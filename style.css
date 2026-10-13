@@ -633,3 +633,6 @@ img.ap-logo{width:24px;height:24px;object-fit:cover;background:none;border:0;dis
 .hdr-cta .btn{padding:11px 24px;font-size:14px;white-space:nowrap}
 .hdr-cta .linkbtn{font-size:12.5px}
 @media (max-width:900px){.hdr-cta{align-items:flex-start}}
+/* v2.0.9 · menos espacio bajo las pestañas */
+.wrap{padding-top:16px}
+#tab-inicio>.home-top:first-child{margin-top:0}
