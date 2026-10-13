@@ -628,3 +628,8 @@ img.ap-logo{width:24px;height:24px;object-fit:cover;background:none;border:0;dis
 .hero-fig{max-width:330px}
 .hero-sheet{max-height:190px;overflow:hidden}
 .hero-fig figcaption{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v2.0.8 · botón de inicio en cabecera */
+.hdr-cta{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;align-self:center}
+.hdr-cta .btn{padding:11px 24px;font-size:14px;white-space:nowrap}
+.hdr-cta .linkbtn{font-size:12.5px}
+@media (max-width:900px){.hdr-cta{align-items:flex-start}}
