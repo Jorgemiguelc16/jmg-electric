@@ -260,21 +260,27 @@
 </div>
 
 
-<!-- ================= ESPACIO DE TRABAJO DEL PROYECTO (v2.0) ================= -->
-<div class="ws" id="ws" hidden>
-  <header class="ws-top">
-    <div class="ws-brand"><span class="ws-mark">JMG</span><span class="ws-app">JMG - ELECTRIC</span></div>
-    <div class="ws-proj"><span class="ws-k" id="wsModo">Vivienda unifamiliar</span><span class="ws-n" id="wsName">Proyecto sin nombre</span></div>
-    <div class="ws-state" id="wsState"></div>
-    <div class="ws-acts"><button class="btn ws-b" type="button" data-sec="exportar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11"/></svg>Exportar</button><button class="btn ws-b ghost" type="button" id="wsSalir"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5H2.5v11H6M10 5l3 3-3 3M13 8H6"/></svg>Salir</button></div>
+<!-- ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= -->
+<div class="app" id="ws" hidden data-mode="uni">
+  <header class="ap-title">
+    <span class="ap-logo">JMG</span>
+    <div class="qa"><button type="button" title="Guardar" data-act="guardar"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4M8 20v-6h8v6"/></svg></button><button type="button" title="Deshacer (Ctrl+Z)" data-act="undo" id="qaUndo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button type="button" title="Rehacer (Ctrl+Y)" data-act="redo" id="qaRedo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button><button type="button" title="Exportar memoria Excel" data-act="xlsx"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg></button></div>
+    <div class="ap-ttl"><b>JMG - ELECTRIC</b> <span class="sep">—</span> <span id="wsName">Proyecto sin nombre</span> <span class="sep">·</span> <span class="ap-mode" id="wsModo">Vivienda unifamiliar</span></div>
+    <div class="ap-tr"><span class="ap-ver" id="wsVer">v2.0 Beta</span><button type="button" data-act="web:guia">Ayuda</button><button type="button" data-act="salir">Salir</button></div>
   </header>
-  <div class="ws-body">
-    <nav class="ws-nav" id="wsNav" aria-label="Secciones del proyecto"></nav>
-    <main class="ws-main" data-calc>
-      <section class="ws-sec" data-sec="proyecto">
-        <div class="ws-head"><span class="ws-step">Paso 1</span><h2>Datos del proyecto</h2><p>Identificación del proyecto para la memoria, el unifilar y el rótulo.</p></div>
-        <div class="ws-cards">
-          <fieldset><legend>Datos del proyecto</legend><div class="fs">
+  <nav class="ap-tabs"><button type="button" class="tb file" data-tab-r="archivo">Archivo</button><button type="button" class="tb on" data-tab-r="proyecto">Proyecto</button><button type="button" class="tb" data-tab-r="cargas">Cargas</button><button type="button" class="tb" data-tab-r="param">Parámetros</button><button type="button" class="tb" data-tab-r="resultados">Resultados</button><button type="button" class="tb" data-tab-r="unifilar">Unifilar</button><button type="button" class="tb" data-tab-r="herr">Herramientas</button><button type="button" class="tb" data-tab-r="ayuda">Ayuda</button></nav>
+  <div class="ap-ribbon"><div class="rib" data-rib="archivo" hidden><div class="grp "><div class="gi"><button type="button" class="rb " data-act="nuevo"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M12.5 10v7M9 13.5h7"/></svg><span>Nuevo<br>proyecto</span></button><button type="button" class="rb " data-open><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h6l2 2h10v11H3z"/><path d="M3 10h18"/></svg><span>Abrir<br>.json</span></button><button type="button" class="rb " data-act="json"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4M8 20v-6h8v6"/></svg><span>Guardar<br>copia .json</span></button></div><div class="gl">Proyecto</div></div><div class="grp "><div class="gi"><button type="button" class="rb " data-act="web:proy"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 9h18M8 13h8M8 16h5"/></svg><span>Mis<br>proyectos</span></button></div><div class="gl">Biblioteca</div></div><div class="grp last"><div class="gi"><button type="button" class="rb " data-act="salir"><svg viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H4v16h6M15 8l4 4-4 4M19 12H9"/></svg><span>Salir al<br>inicio</span></button></div><div class="gl">Sesión</div></div></div><div class="rib" data-rib="proyecto"><div class="grp "><div class="gi"><button type="button" class="rb " data-node="proyecto"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Datos del<br>proyecto</span></button><button type="button" class="rb " data-act="modo"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7v9H3z"/><path d="M10 20v-5h4v5"/></svg><span>Cambiar<br>edificación</span></button></div><div class="gl">Proyecto</div></div><div class="grp "><div class="gi"><button type="button" class="rb " data-node="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M6 8h12M8 8v4M12 8v4M16 8v4"/><circle cx="12" cy="17" r="4"/><path d="M10.5 17h3"/></svg><span>Sistema<br>eléctrico</span></button><button type="button" class="rb " data-node="vivienda"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="14"/><path d="M4 10h16M10 10v10"/><path d="M8 3h8"/></svg><span><i class="m-uni">Vivienda</i><i class="m-multi">Departa-<br>mentos</i></span></button></div><div class="gl">Suministro</div></div><div class="grp "><div class="gi"><button type="button" class="rb " data-view="verif"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Verificar<br>CNE</span></button><div class="col"><div class="chk"><b>✓</b>Cálculo automático</div><div class="chk"><b>✓</b>Resaltar pendientes</div></div></div><div class="gl">Cálculo</div></div><div class="grp last"><div class="gi"><button type="button" class="rb " data-act="xlsx"><svg viewBox="0 0 24 24" fill="none" stroke="#1d6f42" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M8 8l8 8M16 8l-8 8"/></svg><span>Memoria<br>Excel</span></button><button type="button" class="rb " data-act="print"><svg viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4"/><text x="12.5" y="17" font-size="5.5" fill="#b3261e" stroke="none" text-anchor="middle" font-weight="700">PDF</text></svg><span>Resultados<br>PDF</span></button><button type="button" class="rb " data-dl="dxf"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 12 4l9 16z"/><path d="M8 14h8"/></svg><span>Unifilar<br>DXF</span></button></div><div class="gl">Exportar</div></div></div><div class="rib" data-rib="cargas" hidden><div class="grp m-uni"><div class="gi"><button type="button" class="rb " data-node="salidas"><svg viewBox="0 0 24 24" fill="none" stroke="#d49a2a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M10 14v3h4v-3M10 20h4"/></svg><span>Salidas</span></button><button type="button" class="rb " data-node="cargas"><svg viewBox="0 0 24 24" fill="none" stroke="#d49a2a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Cargas<br>especiales</span></button><button type="button" class="rb " data-act="add:cargas"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Agregar<br>carga</span></button></div><div class="gl">Vivienda</div></div><div class="grp m-multi"><div class="gi"><button type="button" class="rb " data-node="vivienda"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20"/><path d="M8 6h2M14 6h2M8 10h2M14 10h2M8 14h2M14 14h2M11 22v-3h2v3"/></svg><span>Departa-<br>mentos</span></button><button type="button" class="rb " data-act="add:tipos"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Agregar<br>tipo</span></button><button type="button" class="rb " data-node="servicios"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M5 7h14l-2 13H7z"/><path d="M9 12h6"/></svg><span>Servicios<br>generales</span></button><button type="button" class="rb " data-act="add:serv"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Agregar carga<br>común</span></button></div><div class="gl">Edificio</div></div><div class="grp last"><div class="gi"><div class="col"><button type="button" class="rs" data-view="cuadro"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 9h18M3 14h18M9 4v16"/></svg><span>Cuadro de cargas</span></button><button type="button" class="rs" data-view="balance"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M5 7l-3 7h6zM19 7l-3 7h6z"/></svg><span>Balance de fases</span></button><button type="button" class="rs" data-view="verif"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Verificaciones</span></button></div></div><div class="gl">Revisión</div></div></div><div class="rib" data-rib="param" hidden><div class="grp "><div class="gi"><button type="button" class="rb " data-node="param" data-fs="fs-p-car"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="1"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h2M14 19h2"/></svg><span>Cargas y<br>circuitos</span></button><button type="button" class="rb " data-node="param" data-fs="fs-p-cond"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c4 0 4 8 9 8s5-8 9-8"/><path d="M3 16c4 0 4-8 9-8"/></svg><span>Conductores</span></button><button type="button" class="rb " data-node="param" data-fs="fs-p-prot"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Protección</span></button><button type="button" class="rb " data-node="param" data-fs="fs-p-dv"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 21 4M3 20h18"/><path d="M15 20v-5"/></svg><span>Caída de<br>tensión</span></button></div><div class="gl">Diseño</div></div><div class="grp last"><div class="gi"><button type="button" class="rb " data-node="pat"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10M5 12h14M7.5 16h9M10 20h4"/></svg><span>Puesta a<br>tierra</span></button><button type="button" class="rb " data-node="metrado"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18"/><path d="M8 7h8M8 11h8M8 15h4M15 15h1"/></svg><span>Metrado</span></button></div><div class="gl">Instalación</div></div></div><div class="rib" data-rib="resultados" hidden><div class="grp last"><div class="gi"><button type="button" class="rb " data-view="resumen"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Resumen</span></button><button type="button" class="rb " data-view="demanda"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 5-8 4 5"/><path d="M3 21h18"/></svg><span>Máxima<br>demanda</span></button><button type="button" class="rb " data-view="alims"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="14" cy="12" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg><span>Alimenta-<br>dores</span></button><button type="button" class="rb " data-view="cuadro"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 9h18M3 14h18M9 4v16"/></svg><span>Cuadro de<br>cargas</span></button><button type="button" class="rb " data-view="balance"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M5 7l-3 7h6zM19 7l-3 7h6z"/></svg><span>Balance<br>de fases</span></button><button type="button" class="rb " data-view="unifilar"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v5M5 7h14M7 7v5M12 7v5M17 7v5"/><path d="M7 12l-1 3M12 12l-1 3M17 12l-1 3"/><circle cx="7" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg><span>Diagrama<br>unifilar</span></button><button type="button" class="rb " data-view="metrado"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18"/><path d="M8 7h8M8 11h8M8 15h4M15 15h1"/></svg><span>Metrado</span></button><button type="button" class="rb " data-view="verif"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Verifica-<br>ciones</span></button></div><div class="gl">Vistas del cálculo</div></div></div><div class="rib" data-rib="unifilar" hidden><div class="grp "><div class="gi"><button type="button" class="rb " data-view="unifilar"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v5M5 7h14M7 7v5M12 7v5M17 7v5"/><path d="M7 12l-1 3M12 12l-1 3M17 12l-1 3"/><circle cx="7" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg><span>Ver<br>unifilar</span></button></div><div class="gl">Diagrama</div></div><div class="grp "><div class="gi"><button type="button" class="rb " data-dl="dxf"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 12 4l9 16z"/><path d="M8 14h8"/></svg><span>DXF<br>AutoCAD</span></button><button type="button" class="rb " data-dl="png"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg><span>Imagen<br>PNG</span></button><button type="button" class="rb " data-dl="svg"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c4-12 12-12 16 0"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="20" r="1.5"/><circle cx="12" cy="8" r="1.5"/></svg><span>Vectorial<br>SVG</span></button></div><div class="gl">Descargar</div></div><div class="grp last"><div class="gi"><button type="button" class="rb " data-act="print"><svg viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4"/><text x="12.5" y="17" font-size="5.5" fill="#b3261e" stroke="none" text-anchor="middle" font-weight="700">PDF</text></svg><span>Imprimir<br>PDF</span></button><button type="button" class="rb " data-act="xlsx"><svg viewBox="0 0 24 24" fill="none" stroke="#1d6f42" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M8 8l8 8M16 8l-8 8"/></svg><span>Memoria<br>Excel</span></button></div><div class="gl">Expediente</div></div></div><div class="rib" data-rib="herr" hidden><div class="grp last"><div class="gi"><button type="button" class="rb " data-act="web:herr"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 21 4M3 20h18"/><path d="M15 20v-5"/></svg><span>Caída de<br>tensión</span></button><button type="button" class="rb " data-act="web:herr"><svg viewBox="0 0 24 24" fill="none" stroke="#9a5a23" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c4 0 4 8 9 8s5-8 9-8"/><path d="M3 16c4 0 4-8 9-8"/></svg><span>Conductor e<br>interruptor</span></button><button type="button" class="rb " data-act="web:herr"><svg viewBox="0 0 24 24" fill="none" stroke="#d49a2a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Circuito<br>de motor</span></button><button type="button" class="rb " data-act="web:herr"><svg viewBox="0 0 24 24" fill="none" stroke="#2f7a4b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10M5 12h14M7.5 16h9M10 20h4"/></svg><span>Varias<br>varillas</span></button><button type="button" class="rb " data-act="web:herr"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="1"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h2M14 19h2"/></svg><span>Conversión</span></button></div><div class="gl">Calculadoras rápidas</div></div></div><div class="rib" data-rib="ayuda" hidden><div class="grp last"><div class="gi"><button type="button" class="rb " data-act="web:guia"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h7a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H3zM21 4h-7a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z"/></svg><span>Guía de<br>uso</span></button><button type="button" class="rb " data-act="web:normas"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h10l4 4v16H5z"/><path d="M15 2v4h4M8 11h8M8 15h8"/></svg><span>Normas<br>aplicadas</span></button><button type="button" class="rb " data-act="web:soporte"><svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4V14M12 17v.5"/></svg><span>Soporte</span></button></div><div class="gl">Ayuda</div></div></div></div>
+  <div class="ap-main">
+    <aside class="ap-pane ap-left"><div class="ph">EXPLORADOR DEL PROYECTO <span id="exCount"></span></div><div class="ex-tree" id="exTree"></div></aside>
+    <section class="ap-center"><div class="ap-doc"><div class="results" id="results"></div></div></section>
+    <aside class="ap-pane ap-right"><div class="ph">PROPIEDADES <span id="propSub"></span></div>
+      <div class="pr-body" id="propBody" data-calc></div>
+      <div class="pr-sum" id="wsSum"></div>
+    </aside>
+  </div>
+  <footer class="ap-status" id="wsStatus"></footer>
+  <div id="park" hidden data-calc>
+<fieldset id="fs-proy"><legend>Datos del proyecto</legend><div class="fs">
             <label>Nombre del proyecto<input type="text" id="p_nombre" value="" placeholder="Nombre del proyecto"></label>
             <div class="row">
               <label>Propietario<input type="text" id="p_prop" value="" placeholder="Nombre del propietario"></label>
@@ -282,46 +288,31 @@
             </div>
             <label>Proyectista (Ing. responsable)<input type="text" id="p_proy" value="" placeholder="Ing. responsable"></label>
           </div></fieldset>
-          <fieldset><legend>Tipo de edificación</legend><div class="fs"><div class="ws-mode"><span id="wsModoTxt">Vivienda unifamiliar</span><button class="btn sec sm" type="button" id="btnMode">Cambiar a multifamiliar</button></div><p class="hint">Al cambiar el tipo se conservan los datos de ambos modos.</p></div></fieldset>
-        </div>
-      </section>
-      <section class="ws-sec" data-sec="suministro" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 2</span><h2>Suministro</h2><p>Sistema de la concesionaria y longitudes de los alimentadores principales.</p></div>
-        <div class="ws-cards">
-          <div class="m-uni"><fieldset><legend>Sistema de suministro</legend><div class="fs">
+<fieldset id="fs-tipo"><legend>Tipo de edificación</legend><div class="fs"><div class="ws-mode"><span id="wsModoTxt">Vivienda unifamiliar</span><button class="btn sec sm" type="button" id="btnMode">Cambiar a multifamiliar</button></div><p class="hint">Al cambiar el tipo se conservan los datos de ambos modos.</p></div></fieldset>
+<fieldset id="fs-sum-uni"><legend>Sistema de suministro</legend><div class="fs">
               <div class="sys" id="sys_uni"></div>
-            </div></fieldset></div>
-          <div class="m-multi"><fieldset><legend>Sistema de suministro del edificio</legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-sum-multi"><legend>Sistema de suministro del edificio</legend><div class="fs">
               <div class="sys" id="sys_multi"></div>
               <div class="row">
                 <label>Long. alimentador general (m)<input type="number" id="Lgen" min="1" step="0.5" value="10"></label>
                 <label>Long. a tablero de servicios (m)<input type="number" id="Lms" min="1" step="0.5" value="15"></label>
               </div>
               <p class="hint">Banco de medidores centralizado en el primer piso (Norma DGE, 301.C.1). Cada departamento se alimenta en 220 V desde su medidor.</p>
-            </div></fieldset></div>
-        </div>
-      </section>
-      <section class="ws-sec" data-sec="vivienda" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 3</span><h2 data-t-uni="Vivienda" data-t-multi="Departamentos">Vivienda</h2><p data-t-uni="Área de la vivienda y alimentador al tablero general." data-t-multi="Cada tipo de departamento con su número de unidades, áreas, salidas y cargas.">Área de la vivienda y alimentador al tablero general.</p></div>
-        <div class="ws-cards">
-          <div class="m-uni"><fieldset><legend>Vivienda <small>050-110 · 050-200</small></legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-viv"><legend>Vivienda <small>050-110 · 050-200</small></legend><div class="fs">
               <div class="row">
                 <label>Área techada (m²)<input type="number" id="area" min="1" value="120"></label>
                 <label>Área de sótano (m²)<input type="number" id="sot" min="0" value="0"></label>
               </div>
               <label>Long. alimentador (m)<input type="number" id="Lalim" min="1" step="0.5" value="15"></label>
               <p class="hint">Área de vivienda: 100 % de pisos dedicados a vivienda más 75 % del sótano. Alimentador: del medidor al tablero general.</p>
-            </div></fieldset></div>
-          <div class="m-multi"><fieldset><legend>Tipos de departamento <small>050-202</small></legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-tipos"><legend>Tipos de departamento <small>050-202</small></legend><div class="fs">
               <div class="list" id="L_tipos"></div>
               <button type="button" class="add" id="add_tipos">+ Agregar tipo de departamento</button>
-            </div></fieldset></div>
-        </div>
-      </section>
-      <section class="ws-sec" data-sec="cargas" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 4</span><h2 data-t-uni="Circuitos y cargas" data-t-multi="Servicios generales">Circuitos y cargas</h2><p data-t-uni="Salidas de alumbrado y tomacorrientes, y cargas especiales con circuito propio." data-t-multi="Cargas comunes del edificio: alumbrado de áreas comunes, emergencia, bombas y portero.">Salidas de alumbrado y tomacorrientes, y cargas especiales con circuito propio.</p></div>
-        <div class="ws-cards">
-          <div class="m-uni ws-two"><fieldset><legend>Salidas</legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-sal"><legend>Salidas</legend><div class="fs">
               <div class="row3 colhead"><span>Cantidad</span><span>W / salida</span><span>Long. (m)</span></div>
               <p class="sublabel">Alumbrado</p>
               <div class="row3"><input type="number" id="al_n" min="0" value="18" aria-label="Salidas de alumbrado"><input type="number" id="al_p" min="0" value="100" aria-label="W por salida de alumbrado"><input type="number" id="al_L" min="1" value="20" aria-label="Longitud alumbrado"></div>
@@ -331,22 +322,16 @@
               <div class="row3"><input type="number" id="tc_n" min="0" value="6" aria-label="Tomacorrientes de cocina"><input type="number" id="tc_p" min="0" value="180" aria-label="W por tomacorriente de cocina"><input type="number" id="tc_L" min="1" value="12" aria-label="Longitud cocina"></div>
               <p class="hint">Longitud: recorrido desde el tablero hasta la salida más alejada.</p>
             </div></fieldset>
-          <fieldset><legend>Cargas especiales</legend><div class="fs">
+<fieldset id="fs-cargas"><legend>Cargas especiales</legend><div class="fs">
               <div class="list" id="L_cargas"></div>
               <button type="button" class="add" id="add_cargas">+ Agregar carga especial</button>
               <p class="hint">Las cargas trifásicas solo se aplican si el suministro es trifásico.</p>
-            </div></fieldset></div>
-          <div class="m-multi"><fieldset><legend>Servicios generales</legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-serv"><legend>Servicios generales</legend><div class="fs">
               <div class="list" id="L_serv"></div>
               <button type="button" class="add" id="add_serv">+ Agregar carga común</button>
-            </div></fieldset></div>
-        </div>
-      </section>
-      <section class="ws-sec" data-sec="param" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 5</span><h2>Parámetros de diseño</h2><p>Valores normales del código; se guardan con el proyecto. Revíselos solo si su caso lo requiere.</p></div>
-        <div class="settings">
-        <div class="scol">
-        <fieldset><legend>Cargas y circuitos</legend><div class="fs">
+            </div></fieldset>
+<fieldset id="fs-p-car"><legend>Cargas y circuitos</legend><div class="fs">
           <div class="row">
             <label>Factor de potencia<input type="number" id="fp" step="0.01" min="0.5" max="1" value="0.9"></label>
             <label>Salidas máx. por circuito<input type="number" id="maxSal" step="1" min="1" max="12" value="12"></label>
@@ -359,18 +344,7 @@
             <select id="reserva"><option value="0">Ninguno</option><option value="1">1</option><option value="2" selected>2 (Regla 050-108)</option><option value="3">3</option><option value="4">4</option></select></label>
           <p class="hint">Máximo 12 salidas por circuito (Regla 070-3000). W por salida y por tomacorriente se usan en el modo multifamiliar.</p>
         </div></fieldset>
-        <fieldset><legend>Caída de tensión <small>050-102</small></legend><div class="fs">
-          <label>ΔV asignada al alimentador general (multifamiliar)
-            <select id="dvGen"><option value="1">1.0 %</option><option value="1.5" selected>1.5 %</option><option value="2">2.0 %</option></select></label>
-          <p class="hint">Límites del código: 2.5 % en alimentadores, 2.5 % en circuitos derivados y 4 % total hasta la salida más alejada.</p>
-        </div></fieldset>
-        <fieldset><legend>Datos guardados</legend><div class="fs">
-          <p class="hint">Los datos se guardan automáticamente en este navegador. Restablecer no borra los proyectos de la pestaña Proyectos.</p>
-          <div class="confirm" id="resetBox"></div>
-        </div></fieldset>
-        </div>
-        <div class="scol">
-        <fieldset><legend>Conductores <small>Tabla 2 · 5A · 5C</small></legend><div class="fs">
+<fieldset id="fs-p-cond"><legend>Conductores <small>Tabla 2 · 5A · 5C</small></legend><div class="fs">
           <label>Método de instalación (Tabla 3)
             <select id="met"><option value="A1" selected>A1 · Conductores en tubo empotrado en pared</option><option value="B1">B1 · Conductores en tubo sobre pared</option><option value="B2">B2 · Cable multipolar en tubo sobre pared</option><option value="C">C · Cable sobre pared</option></select></label>
           <label>Aislamiento
@@ -392,22 +366,18 @@
               <select id="sminA"><option value="2.5">2.5 mm²</option><option value="4" selected>4 mm²</option><option value="6">6 mm²</option><option value="10">10 mm²</option></select></label>
           </div>
         </div></fieldset>
-        <fieldset><legend>Metrado</legend><div class="fs">
-          <div class="row">
-            <label>Desperdicio en conductores y tubos (%)<input type="number" id="pDesp" min="0" max="30" step="1" value="5"></label>
-            <label>Bajada por salida (m)<input type="number" id="bajada" min="0" max="5" step="0.1" value="1"></label>
-          </div>
-          <p class="hint">El metrado de conductores y tubos es referencial: usa la longitud hasta la salida más alejada más una bajada por cada salida.</p>
-        </div></fieldset>
-        </div>
-        <div class="scol">
-        <fieldset><legend>Protección <small>150-400</small></legend><div class="fs">
+<fieldset id="fs-p-prot"><legend>Protección <small>150-400</small></legend><div class="fs">
           <label>Esquema de interruptores diferenciales
             <select id="idMode"><option value="grupo" selected>Un diferencial por cada grupo de 3 circuitos (150-400(8))</option><option value="circuito">Un diferencial por circuito (150-400(9))</option></select></label>
           <label>Corriente de cortocircuito en el punto de entrega (kA)<input type="number" id="iccE" step="0.5" min="0.5" value="10"></label>
           <p class="hint">Valor que proporciona la concesionaria (Norma DGE, 110.F). Si no se conoce, se adopta un valor conservador. Los circuitos de motores se protegen con interruptores de curva D (Regla 160-200).</p>
         </div></fieldset>
-        <fieldset><legend>Puesta a tierra <small>060-702 · 060-712</small></legend><div class="fs">
+<fieldset id="fs-p-dv"><legend>Caída de tensión <small>050-102</small></legend><div class="fs">
+          <label>ΔV asignada al alimentador general (multifamiliar)
+            <select id="dvGen"><option value="1">1.0 %</option><option value="1.5" selected>1.5 %</option><option value="2">2.0 %</option></select></label>
+          <p class="hint">Límites del código: 2.5 % en alimentadores, 2.5 % en circuitos derivados y 4 % total hasta la salida más alejada.</p>
+        </div></fieldset>
+<fieldset id="fs-p-pat"><legend>Puesta a tierra <small>060-702 · 060-712</small></legend><div class="fs">
           <div class="row">
             <label>Resistividad del suelo (Ω·m)<input type="number" id="rho_s" min="1" value="100"></label>
             <label>Factor de tratamiento<input type="number" id="fr" step="0.05" min="0.1" max="1" value="0.5"></label>
@@ -419,28 +389,22 @@
           </div>
           <p class="hint">Varilla de longitud no menor de 2 m (060-702). Factor 1 sin tratamiento; 0.3–0.6 con bentonita o gel.</p>
         </div></fieldset>
-        </div>
-      
-      </section>
-      <section class="ws-sec" data-sec="resultados" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 6</span><h2>Resultados</h2><p>Cálculo verificado contra el CNE-Utilización. Recorra las vistas y revise las observaciones.</p></div>
-        <div class="results" id="results"></div>
-      </section>
-      <section class="ws-sec" data-sec="exportar" hidden>
-        <div class="ws-head"><span class="ws-step">Paso 7</span><h2>Exportar</h2><p>Descargue el expediente técnico del proyecto.</p></div>
-        <div class="exp-grid">
-          <div class="exp-card main"><div class="ec-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="1.5" width="10" height="13"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/></svg></div><h3>Memoria de cálculo</h3><p>Libro Excel con fórmulas vinculadas: Memoria, Cálculos, Unifilar, Metrado y Anexos.</p><button class="btn" id="btnXlsx" type="button">Descargar Excel</button></div>
-          <div class="exp-card"><div class="ec-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6V1.5h8V6M4 11.5H2V6h12v5.5h-2M4 9.5h8v5H4z"/></svg></div><h3>Resultados en PDF</h3><p>Todas las vistas y el unifilar en A4, listos para imprimir o guardar como PDF.</p><button class="btn sec" type="button" id="btnPrint">Imprimir / PDF</button></div>
-          <div class="exp-card"><div class="ec-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5v4M2.5 7h11M4.5 7v4M8 7v4M11.5 7v4"/><circle cx="8" cy="13" r="1.5"/></svg></div><h3>Diagrama unifilar</h3><p>DXF para AutoCAD por lámina y con capas, o imagen PNG / SVG.</p><div class="ec-row"><button class="btn sec" type="button" data-dl="dxf">DXF</button><button class="btn sec" type="button" data-dl="png">PNG</button><button class="btn sec" type="button" data-dl="svg">SVG</button></div></div>
-          <div class="exp-card"><div class="ec-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 1.5h7l3 3v10H3z"/><path d="M5.5 9.5 8 12l2.5-2.5M8 6v6"/></svg></div><h3>Copia del proyecto</h3><p>Archivo .json para respaldarlo o abrirlo en otra computadora.</p><div class="ec-row"><button class="btn sec" type="button" id="btnSave">Guardar .json</button><button class="btn sec" type="button" data-open>Abrir .json</button></div></div>
-        </div>
-        <p class="exp-msg" id="expMsg"></p>
-        <input type="file" id="fileOpen" accept=".json,application/json" hidden>
-      </section>
-      <div class="ws-pager"><button class="btn sec" type="button" id="wsPrev">← Anterior</button><span id="wsPos"></span><button class="btn" type="button" id="wsNext">Siguiente →</button></div>
-    </main>
-    <aside class="ws-sum" id="wsSum"></aside>
+<fieldset id="fs-p-met"><legend>Metrado</legend><div class="fs">
+          <div class="row">
+            <label>Desperdicio en conductores y tubos (%)<input type="number" id="pDesp" min="0" max="30" step="1" value="5"></label>
+            <label>Bajada por salida (m)<input type="number" id="bajada" min="0" max="5" step="0.1" value="1"></label>
+          </div>
+          <p class="hint">El metrado de conductores y tubos es referencial: usa la longitud hasta la salida más alejada más una bajada por cada salida.</p>
+        </div></fieldset>
+<fieldset id="fs-p-dat"><legend>Datos guardados</legend><div class="fs">
+          <p class="hint">Los datos se guardan automáticamente en este navegador. Restablecer no borra los proyectos de la pestaña Proyectos.</p>
+          <div class="confirm" id="resetBox"></div>
+        </div></fieldset>
   </div>
+  <p class="exp-msg" id="expMsg" hidden></p>
+  <input type="file" id="fileOpen" accept=".json,application/json" hidden>
+  <button type="button" id="btnXlsx" hidden>Excel</button><button type="button" id="btnPrint" hidden>PDF</button><button type="button" id="btnSave" hidden>JSON</button>
+  <div class="toast" id="toast" hidden></div>
 </div>
 
 <!-- Asistente de nuevo proyecto -->
@@ -553,7 +517,7 @@ const CRITERIOS=[
   "El balance de fases busca el reparto de cargas monofásicas con el menor desbalance posible; el proyectista puede fijar la fase de cualquier carga. Se recomienda un desbalance no mayor de 10 % como criterio de diseño."];
 const GLOSARIO=[["MD","Máxima demanda: potencia que se espera usar simultáneamente, calculada con las Reglas 050-200 y 050-202."],["ITM","Interruptor termomagnético: protege el conductor contra sobrecargas y cortocircuitos. Curva C para usos generales, D para motores."],["ID","Interruptor diferencial de 30 mA: protege a las personas contra contactos indirectos (Regla 150-400)."],["PdC","Poder de corte: máxima corriente de cortocircuito que el interruptor puede interrumpir sin dañarse."],["Icc","Corriente de cortocircuito disponible en un punto de la instalación. En el punto de entrega la proporciona la concesionaria."],["ΔV","Caída de tensión: máximo 2.5 % en alimentadores, 2.5 % en derivados y 4 % total (Regla 050-102)."],["Iz","Capacidad de corriente del conductor (Tabla 2), corregida por temperatura (5A) y agrupamiento (5C)."],["Id","Corriente de diseño: 1.25 veces la corriente nominal del circuito."],["PAT","Puesta a tierra: electrodo y conductores que conectan la instalación a tierra; resistencia máxima 25 Ω (Regla 060-712)."],["TG · TD · TSG","Tablero general, tablero de departamento y tablero de servicios generales."],["Metrado","Cuantificación de materiales por partidas, base para el presupuesto de la obra."]];
 const FAQ=[["¿Por qué el balance de fases aparece en ámbar?","Porque el desbalance supera el 10 %, criterio de diseño recomendado. Si el mensaje indica que es el mínimo alcanzable, ningún reparto de las cargas lo mejora: divida el circuito más grande o use una carga trifásica."],["¿Qué valor de Icc uso si no lo conozco?","Solicítelo a la concesionaria (Norma DGE, 110.F). Mientras tanto, 10 kA es un valor conservador para zonas urbanas."],["¿El metrado es exacto?","Las protecciones, tableros, cajas y aparatos salen del cálculo. Las longitudes de conductores y tubos son referenciales y deben verificarse con los planos de distribución."],["¿Dónde se guardan mis proyectos?","En este navegador. Para respaldarlos o usarlos en otra computadora, expórtelos desde la pestaña Proyectos e impórtelos en el otro equipo."],["¿Puedo modificar el Excel?","Sí. Las celdas en azul son datos de entrada: al cambiarlas, el libro recalcula los resultados con fórmulas vinculadas."],["¿La memoria reemplaza la firma del ingeniero?","No. Los resultados son de referencia; la responsabilidad del diseño corresponde al ingeniero colegiado que suscribe el expediente (EM.010, Art. 8)."]];
-const NOVEDADES=[["v2.0","Espacio de trabajo del proyecto: asistente de nuevo proyecto, siete pasos con avance, resumen del cálculo siempre visible, parámetros por proyecto y sección de exportación."],["v1.7","Proyectos nuevos en blanco con aviso de datos pendientes y ejemplos en gris; portada con diagrama de muestra fijo, cabecera compacta y expediente en una sola sección."],["v1.6","Nueva portada de Inicio con diagrama de muestra, bienvenida en la primera visita y proyectos reunidos en su pestaña. Puesta a tierra con varias varillas unificada en web, Excel y herramientas. Unifilar DXF en milímetros por lámina (A4 a A1), con capas, estilos de texto y tres esquemas de color."],["v1.5","Proyectos de ejemplo, impresión de resultados en PDF, unifilar en DXF para AutoCAD y vista previa al compartir. Excel con decimales con punto y textos completos; aviso normativo; Ajustes y Herramientas ordenados."],["v1.4","Pestañas Guía y Soporte, estado del proyecto en la cabecera y marca JMG Projects & Energy."],["v1.3","Vistas de resultados, metrado en web y Excel, pestañas Proyectos y Herramientas, ícono de la plataforma."],["v1.2","Balance de fases óptimo con fijación manual, guardar y abrir proyectos, circuitos de motores, resistividad a temperatura de operación."],["v1.1","Diagrama unifilar automático en la web y en el Excel."],["v1.0","Cálculo según CNE-Utilización, EM.010 y Norma DGE con memoria de cálculo en Excel."]];
+const NOVEDADES=[["v2.0","Nueva aplicación de proyecto estilo software de ingeniería: cinta de opciones, explorador del proyecto, propiedades editables por circuito, resultados y unifilar en vivo, barra de estado, deshacer/rehacer y potencias típicas por defecto."],["v1.7","Proyectos nuevos en blanco con aviso de datos pendientes y ejemplos en gris; portada con diagrama de muestra fijo, cabecera compacta y expediente en una sola sección."],["v1.6","Nueva portada de Inicio con diagrama de muestra, bienvenida en la primera visita y proyectos reunidos en su pestaña. Puesta a tierra con varias varillas unificada en web, Excel y herramientas. Unifilar DXF en milímetros por lámina (A4 a A1), con capas, estilos de texto y tres esquemas de color."],["v1.5","Proyectos de ejemplo, impresión de resultados en PDF, unifilar en DXF para AutoCAD y vista previa al compartir. Excel con decimales con punto y textos completos; aviso normativo; Ajustes y Herramientas ordenados."],["v1.4","Pestañas Guía y Soporte, estado del proyecto en la cabecera y marca JMG Projects & Energy."],["v1.3","Vistas de resultados, metrado en web y Excel, pestañas Proyectos y Herramientas, ícono de la plataforma."],["v1.2","Balance de fases óptimo con fijación manual, guardar y abrir proyectos, circuitos de motores, resistividad a temperatura de operación."],["v1.1","Diagrama unifilar automático en la web y en el Excel."],["v1.0","Cálculo según CNE-Utilización, EM.010 y Norma DGE con memoria de cálculo en Excel."]];
 const DOCS=["Certificado de factibilidad de suministro (multifamiliar u otros usos).","Memoria descriptiva: ubicación, áreas libre y techada, proyectista, normativa y criterios técnicos.","Memoria de cálculo: circuitos, iluminación, protecciones, puesta a tierra y otras cargas.","Especificaciones técnicas de materiales y equipos (NTP, IEC).","Planos: esquema unifilar con potencia instalada, demanda máxima, potencia contratada, tensión, capacidad de ruptura y número de fases.","Cuadro de cargas, plano de puesta a tierra y detalles del banco de medidores.","Rótulo con nombre, registro CIP, firma y sello del ingeniero responsable.","Pruebas técnicas al finalizar la obra."];
 
 /* ================= Datos editables (listas) ================= */
@@ -666,7 +630,7 @@ function grupos(list,c,tab,dvUp,feeder){
   const out=[]; let k=0;
   list.forEach(g=>{ if(g.n<=0) return; const nc=Math.ceil(g.n/c.maxSal); let rest=g.n;
     for(let i=0;i<nc;i++){ const n=Math.ceil(rest/(nc-i)); rest-=n;
-      out.push(circuito({tab,id:"C-"+(++k),desc:g.desc+(nc>1?` ${i+1}`:""),tipo:g.tipo,n,P:n*g.p,L:g.L,fases:1},c,dvUp,feeder)); } });
+      const q=circuito({tab,id:"C-"+(++k),desc:g.desc+(nc>1?` ${i+1}`:""),tipo:g.tipo,n,P:n*g.p,L:g.L,fases:1},c,dvUp,feeder); q.src=g.src||null; out.push(q); } });
   return out;
 }
 // Factor de agrupamiento de varillas en paralelo (separación ≥ longitud de varilla), con interpolación lineal
@@ -726,8 +690,8 @@ function calcUni(c){
   const g={al:{n:num("al_n"),p:num("al_p"),L:num("al_L")||1},tg:{n:num("tg_n"),p:num("tg_p"),L:num("tg_L")||1},tc:{n:num("tc_n"),p:num("tc_p"),L:num("tc_L")||1}};
   const CI=g.al.n*g.al.p+g.tg.n*g.tg.p+g.tc.n*g.tc.p+cs.reduce((s,x)=>s+x.p,0);
   const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI});
-  const circ=grupos([{...g.al,desc:"Alumbrado",tipo:"Alumbrado"},{...g.tg,desc:"Tomacorrientes",tipo:"Tomacorriente"},{...g.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente"}],c,"TG",al.dVp,0);
-  cs.filter(x=>x.p>0).forEach(x=>circ.push(circuito({tab:"TG",id:"C-"+(circ.length+1),desc:x.nombre,tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,al.dVp,0)));
+  const circ=grupos([{...g.al,desc:"Alumbrado",tipo:"Alumbrado",src:{t:"grp",k:"al"}},{...g.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:{t:"grp",k:"tg"}},{...g.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:{t:"grp",k:"tc"}}],c,"TG",al.dVp,0);
+  cs.forEach((x,ix)=>{ if(!(x.p>0)) return; const q=circuito({tab:"TG",id:"C-"+(circ.length+1),desc:x.nombre||"Carga especial",tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,al.dVp,0); q.src={t:"cargas",i:ix}; circ.push(q); });
   asignarID(circ,c);
   const bal=balancear(circ,sk,FIX.uni);
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
@@ -738,7 +702,7 @@ function calcUni(c){
 }
 function calcMulti(c){
   const sk=radio("sistG")||"tri380", Lgen=num("Lgen")||1, Lms=num("Lms")||1;
-  const T=tipos.filter(t=>t.cant>0).map(t=>({...t,cant:Math.round(t.cant),md:mdVivienda(t,true)})).sort((a,b)=>b.md.sinAire-a.md.sinAire);
+  const T=tipos.map((t,i)=>({...t,_i:i})).filter(t=>t.cant>0).map(t=>({...t,cant:Math.round(t.cant),md:mdVivienda(t,true)})).sort((a,b)=>b.md.sinAire-a.md.sinAire);
   const units=[]; T.forEach((t,ti)=>{for(let k=0;k<t.cant;k++) units.push({ti,nombre:t.nombre,md:t.md.sinAire,P:t.md.MD,f3:false,ref:`${t.nombre} · Nº ${k+1}`});});
   const fac=i=>i<1?1:i<3?0.65:i<5?0.40:i<20?0.30:0.25;
   units.forEach((u,i)=>{u.ord=i+1; u.f=fac(i); u.dem=u.md*u.f;});
@@ -746,7 +710,7 @@ function calcMulti(c){
   const tramosDef=[["Unidad de mayor carga",1,1],["Siguientes 2 unidades",2,0.65],["Siguientes 2 unidades",2,0.40],["Siguientes 15 unidades",15,0.30],["Unidades restantes",1e9,0.25]];
   const tramos=[]; let i0=0; for(const [lab,n,f] of tramosDef){ const sl=units.slice(i0,i0+n); if(!sl.length) break; tramos.push({lab,n:sl.length,f,sum:sl.reduce((s,u)=>s+u.md,0),dem:sl.reduce((s,u)=>s+u.dem,0)}); i0+=sl.length; }
   const mdDeptos=units.reduce((s,u)=>s+u.dem,0), aireTot=T.reduce((s,t)=>s+t.aire*t.cant,0);
-  const SV=serv.filter(s=>s.p>0).map(s=>({...s}));
+  const SV=serv.map((s,i)=>({...s,_i:i})).filter(s=>s.p>0);
   const Pserv=SV.reduce((s,x)=>s+x.p,0), maxMot=Math.max(0,...SV.filter(x=>x.tipo==="motor").map(x=>x.p)), mdServ=0.75*Pserv;
   const MD=mdDeptos+aireTot+mdServ;
   const gen=alimentador("Alimentador general: acometida → tablero general TG",MD,sk,Lgen,0,c.dvGen,c,{pKey:"MD"});
@@ -760,13 +724,13 @@ function calcMulti(c){
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); const icc=iccAbajo(iccTG,f.s,f.L,f.S);
     tabs.push({tab,desc:`Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,feeder:alims.length-1,icc,pdc:pdcPara(icc)}); });
   const circ=[];
-  if(SV.length){ const f=alims[1]; const l=SV.map((x,i)=>circuito({tab:"TSG",id:"S-"+(i+1),desc:x.nombre,tipo:TSERV[x.tipo],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,f.dvAc,1)); asignarID(l,c); circ.push(...l); }
+  if(SV.length){ const f=alims[1]; const l=SV.map((x,i)=>{ const q=circuito({tab:"TSG",id:"S-"+(i+1),desc:x.nombre||"Carga común",tipo:TSERV[x.tipo],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,f.dvAc,1); q.src={t:"serv",i:x._i}; return q; }); asignarID(l,c); circ.push(...l); }
   T.forEach((t,ti)=>{
     const fi=alims.findIndex(a=>a.pKey==="tipo"&&a.ti===ti), up=alims[fi].dvAc;
     const list=grupos([{n:t.nAl,p:c.pAl,L:t.Lc||1,desc:"Alumbrado",tipo:"Alumbrado"},{n:t.nTo,p:c.pTo,L:t.Lc||1,desc:"Tomacorrientes",tipo:"Tomacorriente"}],c,t.tab,up,fi);
     [["Cocina eléctrica",t.coc,"Cocina eléctrica"],["Calentador de agua / ducha",t.cal,"Calentador de agua / ducha"],["Aire acondicionado",t.aire,"Aire acondicionado"],["Otras cargas > 1500 W",t.otras,"Otra carga"]]
       .forEach(([d,p,tp])=>{ if(p>0) list.push(circuito({tab:t.tab,id:"C-"+(list.length+1),desc:d,tipo:tp,n:1,P:p,L:t.Lc||1,fases:1},c,up,fi)); });
-    asignarID(list,c); circ.push(...list);
+    list.forEach(q=>{ q.src={t:"tipo",i:t._i}; }); asignarID(list,c); circ.push(...list);
   });
   circ.filter(q=>q.tab==="TSG").forEach(q=>{ q.ref=`${q.id} · ${q.desc}`; });
   const balItems=[...units.map(u=>({...u,key:u.ref})),...circ.filter(q=>q.tab==="TSG")];
@@ -1174,9 +1138,9 @@ function render(r){
 function setMode(m){
   MODE=m;
   $("btnMode").textContent=m==="uni"?"Cambiar a multifamiliar":"Cambiar a unifamiliar";
-  const ws=$("ws"); ws.dataset.mode=m;
-  ws.querySelectorAll("[data-t-uni]").forEach(e=>e.textContent=e.dataset[m==="uni"?"tUni":"tMulti"]);
+  $("ws").dataset.mode=m;
   $("modeTxt").textContent=$("wsModoTxt").textContent=m==="uni"?"Vivienda unifamiliar":"Edificio multifamiliar";
+  if(!$("ws").hidden&&fsDe(NODE)) selNode(NODE);
   update();
 }
 function setTab(t){
@@ -1725,7 +1689,7 @@ function aplicar(o){
   setMode(o.MODE==="multi"?"multi":"uni");
 }
 const PKEYS=["p_nombre","p_prop","p_ubic","p_proy","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"];
-function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); o.tipos[0].nombre="Tipo A"; return o; }
+function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
 function nuevoProyecto(m){
   aplicar(proyectoVacio(m));
   irSec("proyecto"); try{ $("p_nombre").focus(); }catch(e){}
@@ -1733,7 +1697,7 @@ function nuevoProyecto(m){
 function cargarEjemplo(m){
   aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
   const v={p_nombre:m==="multi"?"EJEMPLO · Edificio multifamiliar de 8 departamentos":"EJEMPLO · Vivienda unifamiliar",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable"};
-  Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="resumen"; update(); irSec("resultados");
+  Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="unifilar"; update(); irSec("resultados");
 }
 let DELQ=null;
 function renderProy(){
@@ -1831,52 +1795,123 @@ function resetUI(confirmar){
 }
 resetUI(false);
 
-/* ================= Espacio de trabajo del proyecto (v2.0) ================= */
-const SECS=[["proyecto","Datos del proyecto","Proyecto"],["suministro","Suministro","Suministro"],["vivienda","Vivienda","Departamentos"],["cargas","Circuitos y cargas","Servicios generales"],["param","Parámetros de diseño","Parámetros de diseño"],["resultados","Resultados","Resultados"],["exportar","Exportar","Exportar"]];
-let SEC="proyecto", WSF=[];
-try{ const x=localStorage.getItem("jmg-electric-sec"); if(SECS.some(q=>q[0]===x)) SEC=x; }catch(e){}
-function abrirWS(sec){ document.body.classList.add("ws-on"); $("ws").hidden=false; TAB="calculo"; irSec(sec||SEC); }
+/* ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= */
+const NODEFS={proyecto:["fs-proy","fs-tipo"],suministro:{uni:["fs-sum-uni"],multi:["fs-sum-multi"]},vivienda:{uni:["fs-viv"],multi:["fs-tipos"]},salidas:["fs-sal"],cargas:["fs-cargas"],servicios:["fs-serv"],
+  param:["fs-p-car","fs-p-cond","fs-p-prot","fs-p-dv","fs-p-pat","fs-p-met","fs-p-dat"],pat:["fs-p-pat"],metrado:["fs-p-met"]};
+const NODETIT={proyecto:"Datos del proyecto",suministro:"Suministro",vivienda:"Vivienda",salidas:"Salidas",cargas:"Cargas especiales",servicios:"Servicios generales",param:"Parámetros de diseño",pat:"Puesta a tierra",metrado:"Metrado"};
+let NODE="proyecto", WSF=[], RIB="proyecto";
+try{ const x=localStorage.getItem("jmg-electric-node"); if(x) NODE=x; }catch(e){}
+const fsDe=n=>{ const v=NODEFS[n]; return Array.isArray(v)?v:v?v[MODE]:null; };
+function abrirWS(n){ document.body.classList.add("ws-on"); $("ws").hidden=false; TAB="calculo"; try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} if(n) selNode(n); else selNode(NODE); }
 function cerrarWS(silencioso){ document.body.classList.remove("ws-on"); $("ws").hidden=true; if(!silencioso) setTab("inicio"); }
-function irSec(sec){ if(!SECS.some(q=>q[0]===sec)) sec="proyecto"; SEC=sec; try{ localStorage.setItem("jmg-electric-sec",sec); }catch(e){}
-  if($("ws").hidden){ document.body.classList.add("ws-on"); $("ws").hidden=false; TAB="calculo"; try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} }
-  document.querySelectorAll(".ws-sec").forEach(x=>x.hidden=x.dataset.sec!==sec);
-  const i=SECS.findIndex(q=>q[0]===sec); $("wsPrev").disabled=i===0; $("wsNext").hidden=i===SECS.length-1;
-  $("wsNext").textContent=i<SECS.length-1?`${SECS[i+1][MODE==="multi"?2:1]} →`:""; $("wsPos").textContent=`${i+1} de ${SECS.length}`;
-  wsNav(); try{ window.scrollTo({top:0}); }catch(e){} }
-function secDe(id){ const el=$(id); return el?el.closest(".ws-sec")?.dataset.sec:null; }
-function focoCampo(id){ const sec=secDe(id); if(sec&&sec!==SEC) irSec(sec); const el=$(id); if(!el) return;
-  setTimeout(()=>{ el.scrollIntoView({behavior:"smooth",block:"center"}); setTimeout(()=>el.focus({preventScroll:true}),250); },60); }
-function wsEstadoSecs(){ const st={}, pend={}; WSF.forEach(f=>{ const s=secDe(f.id); if(s) pend[s]=(pend[s]||0)+1; });
-  SECS.forEach(([k])=>{ st[k]=pend[k]?{c:"pend",t:`${pend[k]} pendiente${pend[k]>1?"s":""}`}:{c:"ok",t:"Completo"}; });
-  if(!$("p_nombre").value.trim()) st.proyecto={c:"pend",t:"Falta el nombre"};
-  if(document.querySelector('.ws-sec[data-sec="param"] .inv')) st.param={c:"bad",t:"Revise valores"};
-  if(!LAST){ st.resultados={c:"lock",t:"Complete los datos"}; st.exportar={c:"lock",t:"Complete los datos"}; }
-  else { const ok=LAST.alims.every(a=>a.ok)&&LAST.circ.every(q=>q.ok); st.resultados=ok?(LAST.bal&&LAST.bal.desb>10?{c:"warn",t:"Con observaciones"}:{c:"ok",t:"Conforme"}):{c:"bad",t:"Revisar circuitos"}; st.exportar={c:"ok",t:"Disponible"}; }
-  return st; }
-function wsNav(){ const st=wsEstadoSecs();
-  $("wsNav").innerHTML=SECS.map(([k,u,m],i)=>`<button type="button" class="wn${k===SEC?" on":""} ${st[k].c}" data-sec="${k}"><span class="wn-n">${st[k].c==="ok"?"✓":i+1}</span><span class="wn-t"><b>${MODE==="multi"?m:u}</b><small>${st[k].t}</small></span></button>`).join("")
-    +`<div class="wn-foot"><button type="button" class="linkbtn" data-ws-help>Guía de uso</button></div>`; }
-function wsRefresh(F){ WSF=F||[];
-  const n=$("p_nombre").value.trim(); $("wsName").textContent=n||"Proyecto sin nombre"; $("wsName").classList.toggle("muted",!n);
-  $("wsModo").textContent=MODE==="multi"?"Edificio multifamiliar":"Vivienda unifamiliar";
-  $("wsState").innerHTML=n?(/^EJEMPLO\b/.test(n)?`<span class="wst ej">Ejemplo · no se guarda</span>`:`<span class="wst ok">Guardado ✓</span>`):`<span class="wst warn">Sin nombre · no se guarda</span>`;
-  const S=$("wsSum");
-  if(!LAST){ const tot=SECS.length-2, done=SECS.slice(0,5).filter(([k])=>!WSF.some(f=>secDe(f.id)===k)).length;
-    S.innerHTML=`<div class="sum-card"><p class="sum-k">Avance de datos</p><div class="sum-bar"><i style="width:${Math.round(done/5*100)}%"></i></div><p class="sum-h">${WSF.length} dato${WSF.length===1?"":"s"} pendiente${WSF.length===1?"":"s"}</p>
-      <ul class="sum-list">${WSF.slice(0,6).map(f=>`<li><button type="button" class="linkbtn" data-foco="${f.id}">${esc(f.l)}</button></li>`).join("")}${WSF.length>6?`<li class="more">y ${WSF.length-6} más…</li>`:""}</ul>
-      <p class="sum-note">Los resultados aparecen al completar los datos.</p></div>`;
-  } else { const r=LAST, a0=r.alims[0], md=r.mode==="multi"?r.MD:r.md.MD, maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)), ok=r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok);
-    const row=(k,v,u)=>`<div class="sum-row"><span>${k}</span><b>${v}<small>${u}</small></b></div>`;
-    S.innerHTML=`<div class="sum-card"><p class="sum-k">Resumen del cálculo</p>
-      <div class="sum-big"><span>Máxima demanda</span><b>${fmt(md/1000,2)}<small> kW</small></b></div>
-      ${row("Potencia a contratar",fmt(r.contratada,1)," kW")}${row("Alimentador",a0.S," mm²")}${row("Interruptor general",`${a0.s.tri?3:2}×${a0.itm??"—"}`," A")}${row("ΔV máxima total",fmt(maxDV,2)," %")}${row("Puesta a tierra",fmt(r.pat.Rn??r.pat.Rt,1)," Ω")}${r.bal?row("Desbalance",fmt(r.bal.desb,1)," %"):""}
-      <div class="sum-st ${ok?"ok":"bad"}">${ok?"CONFORME":"REVISAR"}<small>${ok?"Alimentadores y circuitos cumplen":"Hay circuitos por revisar"}</small></div>
-      <button type="button" class="btn sec sm sum-go" data-sec="resultados">Ver resultados</button></div>`; }
-  if(!$("ws").hidden) wsNav(); }
-$("ws").addEventListener("click",e=>{ const b=e.target.closest("[data-sec]"); if(b){ irSec(b.dataset.sec); return; } if(e.target.closest("[data-ws-help]")){ cerrarWS(true); setTab("guia"); } });
-$("wsPrev").addEventListener("click",()=>{ const i=SECS.findIndex(q=>q[0]===SEC); if(i>0) irSec(SECS[i-1][0]); });
-$("wsNext").addEventListener("click",()=>{ const i=SECS.findIndex(q=>q[0]===SEC); if(i<SECS.length-1) irSec(SECS[i+1][0]); });
-$("wsSalir").addEventListener("click",()=>cerrarWS(false));
+// compatibilidad con llamadas anteriores
+function irSec(sec){ const map={proyecto:"proyecto",suministro:"suministro",vivienda:"vivienda",cargas:MODE==="multi"?"servicios":"salidas",param:"param",resultados:null,exportar:null};
+  if(!document.body.classList.contains("ws-on")){ try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} }
+  abrirWS(map[sec]===undefined?null:map[sec]); if(sec==="resultados"||sec==="exportar") verVista(VIEW||"resumen"); }
+function selNode(n){
+  if(n==="servicios"&&MODE!=="multi") n="cargas"; if((n==="cargas"||n==="salidas")&&MODE==="multi") n="servicios";
+  NODE=n; try{ localStorage.setItem("jmg-electric-node",n); }catch(e){}
+  const pb=$("propBody"), park=$("park");
+  [...pb.querySelectorAll(":scope > fieldset")].forEach(f=>park.appendChild(f)); pb.innerHTML="";
+  const fsl=fsDe(n);
+  if(fsl){ fsl.forEach(id=>{ const f=$(id); if(f) pb.appendChild(f); }); $("propSub").textContent=n==="vivienda"&&MODE==="multi"?"Departamentos":NODETIT[n]||""; }
+  else if(n.startsWith("circ:")) propCircuito(n.slice(5));
+  else if(n.startsWith("tab:")) propTablero(n.slice(4));
+  if(n==="pat") verVista("resumen"); if(n==="metrado") verVista("metrado");
+  pb.scrollTop=0; exTree(); }
+function verVista(v){ VIEW=v; try{ localStorage.setItem("jmg-electric-view",v); }catch(e){} if(LAST) update(); }
+function focoCampo(id){ const el=$(id); if(!el) return; const f=el.closest("fieldset[id]");
+  if(f&&!$("propBody").contains(f)){ const n=Object.keys(NODEFS).find(k=>(fsDe(k)||[]).includes(f.id)); if(n) selNode(n); }
+  setTimeout(()=>{ el.scrollIntoView({behavior:"smooth",block:"center"}); el.focus({preventScroll:true}); },60); }
+const pendDe=n=>{ const fl=fsDe(n)||[]; return WSF.filter(f=>{ const el=$(f.id); const fs=el&&el.closest("fieldset[id]"); return fs&&fl.includes(fs.id); }).length+(n==="proyecto"&&!$("p_nombre").value.trim()?1:0); };
+function exTree(){
+  const r=LAST, multi=MODE==="multi", N=[];
+  const add=(lv,txt,node,st,extra="")=>N.push(`<button type="button" class="tn ${st||""}${NODE===node?" sel":""}" style="padding-left:${10+lv*16}px" data-node="${node}"><i class="dot"></i><span>${txt}</span>${extra}</button>`);
+  const pst=n=>pendDe(n)?"pend":"ok", pc=n=>{ const k=pendDe(n); return k?`<em>${k}</em>`:""; };
+  const sk=multi?radio("sistG"):radio("sist"), sis=SIST[sk]?.nom||"";
+  add(0,esc($("p_nombre").value.trim()||"Proyecto sin nombre"),"proyecto",pst("proyecto"),pc("proyecto"));
+  add(1,`Suministro · ${sis}`,"suministro",pst("suministro"),pc("suministro"));
+  if(!multi){ const a=parseFloat($("area").value); add(1,`Vivienda${a>0?` · ${fmt(a,0)} m²`:""}`,"vivienda",pst("vivienda"),pc("vivienda"));
+    add(1,"Salidas de alumbrado y tomacorrientes","salidas",pst("salidas"),pc("salidas")); add(1,`Cargas especiales · ${cargas.length}`,"cargas",pst("cargas"),pc("cargas")); }
+  else { add(1,`Departamentos · ${tipos.reduce((s,t)=>s+(t.cant>0?Math.round(t.cant):0),0)} unidades`,"vivienda",pst("vivienda"),pc("vivienda"));
+    add(1,`Servicios generales · ${serv.length}`,"servicios",pst("servicios"),pc("servicios")); }
+  if(r){ r.tabs.forEach(tb=>{ add(1,`Tablero ${tb.tab}`,"tab:"+tb.tab,"tabk");
+      r.circ.filter(q=>q.tab===tb.tab).forEach(q=>add(2,`${q.id} &nbsp;${esc(q.desc)}`,"circ:"+q.key,q.ok?"ok":"bad"));
+      const pre=tb.tab==="TSG"?"S-":"C-", n0=r.circ.filter(q=>q.tab===tb.tab).length; for(let i=1;i<=r.c.reserva;i++) N.push(`<div class="tn res" style="padding-left:42px"><i class="dot"></i><span>${pre}${n0+i} &nbsp;Reserva</span></div>`); });
+    add(1,`Puesta a tierra · ${fmt(r.pat.Rn??r.pat.Rt,1)} Ω`,"pat",r.pat.Rn<=25||r.pat.ok?"ok":"bad"); }
+  else N.push(`<div class="tn lock" style="padding-left:26px"><i class="dot"></i><span>Tableros y circuitos · complete los datos</span></div>`);
+  add(1,"Parámetros de diseño","param",document.querySelector("#fs-p-car .inv,#fs-p-cond .inv,#fs-p-prot .inv,#fs-p-pat .inv")?"bad":"ok");
+  if(r) add(1,"Metrado","metrado","ok");
+  $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`; }
+function propTablero(tab){ const r=LAST; if(!r){ return selNode("proyecto"); } const tb=r.tabs.find(t=>t.tab===tab); if(!tb) return selNode("proyecto");
+  const f=r.alims[tb.feeder], cs=r.circ.filter(q=>q.tab===tab), row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
+  $("propSub").textContent=`Tablero ${tab}`;
+  $("propBody").innerHTML=`<div class="pc"><div class="st">Tablero ${tab}</div><p class="pc-d">${esc(tb.desc)}</p><table class="rt">${row("Alimentado por",esc(f.desc))}${row("Potencia",`${fmt(f.P,0)} W`)}${row("Conductor",`${f.s.n}-1×${f.S} mm²`)}${row("Interruptor",`${f.s.tri?3:2}×${f.itm??"—"} A`)}${row("ΔV acumulada",`${fmt(f.dvAc,2)} %`)}${row("Icc en barras",`${fmt(tb.icc,2)} kA`)}${row("Poder de corte",`${tb.pdc} kA`)}${row("Circuitos",`${cs.length} + ${r.c.reserva} reserva`)}${row("Verificación",cs.every(q=>q.ok)&&f.ok?'<span class="okb">CONFORME</span>':'<span class="badb">REVISAR</span>')}</table>
+    <button type="button" class="btn sec sm pc-go" data-view="cuadro">Ver cuadro de cargas</button></div>`; }
+function propCircuito(key){ const r=LAST; const q=r&&r.circ.find(x=>x.key===key); if(!q) return selNode("proyecto");
+  $("propSub").textContent=`${q.id} · ${q.desc}`;
+  let ed="";
+  const inp=(lbl,attr,val,unit,ph="")=>`<label class="pr"><span>${lbl}</span><span class="in-u"><input type="number" min="0" step="any" ${attr} value="${val??""}" placeholder="${ph}">${unit?`<em>${unit}</em>`:""}</span></label>`;
+  if(q.src&&(q.src.t==="cargas"||q.src.t==="serv")){ const L=LISTS[q.src.t], it=L.arr[q.src.i]; if(it){
+      const tipos_=q.src.t==="cargas"?TIPOS:TSERV;
+      ed=`<label class="pr"><span>Descripción</span><input type="text" data-bl="${q.src.t}|${q.src.i}|nombre" value="${esc(it.nombre)}"></label>
+      <label class="pr"><span>Tipo de carga</span><select data-bl="${q.src.t}|${q.src.i}|tipo">${Object.entries(tipos_).map(([k,v])=>`<option value="${k}"${k===it.tipo?" selected":""}>${v}</option>`).join("")}</select></label>
+      ${inp("Potencia",`data-bl="${q.src.t}|${q.src.i}|p"`,it.p,"W")}
+      <label class="pr"><span>Fases</span><select data-bl="${q.src.t}|${q.src.i}|fases"><option value="1"${it.fases==1?" selected":""}>Monofásica</option><option value="3"${it.fases==3?" selected":""}>Trifásica</option></select></label>
+      ${inp("Longitud",`data-bl="${q.src.t}|${q.src.i}|L"`,it.L,"m")}`; } }
+  else if(q.src&&q.src.t==="grp"){ const k=q.src.k, nm={al:"Alumbrado",tg:"Tomacorrientes",tc:"Tomacorrientes cocina / lavandería"}[k];
+    ed=`<p class="pc-d">Este circuito se arma con las salidas de <b>${nm}</b> (máximo ${ctx().maxSal} por circuito). Al cambiar estos datos se recalculan todos los circuitos del grupo.</p>
+      ${inp("Nº de salidas",`data-mirror="${k}_n"`,$(k+"_n").value,"")}${inp("Potencia por salida",`data-mirror="${k}_p"`,$(k+"_p").value,"W")}${inp("Longitud",`data-mirror="${k}_L"`,$(k+"_L").value,"m")}`; }
+  else if(q.src&&q.src.t==="tipo"){ const t=tipos[q.src.i]; ed=`<p class="pc-d">Circuito del departamento <b>${esc(t?t.nombre:"")}</b>. Sus datos se editan en el tipo de departamento.</p><button type="button" class="btn sec sm" data-node="vivienda">Editar ${esc(t?t.nombre:"departamento")}</button>`; }
+  $("propBody").innerHTML=`<div class="pc"><div class="st">Datos del circuito</div>${ed}</div><div class="pc" id="circRes"></div>`;
+  circRes(key); }
+function circRes(key){ const box=$("circRes"); if(!box) return; const q=LAST&&LAST.circ.find(x=>x.key===key); if(!q){ box.innerHTML=""; return; }
+  const row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
+  box.innerHTML=`<div class="st">Resultado del circuito</div><table class="rt">${row("Potencia",`${fmt(q.P,0)} W · ${q.f3?"3φ":"1φ"} ${q.s.V} V`)}${row("Corriente nominal",`${fmt(q.I,2)} A`)}${row("Corriente de diseño",`${fmt(q.Id,2)} A`)}${row("Interruptor",`${q.f3?3:2}×${q.itm??"—"} A · ${q.curva}`)}${row("Conductor",`${q.f3?4:2}-1×${q.S} mm²${LAST.c.desig?" "+esc(LAST.c.desig):""}`)}${row("Iz corregida",`${fmt(q.Izc,1)} A`)}${row("ΔV circuito / total",`${fmt(q.dVp,2)} / ${fmt(q.dVt,2)} %`)}${row("Diferencial",`${q.idName} · ${q.f3?4:2}×${q.idRat} A`)}${row("Tubo",q.tubo.mm?`${q.tubo.mm} mm`:q.tubo.pul)}${row("Verificación",q.ok?'<span class="okb">CONFORME</span>':'<span class="badb">REVISAR</span>')}</table>`; }
+$("propBody").addEventListener("input",e=>{ const t=e.target;
+  if(t.dataset.bl){ const [nm,i,k]=t.dataset.bl.split("|"), it=LISTS[nm].arr[+i]; if(!it) return; const f=LISTS[nm].f.find(x=>x.k===k);
+    it[k]=f&&f.t==="number"?(t.value.trim()===""?null:(parseFloat(t.value)||0)):(k==="fases"?+t.value:t.value.replace(/[<>]/g,"")); renderList(nm); }
+  if(t.dataset.mirror){ $(t.dataset.mirror).value=t.value; } });
+$("propBody").addEventListener("change",e=>{ if(e.target.dataset.bl&&e.target.tagName==="SELECT"){ const ev=new Event("input",{bubbles:true}); e.target.dispatchEvent(ev); } });
+function toast(t){ const x=$("toast"); x.textContent=t; x.hidden=false; clearTimeout(toast.k); toast.k=setTimeout(()=>x.hidden=true,2200); }
+/* Deshacer / rehacer */
+const HIST=[], REDO=[]; let histT=null, histBlock=false;
+const snap=()=>{ const o=estado(); delete o.savedAt; return JSON.stringify(o); };
+function histPush(){ if(histBlock) return; clearTimeout(histT); histT=setTimeout(()=>{ histT=null; const s=snap(); if(HIST[HIST.length-1]!==s){ HIST.push(s); if(HIST.length>60) HIST.shift(); REDO.length=0; } qaHist(); },500); }
+function qaHist(){ $("qaUndo").disabled=HIST.length<2; $("qaRedo").disabled=!REDO.length; }
+function histGo(dir){ if(histT){ clearTimeout(histT); histT=null; const s=snap(); if(HIST[HIST.length-1]!==s){ HIST.push(s); REDO.length=0; } }
+  if(dir<0&&HIST.length<2) return; if(dir>0&&!REDO.length) return;
+  if(dir<0) REDO.push(HIST.pop()); else HIST.push(REDO.pop());
+  histBlock=true; const n=NODE; aplicar(JSON.parse(HIST[HIST.length-1])); selNode(n); histBlock=false; qaHist(); toast(dir<0?"Cambio deshecho":"Cambio rehecho"); }
+addEventListener("keydown",e=>{ if($("ws").hidden||!(e.ctrlKey||e.metaKey)) return; const k=e.key.toLowerCase(); if(k==="z"&&!e.shiftKey){ e.preventDefault(); histGo(-1); } else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); histGo(1); } });
+function wsRefresh(F){ WSF=F||[]; histPush();
+  const n=$("p_nombre").value.trim(); $("wsName").textContent=n||"Proyecto sin nombre";
+  $("wsModo").textContent=$("wsModoTxt").textContent=MODE==="multi"?"Edificio multifamiliar":"Vivienda unifamiliar"; $("ws").dataset.mode=MODE;
+  const S=$("wsSum"), r=LAST, row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
+  if(!r) S.innerHTML=`<div class="st">Datos pendientes</div><div class="sum-bar"><i style="width:${Math.max(6,100-Math.min(100,WSF.length*10))}%"></i></div><ul class="sum-list">${WSF.slice(0,5).map(f=>`<li><button type="button" class="linkbtn" data-foco="${f.id}">${esc(f.l)}</button></li>`).join("")}${WSF.length>5?`<li class="more">y ${WSF.length-5} más…</li>`:""}</ul>`;
+  else { const a0=r.alims[0], md=r.mode==="multi"?r.MD:r.md.MD, maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt));
+    S.innerHTML=`<div class="st">Resumen del proyecto</div><div class="big"><small>Máxima demanda</small><b>${fmt(md/1000,2)} <small>kW</small></b></div><table class="rt">${row("Potencia a contratar",`${fmt(r.contratada,1)} kW`)}${row("Alimentador",`${a0.s.n}-1×${a0.S} mm²`)}${row("Interruptor general",`${a0.s.tri?3:2}×${a0.itm??"—"} A`)}${row("ΔV máxima total",`${fmt(maxDV,2)} %`)}${row("Puesta a tierra",`${fmt(r.pat.Rn??r.pat.Rt,1)} Ω`)}</table>`; }
+  const ok=r&&r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok), hh=new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
+  $("wsStatus").innerHTML=`<div>Modo edición</div><div><span class="g">●</span> Cálculo automático</div>`+(r?`<div>MD ${fmt((r.mode==="multi"?r.MD:r.md.MD)/1000,2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri?3:2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)),2)} %</div><div class="${ok?"g":"b"}">${ok?"CONFORME":"REVISAR"}</div>`:`<div class="w">${WSF.length} dato${WSF.length===1?"":"s"} pendiente${WSF.length===1?"":"s"}</div>`)+`<div class="r">${n&&!/^EJEMPLO\b/.test(n)?`Guardado ${hh}`:/^EJEMPLO\b/.test(n)?"Ejemplo · no se guarda":"Sin nombre · no se guarda"} · ${VERSION}</div>`;
+  if(!$("ws").hidden){ exTree(); if(NODE.startsWith("circ:")){ if(r&&r.circ.some(q=>q.key===NODE.slice(5))) circRes(NODE.slice(5)); else selNode(MODE==="multi"?"vivienda":"salidas"); } if(NODE.startsWith("tab:")&&!$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4)); } }
+/* Cinta de opciones y acciones */
+$("ws").addEventListener("click",e=>{
+  const tr=e.target.closest("[data-tab-r]"); if(tr){ RIB=tr.dataset.tabR; document.querySelectorAll(".ap-tabs .tb").forEach(b=>b.classList.toggle("on",b===tr)); document.querySelectorAll(".rib").forEach(x=>x.hidden=x.dataset.rib!==RIB); return; }
+  const nd=e.target.closest("[data-node]"); if(nd&&!e.target.closest("[data-act]")){ selNode(nd.dataset.node); if(nd.dataset.fs){ const f=$(nd.dataset.fs); if(f) setTimeout(()=>f.scrollIntoView({behavior:"smooth",block:"start"}),40); } return; }
+  const vw=e.target.closest("[data-view]"); if(vw&&!e.target.closest("#results")){ if(!LAST){ toast("Complete los datos para ver los resultados"); return; } verVista(vw.dataset.view); return; }
+  const ac=e.target.closest("[data-act]"); if(!ac) return; const a=ac.dataset.act;
+  if(a==="nuevo") asistente(true,MODE);
+  else if(a==="json") $("btnSave").click();
+  else if(a==="guardar"){ saveDraft(); hdrEstado(); toast($("p_nombre").value.trim()?"Proyecto guardado en este navegador":"Asigne un nombre al proyecto para guardarlo"); }
+  else if(a==="salir") cerrarWS(false);
+  else if(a==="modo"){ selNode("proyecto"); $("btnMode").click(); }
+  else if(a==="xlsx"){ if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }
+  else if(a==="print"){ if(!LAST) return toast("Complete los datos para imprimir"); $("btnPrint").click(); }
+  else if(a==="undo") histGo(-1); else if(a==="redo") histGo(1);
+  else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
+  else if(a.startsWith("web:")){ cerrarWS(true); setTab(a.slice(4)); } });
+document.addEventListener("click",e=>{ if(e.target.closest("#ws [data-dl]")&&!LAST) toast("Complete los datos para descargar el unifilar"); },true);
+$("expMsg").textContent=""; new MutationObserver(()=>{ const t=$("expMsg").textContent; if(t&&!$("ws").hidden) toast(t); }).observe($("expMsg"),{childList:true,characterData:true,subtree:true});
 
 /* Asistente de nuevo proyecto */
 function asistente(abrir,m){ const w=$("wizard"); w.hidden=!abrir; document.body.classList.toggle("wl-open",abrir); if(!abrir) return;
@@ -1890,7 +1925,7 @@ $("wizard").addEventListener("click",e=>{ const b=e.target.closest("[data-wz]");
   const m=radio("wz_mode")||"uni", o=proyectoVacio(m), sist=$("wz_sist").value;
   o.p_nombre=nom.replace(/[<>]/g,""); o.p_prop=$("wz_prop").value.replace(/[<>]/g,""); o.p_ubic=$("wz_ubic").value.replace(/[<>]/g,""); o.p_proy=$("wz_proy").value.replace(/[<>]/g,"");
   if(m==="multi") o.sistG=sist; else o.sist=sist;
-  asistente(false); aplicar(o); update(); irSec("suministro"); });
+  asistente(false); aplicar(o); VIEW="unifilar"; HIST.length=0; REDO.length=0; abrirWS(m==="multi"?"vivienda":"vivienda"); update(); toast("Proyecto creado: complete los datos marcados en ámbar"); });
 $("wizard").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.tagName==="INPUT"){ e.preventDefault(); $("wizard").querySelector('[data-wz="ok"]').click(); } });
 addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("wizard").hidden) asistente(false); });
 
