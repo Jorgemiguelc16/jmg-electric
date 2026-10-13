@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<link rel="stylesheet" href="style.css?v=2.0.6">
+<link rel="stylesheet" href="style.css?v=2.0.7">
 </head>
 <body>
 
@@ -57,7 +57,7 @@
   <header class="masthead"><div class="in">
     <div class="mh-top">
       <div class="brand">
-        <div class="mark" aria-hidden="true"><span>JMG</span></div>
+        <img class="mark-logo" src="logo.png" alt="JMG Projects &amp; Energy" width="64" height="64">
         <div>
           <p class="eyebrow">JMG - ELECTRIC · Plataforma de cálculo eléctrico</p>
           <h1>Cálculo y Dimensionamiento Eléctrico de Viviendas Unifamiliares y Multifamiliares</h1>
@@ -86,12 +86,12 @@
         <div class="hero-txt">
           <p class="hero-eyebrow">Plataforma gratuita · Versión beta</p>
           <h2 class="hero-t">El cálculo eléctrico de una vivienda, listo para el expediente técnico</h2>
-          <p class="hero-s">Ingrese los datos de la vivienda o del edificio y obtenga la máxima demanda, los conductores, las protecciones, la caída de tensión, la puesta a tierra, el diagrama unifilar y la memoria de cálculo en Excel, conforme al CNE-Utilización.</p>
-          <div class="hero-acts"><button class="btn lg" type="button" data-start>Empezar cálculo</button><button class="btn sec lg" type="button" data-ej="uni">Ver un ejemplo</button></div>
+          <p class="hero-s">Máxima demanda, conductores, protecciones, caída de tensión, puesta a tierra, diagrama unifilar y memoria en Excel.</p>
+          <div class="hero-acts"><button class="btn" type="button" data-start>Empezar cálculo →</button><button class="linkbtn" type="button" data-ej="uni">o ver un ejemplo</button></div>
           <p class="hero-last" id="lastBox" hidden>Proyecto en curso: <button class="linkbtn" type="button" data-go="calculo" id="lastTxt"></button></p>
           <ul class="hero-norms"><li>CNE-Utilización</li><li>RNE EM.010</li><li>Norma DGE</li><li>IEC 60898 · 61008</li></ul>
         </div>
-        <figure class="hero-fig" id="heroFig" title="Ver el ejemplo completo"><div class="hero-sheet" id="heroUnif"></div><figcaption>Diagrama unifilar generado por la plataforma · <b>clic para ver el ejemplo completo</b></figcaption></figure>
+        <figure class="hero-fig" id="heroFig" title="Ver el ejemplo completo"><div class="hero-sheet" id="heroUnif"></div><figcaption>Unifilar generado · <b>clic para ver el ejemplo</b></figcaption></figure>
       </div>
 
       <div class="home home-top">
@@ -263,7 +263,7 @@
 <!-- ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= -->
 <div class="app" id="ws" hidden data-mode="uni">
   <header class="ap-title">
-    <span class="ap-logo">JMG</span>
+    <img class="ap-logo" src="logo.png" alt="JMG">
     <div class="qa"><button type="button" title="Guardar" data-act="guardar"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4M8 20v-6h8v6"/></svg></button><button type="button" title="Deshacer (Ctrl+Z)" data-act="undo" id="qaUndo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button type="button" title="Rehacer (Ctrl+Y)" data-act="redo" id="qaRedo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button><button type="button" title="Exportar memoria Excel" data-act="xlsx"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg></button></div>
     <div class="ap-ttl"><b>JMG - ELECTRIC</b> <span class="sep">—</span> <span id="wsName">Proyecto sin nombre</span> <span class="sep">·</span> <span class="ap-mode" id="wsModo">Vivienda unifamiliar</span></div>
     <div class="ap-tr"><span class="ap-ver" id="wsVer">v2.0 Beta</span><button type="button" data-act="web:guia">Ayuda</button><button type="button" data-act="salir">Salir</button></div>

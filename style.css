@@ -432,9 +432,6 @@ input::placeholder{color:#a3adb8;font-style:italic}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 
 /* v1.7 · Inicio: cabecera compacta, diagrama de muestra y expediente */
-body.en-inicio .brand h1,body.en-inicio .brand .sub{display:none}
-body.en-inicio .brand{align-items:center}
-body.en-inicio .brand .eyebrow{font-size:15px;letter-spacing:.12em;margin:0}
 .hero-fig{cursor:zoom-in;transition:box-shadow .15s}
 .hero-fig:hover{box-shadow:0 0 0 2px var(--navy)}
 .hero-fig figcaption b{color:var(--navy);font-weight:600}
@@ -614,3 +611,20 @@ tr.grp td{white-space:normal}
 .lt{display:flex;align-items:center;gap:0}
 .tipbox{position:fixed;z-index:200;max-width:250px;background:#14304f;color:#fff;font:400 11.5px/1.45 var(--f-body);padding:7px 10px;box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;border-left:3px solid #9a5a23}
 .tipbox[hidden]{display:none}
+
+/* v2.0.7 · logo + portada compacta */
+.mark-logo{flex:none;width:64px;height:64px;display:block;object-fit:cover;box-shadow:0 1px 3px rgba(20,48,79,.25)}
+img.ap-logo{width:24px;height:24px;object-fit:cover;background:none;border:0;display:block}
+.hero{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:28px;padding:22px 28px;border-top-width:3px}
+.hero-t{font-size:clamp(20px,2vw,25px);margin-top:8px}
+.hero-s{margin-top:8px;font-size:14px}
+.hero-acts{margin-top:16px;align-items:center;gap:14px}
+.hero-acts .linkbtn{font-size:13.5px}
+.hero-norms{margin-top:16px}
+.hero-fig{padding:8px 8px 6px;max-width:360px;justify-self:end;width:100%}
+.hero-fig figcaption{font-size:11px;margin-top:6px}
+@media (max-width:960px){.hero{grid-template-columns:1fr;padding:20px}.hero-fig{justify-self:stretch;max-width:none}}
+.hero{align-items:center}
+.hero-fig{max-width:330px}
+.hero-sheet{max-height:190px;overflow:hidden}
+.hero-fig figcaption{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
