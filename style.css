@@ -475,8 +475,8 @@ body.ws-on{background:#e9edf2;overflow:hidden}
 .ap-ribbon{flex:none;height:100px;background:#f7f8fa;border-bottom:1px solid #d5dbe2;overflow-x:auto;overflow-y:hidden}
 .rib{display:flex;height:100%;padding:4px 6px 0}
 .rib[hidden]{display:none}
-.grp{display:flex;flex-direction:column;padding:0 8px;border-right:1px solid #dde2e8}
-.grp.last{border-right:0}
+.rgrp{display:flex;flex-direction:column;padding:0 8px;border-right:1px solid #dde2e8}
+.rgrp.last{border-right:0}
 .gi{display:flex;gap:2px;flex:1;align-items:flex-start}
 .gl{text-align:center;font-size:10.5px;color:#6b7785;padding:2px 0 5px;white-space:nowrap}
 .rb{display:flex;flex-direction:column;align-items:center;min-width:66px;padding:4px 4px;background:none;border:1px solid transparent;border-radius:3px;text-align:center;line-height:1.15;font-size:11.5px;color:#1f2a36}
@@ -599,3 +599,18 @@ body.ws-on{background:#e9edf2;overflow:hidden}
 .app[data-mode="uni"] .ap-ribbon .rb .m-multi,.app[data-mode="multi"] .ap-ribbon .rb .m-uni{display:none!important}
 body.ws-on>svg.unifilar{display:none}
 @media (max-width:900px){.ap-main{background:#e9edf2}}
+.rt td:last-child{white-space:normal;overflow-wrap:anywhere}
+.pr-body{overflow-x:hidden}
+/* Tablas anchas: el título de grupo no ensancha la primera columna */
+tr.grp td{white-space:normal}
+.app .vpanel th,.app .vpanel td{padding:5px 8px;font-size:12px}
+.app .vpanel th{font-size:10px}
+.app .vpanel table tbody td:first-child:not([colspan]),.app .vpanel table thead th:first-child{position:sticky;left:0;z-index:1}
+.app .vpanel table tbody td:first-child:not([colspan]){background:#fff;box-shadow:1px 0 0 var(--line2)}
+.app .vpanel table thead th:first-child{background:var(--navy)}
+/* Ayudas ⓘ */
+.ii{position:relative;display:inline-grid;place-items:center;width:14px;height:14px;margin-left:5px;border-radius:50%;border:1px solid #9aa8b6;color:#5b6876;font:600 9.5px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;flex:none}
+.ii:hover,.ii:focus{background:#14304f;border-color:#14304f;color:#fff;outline:none}
+.lt{display:flex;align-items:center;gap:0}
+.tipbox{position:fixed;z-index:200;max-width:250px;background:#14304f;color:#fff;font:400 11.5px/1.45 var(--f-body);padding:7px 10px;box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;border-left:3px solid #9a5a23}
+.tipbox[hidden]{display:none}
