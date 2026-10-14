@@ -47,15 +47,10 @@ function setTab(t){
   if(t==="soporte") refrSoporte();
   try{ window.scrollTo({top:0}); }catch(e){}
 }
-// Rótulo de la cabecera: proyecto actual, estado, tipo, máxima demanda y hora de la última actualización
+// Cuadro «Comenzar» de la cabecera: muestra el acceso al proyecto guardado, si existe
 function hdrEstado(){
-  const n=$("p_nombre").value.trim(), ej=/^EJEMPLO\b/.test(n), md=LAST?(LAST.mode==="multi"?LAST.MD:LAST.md.MD):null;
-  const hh=new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
-  const est=!n?`<span class="rt-st warn">Sin guardar</span>`:ej?`<span class="rt-st">Ejemplo</span>`:`<span class="rt-st ok">Guardado</span>`;
-  $("hdrProj").innerHTML=`<div class="rt-h"><span class="k">Proyecto actual</span>${est}</div>
-    <div class="rt-n${n?"":" muted"}" title="${esc(n)}">${esc(n||"Sin nombre · asigne un nombre para guardarlo")}</div>
-    <div class="rt-g"><div><span class="k">Tipo</span><b>${MODE==="multi"?"Multifamiliar":"Unifamiliar"}</b></div><div><span class="k">Máx. demanda</span><b>${md!=null?fmt(md/1000,2)+" kW":"—"}</b></div><div><span class="k">Actualizado</span><b>${n&&!ej?hh:"—"}</b></div></div>`;
-  const b=$("hdrStart"); if(b) b.textContent=n&&!ej?"Continuar proyecto →":"Empezar cálculo →";
+  const n=$("p_nombre").value.trim(), b=$("hdrCont"); if(!b) return;
+  b.hidden=!(n&&!/^EJEMPLO\b/.test(n)); b.querySelector("b").textContent=n; b.title=n?`Abrir «${n}» en el espacio de trabajo`:"";
 }
 function validar(){
   const E=[], v=id=>{ const x=$(id).value.trim(); return x===""?0:parseFloat(x); };
