@@ -983,3 +983,23 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .aj-row .hint{display:block;font-size:12px}
 dl.spec.aj-about dd{font-family:var(--f-body)}
 .nov-list li:first-child b{color:var(--accent)}
+/* v2.2 · Rótulo de la cabecera (al estilo del cajetín de un plano) */
+.hdr-rotulo{flex:none;width:436px;max-width:100%;align-self:center;border:1.5px solid var(--rt-line,var(--navy));border-radius:8px;background:var(--panel);overflow:hidden;box-shadow:var(--shadow,0 1px 2px rgba(0,0,0,.06))}
+:root[data-theme="dark"] .hdr-rotulo{--rt-line:#3a3f47}
+.hdr-rotulo .hdr-proj{display:block;border:0;background:none;padding:0;min-width:0;max-width:none}
+.hdr-rotulo .k{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.rt-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.rt-st{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted)}
+.rt-st:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.rt-st.ok{color:var(--ok)}.rt-st.warn{color:var(--warn,#8a5a00)}
+.rt-n{padding:8px 12px 9px;font-family:var(--f-head);font-weight:600;font-size:15.5px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-n.muted{font-family:var(--f-body);font-size:12.5px;font-weight:500;color:var(--muted);font-style:italic}
+.rt-g{display:grid;grid-template-columns:1.1fr 1fr 1fr;border-top:1px solid var(--line)}
+.rt-g>div{padding:6px 12px 7px;min-width:0}
+.rt-g>div+div{border-left:1px solid var(--line)}
+.rt-g b{display:block;margin-top:1px;font-family:var(--f-mono);font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-acts{display:flex;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--line);background:var(--panel2)}
+.rt-acts .btn{padding:9px 16px;font-size:13.5px;white-space:nowrap}
+.rt-links{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;color:var(--muted);font-size:12px}
+.rt-links .linkbtn{font-size:12.5px}
+@media (max-width:900px){.hdr-rotulo{width:100%;align-self:stretch}}
