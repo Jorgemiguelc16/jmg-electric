@@ -756,3 +756,7 @@ body.arrastrando,body.arrastrando *{cursor:col-resize!important;user-select:none
   .ex-formal .ex-unif svg{filter:grayscale(1)}
   .ex-formal .card h2 .ref,.ex-formal .ex-toc li span,.ex-formal .ex-h1 small{font-family:Arial,Helvetica,sans-serif!important}
 }
+/* v2.1.1 · manual en PDF */
+a.rb{text-decoration:none}
+.manual-card{margin-bottom:22px}
+.manual-card .body p{margin:0 0 12px}
