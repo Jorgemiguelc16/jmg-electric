@@ -13,8 +13,10 @@ function expediente(r,estilo="formal"){
   const kv=rows=>`<table class="ex-tbl ex-kv"><tbody>${rows.map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>`;
   // Numeración de capítulos y subcapítulos con índice automático
   const TOC=[]; let n1=0, n2=0;
-  const cap=(t,cls="")=>{ n1++; n2=0; TOC.push([`${n1}`,t,0]); return `<section class="ex-sec ${cls}"><h1 class="ex-h1"><span>${n1}.</span>${t}</h1>`; };
-  const sub=t=>{ n2++; TOC.push([`${n1}.${n2}`,t,1]); return `<h2 class="ex-h2"><span>${n1}.${n2}</span>${t}</h2>`; };
+  // Cada título lleva un id para que el índice enlace a él (el PDF conserva los enlaces)
+  const tid=n=>"ex-s"+n.replace(/\./g,"-");
+  const cap=(t,cls="")=>{ n1++; n2=0; TOC.push([`${n1}`,t,0]); return `<section class="ex-sec ${cls}"><h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>${t}</h1>`; };
+  const sub=t=>{ n2++; TOC.push([`${n1}.${n2}`,t,1]); return `<h2 class="ex-h2" id="${tid(`${n1}.${n2}`)}"><span>${n1}.${n2}</span>${t}</h2>`; };
   const fin="</section>";
   let B="";
 
@@ -130,7 +132,7 @@ function expediente(r,estilo="formal"){
   // Lámina horizontal o vertical: la que imprime el diagrama más grande (área útil A4 ≈ 269 × 163 mm o 182 × 245 mm)
   const U=unifilar(r), horiz=Math.min(269/U.W,163/U.H)>=Math.min(182/U.W,245/U.H);
   B+=`<section class="ex-sec ex-plano ${horiz?"ex-ancho":"ex-alto"}">`; n1++; n2=0; TOC.push([`${n1}`,"Planos · diagrama unifilar",0]);
-  B+=`<h1 class="ex-h1"><span>${n1}.</span>Planos · diagrama unifilar <small>Lámina IE-01 · Escala S/E</small></h1><div class="ex-unif">${U.svg}</div>`+fin;
+  B+=`<h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>Planos · diagrama unifilar <small>Lámina IE-01 · Escala S/E</small></h1><div class="ex-unif">${U.svg}</div>`+fin;
 
   /* ---------- 6. PRUEBAS ---------- */
   B+=cap("Pruebas técnicas y puesta en servicio");
@@ -164,7 +166,7 @@ function expediente(r,estilo="formal"){
     <dl class="ex-cv-dl"><dt>Propietario</dt><dd>${esc(P.prop||"—")}</dd><dt>Ubicación</dt><dd>${esc(P.ubic||"—")}</dd><dt>Proyectista</dt><dd>${proyCip}</dd>
       <dt>Máxima demanda</dt><dd>${fmt(md/1000,2)} kW · ${s0.nom}</dd><dt>Potencia a contratar</dt><dd>${fmt(r.contratada,1)} kW</dd><dt>Fecha</dt><dd>${fecha}</dd></dl>
     <div class="ex-cv-foot"><span>CNE-Utilización · RNE EM.010 · Norma DGE</span><span>Contenido según RNE EM.010, Artículo 8</span></div></section>`;
-  const indice=`<section class="ex-sec ex-toc"><h1 class="ex-h1">Índice</h1><ol>${TOC.map(([n,t,l])=>`<li class="l${l}"><span>${n}</span>${t}</li>`).join("")}</ol>
+  const indice=`<section class="ex-sec ex-toc"><h1 class="ex-h1">Índice</h1><ol>${TOC.map(([n,t,l])=>`<li class="l${l}"><a href="#${tid(n)}"><span>${n}</span>${t}</a></li>`).join("")}</ol>
     <h2 class="ex-h2">Datos del proyecto</h2>${kv([["Proyecto",esc(nom)],["Tipo de edificación",tipoEd],["Propietario",esc(P.prop||"—")],["Ubicación",esc(P.ubic||"—")],["Proyectista",proyCip],["Normativa","CNE-Utilización · RNE EM.010 · Norma DGE"],["Fecha",fecha]])}</section>`;
   return `<div class="ex ex-${estilo==="formal"?"formal":"jmg"}">${portada}${indice}${B}</div>`;
 

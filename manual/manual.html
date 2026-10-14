@@ -68,6 +68,7 @@
   .portada .foot{display:flex;justify-content:space-between;font-size:8.5pt;border-top:1pt solid #000;padding-top:8px}
   .toc ol{list-style:none;padding:0;margin:0}
   .toc li{display:flex;gap:10px;padding:3px 0;border-bottom:.5pt dotted #777}
+  .toc li a{display:flex;gap:10px;flex:1;color:inherit;text-decoration:none}
   .toc li span{min-width:34px}.toc li.l0{font-weight:700;margin-top:6px}.toc li.l1{padding-left:24px}.toc li.p{font-weight:700;margin-top:12px;border-bottom:1pt solid #000;text-transform:uppercase;letter-spacing:.05em}
   .firmas{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;break-inside:avoid}
   .firma{border:.6pt solid #000;padding:8px 12px}.firma .l{height:58px;border-bottom:.6pt solid #000;margin:8px 0}
@@ -86,9 +87,11 @@ const tbl=(head,rows,cls="")=>`<table class="${cls}"><thead><tr>${head.map(h=>`<
 const kv=rows=>`<table class="kv"><tbody>${rows.map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>`;
 const fig=(img,txt)=>`<figure class="fig"><img src="img/${img}.png" alt=""><figcaption>${txt}</figcaption></figure>`;
 const TOC=[]; let n1=0,n2=0;
-const parte=(rom,t,d)=>{ TOC.push(["",`Parte ${rom} · ${t}`,"p"]); return `<section class="parte"><p>Parte ${rom}</p><h1>${t}</h1><div>${d}</div></section>`; };
-const cap=(t,cls="cap")=>{ n1++; n2=0; TOC.push([`${n1}`,t,"l0"]); return `<section class="${cls}"><h1><span class="n">${n1}.</span>${t}</h1>`; };
-const sub=t=>{ n2++; TOC.push([`${n1}.${n2}`,t,"l1"]); return `<h2><span class="n">${n1}.${n2}</span>${t}</h2>`; };
+// Cada título lleva un id para que el índice enlace a él (el PDF conserva los enlaces)
+const tid=n=>"m-s"+n.replace(/\./g,"-");
+const parte=(rom,t,d)=>{ TOC.push(["",`Parte ${rom} · ${t}`,"p",`m-p${rom}`]); return `<section class="parte" id="m-p${rom}"><p>Parte ${rom}</p><h1>${t}</h1><div>${d}</div></section>`; };
+const cap=(t,cls="cap")=>{ n1++; n2=0; TOC.push([`${n1}`,t,"l0",tid(`${n1}`)]); return `<section class="${cls}"><h1 id="${tid(`${n1}`)}"><span class="n">${n1}.</span>${t}</h1>`; };
+const sub=t=>{ n2++; TOC.push([`${n1}.${n2}`,t,"l1",tid(`${n1}.${n2}`)]); return `<h2 id="${tid(`${n1}.${n2}`)}"><span class="n">${n1}.${n2}</span>${t}</h2>`; };
 const fin="</section>";
 const fecha=new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"});
 let B="";
@@ -222,8 +225,8 @@ B+=sub("Contenido del expediente · EM.010, Art. 8");
 B+=`<ol>${DOCS.map(t=>`<li>${t}</li>`).join("")}</ol>`;
 B+=fin;
 
-B+=`<section class="ancho">`; n1++; n2=0; TOC.push([`${n1}`,"Datos normativos incorporados","l0"]);
-B+=`<h1><span class="n">${n1}.</span>Datos normativos incorporados</h1>`;
+B+=`<section class="ancho">`; n1++; n2=0; TOC.push([`${n1}`,"Datos normativos incorporados","l0",tid(`${n1}`)]);
+B+=`<h1 id="${tid(`${n1}`)}"><span class="n">${n1}.</span>Datos normativos incorporados</h1>`;
 B+=sub("Tabla 2 · capacidad de corriente de conductores de cobre (A), ambiente 30 °C");
 B+=tbl(["Sección (mm²)",...Object.keys(T2).flatMap(m=>[`${m} · PVC 2c`,`${m} · PVC 3c`,`${m} · XLPE 2c`,`${m} · XLPE 3c`])],SECC.map((s,i)=>[`<b>${s}</b>`,...Object.keys(T2).flatMap(m=>["pvc2","pvc3","xl2","xl3"].map(k=>f(T2[m][k][i],1)))]),"r");
 B+=`<p class="nota">2c / 3c: conductores cargados (monofásico / trifásico). Métodos: ${Object.values(MET).join(" · ")}.</p>`;
@@ -334,7 +337,7 @@ const portada=`<section class="portada"><div class="top"><img src="${typeof LOGO
 <div class="mid"><p class="eye">Documentación</p><h1>Manual de usuario y referencia técnica</h1><p class="sub">Cálculo de instalaciones eléctricas interiores en viviendas y edificios multifamiliares</p></div>
 <dl><dt>Aplicación</dt><dd>JMG - ELECTRIC ${VERSION} · jorgemiguelc16.github.io/jmg-electric</dd><dt>Normativa</dt><dd>CNE-Utilización · RNE EM.010 · Norma DGE</dd><dt>Autor</dt><dd>Jorge Miguel Condori Huayllani</dd><dt>Fecha</dt><dd>${fecha}</dd></dl>
 <div class="foot"><span>Parte I · Manual de usuario</span><span>Parte II · Referencia técnica para revisores</span></div></section>`;
-const indice=`<section class="cap toc"><h1>Índice</h1><ol>${TOC.map(([n,t,c])=>`<li class="${c}"><span>${n}</span>${t}</li>`).join("")}</ol></section>`;
+const indice=`<section class="cap toc"><h1>Índice</h1><ol>${TOC.map(([n,t,c,id])=>`<li class="${c}"><a href="#${id}"><span>${n}</span>${t}</a></li>`).join("")}</ol></section>`;
 document.getElementById("doc").innerHTML=portada+indice+B;
 document.title="JMG-ELECTRIC - Manual de usuario y referencia técnica "+VERSION;
 </script>
