@@ -1,5 +1,5 @@
 /* ================= Proyectos y borrador local ================= */
-const KEYS=["p_nombre","p_prop","p_ubic","p_proy","fp","maxSal","pAl","pTo","reserva","met","aisl","temp","nag","sminD","sminA","rhoMode","desig","idMode","iccE","dvGen","pDesp","bajada","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms","rho_s","fr","Lv","dv"];
+const KEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","fp","maxSal","pAl","pTo","reserva","met","aisl","temp","nag","sminD","sminA","rhoMode","desig","idMode","iccE","dvGen","pDesp","bajada","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms","rho_s","fr","Lv","dv","esqPisos","Ltd1"];
 const SKEY="jmg-electric-v1", DEFV={}; KEYS.forEach(k=>DEFV[k]=$(k).value);
 ["area","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"].forEach(k=>{ if($(k)&&!$(k).placeholder) $(k).placeholder="ej. "+DEFV[k]; });
 if($("sot")) $("sot").placeholder="0 si no hay";
@@ -9,7 +9,7 @@ const LKEY="jmg-electric-proyectos";
 const nuevoId=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function libLoad(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
 function libSave(L){ try{ localStorage.setItem(LKEY,JSON.stringify(L)); return true; }catch(e){ return false; } }
-function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,FIX,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
+function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,FIX,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
 const esEjemplo=()=>/^EJEMPLO\b/.test($("p_nombre").value.trim());
 function saveDraft(){
   if(esEjemplo()){ PID=null; try{ localStorage.setItem(SKEY,JSON.stringify(estado())); }catch(e){} return; }
@@ -23,25 +23,25 @@ function limpiarLista(a,plantilla,nums=[]){ return Array.isArray(a)?a.filter(x=>
   Object.keys(plantilla).forEach(k=>{ if(x[k]==null||x[k]===""){ if(nums.includes(k)) y[k]=null; return; } y[k]=(nums.includes(k)||typeof plantilla[k]==="number")?(parseFloat(x[k])||0):String(x[k]).replace(/[<>]/g,"").slice(0,120); }); return y; }):null; }
 function aplicar(o){
   PID=typeof o.id==="string"&&/^[\w-]{1,40}$/.test(o.id)?o.id:null;
-  KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=String(o[k]).replace(/[<>]/g,""); });
-  [["cargas",cargas],["tipos",tipos],["serv",serv]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases")); if(L){ a.length=0; a.push(...L); } });
+  KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=String(o[k]).replace(/[<>]/g,""); else if(k==="esqPisos"||k==="Ltd1"||k==="p_cip") $(k).value=DEFV[k]; });
+  [["cargas",cargas],["tipos",tipos],["serv",serv],["pisos",pisos]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases"))||(k==="pisos"?[]:null); if(L){ a.length=0; a.push(...L); } });
   const fx=o.FIX&&typeof o.FIX==="object"?o.FIX:{}, ok=v=>v&&typeof v==="object"?Object.fromEntries(Object.entries(v).filter(([,x])=>typeof x==="string")):{};
   FIX={uni:ok(fx.uni),multi:ok(fx.multi)};
   const sv=v=>["mono220","tri220","tri380"].includes(v)?v:null;
   renderSys("sys_uni","sist",sv(o.sist)||"mono220"); renderSys("sys_multi","sistG",sv(o.sistG)||"tri380");
   Object.keys(LISTS).forEach(renderList);
-  setMode(o.MODE==="multi"?"multi":"uni");
+  const f0=FORZAR; FORZAR=true; try{ setMode(o.MODE==="multi"?"multi":"uni"); } finally{ FORZAR=f0; }
 }
-const PKEYS=["p_nombre","p_prop","p_ubic","p_proy","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"];
-function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
+const PKEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","area","sot","Lalim","Ltd1","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"];
+function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],pisos:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
 function nuevoProyecto(m){
   aplicar(proyectoVacio(m));
   irSec("proyecto"); try{ $("p_nombre").focus(); }catch(e){}
 }
 function cargarEjemplo(m){
-  aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
+  aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),pisos:[],FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
   const v={p_nombre:m==="multi"?"EJEMPLO · Edificio multifamiliar de 8 departamentos":"EJEMPLO · Vivienda unifamiliar",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable"};
-  Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="unifilar"; update(); irSec("resultados");
+  Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="unifilar"; calcularAhora(); irSec("resultados");
 }
 let DELQ=null;
 function renderProy(){

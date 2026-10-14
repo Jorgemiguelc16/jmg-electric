@@ -15,12 +15,12 @@ function metrado(r){
     const tb=r.tabs.find(t=>t.tab===q.tab); add(itm,`${q.f3?3:2}|${q.itm}|${q.curva}|${tb.pdc}`,n); });
   let mods={}, nTab=0, nRes=0;
   r.tabs.forEach(tb=>{ const n=r.alims[tb.feeder].cant||1, cs=r.circ.filter(q=>q.tab===tb.tab), vistos={};
-    let m=cs.reduce((s,q)=>s+(q.f3?3:2),0)+c.reserva*2;
+    let m=cs.reduce((s,q)=>s+(q.f3?3:2),0)+c.reserva*2+(r.mode==="uni"&&tb.tab==="TG"?r.alims.slice(1).reduce((s,a)=>s+(a.s.tri?3:2),0):0);
     cs.forEach(q=>{ const k=c.idMode==="circuito"?q.key:q.idName; if(vistos[k]) return; vistos[k]=1;
       const g=cs.filter(x=>(c.idMode==="circuito"?x.key:x.idName)===k), pol=g.some(x=>x.f3)?4:2; m+=pol; add(ids,`${pol}|${q.idRat}`,n); });
     mods[tb.tab]={n,m,desc:tb.desc}; nTab+=n; nRes+=c.reserva*n; });
   let al=0,to=0,esp=0,nCirc=0;
-  if(r.mode==="uni"){ const v=id=>Math.max(0,num(id)); al=v("al_n"); to=v("tg_n")+v("tc_n"); esp=r.cs.filter(x=>x.p>0).length; }
+  if(r.mode==="uni"){ const v=x=>Math.max(0,x); r.PS.forEach(p=>{ al+=v(p.al.n); to+=v(p.tg.n)+v(p.tc.n); }); esp=r.cs.filter(x=>x.p>0).length; }
   else { r.T.forEach(t=>{ al+=t.nAl*t.cant; to+=t.nTo*t.cant; esp+=[t.coc,t.cal,t.aire,t.otras].filter(x=>x>0).length*t.cant; }); esp+=r.circ.filter(q=>q.tab==="TSG").length; }
   r.circ.forEach(q=>{ nCirc+=r.alims[q.feeder].cant||1; });
   const inter=Math.ceil(al/2), p=r.pat, P=[];

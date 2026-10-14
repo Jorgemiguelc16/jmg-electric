@@ -8,34 +8,7 @@ function render(r){
   let html=`<div class="kpis">${k.map(([a,b,u,n])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${b}${u?`<small>${u}</small>`:""}</div><div class="n">${n}</div></div>`).join("")}</div>`;
   const S={}, A=alertas(r);
   S.resumen=()=>`<div class="two">${cardSuministro(r,"")}${cardPozo(r,"")}</div>${cardAlertas(r,"")}`;
-  S.demanda=()=>{ let html="";
-    if(r.mode==="uni"){ const m=r.md;
-      html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda de la vivienda</span><span class="ref">050-110 · 050-200</span></h2><div class="tbl-wrap"><table>
-      <thead><tr><th class="t">Concepto</th><th class="t">Criterio</th><th>Instalada (W)</th><th>Demanda (W)</th></tr></thead><tbody>
-      <tr><td class="t">Carga básica · ${fmt(r.area,1)} m² de vivienda</td><td class="t">Primeros 90 m² y cada 90 m² adicionales</td><td>—</td><td>${fmt(m.basica,0)}</td></tr>
-      <tr><td class="t">Cocina eléctrica</td><td class="t">Valor fijo y exceso sobre 12 kW</td><td>${fmt(m.coc,0)}</td><td>${fmt(m.mdCoc,0)}</td></tr>
-      <tr><td class="t">Calentadores de agua / duchas</td><td class="t">Al 100 %</td><td>${fmt(m.cal,0)}</td><td>${fmt(m.cal,0)}</td></tr>
-      <tr><td class="t">Aire acondicionado</td><td class="t">Al 100 %</td><td>${fmt(m.aire,0)}</td><td>${fmt(m.aire,0)}</td></tr>
-      <tr><td class="t">Otras cargas mayores de 1 500 W</td><td class="t">${m.coc>0?"Al 25 % (existe cocina)":"Al 100 % hasta 6 kW y 25 % del exceso"}</td><td>${fmt(m.otras,0)}</td><td>${fmt(m.mdOtras,0)}</td></tr>
-      <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div></section>`;
-    } else {
-      html+=`<section class="card"><h2><span><span class="num"></span>Carga por unidad de vivienda</span><span class="ref">050-202(1)</span></h2><div class="tbl-wrap"><table>
-      <thead><tr><th class="t">Tipo</th><th>Unid.</th><th>Área (m²)</th><th>Carga básica</th><th>Cocina</th><th>Calentador</th><th>Aire acond.</th><th>Otras &gt;1,5 kW</th><th>MD unidad (W)</th><th>I (A)</th></tr></thead><tbody>
-      ${r.T.map(t=>`<tr><td class="t"><strong>${esc(t.nombre)}</strong></td><td>${t.cant}</td><td>${fmt(t.area,0)}</td><td>${fmt(t.md.basica,0)}</td><td>${fmt(t.md.mdCoc,0)}</td><td>${fmt(t.md.cal,0)}</td><td>${fmt(t.md.aire,0)}</td><td>${fmt(t.md.mdOtras,0)}</td><td><strong>${fmt(t.md.MD,0)}</strong></td><td>${fmt(t.md.MD/(220*r.c.fp),2)}</td></tr>`).join("")}
-      </tbody></table></div></section>`;
-      html+=`<div class="two"><section class="card"><h2><span><span class="num"></span>Máxima demanda del edificio</span><span class="ref">050-202(3)</span></h2><div class="tbl-wrap"><table>
-      <thead><tr><th class="t">Tramo</th><th>Unid.</th><th>Carga (W)</th><th>Factor</th><th>Demanda (W)</th></tr></thead><tbody>
-      ${r.tramos.map(t=>`<tr><td class="t">${t.lab}</td><td>${t.n}</td><td>${fmt(t.sum,0)}</td><td>${fmt(t.f*100,0)} %</td><td>${fmt(t.dem,0)}</td></tr>`).join("")}
-      <tr><td class="t">Aire acondicionado</td><td></td><td>${fmt(r.aireTot,0)}</td><td>100 %</td><td>${fmt(r.aireTot,0)}</td></tr>
-      <tr><td class="t">Cargas comunes (servicios generales)</td><td></td><td>${fmt(r.Pserv,0)}</td><td>75 %</td><td>${fmt(r.mdServ,0)}</td></tr>
-      <tr class="total"><td class="t" colspan="4">Máxima demanda del edificio</td><td>${fmt(r.MD,0)}</td></tr></tbody></table></div></section>
-      <section class="card"><h2><span><span class="num"></span>Servicios generales</span><span class="ref">Tablero TSG</span></h2><div class="tbl-wrap"><table>
-      <thead><tr><th class="t">Carga común</th><th>Fases</th><th>P (W)</th></tr></thead><tbody>
-      ${r.SV.map(s=>`<tr><td class="t">${esc(s.nombre)}</td><td>${s.fases===3&&SIST[r.sk].tri?"3φ":"1φ"}</td><td>${fmt(s.p,0)}</td></tr>`).join("")||`<tr><td class="t" colspan="3">Sin cargas comunes</td></tr>`}
-      <tr class="total"><td class="t" colspan="2">Potencia total</td><td>${fmt(r.Pserv,0)}</td></tr>
-      ${r.maxMot>0?`<tr><td class="t" colspan="2">Diseño del alimentador TSG (+25 % del mayor motor)</td><td>${fmt(r.Pserv+0.25*r.maxMot,0)}</td></tr>`:""}</tbody></table></div></section></div>`;
-    }
-    return html; };
+  S.demanda=()=>cardDemanda(r);
   S.alims=()=>tablaAlims(r,""); S.cuadro=()=>tablaCircuitos(r,"");
   if(r.bal) S.balance=()=>cardBalance(r,"");
   S.unifilar=()=>cardUnifilar(r,""); S.metrado=()=>cardMetrado(r); S.verif=()=>cardAlertas(r,"");
@@ -96,6 +69,9 @@ function validar(){
       chk(k+"_p",v(k+"_p")>=0,`Ingrese la potencia por salida de ${t}.`);
       if(v(k+"_n")>0) chk(k+"_L",v(k+"_L")>0,`Ingrese la longitud de los circuitos de ${t}.`); });
     cargas.forEach((x,i)=>{ chk(`cargas_p_${i}`,x.p>=0,`Carga especial ${i+1}: la potencia no puede ser negativa.`); if(x.p>0) chk(`cargas_L_${i}`,x.L>0,`Carga especial ${i+1} (${x.nombre}): ingrese la longitud.`); });
+    if(pisos.length&&$("esqPisos").value==="td") chk("Ltd1",v("Ltd1")>0,"Ingrese la longitud del alimentador al tablero del 1er piso.");
+    pisos.forEach((p,i)=>{ const n=`${ORD(i+2)} piso`; chk(`pisos_area_${i}`,p.area>0,`${n}: ingrese el área techada.`); chk(`pisos_Ld_${i}`,p.Ld>0,`${n}: ingrese la longitud del alimentador.`);
+      [["al","alumbrado"],["tg","tomacorrientes"],["tc","tomacorrientes de cocina"]].forEach(([k,t])=>{ chk(`pisos_${k}_n_${i}`,!(p[k+"_n"]<0),`${n}: la cantidad de salidas de ${t} no puede ser negativa.`); if(p[k+"_n"]>0) chk(`pisos_${k}_L_${i}`,p[k+"_L"]>0,`${n}: ingrese la longitud de los circuitos de ${t}.`); }); });
   } else {
     chk("Lgen",v("Lgen")>0,"Ingrese la longitud del alimentador general.");
     if(serv.length) chk("Lms",v("Lms")>0,"Ingrese la longitud al tablero de servicios generales.");
@@ -116,6 +92,10 @@ function faltantes(){
     [["al","alumbrado"],["tg","tomacorrientes"]].forEach(([k,t])=>{ req(k+"_n",`Número de salidas de ${t}`); req(k+"_p",`Potencia por salida de ${t}`); req(k+"_L",`Longitud de los circuitos de ${t}`); });
     if(parseFloat(val("tc_n"))>0){ req("tc_p","Potencia por salida de tomacorrientes de cocina"); req("tc_L","Longitud de los circuitos de cocina"); }
     cargas.forEach((x,i)=>{ const n=x.nombre||`Carga especial ${i+1}`; req(`cargas_p_${i}`,`${n}: potencia`,vacio(x.p)); req(`cargas_L_${i}`,`${n}: longitud`,vacio(x.L)); });
+    if(pisos.length&&$("esqPisos").value==="td") req("Ltd1","Longitud del alimentador al tablero del 1er piso");
+    pisos.forEach((p,i)=>{ const n=`${ORD(i+2)} piso`;
+      [["area","área techada"],["Ld","longitud del alimentador"],["al_n","salidas de alumbrado"],["al_L","longitud de alumbrado"],["tg_n","tomacorrientes"],["tg_L","longitud de tomacorrientes"]].forEach(([k,l])=>req(`pisos_${k}_${i}`,`${n}: ${l}`,vacio(p[k])));
+      if(p.tc_n>0) req(`pisos_tc_L_${i}`,`${n}: longitud de cocina`,vacio(p.tc_L)); });
   } else {
     req("Lgen","Longitud del alimentador general");
     if(!tipos.length) F.push({id:"add_tipos",l:"Agregue al menos un tipo de departamento"});
@@ -126,7 +106,26 @@ function faltantes(){
   }
   return F;
 }
+// Textos de Vivienda y Salidas según la vivienda tenga uno o varios pisos
+function uiPisos(){
+  const varios=pisos.length>0, td=$("esqPisos").value==="td", lt=id=>{ const s=$(id).closest("label").querySelector(".lt"); return s&&s.firstChild&&s.firstChild.nodeType===3?s.firstChild:null; };
+  const ta=lt("area"); if(ta) ta.nodeValue=varios?"Área techada del 1er piso (m²)":"Área techada (m²)";
+  $("fs-sal").querySelector("legend").textContent=varios?"Salidas · 1er piso":"Salidas"; $("salPisos").hidden=varios;
+  document.querySelector("#fs-pisos .pisos-esq").hidden=!varios; $("lblLtd1").hidden=!(varios&&td);
+  $("pisosHint").textContent=varios?`Vivienda de ${pisos.length+1} pisos: el alimentador general se calcula con el área total; cada tablero de piso, con la Regla 050-200 aplicada al área de su piso.`
+    :"Vivienda de un piso: todos los circuitos salen del tablero general TG. Agregue los pisos superiores para que cada uno tenga su tablero de distribución.";
+}
+// Cálculo automático (AUTO) o manual: en manual los cambios se guardan, pero se recalcula solo con calcularAhora()
+let AUTO=true, FORZAR=false, DESACT=false;
+function calcularAhora(){ const f0=FORZAR; FORZAR=true; try{ update(); } finally{ FORZAR=f0; } }
+function marcarDesact(){
+  if(!$("desactBox")) $("results").insertAdjacentHTML("afterbegin",`<div class="desact" id="desactBox"><span><b>Cálculo automático desactivado.</b> Los resultados no reflejan los últimos cambios en los datos.</span><button type="button" class="btn sm" data-calcnow>Calcular ahora (F9)</button></div>`);
+  const st=$("wsStatus").children[1]; if(st) st.innerHTML=`<span class="w">●</span> Resultados desactualizados · F9`;
+}
 function update(){
+  if(!AUTO&&!FORZAR){ DESACT=true; saveDraft(); hdrEstado(); histPush(); marcarDesact(); return; }
+  DESACT=false;
+  uiPisos();
   const F=faltantes();
   if(F.length){ LAST=null; PRINT=null; $("btnXlsx").disabled=true; $("btnPrint").disabled=true;
     document.querySelectorAll(".inv").forEach(e=>e.classList.remove("inv"));

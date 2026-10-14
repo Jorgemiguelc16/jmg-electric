@@ -33,7 +33,7 @@ function tablaCircuitos(r,nro){
 function cardBalance(r,nro){
   if(!r.bal) return "";
   const b=r.bal, tot=(b.ph[0]+b.ph[1]+b.ph[2])||1, mx=Math.max(...b.ph)||1, st=b.desb<=10?"ok":"warn";
-  const lab=i=>i.ref||`${i.id} · ${i.desc}`, fx=FIX[r.mode]||{};
+  const lab=i=>i.ref||`${r.tabs.length>1?i.tab+" · ":""}${i.id} · ${i.desc}`, fx=FIX[r.mode]||{};
   const bars=b.nm.map((n,k)=>`<div class="ph"><b>${n}</b><span class="bar"><i style="width:${(b.ph[k]/mx*100).toFixed(1)}%"></i></span><span>${fmt(b.ph[k],0)} W · ${fmt(b.ph[k]/tot*100,1)} %</span></div>`).join("");
   const msg=b.desb<=10?`Desbalance de ${fmt(b.desb,1)} %: dentro del criterio de diseño (≤ 10 %).`
     :b.desb<=b.desbMin+0.05?`Con estas cargas el menor desbalance posible es ${fmt(b.desbMin,1)} %. ${sugerencia(r)}`
@@ -64,4 +64,38 @@ function cardPozo(r,nro){
 }
 function cardAlertas(r,nro){
   return `<section class="card"><h2><span><span class="num">${nro}</span>Verificaciones normativas</span></h2><div class="body"><ul class="alerts">${alertas(r).map(([ok,ref,t])=>`<li class="${ok===true?"ok":ok==="warn"?"warn":"bad"}"><b>${ref}</b><span>${t}</span></li>`).join("")}</ul></div></section>`;
+}
+function cardDemanda(r){ let html="";
+    if(r.mode==="uni"){ const m=r.md;
+      html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda de la vivienda</span><span class="ref">050-110 · 050-200</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Concepto</th><th class="t">Criterio</th><th>Instalada (W)</th><th>Demanda (W)</th></tr></thead><tbody>
+      <tr><td class="t">Carga básica · ${fmt(r.area,1)} m² de vivienda</td><td class="t">Primeros 90 m² y cada 90 m² adicionales</td><td>—</td><td>${fmt(m.basica,0)}</td></tr>
+      <tr><td class="t">Cocina eléctrica</td><td class="t">Valor fijo y exceso sobre 12 kW</td><td>${fmt(m.coc,0)}</td><td>${fmt(m.mdCoc,0)}</td></tr>
+      <tr><td class="t">Calentadores de agua / duchas</td><td class="t">Al 100 %</td><td>${fmt(m.cal,0)}</td><td>${fmt(m.cal,0)}</td></tr>
+      <tr><td class="t">Aire acondicionado</td><td class="t">Al 100 %</td><td>${fmt(m.aire,0)}</td><td>${fmt(m.aire,0)}</td></tr>
+      <tr><td class="t">Otras cargas mayores de 1 500 W</td><td class="t">${m.coc>0?"Al 25 % (existe cocina)":"Al 100 % hasta 6 kW y 25 % del exceso"}</td><td>${fmt(m.otras,0)}</td><td>${fmt(m.mdOtras,0)}</td></tr>
+      <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div></section>`;
+      const PT=r.PS.filter(p=>p.md);
+      if(PT.length) html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda por piso · tableros de distribución</span><span class="ref">050-200 por piso</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Piso</th><th class="t">Tablero</th><th>Área (m²)</th><th>Carga básica</th><th>Cocina</th><th>Calentador</th><th>Aire acond.</th><th>Otras &gt;1,5 kW</th><th>MD piso (W)</th><th>I (A)</th></tr></thead><tbody>
+      ${PT.map(p=>`<tr><td class="t"><strong>${ORD(p.n)} piso</strong></td><td class="t">${p.tab}</td><td>${fmt(p.areaC,1)}</td><td>${fmt(p.md.basica,0)}</td><td>${fmt(p.md.mdCoc,0)}</td><td>${fmt(p.md.cal,0)}</td><td>${fmt(p.md.aire,0)}</td><td>${fmt(p.md.mdOtras,0)}</td><td><strong>${fmt(p.md.MD,0)}</strong></td><td>${fmt(r.alims[p.feeder].I,2)}</td></tr>`).join("")}
+      </tbody></table></div><div class="body"><p class="hint">Cada alimentador TG → TD se dimensiona con la Regla 050-200 aplicada al área del piso y a las cargas especiales conectadas a su tablero${r.sot>0&&r.esq==="td"?"; el sótano, al 75 %, se asigna al 1er piso":""}. El alimentador general mantiene la máxima demanda de toda la vivienda.${r.esq==="tg"?" Los circuitos del 1er piso salen directamente del tablero general TG.":""}</p></div></section>`;
+    } else {
+      html+=`<section class="card"><h2><span><span class="num"></span>Carga por unidad de vivienda</span><span class="ref">050-202(1)</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Tipo</th><th>Unid.</th><th>Área (m²)</th><th>Carga básica</th><th>Cocina</th><th>Calentador</th><th>Aire acond.</th><th>Otras &gt;1,5 kW</th><th>MD unidad (W)</th><th>I (A)</th></tr></thead><tbody>
+      ${r.T.map(t=>`<tr><td class="t"><strong>${esc(t.nombre)}</strong></td><td>${t.cant}</td><td>${fmt(t.area,0)}</td><td>${fmt(t.md.basica,0)}</td><td>${fmt(t.md.mdCoc,0)}</td><td>${fmt(t.md.cal,0)}</td><td>${fmt(t.md.aire,0)}</td><td>${fmt(t.md.mdOtras,0)}</td><td><strong>${fmt(t.md.MD,0)}</strong></td><td>${fmt(t.md.MD/(220*r.c.fp),2)}</td></tr>`).join("")}
+      </tbody></table></div></section>`;
+      html+=`<div class="two"><section class="card"><h2><span><span class="num"></span>Máxima demanda del edificio</span><span class="ref">050-202(3)</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Tramo</th><th>Unid.</th><th>Carga (W)</th><th>Factor</th><th>Demanda (W)</th></tr></thead><tbody>
+      ${r.tramos.map(t=>`<tr><td class="t">${t.lab}</td><td>${t.n}</td><td>${fmt(t.sum,0)}</td><td>${fmt(t.f*100,0)} %</td><td>${fmt(t.dem,0)}</td></tr>`).join("")}
+      <tr><td class="t">Aire acondicionado</td><td></td><td>${fmt(r.aireTot,0)}</td><td>100 %</td><td>${fmt(r.aireTot,0)}</td></tr>
+      <tr><td class="t">Cargas comunes (servicios generales)</td><td></td><td>${fmt(r.Pserv,0)}</td><td>75 %</td><td>${fmt(r.mdServ,0)}</td></tr>
+      <tr class="total"><td class="t" colspan="4">Máxima demanda del edificio</td><td>${fmt(r.MD,0)}</td></tr></tbody></table></div></section>
+      <section class="card"><h2><span><span class="num"></span>Servicios generales</span><span class="ref">Tablero TSG</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Carga común</th><th>Fases</th><th>P (W)</th></tr></thead><tbody>
+      ${r.SV.map(s=>`<tr><td class="t">${esc(s.nombre)}</td><td>${s.fases===3&&SIST[r.sk].tri?"3φ":"1φ"}</td><td>${fmt(s.p,0)}</td></tr>`).join("")||`<tr><td class="t" colspan="3">Sin cargas comunes</td></tr>`}
+      <tr class="total"><td class="t" colspan="2">Potencia total</td><td>${fmt(r.Pserv,0)}</td></tr>
+      ${r.maxMot>0?`<tr><td class="t" colspan="2">Diseño del alimentador TSG (+25 % del mayor motor)</td><td>${fmt(r.Pserv+0.25*r.maxMot,0)}</td></tr>`:""}</tbody></table></div></section></div>`;
+    }
+  return html;
 }

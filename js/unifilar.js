@@ -18,10 +18,11 @@ function unifilar(r){
   // Tablero con sus circuitos derivados
   function panel(X,Y,tb,{entrada=true,pat=false}={}){
     const f=r.alims[tb.feeder], cs=r.circ.filter(q=>q.tab===tb.tab), nres=c.reserva, col0=X+96, yb=Y+46;
-    const ncol=cs.length+nres, xe=col0+(ncol-1)*CW+26;
+    const fd=r.mode==="uni"&&tb.tab==="TG"?r.alims.slice(1):[];
+    const ncol=cs.length+fd.length+nres, xe=col0+(ncol-1)*CW+26;
     T(X+60,Y+14,`TABLERO ${tb.tab}`,{s:11.5,b:1,f:NAVY});
     T(X+60,Y+28,`${tb.desc} · Icc ≈ ${fmt(tb.icc,2)} kA · PdC mín. ${tb.pdc} kA`,{s:8.5,f:GR});
-    if(entrada){ o.push(`<circle cx="${X+40}" cy="${Y+6}" r="3" fill="#fff" stroke="${INK}" stroke-width="1.2"/>`); L(X+40,Y+9,X+40,yb); T(X+48,Y+40,`Llega: ${cond(f.s.n,f.S,f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri?3:2}×${f.itm} A en ${tb.tab==="TSG"||r.mode==="multi"?"banco de medidores":"medidor"}`,{s:7.5,f:GR}); }
+    if(entrada){ o.push(`<circle cx="${X+40}" cy="${Y+6}" r="3" fill="#fff" stroke="${INK}" stroke-width="1.2"/>`); L(X+40,Y+9,X+40,yb); T(X+48,Y+40,`Llega: ${cond(f.s.n,f.S,f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri?3:2}×${f.itm} A en ${r.mode==="uni"&&tb.feeder>0?"tablero TG":tb.tab==="TSG"||r.mode==="multi"?"banco de medidores":"medidor"}`,{s:7.5,f:GR}); }
     L(X+14,yb,xe,yb,4,CU);
     // Barra / puesta a tierra
     L(X+14,yb,X+14,yb+232,1.2,"#2f7a4b","5 3"); tierra(X+14,yb+232);
@@ -38,12 +39,18 @@ function unifilar(r){
       xs.forEach(x=>L(x,yb+66,x,yb+76));
     });
     for(let j=0;j<ncol;j++){
-      const x=X_(j), q=cs[j], res=!q;
-      if(res){ dot(x,yb); L(x,yb,x,yb+76); }
+      const x=X_(j), q=cs[j], a=j>=cs.length?fd[j-cs.length]:null, res=!q&&!a;
+      if(res||a){ dot(x,yb); L(x,yb,x,yb+76); }
       itm(x,yb+76);
       L(x,yb+100,x,yb+282,1.3,res?GR:INK,res?"4 3":null); arrow(x,yb+292);
       if(res){ T(x+12,yb+92,"ITM",{s:8,f:GR}); T(x-5,yb+276,"Reserva equipada",{s:8,f:GR,rot:-90});
-        T(x,yb+308,`${tb.tab==="TSG"?"S-":"C-"}${j+1}`,{s:9.5,b:1,a:"middle",f:GR}); T(x,yb+322,"Reserva",{s:8,a:"middle",f:GR}); continue; }
+        T(x,yb+308,`${tb.tab==="TSG"?"S-":"C-"}${j-fd.length+1}`,{s:9.5,b:1,a:"middle",f:GR}); T(x,yb+322,"Reserva",{s:8,a:"middle",f:GR}); continue; }
+      if(a){ const td=r.tabs.find(t=>t.feeder===r.alims.indexOf(a));
+        T(x+12,yb+92,`${a.s.tri?3:2}×${a.itm??"—"} A`,{s:8,b:1});
+        T(x-5,yb+276,`${cond(a.s.n,a.S,a.St)} · ${tub(a.tubo)}`,{s:7.5,rot:-90});
+        T(x+12,yb+276,`I ${fmt(a.I,1)} A · ΔV ${fmt(a.dVp,2)} % · L ${fmt(a.L,0)} m`,{s:7.5,f:GR,rot:-90});
+        T(x,yb+308,td.tab,{s:9.5,b:1,a:"middle",f:CU}); T(x,yb+321,"Alimentador",{s:7.8,a:"middle"}); T(x,yb+331.5,`${ORD(td.piso)} piso`,{s:7.8,a:"middle"});
+        T(x,yb+344,`${fmt(a.P,0)} W`,{s:7.5,a:"middle",f:GR}); continue; }
       T(x+12,yb+92,`${q.f3?3:2}×${q.itm??"—"} A ${q.curva}`,{s:8,b:1});
       T(x-5,yb+276,`${cond(q.f3?3:2,q.S,q.St)} · ${tub(q.tubo)}`,{s:7.5,rot:-90});
       T(x+12,yb+276,`I ${fmt(q.I,1)} A · ΔV ${fmt(q.dVp,2)} %`,{s:7.5,f:GR,rot:-90});
@@ -56,6 +63,15 @@ function unifilar(r){
 
   let W=0, y=0;
   const X=20, x=X+40;
+  // Detalle de tableros en filas (tableros de departamento o de piso)
+  function detalle(tabs){
+    L(X,y,X+10,y,1,GR); T(X+16,y+4,"DETALLE DE TABLEROS",{s:9,b:1,f:GR}); y+=24;
+    const pw=tb=>Math.max(96+(r.circ.filter(q=>q.tab===tb.tab).length+c.reserva-1)*CW+46,560);
+    const maxW=Math.max(W,1400); let px=X, rowH=0;
+    tabs.forEach(tb=>{ const w=pw(tb); if(px>X&&px+w>maxW){ y+=rowH+8; px=X; rowH=0; }
+      const p=panel(px,y,tb); W=Math.max(W,px+p.w); px+=p.w+16; rowH=Math.max(rowH,p.h); });
+    y+=rowH+8;
+  }
   // Acometida y alimentador principal
   L(x-12,14,x+12,14,3); L(x,14,x,64);
   T(x+16,22,"RED DE DISTRIBUCIÓN SECUNDARIA",{s:10,b:1,f:NAVY});
@@ -70,6 +86,7 @@ function unifilar(r){
 
   if(!multi){
     const p=panel(X,200,r.tabs[0],{entrada:false,pat:true}); W=p.w+X; y=200+p.h;
+    if(r.tabs.length>1){ y+=8; detalle(r.tabs.slice(1)); }
   } else {
     const yb=246, feeders=r.alims.slice(1), CF=200;
     T(x+20,214,"BANCO DE MEDIDORES · BARRA GENERAL",{s:11.5,b:1,f:NAVY});
@@ -89,12 +106,7 @@ function unifilar(r){
       T(fx,yb+240,f.pKey==="servP"?"Servicios generales":`${r.T[f.ti].nombre} · ${cant} unidad${cant>1?"es":""}`,{s:8,a:"middle",f:GR});
     });
     W=xe+40; y=yb+270;
-    L(X,y,X+10,y,1,GR); T(X+16,y+4,"DETALLE DE TABLEROS",{s:9,b:1,f:GR}); y+=24;
-    const pw=tb=>Math.max(96+(r.circ.filter(q=>q.tab===tb.tab).length+c.reserva-1)*CW+46,560);
-    const maxW=Math.max(W,1400); let px=X, rowH=0;
-    r.tabs.forEach(tb=>{ const w=pw(tb); if(px>X&&px+w>maxW){ y+=rowH+8; px=X; rowH=0; }
-      const p=panel(px,y,tb); W=Math.max(W,px+p.w); px+=p.w+16; rowH=Math.max(rowH,p.h); });
-    y+=rowH+8;
+    detalle(r.tabs);
   }
   W=Math.max(W,780);
   // Cuadro de datos (EM.010, Art. 8)
@@ -117,9 +129,16 @@ function unifilar(r){
     L(lx-12,ly+34,lx+12,ly+34,4,CU); T(lx+22,ly+37,"Barra de tablero",{s:8}); L(lx2-12,ly+34,lx2+12,ly+34,1.3,GR,"4 3"); T(lx2+22,ly+37,"Circuito de reserva",{s:8}); }
   const rx=Math.max(X+350,W-480), rw=W-20-rx, P=c.proj;
   o.push(`<rect x="${rx}" y="${yr}" width="${rw}" height="${hr}" fill="none" stroke="${NAVY}" stroke-width="1"/>`);
-  o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${CU}"/>`);
-  T(rx+55,yr+52,"JMG",{s:24,b:1,a:"middle",f:"#fff"}); T(rx+55,yr+70,"ELECTRIC",{s:9,b:1,a:"middle",f:"#fff"});
-  const rot=[["PROYECTO",P.nombre||"—"],["PROPIETARIO",P.prop||"—"],["UBICACIÓN",P.ubic||"—"],["PROYECTISTA",P.proy||"—"],["PLANO",`Diagrama unifilar · ${multi?"Multifamiliar":"Unifamiliar"} · Escala S/E`],["FECHA · LÁMINA",`${new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"})} · IE-01`]];
+  // Logo: imagen en la web, el PNG y el Excel; versión vectorial (oculta en pantalla) que usa el DXF
+  const LY="#ffd200", LB="#1f2328";
+  o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${LB}"/>`);
+  if(typeof LOGO_JPG==="string") o.push(`<image x="${rx+1}" y="${yr+(hr-108)/2}" width="108" height="108" href="${LOGO_JPG}" preserveAspectRatio="xMidYMid slice"/>`);
+  o.push(`<g display="none" data-dxf="logo">`);
+  T(rx+55,yr+62,"JMG",{s:30,b:1,a:"middle",f:LY});
+  o.push(`<path d="M${rx+59} ${yr+54}L${rx+48} ${yr+72}L${rx+57} ${yr+69}Z" fill="${LY}"/><path d="M${rx+53} ${yr+67}L${rx+62} ${yr+64}L${rx+50} ${yr+84}Z" fill="${LY}"/>`);
+  T(rx+55,yr+100,"PROJECTS & ENERGY",{s:7,b:1,a:"middle",f:LY});
+  o.push(`</g>`);
+  const rot=[["PROYECTO",P.nombre||"—"],["PROPIETARIO",P.prop||"—"],["UBICACIÓN",P.ubic||"—"],["PROYECTISTA",(P.proy||"—")+(P.cip?` · CIP ${P.cip}`:"")],["PLANO",`Diagrama unifilar · ${multi?"Multifamiliar":"Unifamiliar"} · Escala S/E`],["FECHA · LÁMINA",`${new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"})} · IE-01`]];
   rot.forEach(([k,v],i)=>{ const yy=yr+i*hr/6; if(i) L(rx+110,yy,rx+rw,yy,.8,"#bfc8d2"); T(rx+118,yy+12.5,k,{s:7,b:1,f:GR}); T(rx+205,yy+12.5,String(v).slice(0,Math.max(20,Math.floor((rw-215)/4.6))),{s:8.5,b:i===0||i===4}); });
   const H=yr+hr+16;
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W-12}" height="${H-10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
@@ -135,8 +154,8 @@ function svgDxf(svgTxt,op={}){
   const n=v=>parseFloat(v)||0, f=v=>(+v).toFixed(3), X=x=>f(ox+x*k), Y=y=>f(oy+(H-y)*k);
   const hex=c=>{ c=(c||"").toLowerCase(); return c==="#fff"?"#ffffff":c; };
   // Colores: JMG (azul y cobre) · monocromo (impresión) · por capa (estilo AutoCAD)
-  const ACI={"#14304f":162,"#9a5a23":32,"#5a6775":252,"#2f7a4b":105,"#bfc8d2":253,"#ffffff":255};
-  const OSCURO=["#14304f","#9a5a23"];
+  const ACI={"#14304f":162,"#9a5a23":32,"#5a6775":252,"#2f7a4b":105,"#bfc8d2":253,"#ffffff":255,"#ffd200":2,"#1f2328":250};
+  const OSCURO=["#14304f","#9a5a23","#1f2328"];
   const col=(c,esTexto)=>{ c=hex(c); if(esq==="capas") return 256; if(esq==="mono") return 7; return ACI[c]??7; };
   const E=[], add=(...kv)=>{ for(let i=0;i<kv.length;i+=2) E.push(kv[i],kv[i+1]); };
   const linea=(x1,y1,x2,y2,ly,c)=>add(0,"LINE",8,ly,62,c,10,X(x1),20,Y(y1),11,X(x2),21,Y(y2));

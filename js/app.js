@@ -1,5 +1,5 @@
 /* ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= */
-const NODEFS={proyecto:["fs-proy","fs-tipo"],suministro:{uni:["fs-sum-uni"],multi:["fs-sum-multi"]},vivienda:{uni:["fs-viv"],multi:["fs-tipos"]},salidas:["fs-sal"],cargas:["fs-cargas"],servicios:["fs-serv"],
+const NODEFS={proyecto:["fs-proy","fs-tipo"],suministro:{uni:["fs-sum-uni"],multi:["fs-sum-multi"]},vivienda:{uni:["fs-viv","fs-pisos"],multi:["fs-tipos"]},salidas:["fs-sal"],cargas:["fs-cargas"],servicios:["fs-serv"],
   param:["fs-p-car","fs-p-cond","fs-p-prot","fs-p-dv","fs-p-pat","fs-p-met","fs-p-dat"],pat:["fs-p-pat"],metrado:["fs-p-met"]};
 const NODETIT={proyecto:"Datos del proyecto",suministro:"Suministro",vivienda:"Vivienda",salidas:"Salidas",cargas:"Cargas especiales",servicios:"Servicios generales",param:"Parámetros de diseño",pat:"Puesta a tierra",metrado:"Metrado"};
 let NODE="proyecto", WSF=[], RIB="proyecto";
@@ -34,8 +34,8 @@ function exTree(){
   const sk=multi?radio("sistG"):radio("sist"), sis=SIST[sk]?.nom||"";
   add(0,esc($("p_nombre").value.trim()||"Proyecto sin nombre"),"proyecto",pst("proyecto"),pc("proyecto"));
   add(1,`Suministro · ${sis}`,"suministro",pst("suministro"),pc("suministro"));
-  if(!multi){ const a=parseFloat($("area").value); add(1,`Vivienda${a>0?` · ${fmt(a,0)} m²`:""}`,"vivienda",pst("vivienda"),pc("vivienda"));
-    add(1,"Salidas de alumbrado y tomacorrientes","salidas",pst("salidas"),pc("salidas")); add(1,`Cargas especiales · ${cargas.length}`,"cargas",pst("cargas"),pc("cargas")); }
+  if(!multi){ const a=(parseFloat($("area").value)||0)+pisos.reduce((s,p)=>s+(p.area||0),0); add(1,`Vivienda${a>0?` · ${fmt(a,0)} m²`:""}${pisos.length?` · ${pisos.length+1} pisos`:""}`,"vivienda",pst("vivienda"),pc("vivienda"));
+    add(1,pisos.length?"Salidas del 1er piso":"Salidas de alumbrado y tomacorrientes","salidas",pst("salidas"),pc("salidas")); add(1,`Cargas especiales · ${cargas.length}`,"cargas",pst("cargas"),pc("cargas")); }
   else { add(1,`Departamentos · ${tipos.reduce((s,t)=>s+(t.cant>0?Math.round(t.cant):0),0)} departamentos`,"vivienda",pst("vivienda"),pc("vivienda"));
     add(1,`Servicios generales · ${serv.length}`,"servicios",pst("servicios"),pc("servicios")); }
   if(r){ r.tabs.forEach(tb=>{ add(1,`Tablero ${tb.tab}`,"tab:"+tb.tab,"tabk");
@@ -61,7 +61,10 @@ function propCircuito(key){ const r=LAST; const q=r&&r.circ.find(x=>x.key===key)
       <label class="pr"><span>Tipo de carga</span><select data-bl="${q.src.t}|${q.src.i}|tipo">${Object.entries(tipos_).map(([k,v])=>`<option value="${k}"${k===it.tipo?" selected":""}>${v}</option>`).join("")}</select></label>
       ${inp("Potencia",`data-bl="${q.src.t}|${q.src.i}|p"`,it.p,"W")}
       <label class="pr"><span>Fases</span><select data-bl="${q.src.t}|${q.src.i}|fases"><option value="1"${it.fases==1?" selected":""}>Monofásica</option><option value="3"${it.fases==3?" selected":""}>Trifásica</option></select></label>
-      ${inp("Longitud",`data-bl="${q.src.t}|${q.src.i}|L"`,it.L,"m")}`; } }
+      ${inp("Longitud",`data-bl="${q.src.t}|${q.src.i}|L"`,it.L,"m")}
+      ${q.src.t==="cargas"&&pisos.length?`<label class="pr"><span>Tablero</span><select data-bl="cargas|${q.src.i}|piso">${opcPiso().map(([v,l])=>`<option value="${v}"${+v===+it.piso?" selected":""}>${l}</option>`).join("")}</select></label>`:""}`; } }
+  else if(q.src&&q.src.t==="piso"){ const n=q.src.i+2, nm={al:"alumbrado",tg:"tomacorrientes",tc:"tomacorrientes de cocina / lavandería"}[q.src.k];
+    ed=`<p class="pc-d">Circuito de <b>${nm}</b> del <b>${ORD(n)} piso</b> (tablero ${tabPiso(n)}). Sus salidas y longitudes se editan en Vivienda › Pisos y tableros.</p><button type="button" class="btn sec sm" data-node="vivienda">Editar el ${ORD(n)} piso</button>`; }
   else if(q.src&&q.src.t==="grp"){ const k=q.src.k, nm={al:"Alumbrado",tg:"Tomacorrientes",tc:"Tomacorrientes cocina / lavandería"}[k];
     ed=`<p class="pc-d">Este circuito se arma con las salidas de <b>${nm}</b> (máximo ${ctx().maxSal} por circuito). Al cambiar estos datos se recalculan todos los circuitos del grupo.</p>
       ${inp("Nº de salidas",`data-mirror="${k}_n"`,$(k+"_n").value,"")}${inp("Potencia por salida",`data-mirror="${k}_p"`,$(k+"_p").value,"W")}${inp("Longitud",`data-mirror="${k}_L"`,$(k+"_L").value,"m")}`; }
@@ -73,7 +76,7 @@ function circRes(key){ const box=$("circRes"); if(!box) return; const q=LAST&&LA
   box.innerHTML=`<div class="st">Resultado del circuito</div><table class="rt">${row("Potencia",`${fmt(q.P,0)} W · ${q.f3?"3φ":"1φ"} ${q.s.V} V`)}${row("Corriente nominal",`${fmt(q.I,2)} A`)}${row("Corriente de diseño",`${fmt(q.Id,2)} A`)}${row("Interruptor",`${q.f3?3:2}×${q.itm??"—"} A · ${q.curva}`)}${row("Conductor",`${q.f3?4:2}-1×${q.S} mm²${LAST.c.desig?" "+esc(LAST.c.desig):""}`)}${row("Iz corregida",`${fmt(q.Izc,1)} A`)}${row("ΔV circuito / total",`${fmt(q.dVp,2)} / ${fmt(q.dVt,2)} %`)}${row("Diferencial",`${q.idName} · ${q.f3?4:2}×${q.idRat} A`)}${row("Tubo",q.tubo.mm?`${q.tubo.mm} mm`:q.tubo.pul)}${row("Verificación",q.ok?'<span class="okb">CONFORME</span>':'<span class="badb">REVISAR</span>')}</table>`; }
 $("propBody").addEventListener("input",e=>{ const t=e.target;
   if(t.dataset.bl){ const [nm,i,k]=t.dataset.bl.split("|"), it=LISTS[nm].arr[+i]; if(!it) return; const f=LISTS[nm].f.find(x=>x.k===k);
-    it[k]=f&&f.t==="number"?(t.value.trim()===""?null:(parseFloat(t.value)||0)):(k==="fases"?+t.value:t.value.replace(/[<>]/g,"")); renderList(nm); }
+    it[k]=f&&f.t==="number"?(t.value.trim()===""?null:(parseFloat(t.value)||0)):(k==="fases"||k==="piso"?+t.value:t.value.replace(/[<>]/g,"")); renderList(nm); }
   if(t.dataset.mirror){ $(t.dataset.mirror).value=t.value; } });
 $("propBody").addEventListener("change",e=>{ if(e.target.dataset.bl&&e.target.tagName==="SELECT"){ const ev=new Event("input",{bubbles:true}); e.target.dispatchEvent(ev); } });
 function toast(t){ const x=$("toast"); x.textContent=t; x.hidden=false; clearTimeout(toast.k); toast.k=setTimeout(()=>x.hidden=true,2200); }
@@ -95,7 +98,7 @@ function wsRefresh(F){ WSF=F||[]; histPush();
   else { const a0=r.alims[0], md=r.mode==="multi"?r.MD:r.md.MD, maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt));
     S.innerHTML=`<div class="st">Resumen del proyecto</div><div class="big"><small>Máxima demanda</small><b>${fmt(md/1000,2)} <small>kW</small></b></div><table class="rt">${row("Potencia a contratar",`${fmt(r.contratada,1)} kW`)}${row("Alimentador",`${a0.s.n}-1×${a0.S} mm²`)}${row("Interruptor general",`${a0.s.tri?3:2}×${a0.itm??"—"} A`)}${row("ΔV máxima total",`${fmt(maxDV,2)} %`)}${row("Puesta a tierra",`${fmt(r.pat.Rn??r.pat.Rt,1)} Ω`)}</table>`; }
   const ok=r&&r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok), hh=new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
-  $("wsStatus").innerHTML=`<div>Modo edición</div><div><span class="g">●</span> Cálculo automático</div>`+(r?`<div>MD ${fmt((r.mode==="multi"?r.MD:r.md.MD)/1000,2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri?3:2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)),2)} %</div><div class="${ok?"g":"b"}">${ok?"CONFORME":"REVISAR"}</div>`:`<div class="w">${WSF.length} dato${WSF.length===1?"":"s"} pendiente${WSF.length===1?"":"s"}</div>`)+`<div class="r">${n&&!/^EJEMPLO\b/.test(n)?`Guardado ${hh}`:/^EJEMPLO\b/.test(n)?"Ejemplo · no se guarda":"Sin nombre · no se guarda"} · ${VERSION}</div>`;
+  $("wsStatus").innerHTML=`<div>Modo edición</div><div>${AUTO?`<span class="g">●</span> Cálculo automático`:`<span class="w">●</span> Cálculo manual · F9`}</div>`+(r?`<div>MD ${fmt((r.mode==="multi"?r.MD:r.md.MD)/1000,2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri?3:2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)),2)} %</div><div class="${ok?"g":"b"}">${ok?"CONFORME":"REVISAR"}</div>`:`<div class="w">${WSF.length} dato${WSF.length===1?"":"s"} pendiente${WSF.length===1?"":"s"}</div>`)+`<div class="r">${n&&!/^EJEMPLO\b/.test(n)?`Guardado ${hh}`:/^EJEMPLO\b/.test(n)?"Ejemplo · no se guarda":"Sin nombre · no se guarda"} · ${VERSION}</div>`;
   if(!$("ws").hidden){ exTree(); if(NODE.startsWith("circ:")){ if(r&&r.circ.some(q=>q.key===NODE.slice(5))) circRes(NODE.slice(5)); else selNode(MODE==="multi"?"vivienda":"salidas"); } if(NODE.startsWith("tab:")&&!$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4)); } }
 /* Cinta de opciones y acciones */
 $("ws").addEventListener("click",e=>{
@@ -108,17 +111,18 @@ $("ws").addEventListener("click",e=>{
   else if(a==="guardar"){ saveDraft(); hdrEstado(); toast($("p_nombre").value.trim()?"Proyecto guardado en este navegador":"Asigne un nombre al proyecto para guardarlo"); }
   else if(a==="salir") cerrarWS(false);
   else if(a==="modo"){ selNode("proyecto"); $("btnMode").click(); }
-  else if(a==="xlsx"){ if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }
-  else if(a==="print"){ if(!LAST) return toast("Complete los datos para imprimir"); $("btnPrint").click(); }
+  else if(a==="calc"){ calcularAhora(); toast(LAST?"Cálculo actualizado":"Complete los datos para calcular"); }
+  else if(a==="xlsx"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }
+  else if(a==="print"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para imprimir"); $("btnPrint").click(); }
   else if(a==="undo") histGo(-1); else if(a==="redo") histGo(1);
   else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
   else if(a.startsWith("web:")){ cerrarWS(true); setTab(a.slice(4)); } });
-document.addEventListener("click",e=>{ if(e.target.closest("#ws [data-dl]")&&!LAST) toast("Complete los datos para descargar el unifilar"); },true);
+document.addEventListener("click",e=>{ if(!e.target.closest("[data-dl]")) return; if(DESACT) calcularAhora(); if(e.target.closest("#ws [data-dl]")&&!LAST) toast("Complete los datos para descargar el unifilar"); },true);
 $("expMsg").textContent=""; new MutationObserver(()=>{ const t=$("expMsg").textContent; if(t&&!$("ws").hidden) toast(t); }).observe($("expMsg"),{childList:true,characterData:true,subtree:true});
 
 /* Asistente de nuevo proyecto */
 function asistente(abrir,m){ const w=$("wizard"); w.hidden=!abrir; document.body.classList.toggle("wl-open",abrir); if(!abrir) return;
-  ["wz_nombre","wz_prop","wz_ubic","wz_proy"].forEach(k=>$(k).value=""); $("wzErr").hidden=true; $("wz_nombre").classList.remove("falta");
+  ["wz_nombre","wz_prop","wz_ubic","wz_proy","wz_cip"].forEach(k=>$(k).value=""); $("wzErr").hidden=true; $("wz_nombre").classList.remove("falta");
   const r=document.querySelector(`input[name="wz_mode"][value="${m==="multi"?"multi":"uni"}"]`); if(r) r.checked=true; $("wz_sist").value=m==="multi"?"tri380":"mono220";
   setTimeout(()=>{ if(!$("wizard").contains(document.activeElement)||document.activeElement===document.body) $("wz_nombre").focus(); },50); }
 document.querySelectorAll('input[name="wz_mode"]').forEach(r=>r.addEventListener("change",()=>{ $("wz_sist").value=r.value==="multi"?"tri380":"mono220"; }));
@@ -126,9 +130,50 @@ $("wizard").addEventListener("click",e=>{ const b=e.target.closest("[data-wz]");
   if(!b||b.dataset.wz!=="ok") return;
   const nom=$("wz_nombre").value.trim(); if(!nom){ $("wzErr").hidden=false; $("wz_nombre").classList.add("falta"); $("wz_nombre").focus(); return; }
   const m=radio("wz_mode")||"uni", o=proyectoVacio(m), sist=$("wz_sist").value;
-  o.p_nombre=nom.replace(/[<>]/g,""); o.p_prop=$("wz_prop").value.replace(/[<>]/g,""); o.p_ubic=$("wz_ubic").value.replace(/[<>]/g,""); o.p_proy=$("wz_proy").value.replace(/[<>]/g,"");
+  o.p_nombre=nom.replace(/[<>]/g,""); o.p_prop=$("wz_prop").value.replace(/[<>]/g,""); o.p_ubic=$("wz_ubic").value.replace(/[<>]/g,""); o.p_proy=$("wz_proy").value.replace(/[<>]/g,""); o.p_cip=$("wz_cip").value.replace(/[<>]/g,"");
   if(m==="multi") o.sistG=sist; else o.sist=sist;
-  asistente(false); aplicar(o); VIEW="unifilar"; HIST.length=0; REDO.length=0; abrirWS(m==="multi"?"vivienda":"vivienda"); update(); toast("Proyecto creado: complete los datos marcados en ámbar"); });
+  asistente(false); aplicar(o); VIEW="unifilar"; HIST.length=0; REDO.length=0; abrirWS("vivienda"); calcularAhora(); toast("Proyecto creado: complete los datos marcados en ámbar"); });
 $("wizard").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.tagName==="INPUT"){ e.preventDefault(); $("wizard").querySelector('[data-wz="ok"]').click(); } });
 addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("wizard").hidden) asistente(false); });
 
+$("esqPisos").addEventListener("change",()=>renderList("cargas"));
+
+/* Diálogo de advertencia antes de desactivar una opción */
+function confirmar(tit,html,si,fn){ const d=$("cfmDlg"); $("cfmT").textContent=tit; $("cfmTxt").innerHTML=html; $("cfmSi").textContent=si; confirmar.fn=fn;
+  d.hidden=false; document.body.classList.add("wl-open"); setTimeout(()=>d.querySelector('.btn.sec').focus(),30); }
+function cerrarCfm(ok){ const d=$("cfmDlg"); if(d.hidden) return; d.hidden=true; document.body.classList.remove("wl-open"); const fn=confirmar.fn; confirmar.fn=null; if(fn) fn(ok); }
+$("cfmDlg").addEventListener("click",e=>{ if(e.target.id==="cfmDlg") return cerrarCfm(false); const b=e.target.closest("[data-cf]"); if(b) cerrarCfm(b.dataset.cf==="si"); });
+addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("cfmDlg").hidden) cerrarCfm(false); });
+
+/* Opciones de la cinta: cálculo automático y resaltar pendientes */
+const OPKEY={auto:"jmg-electric-auto",falta:"jmg-electric-resaltar"};
+const opGuardar=(k,v)=>{ try{ localStorage.setItem(OPKEY[k],v?"1":"0"); }catch(e){} };
+function setAuto(v){ AUTO=v; $("optAuto").checked=v; opGuardar("auto",v); calcularAhora(); toast(v?"Cálculo automático activado":"Cálculo manual: use Calcular ahora o F9"); }
+function setFalta(v){ $("optFalta").checked=v; document.body.classList.toggle("sin-falta",!v); opGuardar("falta",v); }
+$("optAuto").addEventListener("click",e=>{ if(e.target.checked) return setAuto(true); e.preventDefault();
+  confirmar("¿Desactivar el cálculo automático?",`<p>Mientras esté desactivado, <b>los resultados, el cuadro de cargas, el diagrama unifilar y las verificaciones no se actualizarán</b> al cambiar los datos. Lo que vea en pantalla podría no corresponder a lo ingresado; por ejemplo, un conductor o un interruptor calculado con una longitud anterior.</p><p>Para actualizar use <b>Calcular ahora</b> o la tecla <b>F9</b>. Al exportar la memoria Excel, imprimir el PDF o descargar el unifilar se recalcula automáticamente.</p>`,"Desactivar",ok=>{ if(ok) setAuto(false); }); });
+$("optFalta").addEventListener("click",e=>{ if(e.target.checked) return setFalta(true); e.preventDefault();
+  confirmar("¿Dejar de resaltar los datos pendientes?",`<p>Los datos obligatorios que faltan <b>ya no se marcarán en ámbar</b> en los formularios, y será más fácil pasar alguno por alto.</p><p>Los resultados seguirán sin calcularse hasta completar todos los datos. La lista de pendientes continuará visible en el panel central, en el explorador y en la barra de estado.</p>`,"Dejar de resaltar",ok=>{ if(ok) setFalta(false); }); });
+document.addEventListener("click",e=>{ if(e.target.closest("[data-calcnow]")){ calcularAhora(); toast("Cálculo actualizado"); } });
+addEventListener("keydown",e=>{ if(e.key==="F9"&&!$("ws").hidden){ e.preventDefault(); calcularAhora(); toast(LAST?"Cálculo actualizado":"Complete los datos para calcular"); } });
+try{ if(localStorage.getItem(OPKEY.auto)==="0"){ AUTO=false; $("optAuto").checked=false; } if(localStorage.getItem(OPKEY.falta)==="0") setFalta(false); }catch(e){}
+
+/* Paneles laterales: cerrar, volver a abrir y cambiar el ancho arrastrando el borde */
+const PANE={left:{cls:".ap-left",v:"--wl",key:"jmg-electric-panel-izq",on:true,w:null},right:{cls:".ap-right",v:"--wr",key:"jmg-electric-panel-der",on:true,w:null}};
+const apMain=document.querySelector("#ws .ap-main");
+function panes(guardar){
+  Object.entries(PANE).forEach(([k,p])=>{ document.querySelector("#ws "+p.cls).hidden=!p.on;
+    if(!p.on) apMain.style.setProperty(p.v,"0px"); else if(p.w) apMain.style.setProperty(p.v,p.w+"px"); else apMain.style.removeProperty(p.v);
+    document.querySelectorAll(`.pane-tg[data-pane="${k}"]`).forEach(b=>b.setAttribute("aria-pressed",p.on));
+    if(guardar) try{ localStorage.setItem(p.key,JSON.stringify({on:p.on,w:p.w})); }catch(e){} }); }
+try{ Object.values(PANE).forEach(p=>{ const o=JSON.parse(localStorage.getItem(p.key)||"null"); if(o){ p.on=o.on!==false; p.w=+o.w>0?+o.w:null; } }); }catch(e){}
+panes(false);
+document.addEventListener("click",e=>{ const b=e.target.closest(".pane-tg,.ph-x"); if(!b) return; const p=PANE[b.dataset.pane];
+  p.on=b.classList.contains("ph-x")?false:!p.on; panes(true); toast(p.on?"Panel visible":"Panel oculto: vuelva a abrirlo con los botones de la barra superior"); });
+document.querySelectorAll("#ws .sp").forEach(sp=>{ const k=sp.dataset.sp, p=PANE[k];
+  sp.addEventListener("pointerdown",e=>{ e.preventDefault(); try{ sp.setPointerCapture(e.pointerId); }catch(_){} sp.classList.add("drag"); document.body.classList.add("arrastrando");
+    const mv=ev=>{ const r=apMain.getBoundingClientRect(), otro=PANE[k==="left"?"right":"left"], wo=otro.on?document.querySelector("#ws "+otro.cls).offsetWidth:0;
+      const w=k==="left"?ev.clientX-r.left:r.right-ev.clientX; p.w=Math.round(Math.max(170,Math.min(640,r.width-wo-360,w))); panes(false); };
+    const up=()=>{ sp.classList.remove("drag"); document.body.classList.remove("arrastrando"); removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); panes(true); };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
+  sp.addEventListener("dblclick",()=>{ p.w=null; panes(true); toast("Ancho restablecido"); }); });

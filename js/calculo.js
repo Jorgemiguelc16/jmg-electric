@@ -3,7 +3,7 @@ function ctx(){
   const aisl=$("aisl").value, temp=+$("temp").value, nag=+$("nag").value, met=$("met").value, ft=FT[aisl][temp]??1, fa=FA[nag]??1;
   return {aisl,temp,nag,met,ft,fa,fc:ft*fa,fp:num("fp")||0.9,maxSal:Math.max(1,Math.min(12,Math.round(num("maxSal")||12))),pAl:num("pAl"),pTo:num("pTo"),
     reserva:+$("reserva").value, sminD:parseFloat($("sminD").value), sminA:parseFloat($("sminA").value), idMode:$("idMode").value, dvGen:parseFloat($("dvGen").value), iccE:num("iccE")||10,
-    proj:{nombre:$("p_nombre").value,prop:$("p_prop").value,ubic:$("p_ubic").value,proy:$("p_proy").value},
+    proj:{nombre:$("p_nombre").value,prop:$("p_prop").value,ubic:$("p_ubic").value,proy:$("p_proy").value,cip:$("p_cip").value.replace(/[<>]/g,"").trim()},
     pat:{rho:num("rho_s")||100,fr:num("fr")||1,Lv:num("Lv")||2.4,dv:parseFloat($("dv").value)},
     rho:$("rhoMode").value==="20"?RHO_CU:(aisl==="pvc"?0.0209:0.0223),
     rhoRef:$("rhoMode").value==="20"?"Cobre a 20 °C":(aisl==="pvc"?"Cobre a 70 °C · ρ20 (1 + 0,00393·50)":"Cobre a 90 °C · ρ20 (1 + 0,00393·70)"),
@@ -116,22 +116,44 @@ function balancear(items,sk,fix){
   return {nm,ph,avg:(ph[0]+ph[1]+ph[2])/3,desb:desbal(ph),desbMin:desbal(ref),nFix,items,mayor:mono.slice().sort((a,b)=>b.P-a.P)[0]||null};
 }
 
+// Pisos de la vivienda: el 1er piso con los datos de Vivienda y Salidas, los siguientes desde la lista «pisos»
+function pisosUni(){
+  const sal=(n,L)=>({n,L:L||1});
+  return [{n:1,area:num("area"),Ld:num("Ltd1")||1,al:sal(num("al_n"),num("al_L")),tg:sal(num("tg_n"),num("tg_L")),tc:sal(num("tc_n"),num("tc_L"))},
+    ...pisos.map((p,i)=>({n:i+2,i,area:p.area||0,Ld:p.Ld||1,al:sal(p.al_n||0,p.al_L),tg:sal(p.tg_n||0,p.tg_L),tc:sal(p.tc_n||0,p.tc_L)}))];
+}
 function calcUni(c){
-  const areaT=num("area"), sot=num("sot"), area=areaT+0.75*sot, sk=radio("sist")||"mono220", Lalim=num("Lalim")||1;
-  const cs=cargas.map(x=>({...x})), sum=t=>cs.filter(x=>x.tipo===t).reduce((s,x)=>s+x.p,0);
-  const otras=cs.filter(x=>(x.tipo==="otra"||x.tipo==="motor")&&x.p>1500).reduce((s,x)=>s+x.p,0);
-  const md=mdVivienda({area,coc:sum("cocina"),cal:sum("calentador"),aire:sum("aire"),otras},false);
-  const g={al:{n:num("al_n"),p:num("al_p"),L:num("al_L")||1},tg:{n:num("tg_n"),p:num("tg_p"),L:num("tg_L")||1},tc:{n:num("tc_n"),p:num("tc_p"),L:num("tc_L")||1}};
-  const CI=g.al.n*g.al.p+g.tg.n*g.tg.p+g.tc.n*g.tc.p+cs.reduce((s,x)=>s+x.p,0);
+  const PS=pisosUni(), varios=PS.length>1, esq=varios?$("esqPisos").value:"tg";
+  const areaT=PS.reduce((s,p)=>s+p.area,0), sot=num("sot"), area=areaT+0.75*sot, sk=radio("sist")||"mono220", Lalim=num("Lalim")||1;
+  const cs=cargas.map(x=>({...x}));
+  const cargasMD=list=>{ const sum=t=>list.filter(x=>x.tipo===t).reduce((s,x)=>s+x.p,0);
+    return {coc:sum("cocina"),cal:sum("calentador"),aire:sum("aire"),otras:list.filter(x=>(x.tipo==="otra"||x.tipo==="motor")&&x.p>1500).reduce((s,x)=>s+x.p,0)}; };
+  const md=mdVivienda({area,...cargasMD(cs)},false);
+  const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
+  const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
   const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI});
-  const circ=grupos([{...g.al,desc:"Alumbrado",tipo:"Alumbrado",src:{t:"grp",k:"al"}},{...g.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:{t:"grp",k:"tg"}},{...g.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:{t:"grp",k:"tc"}}],c,"TG",al.dVp,0);
-  cs.forEach((x,ix)=>{ if(!(x.p>0)) return; const q=circuito({tab:"TG",id:"C-"+(circ.length+1),desc:x.nombre||"Carga especial",tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,al.dVp,0); q.src={t:"cargas",i:ix}; circ.push(q); });
-  asignarID(circ,c);
-  const bal=balancear(circ,sk,FIX.uni);
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,al.s,al.L,al.S);
-  const tabs=[{tab:"TG",desc:"Tablero general de la vivienda",feeder:0,icc:iccTG,pdc:pdcPara(iccTG)}];
-  return {mode:"uni",iccTG,c,sk,area,areaT,sot,cs,md,CI,alims:[al],circ,tabs,bal,pat:pozo(c.pat),
+  // Tablero de cada piso: TG si el piso se conecta al tablero general, TD-n si tiene tablero propio
+  const tabDe=n=>!varios||(n===1&&esq==="tg")?"TG":tabPiso(n);
+  const pisoCarga=x=>{ const k=Math.round(+x.piso||0); return varios&&k>=1&&k<=PS.length?k:0; };
+  const tabCarga=x=>{ const k=pisoCarga(x); return k?tabDe(k):"TG"; };
+  const alims=[al], tabs=[{tab:"TG",desc:"Tablero general de la vivienda",feeder:0,icc:iccTG,pdc:pdcPara(iccTG)}];
+  // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
+  PS.forEach(p=>{ const tab=tabDe(p.n); if(tab==="TG") return;
+    const aP=p.area+(p.n===1?0.75*sot:0), mdP=mdVivienda({area:aP,...cargasMD(cs.filter(x=>tabCarga(x)===tab))},false);
+    const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP});
+    f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); p.tab=tab; p.feeder=alims.length-1; p.md=mdP; p.areaC=aP;
+    const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab,desc:`Tablero de distribución del ${ORD(p.n)} piso`,feeder:p.feeder,icc,pdc:pdcPara(icc),piso:p.n}); });
+  const circ=[];
+  tabs.forEach(tb=>{ const f=alims[tb.feeder], up=tb.feeder?f.dvAc:al.dVp;
+    const PT=PS.filter(p=>tabDe(p.n)===tb.tab);
+    const src=(p,k)=>p.n===1?{t:"grp",k}:{t:"piso",i:p.i,k};
+    const list=grupos(PT.flatMap(p=>[{...p.al,p:pw.al,desc:"Alumbrado",tipo:"Alumbrado",src:src(p,"al")},{...p.tg,p:pw.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:src(p,"tg")},{...p.tc,p:pw.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:src(p,"tc")}]),c,tb.tab,up,tb.feeder);
+    cs.forEach((x,ix)=>{ if(!(x.p>0)||tabCarga(x)!==tb.tab) return; const q=circuito({tab:tb.tab,id:"C-"+(list.length+1),desc:x.nombre||"Carga especial",tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,up,tb.feeder); q.src={t:"cargas",i:ix}; list.push(q); });
+    asignarID(list,c); circ.push(...list); });
+  const bal=balancear(circ,sk,FIX.uni);
+  return {mode:"uni",iccTG,c,sk,area,areaT,sot,cs,md,CI,alims,circ,tabs,bal,pat:pozo(c.pat),PS,varios,esq,
     contratada:Math.ceil(md.MD/500)/2, conexion:"Conexión simple (Norma DGE, 301.A)", Selec:tierraElectrodo(al.Izc)};
 }
 function calcMulti(c){

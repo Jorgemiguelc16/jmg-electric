@@ -6,6 +6,8 @@ async function exportar(){
   const thin={style:"thin",color:{argb:K.line}}, BOX={top:thin,left:thin,bottom:thin,right:thin};
   const fecha=new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"});
   const F=(f,v)=>({formula:f,result:v});
+  const logoId=typeof LOGO_JPG==="string"?wb.addImage({base64:LOGO_JPG,extension:"jpeg"}):null;
+  const proyCip=(c.proj.proy||"—")+(c.proj.cip?` · CIP ${c.proj.cip}`:"");
   const wsM=wb.addWorksheet("Memoria",{properties:{tabColor:{argb:K.navy}}});
   const wsC=wb.addWorksheet("Cálculos",{properties:{tabColor:{argb:K.copper}}});
   const wsU=wb.addWorksheet("Unifilar",{properties:{tabColor:{argb:"FF2F7A4B"}}});
@@ -25,11 +27,12 @@ async function exportar(){
   const val={box:1,h:"center"};
   const cabecera=(ws,last,sub,hoja)=>{
     ws.getRow(1).height=30;
-    span(ws,1,1,2,"JMG - ELECTRIC",{bold:1,size:11,color:"FFFFFFFF",fill:K.copper,h:"center",shrink:1});
+    span(ws,1,1,2,"JMG - ELECTRIC",{bold:1,size:11,color:"FFFFD200",fill:"FF1F2328",h:logoId===null?"center":"right",shrink:1});
+    if(logoId!==null) ws.addImage(logoId,{tl:{col:0.06,row:0.06},ext:{width:36,height:36}});
     span(ws,1,3,last,"MEMORIA DE CÁLCULO DE INSTALACIONES ELÉCTRICAS INTERIORES",{bold:1,size:11,color:"FFFFFFFF",fill:K.navy,h:"center"});
     ws.getRow(2).height=19; span(ws,2,1,last,sub,{bold:1,size:10,color:K.navy,fill:K.soft,h:"center"});
     const half=Math.floor(last/2);
-    [["Proyecto",c.proj.nombre||"—"],["Propietario",c.proj.prop||"—"],["Ubicación",c.proj.ubic||"—"],["Proyectista",c.proj.proy||"—"],["Normativa","CNE-Utilización · RNE EM.010 · Norma DGE"],["Fecha · Hoja",`${fecha} · ${hoja}`]]
+    [["Proyecto",c.proj.nombre||"—"],["Propietario",c.proj.prop||"—"],["Ubicación",c.proj.ubic||"—"],["Proyectista",proyCip],["Normativa","CNE-Utilización · RNE EM.010 · Norma DGE"],["Fecha · Hoja",`${fecha} · ${hoja}`]]
       .forEach(([k,v],i)=>{ const rw=3+Math.floor(i/2), left=i%2===0, c1=left?1:half+1, c2=left?half:last;
         span(ws,rw,c1,c1+1,k.toUpperCase(),{bold:1,size:7.5,color:K.grey,fill:K.lab,box:1}); span(ws,rw,c1+2,c2,v,{box:1,size:9,shrink:1}); ws.getRow(rw).height=17; });
     return 7; };
@@ -104,14 +107,14 @@ async function exportar(){
   par("icc","Corriente de cortocircuito en el punto de entrega",c.iccE,"kA","Dato de la concesionaria (Norma DGE, 110.F)",true,"0.0");
   par("idm","Esquema de interruptores diferenciales",c.idMode==="grupo"?"Por grupos de 3 circuitos":"Uno por circuito","",c.idMode==="grupo"?"Regla 150-400(8)":"Regla 150-400(9)",false,"@");
   if(!multi){
-    par("aT","Área techada de vivienda",r.areaT,"m²","Regla 050-110(1)",true,"0.0");
+    par("aT",r.varios?`Área techada de vivienda (${r.PS.length} pisos)`:"Área techada de vivienda",r.areaT,"m²","Regla 050-110(1)",true,"0.0");
     par("aS","Área de sótano",r.sot,"m²","Se computa al 75 %",true,"0.0");
     { const rr=m; R.area=`'Memoria'!$F$${rr}`; span(wsM,m,1,5,"Área de vivienda computable",{box:1,ind:1}); cell(wsM,m,6,F(`F${rr-2}+0.75*F${rr-1}`,r.area),{...val,fmt:"0.0",bold:1}); cell(wsM,m,7,"m²",{...val,color:K.grey}); span(wsM,m,8,10,"Regla 050-110(1)",{box:1,size:8,color:K.grey}); m++; }
   }
   m=nota(wsM,m,LM,"Las celdas sombreadas en azul son datos de entrada: al modificarlas, el libro recalcula los resultados.")+1;
 
   m=seccion(wsM,m,LM,"2.  CÁLCULO DE LA MÁXIMA DEMANDA");
-  let MDREF, servTotRef=null, servPRef=null, tipoRow={};
+  let MDREF, servTotRef=null, servPRef=null, tipoRow={}, pisoRow={};
   if(!multi){
     m=sub(wsM,m,LM,"2.1  Cargas especiales");
     m=thead(wsM,m,[[1,4,"Descripción"],[5,6,"Tipo de carga"],[7,7,"Fases"],[8,8,"Potencia (W)"],[9,9,"Longitud (m)"],[10,10,"Circuito"]]);
@@ -119,7 +122,7 @@ async function exportar(){
     for(let i=0;i<n;i++){ const it=r.cs[i];
       span(wsM,m,1,4,it?it.nombre:"(sin cargas especiales)",{box:1,ind:1}); span(wsM,m,5,6,it?TIPOS[it.tipo].split(" (")[0]:"—",{box:1});
       cell(wsM,m,7,it?(it.fases===3&&SIST[r.sk].tri?"3φ":"1φ"):"—",val); cell(wsM,m,8,it?it.p:0,{...inp,fmt:"0"}); cell(wsM,m,9,it?it.L:0,{...val,fmt:"0.0"});
-      const ci=it?r.circ.find(q=>q.desc===it.nombre):null; cell(wsM,m,10,ci?ci.id:"—",val); m++; }
+      const ci=it?r.circ.find(q=>q.desc===it.nombre):null; cell(wsM,m,10,ci?(r.varios?`${ci.tab} · ${ci.id}`:ci.id):"—",val); m++; }
     const T=`$E$${c0}:$E$${m-1}`, P=`$H$${c0}:$H$${m-1}`; m++;
     m=sub(wsM,m,LM,"2.2  Determinación de la máxima demanda · Regla 050-200(1)");
     m=thead(wsM,m,[[1,4,"Concepto"],[5,8,"Criterio"],[9,9,"Instalada (W)"],[10,10,"Demanda (W)"]]);
@@ -132,6 +135,18 @@ async function exportar(){
     mr("Otras cargas mayores de 1 500 W","25 % si existe cocina; si no, 100 % hasta 6 kW + 25 % del exceso",F(`SUMIFS(${P},${T},"Otra carga",${P},">1500")+SUMIFS(${P},${T},"Motor",${P},">1500")`,md.otras),F(`IF($I$${rC}>0,0.25*I${m},MIN(I${m},6000)+0.25*MAX(0,I${m}-6000))`,md.mdOtras));
     span(wsM,m,1,9,"MÁXIMA DEMANDA DE LA VIVIENDA (W)",{box:1,ind:1}); cell(wsM,m,10,F(`SUM(J${d0}:J${m-1})`,md.MD),{...val,fmt:"0"}); tot(wsM,m,1,10);
     MDREF=`'Memoria'!$J$${m}`; m+=2;
+    const PT=r.PS.filter(p=>p.md);
+    if(PT.length){
+      m=sub(wsM,m,LM,"2.3  Máxima demanda por piso · alimentadores a tableros de distribución · Regla 050-200");
+      m=thead(wsM,m,[[1,1,"Piso"],[2,2,"Tablero"],[3,3,"Área (m²)"],[4,4,"Carga básica (W)"],[5,5,"Cocina (W)"],[6,6,"Calentador (W)"],[7,7,"Aire acond. (W)"],[8,8,"Otras > 1.5 kW (W)"],[9,9,"Cocina y otras, demanda (W)"],[10,10,"MD piso (W)"]]);
+      PT.forEach(p=>{ pisoRow[p.n]=m;
+        cell(wsM,m,1,`${ORD(p.n)} piso`,{box:1,bold:1,h:"center"}); cell(wsM,m,2,p.tab,val); cell(wsM,m,3,p.areaC,{...inp,fmt:"0.0"});
+        cell(wsM,m,4,F(`2500+1000*MAX(0,ROUNDUP((C${m}-90)/90,0))`,p.md.basica),{...val,fmt:"0"});
+        [p.md.coc,p.md.cal,p.md.aire,p.md.otras].forEach((v,j)=>cell(wsM,m,5+j,v,{...inp,fmt:"0"}));
+        cell(wsM,m,9,F(`IF(E${m}>0,6000+0.4*MAX(0,E${m}-12000),0)+IF(E${m}>0,0.25*H${m},MIN(H${m},6000)+0.25*MAX(0,H${m}-6000))`,p.md.mdCoc+p.md.mdOtras),{...val,fmt:"0"});
+        cell(wsM,m,10,F(`D${m}+F${m}+G${m}+I${m}`,p.md.MD),{...val,fmt:"0",bold:1}); m++; });
+      m=nota(wsM,m,LM,`Cada tablero de piso se alimenta desde el tablero general TG; su máxima demanda se obtiene con la Regla 050-200 aplicada al área del piso y a las cargas especiales conectadas a ese tablero${r.sot>0&&r.esq==="td"?" (el sótano, al 75 %, se asigna al 1er piso)":""}. El alimentador general conserva la máxima demanda de toda la vivienda.${r.esq==="tg"?" Los circuitos del 1er piso salen directamente del tablero general TG.":""}`)+1;
+    }
   } else {
     m=sub(wsM,m,LM,"2.1  Carga por unidad de vivienda · Regla 050-202(1)");
     m=thead(wsM,m,[[1,1,"Tipo"],[2,2,"Unidades"],[3,3,"Área (m²)"],[4,4,"Carga básica (W)"],[5,5,"Cocina (W)"],[6,6,"Calentador (W)"],[7,7,"Aire acond. (W)"],[8,8,"Otras > 1.5 kW (W)"],[9,9,"MD sin aire (W)"],[10,10,"MD unidad (W)"]]);
@@ -190,7 +205,7 @@ async function exportar(){
   k=thead(wsC,k,HDR(true));
   const genRow=k;
   r.alims.forEach((a,i)=>{
-    const pf=a.pKey==="MD"?F(MDREF,a.P):a.pKey==="servP"?F(servPRef,a.P):F(`'Memoria'!$J$${tipoRow[r.T[a.ti].nombre]}`,a.P);
+    const pf=a.pKey==="MD"?F(MDREF,a.P):a.pKey==="servP"?F(servPRef,a.P):a.pKey==="piso"?F(`'Memoria'!$J$${pisoRow[a.piso]}`,a.P):F(`'Memoria'!$J$${tipoRow[r.T[a.ti].nombre]}`,a.P);
     span(wsC,k,1,3,a.desc,{box:1,ind:1,size:8.5}); cell(wsC,k,4,a.cant??1,{...val,fmt:"0"}); cell(wsC,k,5,pf,{...val,fmt:"0"});
     cell(wsC,k,6,a.s.tri?"3φ":"1φ",val); cell(wsC,k,7,a.s.V,val);
     cell(wsC,k,8,F(fI(k),a.I),{...val,fmt:"0.00"}); cell(wsC,k,9,F(`MAX(H${k}*${R.fd},${a.Imin||0})`,a.Id),{...val,fmt:"0.00"});
@@ -287,9 +302,9 @@ async function exportar(){
   cfmt(wsM,`J${m-alertas(r).length}:J${m-1}`);
   m++;
   m=seccion(wsM,m,LM,"6.  CONFORMIDAD");
-  const firma=(c1,c2,tit,nombre)=>{ span(wsM,m,c1,c2,tit,{bold:1,size:8.5,color:K.navy,fill:K.lab,box:1,h:"center"});
-    [["Nombre",nombre],["CIP N°",""],["Firma y sello",""]].forEach(([l,v],i)=>{ const rw=m+1+i; cell(wsM,rw,c1,l,{size:8,color:K.grey,box:1,fill:K.lab}); span(wsM,rw,c1+1,c2,v,{box:1}); wsM.getRow(rw).height=i===2?42:18; }); };
-  firma(1,5,"ELABORADO POR",c.proj.proy||""); firma(6,10,"REVISADO Y APROBADO POR",""); m+=5;
+  const firma=(c1,c2,tit,nombre,cip="")=>{ span(wsM,m,c1,c2,tit,{bold:1,size:8.5,color:K.navy,fill:K.lab,box:1,h:"center"});
+    [["Nombre",nombre],["CIP N°",cip],["Firma y sello",""]].forEach(([l,v],i)=>{ const rw=m+1+i; cell(wsM,rw,c1,l,{size:8,color:K.grey,box:1,fill:K.lab}); span(wsM,rw,c1+1,c2,v,{box:1}); wsM.getRow(rw).height=i===2?42:18; }); };
+  firma(1,5,"ELABORADO POR",c.proj.proy||"",c.proj.cip); firma(6,10,"REVISADO Y APROBADO POR",""); m+=5;
   nota(wsM,m,LM,`La presente memoria ha sido elaborada con JMG - ELECTRIC ${VERSION}, aplicando los criterios del Código Nacional de Electricidad – Utilización, el RNE EM.010 y las Normas DGE. Los valores obtenidos constituyen una herramienta de apoyo al diseño; su validación, adecuación a las condiciones reales de obra y firma corresponden al ingeniero proyectista responsable.`);
 
   /* ---------- UNIFILAR ---------- */
@@ -315,9 +330,9 @@ async function exportar(){
       wsT.getRow(t).height=Math.max(16,Math.ceil(Math.max(x.desc.length/58,x.obs.length/26))*12); t++; });
     wsT.pageSetup.printTitlesRow=`${t0-1}:${t0-1}`;
     t=nota(wsT,t+1,LT,`Metrado referencial generado con JMG - ELECTRIC ${VERSION}. Protecciones, tableros, cajas y aparatos resultan del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(c.bajada,1)} m de bajada por salida y ${fmt(c.pDesp,0)} % de desperdicio. Verificar con los planos de distribución.`)+1;
-    const firmaT=(c1,c2,tit,nombre)=>{ span(wsT,t,c1,c2,tit,{bold:1,size:8.5,color:K.navy,fill:K.lab,box:1,h:"center"});
-      [["Nombre",nombre],["CIP N°",""],["Firma y sello",""]].forEach(([l,v],i)=>{ const rw=t+1+i; cell(wsT,rw,c1,l,{size:8,color:K.grey,box:1,fill:K.lab}); span(wsT,rw,c1+1,c2,v,{box:1}); wsT.getRow(rw).height=i===2?42:18; }); };
-    firmaT(1,4,"ELABORADO POR",c.proj.proy||""); firmaT(5,8,"REVISADO POR",""); }
+    const firmaT=(c1,c2,tit,nombre,cip="")=>{ span(wsT,t,c1,c2,tit,{bold:1,size:8.5,color:K.navy,fill:K.lab,box:1,h:"center"});
+      [["Nombre",nombre],["CIP N°",cip],["Firma y sello",""]].forEach(([l,v],i)=>{ const rw=t+1+i; cell(wsT,rw,c1,l,{size:8,color:K.grey,box:1,fill:K.lab}); span(wsT,rw,c1+1,c2,v,{box:1}); wsT.getRow(rw).height=i===2?42:18; }); };
+    firmaT(1,4,"ELABORADO POR",c.proj.proy||"",c.proj.cip); firmaT(5,8,"REVISADO POR",""); }
 
   wb.calcProperties.fullCalcOnLoad=true;
   return await wb.xlsx.writeBuffer();
