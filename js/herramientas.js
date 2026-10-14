@@ -26,6 +26,6 @@ function herr(){
     out("h5_out",[["Potencia activa",`${fmt(kW,3)} kW · ${fmt(kW*1000,0)} W`],["Potencia en HP",`${fmt(kW/0.746,2)} HP`],["Potencia aparente",`${fmt(kVA,3)} kVA`],[`Corriente (${s.txt})`,`${fmt(I,2)} A`]]); }
 }
 document.querySelectorAll(".h-sis").forEach(el=>{ el.innerHTML=SYS_OPC.map(([v,t])=>`<option value="${v}">${t}</option>`).join(""); });
-document.querySelectorAll(".h-secc").forEach(el=>{ el.innerHTML=SECC.map(S=>`<option value="${S}"${S===4?" selected":""}>${S} mm²</option>`).join(""); });
+document.querySelectorAll(".h-secc").forEach(el=>{ el.innerHTML=SECC.map(S=>`<option value="${S}"${S===6?" selected":""}>${S} mm²</option>`).join(""); });
 $("tools").addEventListener("input",herr); $("tools").addEventListener("change",herr);
 
