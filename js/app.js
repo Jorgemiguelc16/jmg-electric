@@ -110,6 +110,7 @@ $("ws").addEventListener("click",e=>{
   else if(a==="json") $("btnSave").click();
   else if(a==="guardar"){ saveDraft(); hdrEstado(); toast($("p_nombre").value.trim()?"Proyecto guardado en este navegador":"Asigne un nombre al proyecto para guardarlo"); }
   else if(a==="salir") cerrarWS(false);
+  else if(a==="ajustes"){ selNode("param"); setTimeout(()=>$("fs-p-tema").scrollIntoView({behavior:"smooth",block:"start"}),60); }
   else if(a==="modo"){ selNode("proyecto"); $("btnMode").click(); }
   else if(a==="calc"){ calcularAhora(); toast(LAST?"Cálculo actualizado":"Complete los datos para calcular"); }
   else if(a==="xlsx"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }
