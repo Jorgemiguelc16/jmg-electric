@@ -204,7 +204,7 @@ function alertas(r){
   if(r.bal){ const b=r.bal; A.push([b.desb<=10?true:"warn","Balance de fases",b.desb<=10?`Desbalance de cargas ${fmt(b.desb,1)} % (≤ 10 %, criterio de diseño).`:b.desb<=b.desbMin+0.05?`Desbalance de cargas ${fmt(b.desb,1)} %: es el mínimo alcanzable con estas cargas (criterio de diseño ≤ 10 %). ${sugerencia(r)}`:`Desbalance de cargas ${fmt(b.desb,1)} % con el reparto manual; el reparto automático lograría ${fmt(b.desbMin,1)} %.`]); }
   else if(r.mode==="uni"&&r.md.MD>8000) A.push([true,"050-106(9)",`Máxima demanda de ${fmt(r.md.MD/1000,2)} kW en suministro monofásico: evalúe un suministro trifásico 380/220 V con la concesionaria.`]);
   if(r.mode==="multi") A.push([r.emerg,"EM.010 · Art. 11.1",r.emerg?"Incluye iluminación de emergencia en rutas de evacuación.":"Los edificios multifamiliares deben contar con iluminación de emergencia en rutas de evacuación: agréguela en servicios generales."]);
-  A.push([true,"EM.010 · Art. 9",`Se prevén ${r.c.reserva} espacio(s) de reserva por tablero para ampliaciones.`]);
+  A.push([true,"050-108(2)",`Se prevén ${r.c.reserva} espacio(s) de reserva por tablero para ampliaciones.`]);
   return A;
 }
 

@@ -235,7 +235,7 @@ async function exportar(){
     span(wsC,k,1,4,`Subtotal ${tb.tab}`,{box:1,ind:1}); cell(wsC,k,5,F(`SUM(E${t0}:E${k-1})`,cs.reduce((s,q)=>s+q.P,0)),{...val,fmt:"0"}); for(let j=6;j<=LC;j++) cell(wsC,k,j,"",{box:1}); tot(wsC,k,1,LC); subRows.push(k); subMul.push(f.cant||1); k++;
   });
   const cEnd=k-1;
-  k=nota(wsC,k,LC,`Verificación: corriente de diseño ≤ ITM ≤ ampacidad corregida (Tabla 2, método ${c.met}, Tablas 5A y 5C); ΔV del circuito ≤ 2.5 % y total ≤ 4 % (Regla 050-102). Máximo 12 salidas por circuito (Regla 070-3000). Diferenciales de 30 mA ${c.idMode==="grupo"?"por grupos de tres circuitos (Regla 150-400(8))":"en cada circuito (Regla 150-400(9))"}. Espacios de reserva: ${c.reserva} por tablero (Regla 050-108, EM.010 Art. 9).`)+1;
+  k=nota(wsC,k,LC,`Verificación: corriente de diseño ≤ ITM ≤ ampacidad corregida (Tabla 2, método ${c.met}, Tablas 5A y 5C); ΔV del circuito ≤ 2.5 % y total ≤ 4 % (Regla 050-102). Máximo 12 salidas por circuito (Regla 070-3000). Diferenciales de 30 mA ${c.idMode==="grupo"?"por grupos de tres circuitos (Regla 150-400(8))":"en cada circuito (Regla 150-400(9))"}. Espacios de reserva: ${c.reserva} por tablero (Regla 050-108(2)).`)+1;
   cfmt(wsC,`P${genRow}:P${cEnd}`);
   wsC.pageSetup.printTitlesRow=`${cStart-1}:${cStart-1}`;
   let balRow=null;

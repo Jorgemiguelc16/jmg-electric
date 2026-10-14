@@ -285,7 +285,7 @@ B+=fin;
 
 /* Lista de revisión */
 const REV=[
- ["Corriente de diseño","Se aplica 1.25 × I a todos los alimentadores y circuitos, también sobre la máxima demanda ya afectada por factores de demanda. Ejemplo C1: MD 9 kW monofásico → Id 56.8 A → ITM 63 A y conductor 2-1×25 mm².","¿Corresponde aplicar 1.25 sobre la MD o solo a cargas continuas y motores? ¿Es razonable el resultado de C1?"],
+ ["Corriente de diseño","Se aplica 1.25 × I a todos los alimentadores y circuitos, también sobre la máxima demanda ya afectada por factores de demanda. Ejemplo C1: MD 9 kW monofásico → Id 56.8 A → ITM 63 A y conductor 2-1×25 mm².","¿Corresponde aplicar 1.25 sobre la MD o solo a cargas continuas y motores? ¿Es razonable el resultado de C1? Nota: las Reglas 050-200(3) y 050-202(2) indican que la carga total calculada de una vivienda no se considera carga continua para la Regla 050-104."],
  ["Selección del interruptor y del conductor","El conductor se elige con Iz corregida ≥ In (no solo ≥ Id).","¿Es el criterio de coordinación que se exige?"],
  ["Factores de corrección en alimentadores","En alimentadores solo se aplica el factor de temperatura (Tabla 5A); el de agrupamiento (5C) solo en derivados.","¿Debe aplicarse también el agrupamiento a los alimentadores?"],
  ["Corrientes mínimas","40 A en el alimentador de la vivienda y 25 A en el de cada departamento; no se aplican a los alimentadores de piso ni al TSG.","¿Es correcto no exigir mínimo en los alimentadores de piso?"],
@@ -306,7 +306,10 @@ const REV=[
  ["Puesta a tierra: verificación","La alerta de 25 Ω se evalúa con una varilla; si no cumple, se indica el número de varillas necesario.","¿Conforme?"],
  ["Potencia a contratar","Se redondea la MD hacia arriba a múltiplos de 0.5 kW.","¿Conforme con la práctica de la concesionaria?"],
  ["Metrado","Longitudes estimadas con la salida más alejada más bajadas; curvas, uniones, cajas e interruptores con reglas simples.","¿Son razonables las reglas?"],
- ["Especificaciones técnicas y pruebas","Textos generales redactados para el expediente (PVC-SAP, cajas de fierro galvanizado, color del conductor de protección, pruebas).","Revisar redacción y requisitos."]];
+ ["Especificaciones técnicas y pruebas","Textos generales redactados para el expediente (PVC-SAP, cajas de fierro galvanizado, color del conductor de protección, pruebas).","Revisar redacción y requisitos."],
+ ["Agrupamiento en el método C","Se aplica el ítem 1 de la Tabla 5C (agrupados en el aire, empotrados o encerrados) a todos los métodos. Para cables en una capa sobre pared (método C), la tabla da el ítem 2, con factores mayores (0,85; 0,79; 0,75…): la aplicación resulta más conservadora.","¿Debe usarse el ítem 2 de la Tabla 5C para el método C?"],
+ ["Calentadores en edificios","En cada departamento (Regla 050-202) el calentador de agua se suma al 100 %, como en la Regla 050-200(1)(a)(v). La 050-202 no menciona expresamente los calentadores de agua (solo la calefacción); leído al pie de la letra, entrarían en «otras cargas» al 25 %.","¿Es correcto sumar los calentadores al 100 % en la 050-202?"],
+ ["Diámetro de la varilla","La verificación de la Regla 060-702(3)(a) solo exige 13 mm (cobre); la aplicación no distingue la varilla de acero-cobre, que requiere 16 mm (5/8\").","¿Conviene pedir el material de la varilla y verificar 16 mm para acero-cobre?"]];
 B+=cap("Supuestos y decisiones a revisar");
 B+=`<p>Esta lista reúne los criterios de la aplicación que no provienen textualmente de una regla, o que dependen de una interpretación. Para cada punto se indica qué hace la aplicación y la pregunta para el revisor. Marque Conforme u Observación y anote sus comentarios.</p>`;
 B+=tbl(["N.°","Tema · qué hace la aplicación","Conforme","Observación"],REV.map(([t,d,q],i)=>[`R-${String(i+1).padStart(2,"0")}`,`<b>${t}.</b> ${d}<span class="q">${q}</span>`,"☐","☐"]),"rev");
