@@ -1,6 +1,6 @@
 /* ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= */
 const NODEFS={proyecto:["fs-proy","fs-tipo"],suministro:{uni:["fs-sum-uni"],multi:["fs-sum-multi"]},vivienda:{uni:["fs-viv","fs-pisos"],multi:["fs-tipos"]},salidas:["fs-sal"],cargas:["fs-cargas"],servicios:["fs-serv"],
-  param:["fs-p-car","fs-p-cond","fs-p-prot","fs-p-dv","fs-p-pat","fs-p-met","fs-p-tema","fs-p-dat"],pat:["fs-p-pat"],metrado:["fs-p-met"]};
+  param:["fs-p-car","fs-p-cond","fs-p-prot","fs-p-dv","fs-p-pat","fs-p-met","fs-p-dat"],pat:["fs-p-pat"],metrado:["fs-p-met"]};
 const NODETIT={proyecto:"Datos del proyecto",suministro:"Suministro",vivienda:"Vivienda",salidas:"Salidas",cargas:"Cargas especiales",servicios:"Servicios generales",param:"Parámetros de diseño",pat:"Puesta a tierra",metrado:"Metrado"};
 let NODE="proyecto", WSF=[], RIB="proyecto";
 try{ const x=localStorage.getItem("jmg-electric-node"); if(x) NODE=x; }catch(e){}
@@ -110,7 +110,6 @@ $("ws").addEventListener("click",e=>{
   else if(a==="json") $("btnSave").click();
   else if(a==="guardar"){ saveDraft(); hdrEstado(); toast($("p_nombre").value.trim()?"Proyecto guardado en este navegador":"Asigne un nombre al proyecto para guardarlo"); }
   else if(a==="salir") cerrarWS(false);
-  else if(a==="ajustes"){ selNode("param"); setTimeout(()=>$("fs-p-tema").scrollIntoView({behavior:"smooth",block:"start"}),60); }
   else if(a==="modo"){ selNode("proyecto"); $("btnMode").click(); }
   else if(a==="calc"){ calcularAhora(); toast(LAST?"Cálculo actualizado":"Complete los datos para calcular"); }
   else if(a==="xlsx"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }

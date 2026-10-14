@@ -35,7 +35,7 @@ function setMode(m){
   update();
 }
 function setTab(t){
-  if(t==="calculo"||t==="ajustes"){ abrirWS(t==="ajustes"?"param":null); try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} return; }
+  if(t==="calculo"){ abrirWS(null); try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} return; }
   if(document.body.classList.contains("ws-on")) cerrarWS(true);
   TAB=t; document.body.classList.toggle("en-inicio",t==="inicio");
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));

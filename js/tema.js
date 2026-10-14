@@ -18,3 +18,10 @@ document.querySelectorAll("#ws .ap-tabs .tb").forEach(t=>{
   t.addEventListener("click",()=>{ if($("ws").classList.contains("cinta-oculta")) cinta(true); }); });
 addEventListener("keydown",e=>{ if(e.ctrlKey&&e.key==="F1"&&!$("ws").hidden){ e.preventDefault(); cinta($("ws").classList.contains("cinta-oculta")); } });
 try{ if(localStorage.getItem(CINTAKEY)==="0") cinta(false,false); }catch(_){}
+
+/* Pestaña Ajustes: cinta de opciones, paneles laterales y versión */
+$("ajVer").textContent=VERSION+" Beta";
+$("aj_cinta").checked=!$("ws").classList.contains("cinta-oculta");
+$("aj_cinta").addEventListener("change",e=>cinta(e.target.checked));
+new MutationObserver(()=>{ $("aj_cinta").checked=!$("ws").classList.contains("cinta-oculta"); }).observe($("ws"),{attributes:true,attributeFilter:["class"]});
+$("aj_paneles").addEventListener("click",()=>{ Object.values(PANE).forEach(p=>{ p.on=true; p.w=null; }); panes(true); $("aj_paneles").textContent="Paneles restablecidos ✓"; setTimeout(()=>$("aj_paneles").textContent="Restablecer paneles",1800); });
