@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas del cálculo · JMG-ELECTRIC</title>
+<style>
+  :root{--fondo:#f4f3ef;--papel:#fff;--tinta:#22252a;--suave:#5d636c;--linea:#dcd9d0;--oro:#b8892e;--ok:#1f7a45;--okf:#e5f3ea;--mal:#b3261e;--malf:#fbe9e7;--aviso:#8a5a00;--avisof:#fff4dc}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
+  h1{margin:0 0 4px;font-size:24px}
+  h1 small{color:var(--oro);font-weight:600}
+  p.intro{color:var(--suave);margin:0 0 18px}
+  #veredicto{border-radius:10px;padding:16px 18px;font-size:18px;font-weight:600;margin-bottom:18px;border:1px solid var(--linea);background:var(--papel)}
+  #veredicto.ok{background:var(--okf);color:var(--ok);border-color:#b9dcc6}
+  #veredicto.mal{background:var(--malf);color:var(--mal);border-color:#efc3bf}
+  #veredicto.aviso{background:var(--avisof);color:var(--aviso);border-color:#ecd39b}
+  #veredicto span{display:block;font-size:14px;font-weight:400;color:var(--suave);margin-top:4px}
+  .barra{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--linea);background:var(--papel);cursor:pointer}
+  button.pri{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+  .tabla{background:var(--papel);border:1px solid var(--linea);border-radius:10px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:640px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--linea);text-align:left;vertical-align:top}
+  th{font-size:13px;color:var(--suave);font-weight:600;background:#faf9f6}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+  .pill.ok{background:var(--okf);color:var(--ok)} .pill.mal{background:var(--malf);color:var(--mal)} .pill.na{background:#eee;color:var(--suave)}
+  details{margin-top:6px} summary{cursor:pointer;color:var(--suave);font-size:13px}
+  .dif{font:12px/1.45 Consolas,monospace;margin:6px 0 0;padding:8px;background:#faf9f6;border-radius:6px;white-space:pre-wrap;word-break:break-word}
+  .nota{color:var(--suave);font-size:13px;margin-top:18px}
+  iframe{position:absolute;left:-9999px;top:0;width:1400px;height:900px;border:0}
+  #json{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Pruebas del motor de cálculo <small>JMG-ELECTRIC</small></h1>
+  <p class="intro">Esta página abre la aplicación, calcula cada caso de prueba y compara el resultado con la referencia guardada: calibres, interruptores, caídas de tensión, puesta a tierra, balance de fases, metrado y alertas. Si algo cambia, se muestra qué valor cambió y cuánto.</p>
+  <div id="veredicto">Ejecutando las pruebas…</div>
+  <div class="barra">
+    <button type="button" class="pri" id="btnRepetir">Volver a ejecutar</button>
+    <button type="button" id="btnReferencia">Guardar estos resultados como nueva referencia</button>
+  </div>
+  <div class="tabla"><table>
+    <thead><tr><th>Caso</th><th>Descripción</th><th>Contra la referencia</th><th>Contra el manual v2.1</th></tr></thead>
+    <tbody id="filas"></tbody>
+  </table></div>
+  <p class="nota">La referencia está en <code>pruebas/referencia.js</code>. Solo genere una nueva referencia cuando un cambio en el cálculo sea intencional y esté revisado (por ejemplo, una corrección de norma); así la próxima ejecución comparará contra los valores nuevos.</p>
+  <pre id="json"></pre>
+</main>
+<iframe id="app" title="Aplicación en prueba"></iframe>
+<script src="casos.js"></script>
+<script src="referencia.js"></script>
+<script src="../manual/casos.js"></script>
+<script>
+const Q=new URLSearchParams(location.search), $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+let ACTUAL=null;
+const REF=typeof REFERENCIA!=="undefined"?REFERENCIA:null, MAN=typeof CASOS!=="undefined"?CASOS:null;
+
+// Resultado completo de un caso, con los números redondeados a 6 decimales
+function resumen(w,r){
+  const red=(k,v)=>typeof v==="number"?+v.toFixed(6):v;
+  const o=JSON.parse(JSON.stringify(r,red));
+  delete o.PS; delete o.varios; delete o.esq; if(o.c) delete o.c.proj;
+  o.metrado=JSON.parse(JSON.stringify(w.metrado(r),red));
+  o.alertas=w.alertas(r);
+  return o;
+}
+// Mismo formato que la tabla de casos del manual v2.1
+function formatoManual(r){
+  return {MD:r.mode==="multi"?r.MD:r.md.MD,CI:r.CI,contratada:r.contratada,
+    alims:r.alims.map(a=>({d:a.desc,P:a.P,I:+a.I.toFixed(2),Id:+a.Id.toFixed(2),itm:a.itm,cond:`${a.s.n}-1×${a.S}`,St:a.St,dv:+a.dVp.toFixed(2),ac:+a.dvAc.toFixed(2),ok:a.ok})),
+    nCirc:r.circ.length,tabs:r.tabs.map(t=>t.tab+" ("+r.circ.filter(q=>q.tab===t.tab).length+")").join(", "),
+    maxDV:+Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(q=>q.dVt)).toFixed(2),
+    pat:+(r.pat.nVar>1?r.pat.Rn:r.pat.Rt).toFixed(2),nVar:r.pat.nVar,desb:r.bal?+r.bal.desb.toFixed(1):null,icc:+r.iccTG.toFixed(2),
+    ok:r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok)};
+}
+// Lista de diferencias entre dos objetos: [ruta, antes, ahora]
+function diferencias(a,b,ruta="",out=[]){
+  if(out.length>=40) return out;
+  if(typeof a==="number"&&typeof b==="number"){ if(Math.abs(a-b)>1e-6*Math.max(1,Math.abs(a))) out.push([ruta,a,b]); return out; }
+  if(a&&b&&typeof a==="object"&&typeof b==="object"){
+    const ks=[...new Set([...Object.keys(a),...Object.keys(b)])];
+    ks.forEach(k=>diferencias(a[k],b[k],ruta+(Array.isArray(a)?`[${k}]`:(ruta?".":"")+k),out)); return out; }
+  if(JSON.stringify(a)!==JSON.stringify(b)) out.push([ruta,a,b]);
+  return out;
+}
+const textoDif=d=>d.map(([r,a,b])=>`${r||"(todo)"}:  antes ${JSON.stringify(a)}  →  ahora ${JSON.stringify(b)}`).join("\n");
+function celda(d,hay){
+  if(!hay) return `<span class="pill na">No aplica</span>`;
+  if(!d.length) return `<span class="pill ok">✔ Igual</span>`;
+  return `<span class="pill mal">✘ ${d.length>=40?"40 o más":d.length} diferencia${d.length>1?"s":""}</span><details><summary>Ver qué cambió</summary><div class="dif">${esc(textoDif(d))}</div></details>`;
+}
+
+function ejecutar(){
+  $("veredicto").className=""; $("veredicto").textContent="Ejecutando las pruebas…"; $("filas").innerHTML="";
+  const f=$("app");
+  f.onload=()=>{ let res;
+    const w=f.contentWindow;
+    // Guarda el borrador y los proyectos del navegador para dejarlos como estaban al terminar
+    let copia=null; try{ copia=Object.entries(w.localStorage); }catch(e){}
+    try{ res=correr(w); }
+    catch(e){ $("veredicto").className="mal"; $("veredicto").innerHTML=`No se pudieron ejecutar las pruebas<span>${esc(e.message)}. Si abrió este archivo directamente desde la carpeta, use <b>ejecutar-pruebas.bat</b> o la versión publicada en GitHub Pages.</span>`; $("json").textContent="ERROR "+e.stack; return; }
+    finally{ if(copia) try{ w.localStorage.clear(); copia.forEach(([k,v])=>w.localStorage.setItem(k,v)); }catch(e){} }
+    mostrar(res);
+  };
+  f.src=(Q.get("app")||"../index.html")+"?prueba="+Date.now();
+}
+function correr(w){
+  const E=s=>w.eval(s), out=[]; ACTUAL={};
+  w.document.getElementById("welcome")?.setAttribute("hidden","");
+  CASOS_PRUEBA.forEach(cp=>{
+    let r=null, err=null;
+    try{ w.aplicar(JSON.parse(JSON.stringify(cp.p))); (w.calcularAhora||w.update)(); r=E("LAST"); if(!r) throw new Error("La aplicación no devolvió resultados (faltan datos)."); }
+    catch(e){ err=e.message; }
+    const res=r?resumen(w,r):null; ACTUAL[cp.id]=res;
+    const ref=REF&&REF.casos[cp.id], man=MAN&&MAN.find(x=>x.id===cp.id);
+    out.push({cp,err,dRef:ref&&res?diferencias(ref,res):err?[["error",null,err]]:[],hayRef:!!ref,dMan:man&&r?diferencias(Object.fromEntries(Object.keys(formatoManual(r)).map(k=>[k,man[k]])),formatoManual(r)):[],hayMan:!!man});
+  });
+  return out;
+}
+function mostrar(res){
+  $("filas").innerHTML=res.map(x=>`<tr><td><b>${x.cp.id}</b></td><td>${esc(x.cp.tit)}${x.err?`<div class="dif">Error: ${esc(x.err)}</div>`:""}</td><td>${celda(x.dRef,x.hayRef||x.err)}</td><td>${celda(x.dMan,x.hayMan)}</td></tr>`).join("");
+  const malR=res.filter(x=>x.dRef.length||x.err).length, malM=res.filter(x=>x.dMan.length).length, n=res.length;
+  const v=$("veredicto");
+  if(!REF){ v.className="aviso"; v.innerHTML=`Todavía no hay referencia guardada<span>Pulse «Guardar estos resultados como nueva referencia».</span>`; }
+  else if(!malR&&!malM){ v.className="ok"; v.innerHTML=`✔ Todas las pruebas pasaron (${n} de ${n})<span>El cálculo da exactamente los mismos resultados que la referencia del ${esc(REF.fecha)} (${esc(REF.version)}) y que los casos del manual v2.1.</span>`; }
+  else { v.className="mal"; v.innerHTML=`✘ ${malR+malM>0?`${malR} caso${malR!==1?"s":""} con diferencias contra la referencia y ${malM} contra el manual`:""}<span>Abra «Ver qué cambió» en cada caso marcado en rojo.</span>`; }
+  $("json").textContent=JSON.stringify({veredicto:v.className,malRef:malR,malManual:malM,total:n,detalle:res.map(x=>({id:x.cp.id,err:x.err,ref:x.dRef.slice(0,10),manual:x.dMan.slice(0,10)}))})+"\n@@REF@@"+textoReferencia();
+}
+function textoReferencia(){
+  const fecha=new Date().toISOString().slice(0,10), ver=$("app").contentWindow.eval("VERSION");
+  return `/* Referencia de las pruebas del cálculo: resultados de JMG-ELECTRIC ${ver} del ${fecha}.\n   Se genera desde pruebas/index.html; no la edite a mano. */\nconst REFERENCIA=${JSON.stringify({version:ver,fecha,casos:ACTUAL})};\n`;
+}
+$("btnRepetir").onclick=ejecutar;
+$("btnReferencia").onclick=()=>{
+  if(!ACTUAL) return;
+  if(REF&&!confirm("¿Reemplazar la referencia? Hágalo solo si los cambios en el cálculo son intencionales y están revisados.")) return;
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([textoReferencia()],{type:"text/javascript"})); a.download="referencia.js"; a.click();
+  alert("Se descargó referencia.js: reemplace con él el archivo pruebas/referencia.js del proyecto.");
+};
+ejecutar();
+</script>
+</body>
+</html>
