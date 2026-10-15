@@ -1,5 +1,5 @@
 /* ================= Proyectos y borrador local ================= */
-const KEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","fp","maxSal","pAl","pTo","reserva","met","aisl","temp","nag","sminD","sminA","rhoMode","desig","idMode","iccE","dvGen","pDesp","bajada","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms","rho_s","fr","Lv","dv","esqPisos","Ltd1"];
+const KEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","fp","maxSal","pAl","pTo","reserva","resAl","met","aisl","temp","nag","sminD","sminA","rhoMode","desig","idMode","iccE","dvGen","pDesp","bajada","area","sot","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms","rho_s","fr","Lv","dv","esqPisos","Ltd1"];
 const SKEY="jmg-electric-v1", DEFV={}; KEYS.forEach(k=>DEFV[k]=$(k).value);
 ["area","Lalim","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"].forEach(k=>{ if($(k)&&!$(k).placeholder) $(k).placeholder="ej. "+DEFV[k]; });
 if($("sot")) $("sot").placeholder="0 si no hay";
@@ -23,7 +23,7 @@ function limpiarLista(a,plantilla,nums=[]){ return Array.isArray(a)?a.filter(x=>
   Object.keys(plantilla).forEach(k=>{ if(x[k]==null||x[k]===""){ if(nums.includes(k)) y[k]=null; return; } y[k]=(nums.includes(k)||typeof plantilla[k]==="number")?(parseFloat(x[k])||0):String(x[k]).replace(/[<>]/g,"").slice(0,120); }); return y; }):null; }
 function aplicar(o){
   PID=typeof o.id==="string"&&/^[\w-]{1,40}$/.test(o.id)?o.id:null;
-  KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=String(o[k]).replace(/[<>]/g,""); else if(k==="esqPisos"||k==="Ltd1"||k==="p_cip") $(k).value=DEFV[k]; });
+  KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=String(o[k]).replace(/[<>]/g,""); else if(k==="esqPisos"||k==="Ltd1"||k==="p_cip"||k==="resAl") $(k).value=DEFV[k]; });
   [["cargas",cargas],["tipos",tipos],["serv",serv],["pisos",pisos]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases"))||(k==="pisos"?[]:null); if(L){ a.length=0; a.push(...L); } });
   const fx=o.FIX&&typeof o.FIX==="object"?o.FIX:{}, ok=v=>v&&typeof v==="object"?Object.fromEntries(Object.entries(v).filter(([,x])=>typeof x==="string")):{};
   FIX={uni:ok(fx.uni),multi:ok(fx.multi)};

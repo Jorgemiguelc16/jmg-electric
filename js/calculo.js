@@ -2,7 +2,7 @@
 function ctx(){
   const aisl=$("aisl").value, temp=+$("temp").value, nag=+$("nag").value, met=$("met").value, ft=FT[aisl][temp]??1, fa=FA[nag]??1;
   return {aisl,temp,nag,met,ft,fa,fc:ft*fa,fp:num("fp")||0.9,maxSal:Math.max(1,Math.min(12,Math.round(num("maxSal")||12))),pAl:num("pAl"),pTo:num("pTo"),
-    reserva:+$("reserva").value, sminD:parseFloat($("sminD").value), sminA:parseFloat($("sminA").value), idMode:$("idMode").value, dvGen:parseFloat($("dvGen").value), iccE:num("iccE")||10,
+    reserva:+$("reserva").value, resAl:+$("resAl").value, fdA:1+(+$("resAl").value)/100, sminD:parseFloat($("sminD").value), sminA:parseFloat($("sminA").value), idMode:$("idMode").value, dvGen:parseFloat($("dvGen").value), iccE:num("iccE")||10,
     proj:{nombre:$("p_nombre").value,prop:$("p_prop").value,ubic:$("p_ubic").value,proy:$("p_proy").value,cip:$("p_cip").value.replace(/[<>]/g,"").trim()},
     pat:{rho:num("rho_s")||100,fr:num("fr")||1,Lv:num("Lv")||2.4,dv:parseFloat($("dv").value)},
     rho:$("rhoMode").value==="20"?RHO_CU:(aisl==="pvc"?0.0209:0.0223),
@@ -131,7 +131,7 @@ function calcUni(c){
   const md=mdVivienda({area,...cargasMD(cs)},false);
   const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
   const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
-  const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI,fd:FD_VIV});
+  const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI,fd:c.fdA,viv:true});
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,al.s,al.L,al.S);
   // Tablero de cada piso: TG si el piso se conecta al tablero general, TD-n si tiene tablero propio
@@ -142,7 +142,7 @@ function calcUni(c){
   // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
   PS.forEach(p=>{ const tab=tabDe(p.n); if(tab==="TG") return;
     const aP=p.area+(p.n===1?0.75*sot:0), mdP=mdVivienda({area:aP,...cargasMD(cs.filter(x=>tabCarga(x)===tab))},false);
-    const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP,fd:FD_VIV});
+    const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP,fd:c.fdA,viv:true});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); p.tab=tab; p.feeder=alims.length-1; p.md=mdP; p.areaC=aP;
     const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab,desc:`Tablero de distribución del ${ORD(p.n)} piso`,feeder:p.feeder,icc,pdc:pdcPara(icc),piso:p.n}); });
   const circ=[];
@@ -169,14 +169,14 @@ function calcMulti(c){
   const SV=serv.map((s,i)=>({...s,_i:i})).filter(s=>s.p>0);
   const Pserv=SV.reduce((s,x)=>s+x.p,0), maxMot=Math.max(0,...SV.filter(x=>x.tipo==="motor").map(x=>x.p)), mdServ=0.75*Pserv;
   const MD=mdDeptos+aireTot+mdServ;
-  const gen=alimentador("Alimentador general: acometida → tablero general TG",MD,sk,Lgen,0,c.dvGen,c,{pKey:"MD",fd:FD_VIV});
+  const gen=alimentador("Alimentador general: acometida → tablero general TG",MD,sk,Lgen,0,c.dvGen,c,{pKey:"MD",fd:c.fdA,viv:true});
   gen.iccO=c.iccE; gen.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,gen.s,gen.L,gen.S);
   const alims=[gen], tabs=[];
   if(SV.length){ const f=alimentador("Alimentador TG → tablero de servicios generales TSG",Pserv+0.25*maxMot,sk,Lms,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"servP"});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab:"TSG",desc:"Tablero de servicios generales",feeder:1,icc,pdc:pdcPara(icc)}); }
   T.forEach((t,ti)=>{ const tab="TD-"+t.nombre.replace(/^Tipo\s*/i,""); t.tab=tab;
-    const f=alimentador(`Alimentador medidor → ${tab} (${t.nombre})`,t.md.MD,"mono220",t.Ld||1,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"tipo",ti,cant:t.cant,Imin:IMIN_DPTO,fd:FD_VIV});
+    const f=alimentador(`Alimentador medidor → ${tab} (${t.nombre})`,t.md.MD,"mono220",t.Ld||1,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"tipo",ti,cant:t.cant,Imin:IMIN_DPTO,fd:c.fdA,viv:true});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); const icc=iccAbajo(iccTG,f.s,f.L,f.S);
     tabs.push({tab,desc:`Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,feeder:alims.length-1,icc,pdc:pdcPara(icc)}); });
   const circ=[];

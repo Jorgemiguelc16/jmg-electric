@@ -19,8 +19,8 @@ const TUBOS=[[20,"3/4\"",19],[25,"1\"",24],[35,"1 1/4\"",32],[40,"1 1/2\"",38],[
 const TIPOS={calentador:"Calentador de agua / ducha (100 %)",cocina:"Cocina eléctrica",aire:"Aire acondicionado (100 %)",motor:"Motor (bomba, etc.)",otra:"Otra carga"};
 const TSERV={alum:"Alumbrado / tomacorrientes",motor:"Motor",otra:"Otra carga"};
 // FD: corriente de diseño de circuitos derivados y del alimentador de servicios generales (carga continua, Regla 050-104).
-// FD_VIV: alimentadores de vivienda y departamentos; su carga calculada no es continua (Reglas 050-200(3) y 050-202(2)).
-const FD_VIV=1;
+// Los alimentadores de vivienda y departamentos usan 1 + reserva (parámetro resAl): su carga calculada no es continua
+// (Reglas 050-200(3) y 050-202(2)), por lo que la norma admite 0 %; 25 % es la reserva para ampliaciones usual en la práctica.
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;
 const SQ3=Math.sqrt(3), VERSION="v2.3";
 const SIST={mono220:{tri:false,V:220,kI:1,K:2,n:2,txt:"1φ 220 V",nom:"Monofásico 220 V",fases:["—"]},

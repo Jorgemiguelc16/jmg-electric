@@ -53,10 +53,12 @@ function expediente(r,estilo="formal"){
     <p>El sistema de puesta a tierra está formado por ${r.pat.nVar>1?`${r.pat.nVar} electrodos (varillas) de cobre en paralelo`:"un electrodo (varilla) de cobre"} de ${fmt(c.pat.Lv,2)} m, conectados a la barra de tierra del tablero general con conductor de cobre de ${r.Selec} mm² (Tabla 17). Todos los circuitos llevan conductor de protección.</p>`;
   B+=sub("Normas aplicables");
   B+=tbl(["Norma","Título","Aplicación en el proyecto"],NORMAS.map(([cod,tit,,uso])=>[`<b>${cod}</b>`,tit,uso]));
+  // Reserva en alimentadores de vivienda: la norma admite 0 % (carga no continua); 25 % es la reserva usual para ampliaciones
+  const resTxt=c.resAl>0?`reserva del ${c.resAl} % para ampliaciones; la norma no la exige porque su carga calculada no es continua, Reglas 050-200(3) y 050-202(2)`:"carga no continua, Reglas 050-200(3) y 050-202(2)";
   B+=sub("Parámetros de diseño");
   B+=kv([["Factor de potencia",fmt(c.fp,2)],["Método de instalación",MET[c.met]],["Aislamiento del conductor",c.aisl==="pvc"?"PVC 70 °C":"XLPE / EPR 90 °C"],
     ["Temperatura ambiente · factor (Tabla 5A)",`${c.temp} °C · ${fmt(c.ft,2)}`],["Circuitos por tubería · factor (Tabla 5C)",`${c.nag} · ${fmt(c.fa,2)}`],["Factor total en circuitos derivados",fmt(c.fc,2)],
-    ["Resistividad del cobre (caída de tensión)",`${c.rho} Ω·mm²/m · ${c.rhoRef}`],["Corriente de diseño",`${FD} × I en circuitos derivados y servicios generales · ${fmt(FD_VIV,2)} × I en alimentadores de vivienda (Reglas 050-200(3) y 050-202(2))`],
+    ["Resistividad del cobre (caída de tensión)",`${c.rho} Ω·mm²/m · ${c.rhoRef}`],["Corriente de diseño",`${FD} × I en circuitos derivados y servicios generales (Regla 050-104) · ${fmt(c.fdA,2)} × I en alimentadores de vivienda (${resTxt})`],
     ["Caída de tensión máxima",`${DV_ALIM} % alimentadores · ${DV_DER} % derivados · ${DV_TOT} % total (Regla 050-102)`],
     ["Sección mínima",`${c.sminA} mm² alimentadores · ${c.sminD} mm² derivados`],["Salidas máximas por circuito",c.maxSal],["Espacios de reserva por tablero",c.reserva]]);
   B+=fin;
@@ -67,7 +69,7 @@ function expediente(r,estilo="formal"){
   B+=`<ol class="ex-list">${CRITERIOS.map(t=>`<li>${t}</li>`).join("")}</ol>
     <div class="ex-calc ex-form"><dl>
       <dt>Corriente nominal</dt><dd>${mx(`${mi("I")} = ${fr(mi("P"),`${mi("k")} · ${mi("V")} · cos ${mi("φ")}`)}`)}<span class="ex-dn">${mi("k")} = 1 en monofásico; ${mi("k")} = √3 en trifásico</span></dd>
-      <dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = ${mi("f")} · ${mi("I")}`)}<span class="ex-dn">${mi("f")} = ${FD} en circuitos derivados (carga continua, Regla 050-104); ${mi("f")} = ${fmt(FD_VIV,2)} en alimentadores de vivienda (carga no continua, Reglas 050-200(3) y 050-202(2)); no menor que la corriente mínima del código</span></dd>
+      <dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = ${mi("f")} · ${mi("I")}`)}<span class="ex-dn">${mi("f")} = ${FD} en circuitos derivados (carga continua, Regla 050-104); ${mi("f")} = ${fmt(c.fdA,2)} en alimentadores de vivienda (${resTxt}); no menor que la corriente mínima del código</span></dd>
       <dt>Selección</dt><dd>${mx(`${sb("I","d")} ≤ ${sb("I","n")} ≤ ${sb("I","z")} · ${sb("F","t")} · ${sb("F","a")}`)}<span class="ex-dn">${sb("I","n")}: interruptor · ${sb("I","z")}: Tabla 2 · ${sb("F","t")}, ${sb("F","a")}: Tablas 5A y 5C</span></dd>
       <dt>Caída de tensión</dt><dd>${mx(`Δ${mi("V")} = ${fr(`${mi("K")} · ${mi("ρ")} · ${mi("L")} · ${mi("I")}`,mi("S"))}`)} &nbsp; ${mx(`Δ${mi("V")}% = ${fr(`Δ${mi("V")}`,mi("V"))} · 100`)}<span class="ex-dn">${mi("K")} = 2 en monofásico; ${mi("K")} = √3 en trifásico</span></dd>
       <dt>Cortocircuito</dt><dd>${mx(`${sb("I","cc")} = ${fr(mi("V"),`${mi("k")} · ${sq(`${sb("Z","f")}² + ${sb("R","c")}²`)}`)}`)} &nbsp; ${mx(`${sb("Z","f")} = ${fr(mi("V"),`${mi("k")} · ${sb("I","cc,e")}`)}`)} &nbsp; ${mx(`${sb("R","c")} = ${fr(`${mi("n")} · ${sb("ρ","20")} · ${mi("L")}`,mi("S"))}`)}</dd>
@@ -176,7 +178,7 @@ function expediente(r,estilo="formal"){
     const tit=alim?esc(x.desc):`${x.tab} · ${x.id} · ${esc(x.desc)}`, Imin=x.Imin&&x.Id===x.Imin;
     return `<div class="ex-calc"><h4>${tit} <span>${fmt(x.P,0)} W · ${s.txt} · L = ${fmt(x.L,1)} m</span></h4><dl>
       <dt>Corriente nominal</dt><dd>${mx(`${mi("I")} = ${fr(fmt(x.P,0),`${k} × ${s.V} × ${fmt(c.fp,2)}`)} = <b>${fmt(x.I,2)} A</b>`)}</dd>
-      <dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = ${fmt(x.fd??FD,2)} × ${fmt(x.I,2)} = ${fmt((x.fd??FD)*x.I,2)} A`)}${Imin?` → se adopta la mínima del código: <b>${fmt(x.Imin,0)} A</b>`:""}</dd>
+      <dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = ${fmt(x.fd??FD,2)} × ${fmt(x.I,2)} = ${fmt((x.fd??FD)*x.I,2)} A`)}${x.viv&&c.resAl>0?` <span class="ex-dn">reserva del ${c.resAl} % para ampliaciones</span>`:""}${Imin?` → se adopta la mínima del código: <b>${fmt(x.Imin,0)} A</b>`:""}</dd>
       <dt>Interruptor</dt><dd>${mx(`${sb("I","n")} = <b>${x.itm??"—"} A</b> ≥ ${sb("I","d")} = ${fmt(x.Id,2)} A`)} · ${s.tri||x.f3?3:2} polos${alim?"":" · curva "+x.curva}</dd>
       <dt>Conductor</dt><dd>${mi("S")} = <b>${x.S} mm²</b> · ${mx(`${sb("I","z")} · ${sb("F","c")} = ${fmt(x.Iz,1)} × ${fmt(fc,2)} = ${fmt(x.Izc,1)} A ≥ ${sb("I","n")} = ${x.itm??"—"} A`)} <span class="ex-dn">Tabla 2, método ${c.met}</span></dd>
       <dt>Caída de tensión</dt><dd>${mx(`Δ${mi("V")} = ${fr(`${K} × ${c.rho} × ${fmt(x.L,1)} × ${fmt(x.I,2)}`,x.S)} = ${fmt(x.dV,2)} V`)} → <b>${fmt(x.dVp,2)} %</b> ≤ ${lim} % · acumulada <b>${fmt(acum,2)} %</b> ≤ ${limT} %</dd>
