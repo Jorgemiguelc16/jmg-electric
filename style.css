@@ -1044,7 +1044,8 @@ nav.tabs{margin-top:10px}
 .rbadge{position:absolute;top:1px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#d9a23a;color:#fff;font:700 10.5px/17px var(--f-mono);font-style:normal;text-align:center;box-shadow:0 0 0 2px var(--ws-ribbon,#f7f8fa)}
 /* Cinta con más comandos: altura según el contenido (tres filas de botones pequeños) y barra de desplazamiento fina si no cabe */
 @media screen{
-.ap-ribbon{height:auto;min-height:84px;scrollbar-width:thin}
+.ap-ribbon{height:auto;min-height:84px;scrollbar-width:none}
+.ap-ribbon::-webkit-scrollbar{display:none}
 .rib{height:auto}
 .col .rs{padding:2px 8px}
 }
