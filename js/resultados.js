@@ -71,7 +71,7 @@ function cardRecom(r){
   const f=d=>{ const x=new Date(d); return isNaN(x)?"":x.toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"}); };
   const li=x=>{ const a=ac[x.id]; return `<li class="${x.tipo}${a?" acep":""}"><div class="rec-h"><span class="rec-t">${x.tipo==="sobre"?"Posible sobredimensionamiento":"Criterio ajustado"}</span><b>${esc(x.tit)}</b></div>
     <p>${esc(x.txt)}</p><p class="rec-s"><b>Sugerencia:</b> ${esc(x.sug)}</p>
-    <div class="rec-a">${a?`<span class="pill ok">Aceptada${f(a)?" · "+f(a):""}</span><button type="button" class="linkbtn" data-recundo="${esc(x.id)}">Deshacer</button>`
+    <div class="rec-a">${x.ir?`<button type="button" class="btn sm" ${x.ir.foco?`data-foco="${x.ir.foco}"`:x.ir.node?`data-node="${esc(x.ir.node)}"`:`data-view="${x.ir.view}"`}>${esc(x.ir.lab)} →</button>`:""}${a?`<span class="pill ok">Aceptada${f(a)?" · "+f(a):""}</span><button type="button" class="linkbtn" data-recundo="${esc(x.id)}">Deshacer</button>`
       :`<button type="button" class="btn sm sec" data-recacep="${esc(x.id)}">Entendido, lo acepto</button>`}</div></li>`; };
   return `<section class="card rec-card"><h2><span>Recomendaciones de diseño</span><span class="ref">${R.length?`${pend} pendiente${pend!==1?"s":""} · ${R.length-pend} aceptada${R.length-pend!==1?"s":""}`:"Sin observaciones"}</span></h2><div class="body">
     <p class="hint">No son incumplimientos de la norma (esos aparecen en Verificaciones normativas). Señalan decisiones que pueden llevar a conductores mayores de lo necesario o dejar poco margen. Revise cada una y acéptela si la decisión es intencional; el cálculo no cambia.</p>

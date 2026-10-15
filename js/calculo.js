@@ -214,40 +214,42 @@ function alertas(r){
 function recomendaciones(r){
   const c=r.c, R=[], nom=x=>x.tab?`${r.tabs.length>1?x.tab+" · ":""}${x.id} ${x.desc}`:x.desc;
   const items=[...r.alims.map(a=>({...a,alim:true})),...r.circ];
+  // Destino del botón «Ir a»: el campo que define el dato o el circuito en el explorador
+  const irItem=x=>x.alim?(x.pKey==="MD"?{foco:r.mode==="multi"?"Lgen":"Lalim",lab:"Ir a la longitud del alimentador"}:x.pKey==="servP"?{foco:"Lms",lab:"Ir a la longitud del alimentador"}:x.pKey==="piso"&&x.piso===1?{foco:"Ltd1",lab:"Ir a la longitud del alimentador"}:{node:"vivienda",lab:"Ir a los datos del tablero"}):{node:"circ:"+x.key,lab:`Ir al circuito ${x.id}`};
   // Sección que bastaría solo por capacidad de corriente (sin caída de tensión)
   const porCorriente=x=>{ const n3=x.alim?x.s.tri:x.f3, tabla=T2[c.met][c.aisl+(n3?"3":"2")], fc=x.alim?c.ft:c.fc, Smin=x.alim?c.sminA:c.sminD;
     const k=SECC.findIndex((S,i)=>S>=Smin&&x.itm!==null&&tabla[i]*fc>=x.itm); return k<0?null:k; };
   const dv=items.filter(x=>{ const k=porCorriente(x); return k!==null&&SECC.indexOf(x.S)-k>=2; });
   if(dv.length) R.push({id:"dv|"+dv.map(nom).join(","),tipo:"sobre",tit:"Secciones definidas por la caída de tensión",
     txt:`${dv.slice(0,4).map(x=>`${nom(x)}: ${x.S} mm² (por corriente bastaría ${SECC[porCorriente(x)]} mm², L = ${fmt(x.L,1)} m)`).join("; ")}${dv.length>4?` y ${dv.length-4} más`:""}.`,
-    sug:"Si la longitud es correcta, la sección es la que exige la Regla 050-102. Para reducirla, acerque el tablero a las cargas, divida el circuito o use un tablero de distribución intermedio."});
+    sug:"Si la longitud es correcta, la sección es la que exige la Regla 050-102. Para reducirla, acerque el tablero a las cargas, divida el circuito o use un tablero de distribución intermedio.",ir:irItem(dv[0])});
   const im=r.alims.filter(a=>a.Imin&&a.Id===a.Imin&&a.Imin>=2*a.I);
   if(im.length) R.push({id:"imin|"+im.map(a=>a.desc).join(","),tipo:"sobre",tit:"Interruptor fijado por la corriente mínima del código",
     txt:im.map(a=>`${a.desc}: carga de ${fmt(a.I,1)} A, pero el código exige al menos ${a.Imin} A (ITM ${a.itm} A)`).join("; ")+".",
-    sug:"Es una exigencia de las Reglas 050-200(1)(b) y 050-202(1)(b), no un error de cálculo. Basta con conocerla al revisar el expediente."});
+    sug:"Es una exigencia de las Reglas 050-200(1)(b) y 050-202(1)(b), no un error de cálculo. Basta con conocerla al revisar el expediente.",ir:{view:"alims",lab:"Ver alimentadores"}});
   if(c.met==="A1") R.push({id:"a1",tipo:"sobre",tit:"Método A1: pared térmicamente aislante",
     txt:"El método A1 corresponde a tubos en paredes con revestimiento aislante y reduce la capacidad de los conductores (por ejemplo, 10 mm²: 46 A en A1 y 57 A en B1).",
-    sug:"Si los tubos van empotrados en ladrillo o concreto, corresponde el método B1 (CNE-U, Tabla 4, ítem 59)."});
+    sug:"Si los tubos van empotrados en ladrillo o concreto, corresponde el método B1 (CNE-U, Tabla 4, ítem 59).",ir:{foco:"met",lab:"Ir a Método de instalación"}});
   if(c.resAl===0) R.push({id:"res0",tipo:"sub",tit:"Alimentadores sin reserva para ampliaciones",
     txt:"Los alimentadores de vivienda se dimensionan con la corriente de la máxima demanda, sin el 25 % de reserva usual.",
-    sug:"Es el mínimo que admite la norma (Reglas 050-200(3) y 050-202(2)). Úselo si no se prevén ampliaciones; en caso contrario, elija 25 %."});
+    sug:"Es el mínimo que admite la norma (Reglas 050-200(3) y 050-202(2)). Úselo si no se prevén ampliaciones; en caso contrario, elija 25 %.",ir:{foco:"resAl",lab:"Ir a Reserva en alimentadores"}});
   const mg=items.filter(x=>x.ok&&(x.alim?x.dvAc>=0.9*DV_ALIM:(x.dVp>=0.9*DV_DER||x.dVt>=0.9*DV_TOT)||x.I>=0.9*x.Izc));
   if(mg.length) R.push({id:"margen|"+mg.map(nom).join(","),tipo:"sub",tit:"Poco margen de caída de tensión o de capacidad",
     txt:`${mg.slice(0,4).map(nom).join("; ")}${mg.length>4?` y ${mg.length-4} más`:""}: ${mg.length>1?"usan":"usa"} el 90 % o más del límite de caída de tensión o de la capacidad del conductor.`,
-    sug:"Cumplen, pero cualquier carga o longitud adicional los dejaría fuera de norma. Considere la siguiente sección si se prevén ampliaciones."});
+    sug:"Cumplen, pero cualquier carga o longitud adicional los dejaría fuera de norma. Considere la siguiente sección si se prevén ampliaciones.",ir:irItem(mg[0])});
   const pw=r.circ.filter(q=>q.n>0&&((q.tipo==="Alumbrado"&&q.P/q.n<100)||(q.tipo==="Tomacorriente"&&q.P/q.n<180)));
   if(pw.length) R.push({id:"pot",tipo:"sub",tit:"Potencia por salida menor que la usual",
     txt:"Se usan menos de 100 W por salida de alumbrado o menos de 180 W por tomacorriente.",
-    sug:"Los valores usuales de diseño son 100 W y 180 W (el CNE tomo V indica 180 VA por salida de tomacorriente). Use valores menores solo si están justificados."});
+    sug:"Los valores usuales de diseño son 100 W y 180 W (el CNE tomo V indica 180 VA por salida de tomacorriente). Use valores menores solo si están justificados.",ir:{foco:r.mode==="multi"?"pAl":"al_p",lab:"Ir a Potencia por salida"}});
   if(c.temp<30) R.push({id:"temp",tipo:"sub",tit:"Temperatura ambiente menor de 30 °C",
     txt:`Con ${c.temp} °C la Tabla 5A aumenta la capacidad de los conductores (factor ${fmt(c.ft,2)}).`,
-    sug:"Use la temperatura del lugar más caluroso por donde pasan los conductores (techos, muros expuestos al sol)."});
+    sug:"Use la temperatura del lugar más caluroso por donde pasan los conductores (techos, muros expuestos al sol).",ir:{foco:"temp",lab:"Ir a Temperatura ambiente"}});
   if(c.met==="C") R.push({id:"metc",tipo:"sub",tit:"Método C: cable a la vista sobre pared",
     txt:"El método C supone cables sin tubo, fijados sobre la pared, y da la mayor capacidad de la Tabla 2.",
-    sug:"Si los conductores van dentro de tubos empotrados, corresponde el método B1."});
+    sug:"Si los conductores van dentro de tubos empotrados, corresponde el método B1.",ir:{foco:"met",lab:"Ir a Método de instalación"}});
   const l1=items.filter(x=>x.L<=1);
   if(l1.length) R.push({id:"l1|"+l1.map(nom).join(","),tipo:"sub",tit:"Longitudes de 1 m o menos",
     txt:`${l1.slice(0,4).map(nom).join("; ")}${l1.length>4?` y ${l1.length-4} más`:""}: ${l1.length>1?"las longitudes son":"la longitud es"} de 1 m o menos, valor que se adopta cuando falta el dato.`,
-    sug:"Ingrese la longitud real hasta la salida más alejada; con 1 m la caída de tensión resulta casi nula."});
+    sug:"Ingrese la longitud real hasta la salida más alejada; con 1 m la caída de tensión resulta casi nula.",ir:irItem(l1[0])});
   return R;
 }
