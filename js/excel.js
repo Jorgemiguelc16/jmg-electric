@@ -128,23 +128,32 @@ async function exportar(){
     if(r.viv===false){
       // Otros usos: Regla 050-210 y Tabla 14
       const md=r.md, U=md.U, d0=m;
-      m=sub(wsM,m,LM,`2.2  Determinación de la máxima demanda · Regla 050-210 y Tabla 14 · ${U.n}`);
+      m=sub(wsM,m,LM,`2.2  Determinación de la máxima demanda · ${U.regla?`Regla ${U.regla}`:"Regla 050-210 y Tabla 14"} · ${U.n}`);
       m=thead(wsM,m,[[1,4,"Concepto"],[5,8,"Criterio"],[9,9,"Instalada (W)"],[10,10,"Demanda (W)"]]);
       const mr=(a,b,ci,de)=>{ span(wsM,m,1,4,a,{box:1,ind:1}); span(wsM,m,5,8,b,{box:1,size:8,color:K.grey,wrap:1}); cell(wsM,m,9,ci,{...val,fmt:"0"}); cell(wsM,m,10,de,{...val,fmt:"0"}); wsM.getRow(m).height=24; return m++; };
+      if(U.regla){
+        // Escuelas, hospitales y hoteles: el factor de demanda se aplica a la carga por área más las cargas especiales
+        const fa=U.wE?(U.resta?[[`Aulas · ${fmt(md.aE,1)} m² × ${U.wE} W/m²`,md.aE*U.wE],[`Resto · ${fmt(md.area-md.aE,1)} m² × ${U.w} W/m²`,(md.area-md.aE)*U.w]]
+          :[[`Edificio · ${fmt(md.area,1)} m² × ${U.w} W/m²`,md.area*U.w],[`Alta intensidad · ${fmt(md.aE,1)} m² × ${U.wE} W/m²`,md.aE*U.wE]]):[[`Edificio · ${fmt(md.area,1)} m² × ${U.w} W/m²`,md.area*U.w]];
+        fa.forEach(([a,v])=>mr(a,`Regla ${U.regla}(1) · dimensiones exteriores`,v,"—"));
+        mr("Cargas especiales",`Potencia nominal del equipo instalado · Regla ${U.regla}(1)`,F(`SUM(${P})`,md.esp),"—");
+        md.tramos.forEach((t,i)=>mr(`Factor de demanda · ${fmt(t.a,1)} m²`,`${t.fal} % ${md.tramos.length===1?"(hasta 900 m²)":i===0?"(primeros 900 m², según la carga por m²)":"(exceso sobre 900 m²)"} · Regla ${U.regla}(2)`,t.inst,F(`I${m}*${t.fal}/100`,t.d)));
+      } else {
       md.tramos.forEach(t=>mr(`Carga por área · ${fmt(t.a,1)} m² × ${U.w} W/m²`,`Tabla 14: factor de demanda de alimentadores ${t.fal} % (acometida ${t.fac} %)`,t.a*U.w,F(`I${m}*${t.fal}/100`,t.d)));
       mr("Cargas especiales","Potencia nominal del equipo instalado · Regla 050-210(b)",F(`SUM(${P})`,md.esp),F(`I${m}`,md.esp));
+      }
       span(wsM,m,1,9,`MÁXIMA DEMANDA · ${U.n.toUpperCase()} (W)`,{box:1,ind:1}); cell(wsM,m,10,F(`SUM(J${d0+1}:J${m-1})`,md.MD),{...val,fmt:"0"}); tot(wsM,m,1,10);
       MDREF=`'Memoria'!$J$${m}`; m+=1;
-      m=nota(wsM,m,LM,`Área servida según las dimensiones exteriores${r.sot>0?", incluido el sótano":""}. No se aplica la corriente mínima de 40 A (propia de viviendas); la carga de los alimentadores es continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.`)+1;
+      m=nota(wsM,m,LM,`Área servida según las dimensiones exteriores${r.sot>0?", incluido el sótano":""}. No se aplica la corriente mínima de 40 A (propia de viviendas); la carga de los alimentadores es continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.${U.regla?` En la Regla ${U.regla} el factor de demanda se aplica a toda la carga, incluidas las cargas especiales.`:""}`)+1;
       const PT=r.PS.filter(p=>p.md);
       if(PT.length){
-        m=sub(wsM,m,LM,"2.3  Máxima demanda por piso · alimentadores a tableros de distribución · Regla 050-210");
-        m=thead(wsM,m,[[1,1,"Piso"],[2,2,"Tablero"],[3,3,"Área (m²)"],[4,5,"Carga por área (W)"],[6,7,"Demanda por área (W)"],[8,9,"Cargas especiales (W)"],[10,10,"MD piso (W)"]]);
+        m=sub(wsM,m,LM,`2.3  Máxima demanda por piso · alimentadores a tableros de distribución · ${U.regla?"Regla "+U.regla:"Regla 050-210"}`);
+        m=thead(wsM,m,[[1,1,"Piso"],[2,2,"Tablero"],[3,3,"Área (m²)"],[4,5,"Carga por área (W)"],[6,7,U.regla?"Carga total (W)":"Demanda por área (W)"],[8,9,"Cargas especiales (W)"],[10,10,"MD piso (W)"]]);
         PT.forEach(p=>{ pisoRow[p.n]=m;
           cell(wsM,m,1,`${ORD(p.n)} piso`,{box:1,bold:1,h:"center"}); cell(wsM,m,2,p.tab,val); cell(wsM,m,3,p.areaC,{...inp,fmt:"0.0"});
-          span(wsM,m,4,5,p.md.carga,{...val,fmt:"0"}); span(wsM,m,6,7,p.md.dem,{...val,fmt:"0"}); span(wsM,m,8,9,p.md.esp,{...val,fmt:"0"});
+          span(wsM,m,4,5,p.md.carga,{...val,fmt:"0"}); span(wsM,m,6,7,U.regla?p.md.total:p.md.dem,{...val,fmt:"0"}); span(wsM,m,8,9,p.md.esp,{...val,fmt:"0"});
           cell(wsM,m,10,p.md.MD,{...val,fmt:"0",bold:1}); m++; });
-        m=nota(wsM,m,LM,"Cada tablero de piso se alimenta desde el tablero general TG; su máxima demanda se obtiene con la Tabla 14 aplicada al área del piso, más las cargas especiales conectadas a ese tablero.")+1;
+        m=nota(wsM,m,LM,`Cada tablero de piso se alimenta desde el tablero general TG; su máxima demanda se obtiene con ${U.regla?"la Regla "+U.regla:"la Tabla 14"} aplicada al área del piso y a las cargas especiales conectadas a ese tablero.`)+1;
       }
     } else {
     m=sub(wsM,m,LM,"2.2  Determinación de la máxima demanda · Regla 050-200(1)");

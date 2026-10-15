@@ -36,7 +36,13 @@ const USOS={
   iglesias:{n:"Iglesias",w:10,fd:[[Infinity,100,100]]},
   cortes:{n:"Cortes de justicia",w:20,fd:[[Infinity,100,100]]},
   garajes:{n:"Garajes",w:10,fd:[[Infinity,100,100]]},
-  almacenaje:{n:"Edificios de almacenaje",w:5,fd:[[Infinity,70,90]]}};
+  almacenaje:{n:"Edificios de almacenaje",w:5,fd:[[Infinity,70,90]]},
+  // Reglas propias (050-204, 050-206, 050-208): carga por área más cargas especiales; el factor de demanda se aplica a toda la carga
+  // (salvo calefacción, Sección 270): f1 hasta 900 m² y, sobre 900 m², f1 a los primeros 900 m² y f2 al exceso, según la carga por m².
+  // wE: W/m² del área especial (aulas o alta intensidad); resta: el área especial se descuenta del resto (escuelas) o se suma (hospitales).
+  escuela:{n:"Escuelas",regla:"050-204",w:10,wE:50,resta:true,lblE:"Área de aulas",f1:75,f2:50},
+  hospital:{n:"Hospitales",regla:"050-206",w:20,wE:100,resta:false,lblE:"Área de alta intensidad (salas de operación)",f1:80,f2:65},
+  hotel:{n:"Hoteles, moteles y dormitorios",regla:"050-208",w:20,f1:80,f2:65}};
 // Potencia por tomacorriente en usos comerciales: criterio de ingeniería (no lo fija el CNE-U); margen para varios equipos por punto
 const VA_TOMA_COM=250;
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;

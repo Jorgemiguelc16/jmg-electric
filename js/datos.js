@@ -18,8 +18,9 @@ const LISTS={
     nuevo:()=>({nombre:"",tipo:"otra",fases:1,p:null,L:null,piso:0})},
   pisos:{arr:pisos,lab:"Piso",labF:i=>`${ORD(i+2)} piso · tablero ${tabPiso(i+2)}`,f:[{k:"area",l:"Área techada (m²)",t:"number"},{k:"Ld",l:"Long. TG → TD (m)",t:"number"},
     {k:"al_n",l:"Salidas de alumbrado",t:"number"},{k:"al_L",l:"Long. alumbrado (m)",t:"number"},{k:"tg_n",l:"Tomacorrientes",t:"number"},{k:"tg_L",l:"Long. tomacorrientes (m)",t:"number"},
-    {k:"tc_n",l:"Tomac. cocina / lavandería",t:"number"},{k:"tc_L",l:"Long. cocina (m)",t:"number"}],
-    nuevo:()=>({area:null,Ld:null,al_n:null,al_L:null,tg_n:null,tg_L:null,tc_n:0,tc_L:null}),
+    {k:"tc_n",l:"Tomac. cocina / lavandería",t:"number"},{k:"tc_L",l:"Long. cocina (m)",t:"number"},
+    {k:"aE",l:"Área de aulas o de alta intensidad (m²)",t:"number",full:1,show:()=>!!USOS[usoAct()]?.wE}],
+    nuevo:()=>({area:null,Ld:null,al_n:null,al_L:null,tg_n:null,tg_L:null,tc_n:0,tc_L:null,aE:0}),
     // al quitar un piso, sus cargas especiales pasan al TG y las de pisos superiores bajan un número
     quitar:i=>{ const n=i+2; cargas.forEach(x=>{ if(x.piso===n) x.piso=0; else if(x.piso>n) x.piso--; });
       for(let k=lums.length-1;k>=0;k--){ if(lums[k].piso===n) lums.splice(k,1); else if(lums[k].piso>n) lums[k].piso--; } },
@@ -39,7 +40,7 @@ const LISTS={
   lumsT:{arr:lumsT,lab:"Luminarias",f:[{k:"n",l:"Cantidad por departamento",t:"number"},{k:"p",l:"W por salida",t:"number"},
     {k:"tipo",l:"Departamento",t:"select",o:()=>tipos.map((t,i)=>[String(i),t.nombre||`Tipo ${i+1}`]),n:1}],
     nuevo:()=>({n:null,p:null,tipo:0})}};
-const HLP={uso:"Vivienda: máxima demanda por la Regla 050-200. Otros usos (oficinas, comercios, etc.): Regla 050-210 y Tabla 14, con W/m² por actividad, área según dimensiones exteriores y tomacorrientes de 250 VA como criterio de diseño.",p_nombre:"Aparece en la memoria, el unifilar y el rótulo del plano.",p_prop:"Titular de la vivienda o del edificio.",p_ubic:"Distrito, provincia y región de la obra.",p_proy:"Ingeniero responsable que firma el expediente.",p_cip:"Número de colegiatura del ingeniero; aparece en la firma del expediente, en el Excel y en el rótulo del unifilar.",
+const HLP={aE:"Escuelas: área de aulas (50 W/m²; el resto del edificio, 10 W/m²). Hospitales: área de alta intensidad como salas de operación (100 W/m² adicionales a los 20 W/m² del edificio). Reglas 050-204 y 050-206.",uso:"Vivienda: máxima demanda por la Regla 050-200. Otros usos (oficinas, comercios, etc.): Regla 050-210 y Tabla 14, con W/m² por actividad, área según dimensiones exteriores y tomacorrientes de 250 VA como criterio de diseño. Escuelas, hospitales y hoteles: Reglas 050-204, 050-206 y 050-208.",p_nombre:"Aparece en la memoria, el unifilar y el rótulo del plano.",p_prop:"Titular de la vivienda o del edificio.",p_ubic:"Distrito, provincia y región de la obra.",p_proy:"Ingeniero responsable que firma el expediente.",p_cip:"Número de colegiatura del ingeniero; aparece en la firma del expediente, en el Excel y en el rótulo del unifilar.",
   area:"Área techada dedicada a vivienda, al 100 % (Regla 050-110).",sot:"Área de sótano; se computa al 75 %. Deje 0 si no hay.",Lalim:"Recorrido del alimentador desde el medidor hasta el tablero general.",
   al_n:"Cantidad de puntos de luz.",al_p:"Potencia por salida de alumbrado; típico 100 W.",al_L:"Recorrido desde el tablero hasta la salida más alejada.",
   tg_n:"Cantidad de tomacorrientes generales.",tg_p:"Potencia por tomacorriente; típico 180 W.",tg_L:"Recorrido desde el tablero hasta el tomacorriente más alejado.",
@@ -95,7 +96,7 @@ function renderSys(boxId,name,def){
 }
 
 // Usos de la Tabla 14 (Regla 050-210) en el selector «Uso de la edificación» del modo unifamiliar
-$("uso").insertAdjacentHTML("beforeend",`<optgroup label="Otros usos · Regla 050-210 y Tabla 14">${Object.entries(USOS).map(([k,u])=>`<option value="${k}">${u.n} · ${u.w} W/m²</option>`).join("")}</optgroup>`);
+$("uso").insertAdjacentHTML("beforeend",`<optgroup label="Otros usos · Regla 050-210 y Tabla 14">${Object.entries(USOS).filter(([,u])=>!u.regla).map(([k,u])=>`<option value="${k}">${u.n} · ${u.w} W/m²</option>`).join("")}</optgroup><optgroup label="Reglas propias · 050-204, 050-206, 050-208">${Object.entries(USOS).filter(([,u])=>u.regla).map(([k,u])=>`<option value="${k}">${u.n} · Regla ${u.regla}</option>`).join("")}</optgroup>`);
 const usoAct=()=>USOS[$("uso").value]?$("uso").value:"viv";
 // Nombre del tipo de edificación para títulos, cabecera y documentos
 const nomEdif=()=>MODE==="multi"?"Edificio multifamiliar":usoAct()==="viv"?"Vivienda unifamiliar":USOS[usoAct()].n;

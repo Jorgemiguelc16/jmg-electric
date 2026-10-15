@@ -123,14 +123,24 @@ function balancear(items,sk,fix){
 // Pisos de la vivienda: el 1er piso con los datos de Vivienda y Salidas, los siguientes desde la lista «pisos»
 function pisosUni(){
   const sal=(n,L)=>({n,L:L||1});
-  return [{n:1,area:num("area"),Ld:num("Ltd1")||1,al:sal(num("al_n"),num("al_L")),tg:sal(num("tg_n"),num("tg_L")),tc:sal(num("tc_n"),num("tc_L"))},
-    ...pisos.map((p,i)=>({n:i+2,i,area:p.area||0,Ld:p.Ld||1,al:sal(p.al_n||0,p.al_L),tg:sal(p.tg_n||0,p.tg_L),tc:sal(p.tc_n||0,p.tc_L)}))];
+  return [{n:1,area:num("area"),aE:num("aE"),Ld:num("Ltd1")||1,al:sal(num("al_n"),num("al_L")),tg:sal(num("tg_n"),num("tg_L")),tc:sal(num("tc_n"),num("tc_L"))},
+    ...pisos.map((p,i)=>({n:i+2,i,area:p.area||0,aE:p.aE||0,Ld:p.Ld||1,al:sal(p.al_n||0,p.al_L),tg:sal(p.tg_n||0,p.tg_L),tc:sal(p.tc_n||0,p.tc_L)}))];
 }
 // Regla 050-210 y Tabla 14: carga por área (dimensiones exteriores) con el factor de demanda de alimentadores,
 // más las cargas especiales a su potencia nominal (050-210(b)). Devuelve los mismos campos que mdVivienda.
-function mdUso(uso,area,cs){
-  const U=USOS[uso], carga=area*U.w, tramos=[]; let ini=0, dem=0;
-  U.fd.forEach(([lim,fac,fal])=>{ const a=Math.max(0,Math.min(area,lim)-ini); if(a>0){ const d=a*U.w*fal/100; dem+=d; tramos.push({a,fac,fal,d}); } ini=lim; });
+function mdUso(uso,area,cs,aE=0){
+  const U=USOS[uso];
+  // Escuelas, hospitales y hoteles (050-204/206/208): el factor de demanda afecta a la carga por área más las cargas especiales
+  if(U.regla){
+    const e=U.wE?Math.min(Math.max(0,aE),area):0, carga=U.wE?(U.resta?U.wE*e+U.w*(area-e):U.w*area+U.wE*e):U.w*area;
+    const esp=cs.reduce((s,x)=>s+(x.p>0?x.p:0),0), total=carga+esp, dens=area>0?total/area:0, tramos=[];
+    if(area<=900) tramos.push({a:area,fal:U.f1,inst:total,d:total*U.f1/100});
+    else tramos.push({a:900,fal:U.f1,inst:dens*900,d:dens*900*U.f1/100},{a:area-900,fal:U.f2,inst:dens*(area-900),d:dens*(area-900)*U.f2/100});
+    const dem=tramos.reduce((s,t)=>s+t.d,0);
+    return {uso,U,area,aE:e,carga,dem,tramos,esp,total,basica:dem,coc:0,mdCoc:0,cal:0,aire:0,otras:esp,mdOtras:0,sinAire:dem,MD:dem};
+  }
+  const carga=area*U.w, tramos=[]; let ini=0, dem=0;
+  U.fd.forEach(([lim,fac,fal])=>{ const a=Math.max(0,Math.min(area,lim)-ini); if(a>0){ const d=a*U.w*fal/100; dem+=d; tramos.push({a,fac,fal,inst:a*U.w,d}); } ini=lim; });
   const esp=cs.reduce((s,x)=>s+(x.p>0?x.p:0),0);
   return {uso,U,area,carga,dem,tramos,esp,basica:dem,coc:0,mdCoc:0,cal:0,aire:0,otras:esp,mdOtras:esp,sinAire:dem+esp,MD:dem+esp};
 }
@@ -143,8 +153,8 @@ function calcUni(c){
   const cs=cargas.map(x=>({...x}));
   const cargasMD=list=>{ const sum=t=>list.filter(x=>x.tipo===t).reduce((s,x)=>s+x.p,0);
     return {coc:sum("cocina"),cal:sum("calentador"),aire:sum("aire"),otras:list.filter(x=>(x.tipo==="otra"||x.tipo==="motor")&&x.p>1500).reduce((s,x)=>s+x.p,0)}; };
-  const mdDe=(a,list)=>viv?mdVivienda({area:a,...cargasMD(list)},false):mdUso(c.uso,a,list);
-  const md=mdDe(area,cs);
+  const mdDe=(a,list,aE=0)=>viv?mdVivienda({area:a,...cargasMD(list)},false):mdUso(c.uso,a,list,aE);
+  const md=mdDe(area,cs,PS.reduce((s,p)=>s+(p.aE||0),0));
   const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
   // Luminarias de otra potencia de cada piso (con un solo piso, todas van al 1er piso)
   const exP=p=>lumsExtra(lums.filter(x=>(varios?Math.round(+x.piso||1):1)===p.n),p.al.n,pw.al), alX=p=>{ const e=exP(p); return e?{n:p.al.n+e.n,mix:e.mix}:{}; };
@@ -159,7 +169,7 @@ function calcUni(c){
   const alims=[al], tabs=[{tab:"TG",desc:viv?"Tablero general de la vivienda":"Tablero general",feeder:0,icc:iccTG,pdc:pdcPara(iccTG)}];
   // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
   PS.forEach(p=>{ const tab=tabDe(p.n); if(tab==="TG") return;
-    const aP=p.area+(p.n===1?fSot*sot:0), mdP=mdDe(aP,cs.filter(x=>tabCarga(x)===tab));
+    const aP=p.area+(p.n===1?fSot*sot:0), mdP=mdDe(aP,cs.filter(x=>tabCarga(x)===tab),p.aE);
     const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP,fd:fdV,viv});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); p.tab=tab; p.feeder=alims.length-1; p.md=mdP; p.areaC=aP;
     const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab,desc:`Tablero de distribución del ${ORD(p.n)} piso`,feeder:p.feeder,icc,pdc:pdcPara(icc),piso:p.n}); });

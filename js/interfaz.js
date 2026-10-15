@@ -1,7 +1,7 @@
 let PRINT=null;
 function render(r){
   const k=[]; const maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)), a0=r.alims[0];
-  if(r.mode==="uni") k.push(["Potencia instalada",fmt(r.CI/1000,2),"kW","Salidas y equipos"],["Máxima demanda",fmt(r.md.MD/1000,2),"kW",r.viv===false?"Regla 050-210 · Tabla 14":"Regla 050-200"],["Alimentador",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
+  if(r.mode==="uni") k.push(["Potencia instalada",fmt(r.CI/1000,2),"kW","Salidas y equipos"],["Máxima demanda",fmt(r.md.MD/1000,2),"kW",r.viv===false?(USOS[r.uso]?.regla?`Regla ${USOS[r.uso].regla}`:"Regla 050-210 · Tabla 14"):"Regla 050-200"],["Alimentador",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
   else k.push(["Departamentos",r.units.length,"",`${r.T.length} tipo(s)`],["Máxima demanda",fmt(r.MD/1000,2),"kW","Edificio · Regla 050-202"],["Alimentador general",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
   k.push(["Potencia a contratar",fmt(r.contratada,1),"kW","Sugerida"],["ΔV máx. total",fmt(maxDV,2),"%",pill(maxDV<=DV_TOT,"Dentro del límite","Excede 4 %")],["Puesta a tierra",fmt(r.pat.Rt,1),"Ω",pill(r.pat.ok,"Cumple","Excede 25 Ω")]);
   if(r.bal) k.push(["Desbalance",fmt(r.bal.desb,1),"%",r.bal.desb<=10?pillS("ok","≤ 10 %"):pillS("warn",r.bal.desb<=r.bal.desbMin+0.05?"Mínimo posible":"Revisar reparto")]);
@@ -113,8 +113,10 @@ function uiPisos(){
   const ta=lt("area"); if(ta) ta.nodeValue=varios?"Área techada del 1er piso (m²)":"Área techada (m²)";
   $("fs-sal").querySelector("legend").textContent=varios?"Salidas · 1er piso":"Salidas"; $("salPisos").hidden=varios;
   document.querySelector("#fs-pisos .pisos-esq").hidden=!varios; $("lblLtd1").hidden=!(varios&&td);
-  $("pisosHint").textContent=varios?`Vivienda de ${pisos.length+1} pisos: el alimentador general se calcula con el área total; cada tablero de piso, con la Regla 050-200 aplicada al área de su piso.`
-    :"Vivienda de un piso: todos los circuitos salen del tablero general TG. Agregue los pisos superiores para que cada uno tenga su tablero de distribución.";
+  const uU=USOS[usoAct()], edif=uU?"Edificación":"Vivienda", regP=uU?(uU.regla?`la Regla ${uU.regla}`:"la Tabla 14 (Regla 050-210)"):"la Regla 050-200";
+  $("pisosLeg").innerHTML=`Pisos y tableros <small>${uU?(uU.regla||"050-210"):"050-200"}</small>`;
+  $("pisosHint").textContent=varios?`${edif} de ${pisos.length+1} pisos: el alimentador general se calcula con el área total; cada tablero de piso, con ${regP} aplicada al área de su piso.`
+    :`${edif} de un piso: todos los circuitos salen del tablero general TG. Agregue los pisos superiores para que cada uno tenga su tablero de distribución.`;
 }
 // Cálculo automático (AUTO) o manual: en manual los cambios se guardan, pero se recalcula solo con calcularAhora()
 let AUTO=true, FORZAR=false, DESACT=false;
@@ -156,6 +158,14 @@ function uiUso(){
   $("vivLeg").innerHTML=viv?"Vivienda <small>050-110 · 050-200</small>":"Edificación <small>050-210 · Tabla 14</small>";
   $("areaLbl").textContent=viv?"Área techada (m²)":"Área según dimensiones exteriores (m²)";
   $("vivHint").textContent=viv?"Área de vivienda: 100 % de pisos dedicados a vivienda más 75 % del sótano. Alimentador: del medidor al tablero general."
-    :"Área servida según las dimensiones exteriores, incluido el sótano (Regla 050-210). Alimentador: del medidor al tablero general.";
-  $("usoHint").textContent=viv?"":`${U.n}: ${U.w} W/m² con factor de demanda del ${U.fd.map(([l,,f])=>`${f} %${l<Infinity?` en los primeros ${l} m²`:U.fd.length>1?" en el exceso":""}`).join(" y ")} (Tabla 14), más las cargas especiales a su potencia nominal. Sin corriente mínima de 40 A; alimentadores con 1.25 × I por ser carga continua (Regla 050-104(3)). Tomacorrientes: ${VA_TOMA_COM} VA por salida como criterio de diseño.`;
+    :`Área servida según las dimensiones exteriores, incluido el sótano (Regla ${U.regla||"050-210"}). Alimentador: del medidor al tablero general.`;
+  NODETIT.vivienda=viv?"Vivienda":"Edificación"; if(NODE==="vivienda"&&$("propSub")) $("propSub").textContent=NODETIT.vivienda;
+  const comun=` Sin corriente mínima de 40 A; alimentadores con 1.25 × I por ser carga continua (Regla 050-104(3)). Tomacorrientes: ${VA_TOMA_COM} VA por salida como criterio de diseño.`;
+  $("usoHint").textContent=viv?"":U.regla
+    ?`${U.n} (Regla ${U.regla}): ${U.wE?(U.resta?`${U.wE} W/m² en ${U.lblE.toLowerCase()} y ${U.w} W/m² en el resto`:`${U.w} W/m² en todo el edificio más ${U.wE} W/m² en ${U.lblE.toLowerCase()}`):`${U.w} W/m²`}, más las cargas especiales a su potencia nominal; a toda esa carga se aplica ${U.f1} % hasta 900 m² y, en edificaciones mayores, ${U.f1} % a los primeros 900 m² y ${U.f2} % al exceso.`+comun
+    :`${U.n}: ${U.w} W/m² con factor de demanda del ${U.fd.map(([l,,f])=>`${f} %${l<Infinity?` en los primeros ${l} m²`:U.fd.length>1?" en el exceso":""}`).join(" y ")} (Tabla 14), más las cargas especiales a su potencia nominal.`+comun;
+  // Área especial (aulas o alta intensidad): solo en escuelas y hospitales
+  $("aEBox").hidden=!U?.wE; if(U?.wE) $("aELbl").textContent=`${U.lblE} (m²)`;
+  $("vivLeg").innerHTML=viv?"Vivienda <small>050-110 · 050-200</small>":`Edificación <small>${U.regla?U.regla:"050-210 · Tabla 14"}</small>`;
+  if(typeof renderList==="function"&&pisos.length) renderList("pisos");
 }
