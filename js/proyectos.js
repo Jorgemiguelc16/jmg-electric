@@ -9,7 +9,7 @@ const LKEY="jmg-electric-proyectos";
 const nuevoId=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function libLoad(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
 function libSave(L){ try{ localStorage.setItem(LKEY,JSON.stringify(L)); return true; }catch(e){ return false; } }
-function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,FIX,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
+function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,FIX,ACEP,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
 const esEjemplo=()=>/^EJEMPLO\b/.test($("p_nombre").value.trim());
 function saveDraft(){
   if(esEjemplo()){ PID=null; try{ localStorage.setItem(SKEY,JSON.stringify(estado())); }catch(e){} return; }
@@ -27,6 +27,7 @@ function aplicar(o){
   [["cargas",cargas],["tipos",tipos],["serv",serv],["pisos",pisos]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases"))||(k==="pisos"?[]:null); if(L){ a.length=0; a.push(...L); } });
   const fx=o.FIX&&typeof o.FIX==="object"?o.FIX:{}, ok=v=>v&&typeof v==="object"?Object.fromEntries(Object.entries(v).filter(([,x])=>typeof x==="string")):{};
   FIX={uni:ok(fx.uni),multi:ok(fx.multi)};
+  const ac=o.ACEP&&typeof o.ACEP==="object"?o.ACEP:{}; ACEP={uni:ok(ac.uni),multi:ok(ac.multi)};
   const sv=v=>["mono220","tri220","tri380"].includes(v)?v:null;
   renderSys("sys_uni","sist",sv(o.sist)||"mono220"); renderSys("sys_multi","sistG",sv(o.sistG)||"tri380");
   Object.keys(LISTS).forEach(renderList);

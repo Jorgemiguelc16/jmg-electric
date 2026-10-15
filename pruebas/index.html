@@ -68,6 +68,7 @@ function resumen(w,r){
   delete o.PS; delete o.varios; delete o.esq; if(o.c) delete o.c.proj;
   o.metrado=JSON.parse(JSON.stringify(w.metrado(r),red));
   o.alertas=w.alertas(r);
+  if(typeof w.recomendaciones==="function") o.recomendaciones=w.recomendaciones(r).map(x=>[x.tipo,x.id,x.txt]);
   return o;
 }
 // Mismo formato que la tabla de casos del manual v2.1

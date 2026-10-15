@@ -7,13 +7,13 @@ function render(r){
   if(r.bal) k.push(["Desbalance",fmt(r.bal.desb,1),"%",r.bal.desb<=10?pillS("ok","≤ 10 %"):pillS("warn",r.bal.desb<=r.bal.desbMin+0.05?"Mínimo posible":"Revisar reparto")]);
   let html=`<div class="kpis">${k.map(([a,b,u,n])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${b}${u?`<small>${u}</small>`:""}</div><div class="n">${n}</div></div>`).join("")}</div>`;
   const S={}, A=alertas(r);
-  S.resumen=()=>`<div class="two">${cardSuministro(r,"")}${cardPozo(r,"")}</div>${cardAlertas(r,"")}`;
+  S.resumen=()=>`<div class="two">${cardSuministro(r,"")}${cardPozo(r,"")}</div>${cardAlertas(r,"")}${cardRecom(r)}`;
   S.demanda=()=>cardDemanda(r);
   S.alims=()=>tablaAlims(r,""); S.cuadro=()=>tablaCircuitos(r,"");
   if(r.bal) S.balance=()=>cardBalance(r,"");
-  S.unifilar=()=>cardUnifilar(r,""); S.metrado=()=>cardMetrado(r); S.verif=()=>cardAlertas(r,"");
+  S.unifilar=()=>cardUnifilar(r,""); S.metrado=()=>cardMetrado(r); S.verif=()=>cardAlertas(r,"")+cardRecom(r);
   const st={alims:r.alims.every(a=>a.ok)?"":"bad",cuadro:r.circ.every(q=>q.ok)?"":"bad",balance:r.bal&&r.bal.desb>10?"warn":"",
-    verif:A.some(x=>x[0]===false)?"bad":A.some(x=>x[0]==="warn")?"warn":""};
+    verif:A.some(x=>x[0]===false)?"bad":A.some(x=>x[0]==="warn")||recomendaciones(r).some(x=>!(ACEP[r.mode]||{})[x.id])?"warn":""};
   if(!S[VIEW]) VIEW="resumen";
   const kp=html;
   PRINT=()=>{ const P=r.c.proj, f=new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"});

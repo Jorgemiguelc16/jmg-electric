@@ -99,6 +99,11 @@ function expediente(r,estilo="formal"){
       <dt>Verificación</dt><dd>${fmt(p.nVar>1?p.Rn:p.Rt,2)} Ω ${(p.nVar>1?p.Rn:p.Rt)<=25?"≤":">"} 25 Ω (Regla 060-712) ${pill((p.nVar>1?p.Rn:p.Rt)<=25)}</dd></dl></div>`; }
   B+=sub("Verificaciones normativas");
   B+=cardAlertas(r,"");
+  // Recomendaciones de diseño que el proyectista revisó y aceptó (las pendientes no se imprimen)
+  const ac=ACEP[r.mode]||{}, RA=recomendaciones(r).filter(x=>ac[x.id]);
+  if(RA.length) B+=`<h3 class="ex-h3">Criterios de diseño revisados y aceptados por el proyectista</h3>
+    <p>Las siguientes decisiones cumplen la normativa y fueron revisadas y aceptadas expresamente por el proyectista:</p>
+    <ul class="ex-list">${RA.map(x=>`<li><b>${esc(x.tit)}.</b> ${esc(x.txt)}</li>`).join("")}</ul>`;
   B+=fin;
 
   /* ---------- 3. ESPECIFICACIONES TÉCNICAS ---------- */

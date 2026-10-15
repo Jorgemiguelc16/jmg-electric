@@ -22,6 +22,10 @@ $("results").addEventListener("change",e=>{
   update();
 });
 $("results").addEventListener("click",e=>{ if(e.target.closest("[data-balreset]")){ FIX[MODE]={}; update(); } });
+// Recomendaciones de diseño: aceptar (queda registrada la fecha en el proyecto) o deshacer
+$("results").addEventListener("click",e=>{ const a=e.target.closest("[data-recacep]"), u=e.target.closest("[data-recundo]");
+  if(a){ ACEP[MODE]={...ACEP[MODE],[a.dataset.recacep]:new Date().toISOString()}; calcularAhora(); }
+  else if(u){ const o={...ACEP[MODE]}; delete o[u.dataset.recundo]; ACEP[MODE]=o; calcularAhora(); } });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-foco]"); if(b) focoCampo(b.dataset.foco);
   const ej=e.target.closest("[data-ej2]"); if(ej) cargarEjemplo(ej.dataset.ej2); });
 $("results").addEventListener("click",e=>{ const b=e.target.closest("[data-view]"); if(!b) return; VIEW=b.dataset.view; try{ localStorage.setItem("jmg-electric-view",VIEW); }catch(e){} update(); });

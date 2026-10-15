@@ -5,7 +5,7 @@ const condTxt=(n,S,c)=>`${n}-1×${S} mm²${c&&c.desig?" "+c.desig:""}`;
 const sugerencia=r=>{ const m=r.bal&&r.bal.mayor; if(!m||r.bal.desbMin<=10) return "";
   return r.mode==="uni"?`Sugerencia: divida el circuito ${m.id} (${m.desc}, ${fmt(m.P,0)} W) en dos circuitos o aliméntelo como carga trifásica.`
     :`Sugerencia: el reparto está limitado por unidades de gran carga (${m.ref||m.desc}, ${fmt(m.P,0)} W); evalúe un suministro trifásico para ellas o redistribuya las cargas comunes.`; };
-let MODE="uni", TAB="inicio", LAST=null, FIX={uni:{},multi:{}}, VIEW="resumen", PID=null;
+let MODE="uni", TAB="inicio", LAST=null, FIX={uni:{},multi:{}}, ACEP={uni:{},multi:{}}, VIEW="resumen", PID=null;
 try{ VIEW=localStorage.getItem("jmg-electric-view")||"resumen"; }catch(e){}
 const VORDEN=["resumen","demanda","alims","cuadro","balance","unifilar","metrado","verif"];
 const VLBL={resumen:"Resumen",demanda:"Máxima demanda",alims:"Alimentadores",cuadro:"Cuadro de cargas",balance:"Balance de fases",unifilar:"Diagrama unifilar",metrado:"Metrado",verif:"Verificaciones"};
@@ -64,6 +64,18 @@ function cardPozo(r,nro){
 }
 function cardAlertas(r,nro){
   return `<section class="card"><h2><span><span class="num">${nro}</span>Verificaciones normativas</span></h2><div class="body"><ul class="alerts">${alertas(r).map(([ok,ref,t])=>`<li class="${ok===true?"ok":ok==="warn"?"warn":"bad"}"><b>${ref}</b><span>${t}</span></li>`).join("")}</ul></div></section>`;
+}
+// Recomendaciones de diseño: avisos que el proyectista revisa y acepta; no detienen el cálculo
+function cardRecom(r){
+  const R=recomendaciones(r), ac=ACEP[r.mode]||{}, pend=R.filter(x=>!ac[x.id]).length;
+  const f=d=>{ const x=new Date(d); return isNaN(x)?"":x.toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"}); };
+  const li=x=>{ const a=ac[x.id]; return `<li class="${x.tipo}${a?" acep":""}"><div class="rec-h"><span class="rec-t">${x.tipo==="sobre"?"Posible sobredimensionamiento":"Criterio ajustado"}</span><b>${esc(x.tit)}</b></div>
+    <p>${esc(x.txt)}</p><p class="rec-s"><b>Sugerencia:</b> ${esc(x.sug)}</p>
+    <div class="rec-a">${a?`<span class="pill ok">Aceptada${f(a)?" · "+f(a):""}</span><button type="button" class="linkbtn" data-recundo="${esc(x.id)}">Deshacer</button>`
+      :`<button type="button" class="btn sm sec" data-recacep="${esc(x.id)}">Entendido, lo acepto</button>`}</div></li>`; };
+  return `<section class="card rec-card"><h2><span>Recomendaciones de diseño</span><span class="ref">${R.length?`${pend} pendiente${pend!==1?"s":""} · ${R.length-pend} aceptada${R.length-pend!==1?"s":""}`:"Sin observaciones"}</span></h2><div class="body">
+    <p class="hint">No son incumplimientos de la norma (esos aparecen en Verificaciones normativas). Señalan decisiones que pueden llevar a conductores mayores de lo necesario o dejar poco margen. Revise cada una y acéptela si la decisión es intencional; el cálculo no cambia.</p>
+    ${R.length?`<ul class="recs">${R.map(li).join("")}</ul>`:`<p class="hint">Los criterios del proyecto están dentro de los valores usuales de diseño.</p>`}</div></section>`;
 }
 function cardDemanda(r){ let html="";
     if(r.mode==="uni"){ const m=r.md;
