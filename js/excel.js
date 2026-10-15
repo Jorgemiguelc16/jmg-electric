@@ -108,9 +108,9 @@ async function exportar(){
   par("icc","Corriente de cortocircuito en el punto de entrega",c.iccE,"kA","Dato de la concesionaria (Norma DGE, 110.F)",true,"0.0");
   par("idm","Esquema de interruptores diferenciales",c.idMode==="grupo"?"Por grupos de 3 circuitos":"Uno por circuito","",c.idMode==="grupo"?"Regla 150-400(8)":"Regla 150-400(9)",false,"@");
   if(!multi){
-    par("aT",r.varios?`Área techada de vivienda (${r.PS.length} pisos)`:"Área techada de vivienda",r.areaT,"m²","Regla 050-110(1)",true,"0.0");
-    par("aS","Área de sótano",r.sot,"m²","Se computa al 75 %",true,"0.0");
-    { const rr=m; R.area=`'Memoria'!$F$${rr}`; span(wsM,m,1,5,"Área de vivienda computable",{box:1,ind:1}); cell(wsM,m,6,F(`F${rr-2}+0.75*F${rr-1}`,r.area),{...val,fmt:"0.0",bold:1}); cell(wsM,m,7,"m²",{...val,color:K.grey}); span(wsM,m,8,10,"Regla 050-110(1)",{box:1,size:8,color:K.grey}); m++; }
+    const vX=r.viv!==false; par("aT",vX?(r.varios?`Área techada de vivienda (${r.PS.length} pisos)`:"Área techada de vivienda"):(r.varios?`Área según dimensiones exteriores (${r.PS.length} pisos)`:"Área según dimensiones exteriores"),r.areaT,"m²",vX?"Regla 050-110(1)":"Regla 050-210",true,"0.0");
+    par("aS","Área de sótano",r.sot,"m²",vX?"Se computa al 75 %":"Se computa al 100 % (área servida)",true,"0.0");
+    { const rr=m; R.area=`'Memoria'!$F$${rr}`; span(wsM,m,1,5,vX?"Área de vivienda computable":"Área servida computable",{box:1,ind:1}); cell(wsM,m,6,F(`F${rr-2}+${vX?0.75:1}*F${rr-1}`,r.area),{...val,fmt:"0.0",bold:1}); cell(wsM,m,7,"m²",{...val,color:K.grey}); span(wsM,m,8,10,"Regla 050-110(1)",{box:1,size:8,color:K.grey}); m++; }
   }
   m=nota(wsM,m,LM,"Las celdas sombreadas en azul son datos de entrada: al modificarlas, el libro recalcula los resultados.")+1;
 
@@ -125,6 +125,28 @@ async function exportar(){
       cell(wsM,m,7,it?(it.fases===3&&SIST[r.sk].tri?"3φ":"1φ"):"—",val); cell(wsM,m,8,it?it.p:0,{...inp,fmt:"0"}); cell(wsM,m,9,it?it.L:0,{...val,fmt:"0.0"});
       const ci=it?r.circ.find(q=>q.desc===it.nombre):null; cell(wsM,m,10,ci?(r.varios?`${ci.tab} · ${ci.id}`:ci.id):"—",val); m++; }
     const T=`$E$${c0}:$E$${m-1}`, P=`$H$${c0}:$H$${m-1}`; m++;
+    if(r.viv===false){
+      // Otros usos: Regla 050-210 y Tabla 14
+      const md=r.md, U=md.U, d0=m;
+      m=sub(wsM,m,LM,`2.2  Determinación de la máxima demanda · Regla 050-210 y Tabla 14 · ${U.n}`);
+      m=thead(wsM,m,[[1,4,"Concepto"],[5,8,"Criterio"],[9,9,"Instalada (W)"],[10,10,"Demanda (W)"]]);
+      const mr=(a,b,ci,de)=>{ span(wsM,m,1,4,a,{box:1,ind:1}); span(wsM,m,5,8,b,{box:1,size:8,color:K.grey,wrap:1}); cell(wsM,m,9,ci,{...val,fmt:"0"}); cell(wsM,m,10,de,{...val,fmt:"0"}); wsM.getRow(m).height=24; return m++; };
+      md.tramos.forEach(t=>mr(`Carga por área · ${fmt(t.a,1)} m² × ${U.w} W/m²`,`Tabla 14: factor de demanda de alimentadores ${t.fal} % (acometida ${t.fac} %)`,t.a*U.w,F(`I${m}*${t.fal}/100`,t.d)));
+      mr("Cargas especiales","Potencia nominal del equipo instalado · Regla 050-210(b)",F(`SUM(${P})`,md.esp),F(`I${m}`,md.esp));
+      span(wsM,m,1,9,`MÁXIMA DEMANDA · ${U.n.toUpperCase()} (W)`,{box:1,ind:1}); cell(wsM,m,10,F(`SUM(J${d0+1}:J${m-1})`,md.MD),{...val,fmt:"0"}); tot(wsM,m,1,10);
+      MDREF=`'Memoria'!$J$${m}`; m+=1;
+      m=nota(wsM,m,LM,`Área servida según las dimensiones exteriores${r.sot>0?", incluido el sótano":""}. No se aplica la corriente mínima de 40 A (propia de viviendas); la carga de los alimentadores es continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.`)+1;
+      const PT=r.PS.filter(p=>p.md);
+      if(PT.length){
+        m=sub(wsM,m,LM,"2.3  Máxima demanda por piso · alimentadores a tableros de distribución · Regla 050-210");
+        m=thead(wsM,m,[[1,1,"Piso"],[2,2,"Tablero"],[3,3,"Área (m²)"],[4,5,"Carga por área (W)"],[6,7,"Demanda por área (W)"],[8,9,"Cargas especiales (W)"],[10,10,"MD piso (W)"]]);
+        PT.forEach(p=>{ pisoRow[p.n]=m;
+          cell(wsM,m,1,`${ORD(p.n)} piso`,{box:1,bold:1,h:"center"}); cell(wsM,m,2,p.tab,val); cell(wsM,m,3,p.areaC,{...inp,fmt:"0.0"});
+          span(wsM,m,4,5,p.md.carga,{...val,fmt:"0"}); span(wsM,m,6,7,p.md.dem,{...val,fmt:"0"}); span(wsM,m,8,9,p.md.esp,{...val,fmt:"0"});
+          cell(wsM,m,10,p.md.MD,{...val,fmt:"0",bold:1}); m++; });
+        m=nota(wsM,m,LM,"Cada tablero de piso se alimenta desde el tablero general TG; su máxima demanda se obtiene con la Tabla 14 aplicada al área del piso, más las cargas especiales conectadas a ese tablero.")+1;
+      }
+    } else {
     m=sub(wsM,m,LM,"2.2  Determinación de la máxima demanda · Regla 050-200(1)");
     m=thead(wsM,m,[[1,4,"Concepto"],[5,8,"Criterio"],[9,9,"Instalada (W)"],[10,10,"Demanda (W)"]]);
     const md=r.md, d0=m;
@@ -147,6 +169,7 @@ async function exportar(){
         cell(wsM,m,9,F(`IF(E${m}>0,6000+0.4*MAX(0,E${m}-12000),0)+IF(E${m}>0,0.25*H${m},MIN(H${m},6000)+0.25*MAX(0,H${m}-6000))`,p.md.mdCoc+p.md.mdOtras),{...val,fmt:"0"});
         cell(wsM,m,10,F(`D${m}+F${m}+G${m}+I${m}`,p.md.MD),{...val,fmt:"0",bold:1}); m++; });
       m=nota(wsM,m,LM,`Cada tablero de piso se alimenta desde el tablero general TG; su máxima demanda se obtiene con la Regla 050-200 aplicada al área del piso y a las cargas especiales conectadas a ese tablero${r.sot>0&&r.esq==="td"?" (el sótano, al 75 %, se asigna al 1er piso)":""}. El alimentador general conserva la máxima demanda de toda la vivienda.${r.esq==="tg"?" Los circuitos del 1er piso salen directamente del tablero general TG.":""}`)+1;
+    }
     }
   } else {
     m=sub(wsM,m,LM,"2.1  Carga por unidad de vivienda · Regla 050-202(1)");

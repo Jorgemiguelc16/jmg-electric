@@ -21,6 +21,24 @@ const TSERV={alum:"Alumbrado / tomacorrientes",motor:"Motor",otra:"Otra carga"};
 // FD: corriente de diseño de circuitos derivados y del alimentador de servicios generales (carga continua, Regla 050-104).
 // Los alimentadores de vivienda y departamentos usan 1 + reserva (parámetro resAl): su carga calculada no es continua
 // (Reglas 050-200(3) y 050-202(2)), por lo que la norma admite 0 %; 25 % es la reserva para ampliaciones usual en la práctica.
+// Tabla 14 (Regla 050-210): W/m² y factores de demanda según el tipo de actividad.
+// fd: tramos [hasta m², % acometida, % alimentador]; solo las oficinas tienen dos tramos (primeros 930 m² y exceso).
+const USOS={
+  oficina:{n:"Oficinas",w:50,fd:[[930,90,100],[Infinity,70,90]]},
+  comercial:{n:"Industrial, comercial",w:25,fd:[[Infinity,100,100]]},
+  bodegas:{n:"Bodegas, restaurantes",w:30,fd:[[Infinity,100,100]]},
+  bancos:{n:"Bancos",w:25,fd:[[Infinity,100,100]]},
+  barberias:{n:"Barberías y salones de belleza",w:30,fd:[[Infinity,90,100]]},
+  clubes:{n:"Clubes",w:20,fd:[[Infinity,80,100]]},
+  hospedajes:{n:"Hospedajes",w:15,fd:[[Infinity,80,100]]},
+  teatros:{n:"Teatros",w:30,fd:[[Infinity,75,95]]},
+  auditorios:{n:"Auditorios",w:10,fd:[[Infinity,80,100]]},
+  iglesias:{n:"Iglesias",w:10,fd:[[Infinity,100,100]]},
+  cortes:{n:"Cortes de justicia",w:20,fd:[[Infinity,100,100]]},
+  garajes:{n:"Garajes",w:10,fd:[[Infinity,100,100]]},
+  almacenaje:{n:"Edificios de almacenaje",w:5,fd:[[Infinity,70,90]]}};
+// Potencia por tomacorriente en usos comerciales: criterio de ingeniería (no lo fija el CNE-U); margen para varios equipos por punto
+const VA_TOMA_COM=250;
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;
 const SQ3=Math.sqrt(3), VERSION="v2.4";
 const SIST={mono220:{tri:false,V:220,kI:1,K:2,n:2,txt:"1φ 220 V",nom:"Monofásico 220 V",fases:["—"]},

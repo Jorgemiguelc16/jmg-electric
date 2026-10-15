@@ -48,5 +48,8 @@ const CASOS_PRUEBA=[
   {id:"P12",tit:"Edificio sin reserva en alimentadores (0 %, Regla 050-202(2))",p:caso("multi",{resAl:"0"})},
   {id:"P13",tit:"Luminarias de distintas potencias: 17 × 100 W + 8 × 36 W",p:caso("uni",{al_n:"17",lums:[{n:8,p:36,piso:1}]})},
   {id:"P14",tit:"Vivienda de 2 pisos con luminarias de otra potencia en cada piso",p:caso("uni",{sist:"tri380",area:"90",Ltd1:"6",pisos:[{area:80,Ld:10,al_n:10,al_L:15,tg_n:12,tg_L:16,tc_n:0,tc_L:null}],lums:[{n:6,p:50,piso:2},{n:4,p:20,piso:1}]})},
-  {id:"P15",tit:"Edificio con luminarias de otra potencia por tipo de departamento",p:caso("multi",{lumsT:[{n:4,p:20,tipo:0},{n:2,p:60,tipo:1}]})}
+  {id:"P15",tit:"Edificio con luminarias de otra potencia por tipo de departamento",p:caso("multi",{lumsT:[{n:4,p:20,tipo:0},{n:2,p:60,tipo:1}]})},
+  {id:"P16",tit:"Oficina de 300 m² · trifásico 380/220 V · Tabla 14",p:caso("uni",{uso:"oficina",sist:"tri380",area:"300",al_n:"40",tg_n:"36",tg_p:"250",tc_n:"0",cargas:[{nombre:"Aire acondicionado 1",tipo:"aire",fases:3,p:3500,L:18,piso:0},{nombre:"Aire acondicionado 2",tipo:"aire",fases:3,p:3500,L:22,piso:0},{nombre:"Fotocopiadora",tipo:"otra",fases:1,p:1500,L:15,piso:0}]})},
+  {id:"P17",tit:"Oficinas de 1 200 m² en 3 pisos: dos tramos de la Tabla 14 (930 m²)",p:caso("uni",{uso:"oficina",sist:"tri380",area:"400",Ltd1:"8",esqPisos:"td",tg_p:"250",tc_n:"0",pisos:[{area:400,Ld:12,al_n:40,al_L:30,tg_n:40,tg_L:30,tc_n:0,tc_L:null},{area:400,Ld:16,al_n:40,al_L:30,tg_n:40,tg_L:30,tc_n:0,tc_L:null}],al_n:"40",tg_n:"40",cargas:[]})},
+  {id:"P18",tit:"Local comercial con sótano · monofásico · Tabla 14",p:caso("uni",{uso:"comercial",area:"120",sot:"40",al_n:"20",tg_n:"16",tg_p:"250",tc_n:"0",cargas:[{nombre:"Vitrina refrigerada",tipo:"otra",fases:1,p:1200,L:12,piso:0}]})}
 ];

@@ -1,7 +1,7 @@
 let PRINT=null;
 function render(r){
   const k=[]; const maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt)), a0=r.alims[0];
-  if(r.mode==="uni") k.push(["Potencia instalada",fmt(r.CI/1000,2),"kW","Salidas y equipos"],["Máxima demanda",fmt(r.md.MD/1000,2),"kW","Regla 050-200"],["Alimentador",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
+  if(r.mode==="uni") k.push(["Potencia instalada",fmt(r.CI/1000,2),"kW","Salidas y equipos"],["Máxima demanda",fmt(r.md.MD/1000,2),"kW",r.viv===false?"Regla 050-210 · Tabla 14":"Regla 050-200"],["Alimentador",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
   else k.push(["Departamentos",r.units.length,"",`${r.T.length} tipo(s)`],["Máxima demanda",fmt(r.MD/1000,2),"kW","Edificio · Regla 050-202"],["Alimentador general",a0.S,"mm²",`${fmt(a0.I,1)} A · ${a0.s.txt}`],["ITM general",a0.itm??"—","A",`${a0.s.tri?3:2} polos · ${a0.pdc} kA`]);
   k.push(["Potencia a contratar",fmt(r.contratada,1),"kW","Sugerida"],["ΔV máx. total",fmt(maxDV,2),"%",pill(maxDV<=DV_TOT,"Dentro del límite","Excede 4 %")],["Puesta a tierra",fmt(r.pat.Rt,1),"Ω",pill(r.pat.ok,"Cumple","Excede 25 Ω")]);
   if(r.bal) k.push(["Desbalance",fmt(r.bal.desb,1),"%",r.bal.desb<=10?pillS("ok","≤ 10 %"):pillS("warn",r.bal.desb<=r.bal.desbMin+0.05?"Mínimo posible":"Revisar reparto")]);
@@ -17,7 +17,7 @@ function render(r){
   if(!S[VIEW]) VIEW="resumen";
   const kp=html;
   PRINT=()=>{ const P=r.c.proj, f=new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"});
-    return `<header class="pr-head"><div class="pr-brand"><b>JMG - ELECTRIC</b><span>Resultados de cálculo · ${r.mode==="multi"?"Vivienda multifamiliar":"Vivienda unifamiliar"}</span></div>
+    return `<header class="pr-head"><div class="pr-brand"><b>JMG - ELECTRIC</b><span>Resultados de cálculo · ${nomRes(r)}</span></div>
     <dl class="pr-info"><dt>Proyecto</dt><dd>${esc(P.nombre||"—")}</dd><dt>Propietario</dt><dd>${esc(P.prop||"—")}</dd><dt>Ubicación</dt><dd>${esc(P.ubic||"—")}</dd><dt>Proyectista</dt><dd>${esc(P.proy||"—")}</dd><dt>Normativa</dt><dd>CNE-Utilización · RNE EM.010 · Norma DGE</dd><dt>Fecha</dt><dd>${f} · ${VERSION}</dd></dl></header>
     ${kp}${VORDEN.filter(k=>S[k]&&k!=="verif").map(k=>`<div class="pr-sec"><h2 class="pr-h">${VLBL[k]}</h2>${S[k]()}</div>`).join("")}
     <p class="aviso-norma">Cálculos conforme al CNE-Utilización, RNE EM.010 y Normas DGE vigentes. Como en todo proyecto eléctrico, los resultados deben ser verificados por el profesional responsable antes de su ejecución.</p>`; };
@@ -30,7 +30,7 @@ function setMode(m){
   MODE=m;
   $("btnMode").textContent=m==="uni"?"Cambiar a multifamiliar":"Cambiar a unifamiliar";
   $("ws").dataset.mode=m;
-  $("modeTxt").textContent=$("wsModoTxt").textContent=m==="uni"?"Vivienda unifamiliar":"Edificio multifamiliar";
+  $("modeTxt").textContent=$("wsModoTxt").textContent=nomEdif(); $("usoBox").hidden=m!=="uni"; uiUso();
   if(!$("ws").hidden&&fsDe(NODE)) selNode(NODE);
   update();
 }
@@ -149,3 +149,13 @@ function update(){
   if(errs.length) $("results").insertAdjacentHTML("afterbegin",`<section class="card"><h2>Revise los datos de entrada</h2><div class="body"><ul class="alerts">${errs.map(t=>`<li class="bad"><span>${esc(t)}</span></li>`).join("")}</ul></div></section>`);
 }
 
+// Textos que cambian con el uso de la edificación (vivienda o un uso de la Tabla 14)
+function uiUso(){
+  const u=usoAct(), U=USOS[u], viv=u==="viv";
+  $("wsModoTxt").textContent=$("modeTxt").textContent=nomEdif(); if($("wsModo")) $("wsModo").textContent=nomEdif();
+  $("vivLeg").innerHTML=viv?"Vivienda <small>050-110 · 050-200</small>":"Edificación <small>050-210 · Tabla 14</small>";
+  $("areaLbl").textContent=viv?"Área techada (m²)":"Área según dimensiones exteriores (m²)";
+  $("vivHint").textContent=viv?"Área de vivienda: 100 % de pisos dedicados a vivienda más 75 % del sótano. Alimentador: del medidor al tablero general."
+    :"Área servida según las dimensiones exteriores, incluido el sótano (Regla 050-210). Alimentador: del medidor al tablero general.";
+  $("usoHint").textContent=viv?"":`${U.n}: ${U.w} W/m² con factor de demanda del ${U.fd.map(([l,,f])=>`${f} %${l<Infinity?` en los primeros ${l} m²`:U.fd.length>1?" en el exceso":""}`).join(" y ")} (Tabla 14), más las cargas especiales a su potencia nominal. Sin corriente mínima de 40 A; alimentadores con 1.25 × I por ser carga continua (Regla 050-104(3)). Tomacorrientes: ${VA_TOMA_COM} VA por salida como criterio de diseño.`;
+}

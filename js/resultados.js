@@ -78,6 +78,21 @@ function cardRecom(r){
     ${R.length?`<ul class="recs">${R.map(li).join("")}</ul>`:`<p class="hint">Los criterios del proyecto están dentro de los valores usuales de diseño.</p>`}</div></section>`;
 }
 function cardDemanda(r){ let html="";
+    // Otros usos (Regla 050-210 y Tabla 14): carga por área con factor de demanda más cargas especiales a potencia nominal
+    if(r.mode==="uni"&&r.viv===false){ const m=r.md, U=m.U, PT=r.PS.filter(p=>p.md);
+      html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda · ${esc(U.n)}</span><span class="ref">050-210 · Tabla 14</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Concepto</th><th class="t">Criterio</th><th>Instalada (W)</th><th>Demanda (W)</th></tr></thead><tbody>
+      <tr><td class="t">Carga por área · ${fmt(r.area,1)} m² × ${U.w} W/m²</td><td class="t">Tabla 14 · dimensiones exteriores${r.sot>0?" (incluye sótano)":""}</td><td>${fmt(m.carga,0)}</td><td>—</td></tr>
+      ${m.tramos.map(t=>`<tr><td class="t">Factor de demanda · ${fmt(t.a,1)} m²</td><td class="t">${t.fal} % (alimentadores; acometida ${t.fac} %)</td><td>${fmt(t.a*U.w,0)}</td><td>${fmt(t.d,0)}</td></tr>`).join("")}
+      <tr><td class="t">Cargas especiales</td><td class="t">Potencia nominal del equipo · 050-210(b)</td><td>${fmt(m.esp,0)}</td><td>${fmt(m.esp,0)}</td></tr>
+      <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div>
+      <div class="body"><p class="hint">Los factores de la Tabla 14 se aplican a la carga por área; las cargas especiales (equipos, aire acondicionado, vitrinas, cómputo) se suman a su potencia nominal. No se aplica la corriente mínima de 40 A de la Regla 050-200(1)(b), propia de viviendas; la carga de los alimentadores se considera continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.</p></div></section>`;
+      if(PT.length) html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda por piso · tableros de distribución</span><span class="ref">050-210 por piso</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Piso</th><th class="t">Tablero</th><th>Área (m²)</th><th>Carga por área (W)</th><th>Demanda por área (W)</th><th>Cargas especiales (W)</th><th>MD piso (W)</th><th>I (A)</th></tr></thead><tbody>
+      ${PT.map(p=>`<tr><td class="t"><strong>${ORD(p.n)} piso</strong></td><td class="t">${p.tab}</td><td>${fmt(p.areaC,1)}</td><td>${fmt(p.md.carga,0)}</td><td>${fmt(p.md.dem,0)}</td><td>${fmt(p.md.esp,0)}</td><td><strong>${fmt(p.md.MD,0)}</strong></td><td>${fmt(r.alims[p.feeder].I,2)}</td></tr>`).join("")}
+      </tbody></table></div></section>`;
+      return html;
+    }
     if(r.mode==="uni"){ const m=r.md;
       html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda de la vivienda</span><span class="ref">050-110 · 050-200</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Concepto</th><th class="t">Criterio</th><th>Instalada (W)</th><th>Demanda (W)</th></tr></thead><tbody>

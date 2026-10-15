@@ -195,7 +195,7 @@
     <!-- ================= GUÍA ================= -->
     <section id="tab-guia" class="tabpanel" role="tabpanel" hidden>
       <div class="panel-head"><h2>Guía de uso</h2><p>Cómo realizar un cálculo, significado de los términos técnicos y respuestas a las consultas más frecuentes.</p></div>
-      <div class="card manual-card"><h2><span>Manual de usuario y referencia técnica</span><span class="ref">PDF · 36 páginas</span></h2>
+      <div class="card manual-card"><h2><span>Manual de usuario y referencia técnica</span><span class="ref">PDF · 38 páginas</span></h2>
         <div class="body"><p>Guía completa de la aplicación con capturas de pantalla y, para ingenieros revisores, las normas, tablas y fórmulas que aplica el cálculo, los supuestos adoptados y casos de verificación.</p>
           <div class="acts-row"><a class="btn" href="manual/JMG-ELECTRIC-Manual-v2.1.pdf" target="_blank" rel="noopener">Ver manual</a><a class="btn sec" href="manual/JMG-ELECTRIC-Manual-v2.1.pdf" download>Descargar PDF</a></div></div></div>
       <div class="card"><h2>Cómo realizar un cálculo</h2>
@@ -306,7 +306,7 @@
               <label>N.° CIP<input type="text" id="p_cip" value="" placeholder="ej. 123456" inputmode="numeric"></label>
             </div>
           </div></fieldset>
-<fieldset id="fs-tipo"><legend>Tipo de edificación</legend><div class="fs"><div class="ws-mode"><span id="wsModoTxt">Vivienda unifamiliar</span><button class="btn sec sm" type="button" id="btnMode">Cambiar a multifamiliar</button></div><p class="hint">Al cambiar el tipo se conservan los datos de ambos modos.</p></div></fieldset>
+<fieldset id="fs-tipo"><legend>Tipo de edificación</legend><div class="fs"><div class="ws-mode"><span id="wsModoTxt">Vivienda unifamiliar</span><button class="btn sec sm" type="button" id="btnMode">Cambiar a multifamiliar</button></div><label id="usoBox">Uso de la edificación<select id="uso"><option value="viv" selected>Vivienda unifamiliar · Regla 050-200</option></select></label><p class="hint" id="usoHint"></p><p class="hint">Al cambiar el tipo se conservan los datos de ambos modos.</p></div></fieldset>
 <fieldset id="fs-sum-uni"><legend>Sistema de suministro</legend><div class="fs">
               <div class="sys" id="sys_uni"></div>
             </div></fieldset>
@@ -318,13 +318,13 @@
               </div>
               <p class="hint">Banco de medidores centralizado en el primer piso (Norma DGE, 301.C.1). Cada departamento se alimenta en 220 V desde su medidor.</p>
             </div></fieldset>
-<fieldset id="fs-viv"><legend>Vivienda <small>050-110 · 050-200</small></legend><div class="fs">
+<fieldset id="fs-viv"><legend id="vivLeg">Vivienda <small>050-110 · 050-200</small></legend><div class="fs">
               <div class="row">
-                <label>Área techada (m²)<input type="number" id="area" min="1" value="120"></label>
+                <label><span id="areaLbl">Área techada (m²)</span><input type="number" id="area" min="1" value="120"></label>
                 <label>Área de sótano (m²)<input type="number" id="sot" min="0" value="0"></label>
               </div>
               <label>Long. alimentador (m)<input type="number" id="Lalim" min="1" step="0.5" value="15"></label>
-              <p class="hint">Área de vivienda: 100 % de pisos dedicados a vivienda más 75 % del sótano. Alimentador: del medidor al tablero general.</p>
+              <p class="hint" id="vivHint">Área de vivienda: 100 % de pisos dedicados a vivienda más 75 % del sótano. Alimentador: del medidor al tablero general.</p>
             </div></fieldset>
 <fieldset id="fs-pisos"><legend>Pisos y tableros <small>050-200</small></legend><div class="fs">
               <p class="hint" id="pisosHint">Vivienda de un piso: todos los circuitos salen del tablero general TG. Agregue los pisos superiores para que cada uno tenga su tablero de distribución.</p>

@@ -6,7 +6,7 @@ function expediente(r,estilo="formal"){
   // Notación matemática: variables en cursiva, subíndices, fracciones y raíces
   const mi=s=>`<i>${s}</i>`, sb=(v,s)=>`<i>${v}</i><sub>${s}</sub>`, fr=(a,b)=>`<span class="mf"><span>${a}</span><span>${b}</span></span>`, sq=x=>`√<span class="ms">${x}</span>`, mx=x=>`<span class="mx">${x}</span>`;
   const fecha=new Date().toLocaleDateString("es-PE",{day:"2-digit",month:"long",year:"numeric"});
-  const nom=P.nombre||"Proyecto sin nombre", tipoEd=multi?"Edificio multifamiliar":"Vivienda unifamiliar";
+  const nom=P.nombre||"Proyecto sin nombre", tipoEd=nomRes(r);
   const ok=r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok), maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(q=>q.dVt));
   const tub=t=>t.mm?`${t.mm} mm (${t.pul})`:t.pul, cond=(n,S,St)=>`${n}-1×${S} mm² + 1×${St} mm² (T)${c.desig?" "+esc(c.desig):""}`;
   const tbl=(head,rows,cls="")=>`<table class="ex-tbl ${cls}"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(rw=>`<tr>${rw.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table>`;

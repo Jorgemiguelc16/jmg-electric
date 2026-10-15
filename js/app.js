@@ -34,7 +34,7 @@ function exTree(){
   const sk=multi?radio("sistG"):radio("sist"), sis=SIST[sk]?.nom||"";
   add(0,esc($("p_nombre").value.trim()||"Proyecto sin nombre"),"proyecto",pst("proyecto"),pc("proyecto"));
   add(1,`Suministro · ${sis}`,"suministro",pst("suministro"),pc("suministro"));
-  if(!multi){ const a=(parseFloat($("area").value)||0)+pisos.reduce((s,p)=>s+(p.area||0),0); add(1,`Vivienda${a>0?` · ${fmt(a,0)} m²`:""}${pisos.length?` · ${pisos.length+1} pisos`:""}`,"vivienda",pst("vivienda"),pc("vivienda"));
+  if(!multi){ const a=(parseFloat($("area").value)||0)+pisos.reduce((s,p)=>s+(p.area||0),0); add(1,`${usoAct()==="viv"?"Vivienda":"Edificación"}${a>0?` · ${fmt(a,0)} m²`:""}${pisos.length?` · ${pisos.length+1} pisos`:""}`,"vivienda",pst("vivienda"),pc("vivienda"));
     add(1,pisos.length?"Salidas del 1er piso":"Salidas de alumbrado y tomacorrientes","salidas",pst("salidas"),pc("salidas")); add(1,`Cargas especiales · ${cargas.length}`,"cargas",pst("cargas"),pc("cargas")); }
   else { add(1,`Departamentos · ${tipos.reduce((s,t)=>s+(t.cant>0?Math.round(t.cant):0),0)} departamentos`,"vivienda",pst("vivienda"),pc("vivienda"));
     add(1,`Servicios generales · ${serv.length}`,"servicios",pst("servicios"),pc("servicios")); }
@@ -92,7 +92,7 @@ function histGo(dir){ if(histT){ clearTimeout(histT); histT=null; const s=snap()
 addEventListener("keydown",e=>{ if($("ws").hidden||!(e.ctrlKey||e.metaKey)) return; const k=e.key.toLowerCase(); if(k==="z"&&!e.shiftKey){ e.preventDefault(); histGo(-1); } else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); histGo(1); } });
 function wsRefresh(F){ WSF=F||[]; histPush();
   const n=$("p_nombre").value.trim(); $("wsName").textContent=n||"Proyecto sin nombre";
-  $("wsModo").textContent=$("wsModoTxt").textContent=MODE==="multi"?"Edificio multifamiliar":"Vivienda unifamiliar"; $("ws").dataset.mode=MODE;
+  $("wsModo").textContent=$("wsModoTxt").textContent=nomEdif(); $("ws").dataset.mode=MODE;
   const S=$("wsSum"), r=LAST, row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
   if(!r) S.innerHTML=`<div class="st">Datos pendientes</div><div class="sum-bar"><i style="width:${Math.max(6,100-Math.min(100,WSF.length*10))}%"></i></div><ul class="sum-list">${WSF.slice(0,5).map(f=>`<li><button type="button" class="linkbtn" data-foco="${f.id}">${esc(f.l)}</button></li>`).join("")}${WSF.length>5?`<li class="more">y ${WSF.length-5} más…</li>`:""}</ul>`;
   else { const a0=r.alims[0], md=r.mode==="multi"?r.MD:r.md.MD, maxDV=Math.max(...r.alims.map(a=>a.dvAc),...r.circ.map(c=>c.dVt));
@@ -137,6 +137,8 @@ $("wizard").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.tagName
 addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("wizard").hidden) asistente(false); });
 
 $("esqPisos").addEventListener("change",()=>renderList("cargas"));
+// Al cambiar el uso: 250 VA por tomacorriente en usos comerciales (criterio de diseño) y 180 W en vivienda, salvo que el usuario haya puesto otro valor
+$("uso").addEventListener("change",()=>{ const com=usoAct()!=="viv"; ["tg_p","tc_p"].forEach(k=>{ const v=$(k).value; if(com&&v==="180") $(k).value=String(VA_TOMA_COM); else if(!com&&v===String(VA_TOMA_COM)) $(k).value="180"; }); uiUso(); calcularAhora(); });
 
 /* Diálogo de advertencia antes de desactivar una opción */
 function confirmar(tit,html,si,fn){ const d=$("cfmDlg"); $("cfmT").textContent=tit; $("cfmTxt").innerHTML=html; $("cfmSi").textContent=si; confirmar.fn=fn;

@@ -39,7 +39,7 @@ const LISTS={
   lumsT:{arr:lumsT,lab:"Luminarias",f:[{k:"n",l:"Cantidad por departamento",t:"number"},{k:"p",l:"W por salida",t:"number"},
     {k:"tipo",l:"Departamento",t:"select",o:()=>tipos.map((t,i)=>[String(i),t.nombre||`Tipo ${i+1}`]),n:1}],
     nuevo:()=>({n:null,p:null,tipo:0})}};
-const HLP={p_nombre:"Aparece en la memoria, el unifilar y el rótulo del plano.",p_prop:"Titular de la vivienda o del edificio.",p_ubic:"Distrito, provincia y región de la obra.",p_proy:"Ingeniero responsable que firma el expediente.",p_cip:"Número de colegiatura del ingeniero; aparece en la firma del expediente, en el Excel y en el rótulo del unifilar.",
+const HLP={uso:"Vivienda: máxima demanda por la Regla 050-200. Otros usos (oficinas, comercios, etc.): Regla 050-210 y Tabla 14, con W/m² por actividad, área según dimensiones exteriores y tomacorrientes de 250 VA como criterio de diseño.",p_nombre:"Aparece en la memoria, el unifilar y el rótulo del plano.",p_prop:"Titular de la vivienda o del edificio.",p_ubic:"Distrito, provincia y región de la obra.",p_proy:"Ingeniero responsable que firma el expediente.",p_cip:"Número de colegiatura del ingeniero; aparece en la firma del expediente, en el Excel y en el rótulo del unifilar.",
   area:"Área techada dedicada a vivienda, al 100 % (Regla 050-110).",sot:"Área de sótano; se computa al 75 %. Deje 0 si no hay.",Lalim:"Recorrido del alimentador desde el medidor hasta el tablero general.",
   al_n:"Cantidad de puntos de luz.",al_p:"Potencia por salida de alumbrado; típico 100 W.",al_L:"Recorrido desde el tablero hasta la salida más alejada.",
   tg_n:"Cantidad de tomacorrientes generales.",tg_p:"Potencia por tomacorriente; típico 180 W.",tg_L:"Recorrido desde el tablero hasta el tomacorriente más alejado.",
@@ -94,3 +94,9 @@ function renderSys(boxId,name,def){
   $(boxId).innerHTML=SYS_OPC.map(([v,t,w,d])=>`<label><input type="radio" name="${name}" value="${v}"${v===def?" checked":""}><span><span class="t">${t}<span class="w">${w}</span></span><span class="d">${d}</span></span></label>`).join("");
 }
 
+// Usos de la Tabla 14 (Regla 050-210) en el selector «Uso de la edificación» del modo unifamiliar
+$("uso").insertAdjacentHTML("beforeend",`<optgroup label="Otros usos · Regla 050-210 y Tabla 14">${Object.entries(USOS).map(([k,u])=>`<option value="${k}">${u.n} · ${u.w} W/m²</option>`).join("")}</optgroup>`);
+const usoAct=()=>USOS[$("uso").value]?$("uso").value:"viv";
+// Nombre del tipo de edificación para títulos, cabecera y documentos
+const nomEdif=()=>MODE==="multi"?"Edificio multifamiliar":usoAct()==="viv"?"Vivienda unifamiliar":USOS[usoAct()].n;
+const nomRes=r=>r.mode==="multi"?"Edificio multifamiliar":(r.viv===false&&USOS[r.uso])?USOS[r.uso].n:"Vivienda unifamiliar";
