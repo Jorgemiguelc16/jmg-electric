@@ -45,7 +45,7 @@ function exTree(){
   else N.push(`<div class="tn lock" style="padding-left:26px"><i class="dot"></i><span>Tableros y circuitos · complete los datos</span></div>`);
   add(1,"Parámetros de diseño","param",document.querySelector("#fs-p-car .inv,#fs-p-cond .inv,#fs-p-prot .inv,#fs-p-pat .inv")?"bad":"ok");
   if(r) add(1,"Metrado","metrado","ok");
-  $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`; }
+  $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`; guiaPasos(); }
 function propTablero(tab){ const r=LAST; if(!r){ return selNode("proyecto"); } const tb=r.tabs.find(t=>t.tab===tab); if(!tb) return selNode("proyecto");
   const f=r.alims[tb.feeder], cs=r.circ.filter(q=>q.tab===tab), row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
   $("propSub").textContent=`Tablero ${tab}`;
@@ -102,7 +102,7 @@ function wsRefresh(F){ WSF=F||[]; histPush();
   if(!$("ws").hidden){ exTree(); if(NODE.startsWith("circ:")){ if(r&&r.circ.some(q=>q.key===NODE.slice(5))) circRes(NODE.slice(5)); else selNode(MODE==="multi"?"vivienda":"salidas"); } if(NODE.startsWith("tab:")&&!$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4)); } }
 /* Cinta de opciones y acciones */
 $("ws").addEventListener("click",e=>{
-  const tr=e.target.closest("[data-tab-r]"); if(tr){ RIB=tr.dataset.tabR; document.querySelectorAll(".ap-tabs .tb").forEach(b=>b.classList.toggle("on",b===tr)); document.querySelectorAll(".rib").forEach(x=>x.hidden=x.dataset.rib!==RIB); return; }
+  const tr=e.target.closest("[data-tab-r]"); if(tr){ RIB=tr.dataset.tabR; document.querySelectorAll(".ap-tabs .tb").forEach(b=>b.classList.toggle("on",b===tr)); document.querySelectorAll(".rib").forEach(x=>x.hidden=x.dataset.rib!==RIB); guiaPasos(); return; }
   const nd=e.target.closest("[data-node]"); if(nd&&!e.target.closest("[data-act]")){ selNode(nd.dataset.node); if(nd.dataset.fs){ const f=$(nd.dataset.fs); if(f) setTimeout(()=>f.scrollIntoView({behavior:"smooth",block:"start"}),40); } return; }
   const vw=e.target.closest("[data-view]"); if(vw&&!e.target.closest("#results")){ if(!LAST){ toast("Complete los datos para ver los resultados"); return; } verVista(vw.dataset.view); return; }
   const ac=e.target.closest("[data-act]"); if(!ac) return; const a=ac.dataset.act;
@@ -181,3 +181,32 @@ document.querySelectorAll("#ws .sp").forEach(sp=>{ const k=sp.dataset.sp, p=PANE
     const up=()=>{ sp.classList.remove("drag"); document.body.classList.remove("arrastrando"); removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); panes(true); };
     addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
   sp.addEventListener("dblclick",()=>{ p.w=null; panes(true); toast("Ancho restablecido"); }); });
+// Guía de pasos del proyecto (a la derecha de la cinta): estado de cada paso y contadores de pendientes y recomendaciones
+function guiaPasos(){ const g=$("apGuia"); if(!g) return;
+  const r=LAST, multi=MODE==="multi";
+  const P=multi?[["proyecto","Datos"],["suministro","Suministro"],["vivienda","Departamentos"],["servicios","Servicios"],["revisar","Revisar"],["exportar","Exportar"]]
+    :[["proyecto","Datos"],["suministro","Suministro"],["vivienda",usoAct()==="viv"?"Vivienda":"Edificación"],["salidas","Salidas"],["cargas","Cargas"],["revisar","Revisar"],["exportar","Exportar"]];
+  const recP=r?recomendaciones(r).filter(x=>!(ACEP[r.mode]||{})[x.id]).length:0, malos=r?alertas(r).some(x=>x[0]===false):false;
+  const pend=WSF.length+(!$("p_nombre").value.trim()?1:0);
+  const st=n=>n==="revisar"?(!r?"":malos||recP?"pend":"ok"):n==="exportar"?(r?"ok":""):(pendDe(n)?"pend":"ok");
+  const tip=n=>n==="revisar"?(!r?"Complete los datos para ver los resultados":malos?"Hay verificaciones que no cumplen":recP?`${recP} recomendación(es) por revisar`:"Resultados conformes")
+    :n==="exportar"?"Memoria Excel, expediente PDF y unifilar DXF":pendDe(n)?`${pendDe(n)} dato(s) pendiente(s)`:"Completo";
+  g.innerHTML=`<div class="ag-top">Pasos del proyecto
+    ${pend?`<button type="button" class="ag-chip pend" data-guia="pend" title="Ir al primer dato pendiente">Pendientes <b>${pend}</b></button>`:`<span class="ag-chip ok">Datos completos ✓</span>`}
+    ${r?`<button type="button" class="ag-chip${recP?" pend":" ok"}" data-guia="rec" title="Ver recomendaciones de diseño">Recomendaciones <b>${recP}</b></button>`:""}</div>
+    <div class="ag-pasos">${P.map(([n,l],i)=>{ const s=st(n), at=(n==="revisar"||n==="exportar")?`data-guia="${n}"`:`data-node="${n}"`;
+      return `${i?'<span class="ag-sep"></span>':""}<button type="button" class="ag-p ${s}${NODE===n?" act":""}" ${at} title="${esc(tip(n))}"><i>${s==="ok"?"✓":i+1}</i><span>${l}</span></button>`; }).join("")}</div>`;
+  // Si los pasos no caben junto a la cinta, se muestran solo los números
+  g.classList.remove("compacta"); const ps=g.querySelector(".ag-pasos"); if(ps&&ps.scrollWidth>g.clientWidth-18) g.classList.add("compacta");
+}
+$("apGuia").addEventListener("click",e=>{ const b=e.target.closest("[data-guia]"); if(!b) return; const a=b.dataset.guia;
+  const verRec=()=>setTimeout(()=>document.querySelector("#results .rec-card")?.scrollIntoView({behavior:"smooth",block:"start"}),80);
+  if(a==="pend"){ if(WSF.length) focoCampo(WSF[0].id); else focoCampo("p_nombre"); return; }
+  if(!LAST){ toast("Complete los datos para ver los resultados"); return; }
+  if(a==="rec"){ verVista("verif"); verRec(); return; }
+  if(a==="revisar"){ const recP=recomendaciones(LAST).some(x=>!(ACEP[LAST.mode]||{})[x.id]); verVista(recP?"verif":"resumen"); if(recP) verRec(); return; }
+  if(a==="exportar"){ document.querySelector('.ap-tabs [data-tab-r="proyecto"]')?.click();
+    const grp=[...document.querySelectorAll('.rib[data-rib="proyecto"] .rgrp')].find(x=>x.querySelector(".gl")?.textContent==="Exportar");
+    if(grp){ grp.classList.remove("flash"); void grp.offsetWidth; grp.classList.add("flash"); } toast("Exportar: Memoria Excel, Expediente PDF o Unifilar DXF"); }
+});
+addEventListener("resize",()=>{ if(!$("ws").hidden) guiaPasos(); });
