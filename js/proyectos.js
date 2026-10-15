@@ -39,9 +39,14 @@ function nuevoProyecto(m){
   aplicar(proyectoVacio(m));
   irSec("proyecto"); try{ $("p_nombre").focus(); }catch(e){}
 }
+// Ejemplo de oficina (Tabla 14): 250 m², trifásico, tomacorrientes de 250 VA, aire acondicionado y equipos de cómputo
+const EJ_OFICINA={uso:"oficina",sist:"tri380",area:"250",sot:"0",Lalim:"20",al_n:"32",al_p:"100",al_L:"28",tg_n:"30",tg_p:String(VA_TOMA_COM),tg_L:"30",tc_n:"0",tc_p:String(VA_TOMA_COM),tc_L:"12",
+  cargas:[{nombre:"Aire acondicionado sala de reuniones",tipo:"aire",fases:3,p:3500,L:18,piso:0},{nombre:"Aire acondicionado oficinas",tipo:"aire",fases:3,p:5000,L:24,piso:0},
+    {nombre:"Rack de servidores y red",tipo:"otra",fases:1,p:1500,L:15,piso:0},{nombre:"Fotocopiadora",tipo:"otra",fases:1,p:1800,L:20,piso:0}]};
 function cargarEjemplo(m){
-  aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),pisos:[],lums:[],lumsT:[],FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
-  const v={p_nombre:m==="multi"?"EJEMPLO · Edificio multifamiliar de 8 departamentos":"EJEMPLO · Vivienda unifamiliar",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable"};
+  const com=m==="com", md=com?"uni":m;
+  aplicar({id:null,...DEFV,MODE:md,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),pisos:[],lums:[],lumsT:[],FIX:null,sist:"mono220",sistG:"tri380",...(com?clon(EJ_OFICINA):{})}); setTab("calculo");
+  const v={p_nombre:com?"EJEMPLO · Oficinas de 250 m²":m==="multi"?"EJEMPLO · Edificio multifamiliar de 8 departamentos":"EJEMPLO · Vivienda unifamiliar",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable"};
   Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="unifilar"; calcularAhora(); irSec("resultados");
 }
 let DELQ=null;
@@ -51,7 +56,7 @@ function renderProy(){
   if(!arr.length){ $("projList").innerHTML=`<div class="body"><p class="hint" style="font-size:13px">Aún no hay proyectos guardados. Cree uno nuevo o escriba un nombre en «Datos del proyecto»: se guardará automáticamente.</p></div>`; return; }
   $("projList").innerHTML=`<table><thead><tr><th class="t">Proyecto</th><th class="t">Tipo</th><th class="t">Proyectista</th><th class="t">Modificado</th><th class="t">Acciones</th></tr></thead><tbody>${arr.map(o=>`<tr${o.id===PID?' class="fix"':""}>
     <td class="t" style="white-space:normal"><strong>${esc(o.p_nombre)}</strong>${o.id===PID?' <span class="pill ok">En edición</span>':""}<br><span class="hint">${esc(o.p_ubic||"")}</span></td>
-    <td class="t">${o.MODE==="multi"?"Multifamiliar":"Unifamiliar"}</td><td class="t">${esc(o.p_proy||"—")}</td><td class="t">${f(o.savedAt)}</td>
+    <td class="t">${o.MODE==="multi"?"Multifamiliar":USOS[o.uso]?esc(USOS[o.uso].n):"Unifamiliar"}</td><td class="t">${esc(o.p_proy||"—")}</td><td class="t">${f(o.savedAt)}</td>
     <td class="t"><div class="acts-row">${DELQ===o.id?`<span class="hint">¿Eliminar?</span><button type="button" class="btn sm" data-pa="del-ok" data-id="${o.id}">Sí, eliminar</button><button type="button" class="btn sec sm" data-pa="del-no">Cancelar</button>`
       :`<button type="button" class="btn sm" data-pa="open" data-id="${o.id}">Abrir</button><button type="button" class="btn sec sm" data-pa="dup" data-id="${o.id}">Duplicar</button><button type="button" class="btn sec sm" data-pa="exp" data-id="${o.id}">Exportar</button><button type="button" class="btn sec sm" data-pa="del" data-id="${o.id}">Eliminar</button>`}</div></td></tr>`).join("")}</tbody></table>`;
 }

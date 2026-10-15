@@ -101,3 +101,5 @@ const usoAct=()=>USOS[$("uso").value]?$("uso").value:"viv";
 // Nombre del tipo de edificación para títulos, cabecera y documentos
 const nomEdif=()=>MODE==="multi"?"Edificio multifamiliar":usoAct()==="viv"?"Vivienda unifamiliar":USOS[usoAct()].n;
 const nomRes=r=>r.mode==="multi"?"Edificio multifamiliar":(r.viv===false&&USOS[r.uso])?USOS[r.uso].n:"Vivienda unifamiliar";
+// Mismas opciones de uso en el asistente de nuevo proyecto (opción «Comercial y otros usos»)
+$("wz_uso").innerHTML=`<optgroup label="Regla 050-210 y Tabla 14">${Object.entries(USOS).filter(([,u])=>!u.regla).map(([k,u])=>`<option value="${k}">${u.n} · ${u.w} W/m²</option>`).join("")}</optgroup><optgroup label="Reglas propias">${Object.entries(USOS).filter(([,u])=>u.regla).map(([k,u])=>`<option value="${k}">${u.n} · Regla ${u.regla}</option>`).join("")}</optgroup>`;

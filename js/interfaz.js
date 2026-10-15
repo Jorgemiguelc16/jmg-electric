@@ -136,7 +136,7 @@ function update(){
     $("results").innerHTML=`<section class="card falta-card"><h2><span>Para calcular, complete</span><span class="ref">${F.length} dato${F.length>1?"s":""} pendiente${F.length>1?"s":""}</span></h2><div class="body">
       <p class="hint">Los resultados aparecen automáticamente al completar los datos marcados en ámbar. Haga clic en un dato para ir a él.</p>
       <ul class="faltan">${F.map(x=>`<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul>
-      <p class="hint">¿Prefiere explorar primero? <button type="button" class="linkbtn" data-ej2="${MODE}">Cargue un proyecto de ejemplo</button>.</p></div></section>`;
+      <p class="hint">¿Prefiere explorar primero? <button type="button" class="linkbtn" data-ej2="${MODE==="uni"&&usoAct()!=="viv"?"com":MODE}">Cargue un proyecto de ejemplo</button>.</p></div></section>`;
     saveDraft(); hdrEstado(); wsRefresh(F); return; }
   $("btnPrint").disabled=false;
   const errs=validar();

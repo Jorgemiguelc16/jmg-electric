@@ -67,7 +67,7 @@
       </div>
       <div class="hdr-rotulo">
         <div class="rt-h"><span class="k">Comenzar</span><button class="linkbtn rt-cont" type="button" data-start id="hdrCont" hidden>Continuar: <b></b> →</button></div>
-        <div class="rt-btns"><button class="rt-btn principal" type="button" data-new="uni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M12.5 10v7M9 13.5h7"/></svg><span><b>Nuevo proyecto</b><small>Vivienda o edificio multifamiliar</small></span></button><button class="rt-btn" type="button" data-ej="uni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg><span><b>Ver un ejemplo</b><small>Vivienda de 120 m² calculada</small></span></button></div>
+        <div class="rt-btns"><button class="rt-btn principal" type="button" data-new="uni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M12.5 10v7M9 13.5h7"/></svg><span><b>Nuevo proyecto</b><small>Vivienda, edificio o local comercial</small></span></button><button class="rt-btn" type="button" data-ej="uni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg><span><b>Ver un ejemplo</b><small>Vivienda de 120 m² calculada</small></span></button></div>
       </div>
     </div>
     <nav class="tabs" role="tablist" aria-label="Secciones">
@@ -141,9 +141,9 @@
     <section id="tab-proy" class="tabpanel" role="tabpanel" hidden>
       <div class="panel-head"><h2>Proyectos</h2><p>Proyectos guardados en este navegador. Cada proyecto se guarda automáticamente cuando tiene nombre.</p></div>
       <div class="proj-g proj-top">
-        <div class="pbox"><h3>Nuevo proyecto</h3><p>Inicie un cálculo nuevo con valores de partida típicos.</p><div class="acts"><button class="btn" type="button" data-new="uni">Unifamiliar</button><button class="btn" type="button" data-new="multi">Multifamiliar</button></div></div>
+        <div class="pbox"><h3>Nuevo proyecto</h3><p>Inicie un cálculo nuevo con valores de partida típicos.</p><div class="acts"><button class="btn" type="button" data-new="uni">Unifamiliar</button><button class="btn" type="button" data-new="multi">Multifamiliar</button><button class="btn" type="button" data-new="com">Comercial y otros usos</button></div></div>
         <div class="pbox"><h3>Abrir archivo</h3><p>Cargue un proyecto exportado anteriormente (archivo .json).</p><div class="acts"><button class="btn sec" type="button" data-open>Importar archivo</button></div></div>
-        <div class="pbox"><h3>Ver un ejemplo</h3><p>Abra un proyecto de muestra ya calculado. No se guarda en la lista.</p><div class="acts"><button class="btn sec" type="button" data-ej="uni">Unifamiliar</button><button class="btn sec" type="button" data-ej="multi">Multifamiliar</button></div></div>
+        <div class="pbox"><h3>Ver un ejemplo</h3><p>Abra un proyecto de muestra ya calculado. No se guarda en la lista.</p><div class="acts"><button class="btn sec" type="button" data-ej="uni">Unifamiliar</button><button class="btn sec" type="button" data-ej="multi">Multifamiliar</button><button class="btn sec" type="button" data-ej="com">Oficina</button></div></div>
       </div>
       <p class="hint" id="openMsg" style="margin:0 0 12px"></p>
       <div class="card"><div class="tbl-wrap" id="projList"></div></div>
@@ -453,7 +453,7 @@
     <h2 id="wzT" class="dx-t">Datos iniciales del proyecto</h2>
     <div class="wz-modes">
       <label class="wz-mode"><input type="radio" name="wz_mode" value="uni" checked><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7.5 8 2.5l6 5V14H2z"/><path d="M6.5 14v-4h3v4"/></svg><b>Vivienda unifamiliar</b><small>Una vivienda con su tablero general</small></span></label>
-      <label class="wz-mode"><input type="radio" name="wz_mode" value="multi"><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="1.5" width="10" height="13"/><path d="M5.5 4h1M9.5 4h1M5.5 7h1M9.5 7h1M5.5 10h1M9.5 10h1M7 14.5v-2h2v2"/></svg><b>Edificio multifamiliar</b><small>Departamentos con banco de medidores</small></span></label>
+      <label class="wz-mode"><input type="radio" name="wz_mode" value="multi"><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="1.5" width="10" height="13"/><path d="M5.5 4h1M9.5 4h1M5.5 7h1M9.5 7h1M5.5 10h1M9.5 10h1M7 14.5v-2h2v2"/></svg><b>Edificio multifamiliar</b><small>Departamentos con banco de medidores</small></span></label><label class="wz-mode"><input type="radio" name="wz_mode" value="com"><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 6h12v8H2z"/><path d="M1.5 6 3 2.5h10L14.5 6M6.5 14v-4h3v4M4 8.5h1.5M10.5 8.5H12"/></svg><b>Comercial y otros usos</b><small>Oficinas, comercios, escuelas, hospitales, hoteles</small></span></label>
     </div>
     <div class="wz-grid">
       <label class="full"><span>Nombre del proyecto <em>*</em></span><input type="text" id="wz_nombre" placeholder="ej. Vivienda unifamiliar Pérez"></label>
@@ -461,6 +461,7 @@
       <label>Ubicación<input type="text" id="wz_ubic" placeholder="Distrito, provincia, región"></label>
       <label>Proyectista (Ing. responsable)<input type="text" id="wz_proy" placeholder="Ing. responsable"></label>
       <label>N.° CIP<input type="text" id="wz_cip" placeholder="ej. 123456" inputmode="numeric"></label>
+      <label class="full" id="wzUsoBox" hidden>Uso de la edificación<select id="wz_uso"></select></label>
       <label class="full">Sistema de suministro<select id="wz_sist"><option value="mono220">Monofásico 220 V · 2 conductores + tierra</option><option value="tri380">Trifásico 380/220 V · 3F + N + tierra</option><option value="tri220">Trifásico 220 V · 3 conductores + tierra</option></select></label>
     </div>
     <p class="wz-err" id="wzErr" hidden>Escriba el nombre del proyecto para continuar.</p>

@@ -123,13 +123,15 @@ $("expMsg").textContent=""; new MutationObserver(()=>{ const t=$("expMsg").textC
 /* Asistente de nuevo proyecto */
 function asistente(abrir,m){ const w=$("wizard"); w.hidden=!abrir; document.body.classList.toggle("wl-open",abrir); if(!abrir) return;
   ["wz_nombre","wz_prop","wz_ubic","wz_proy","wz_cip"].forEach(k=>$(k).value=""); $("wzErr").hidden=true; $("wz_nombre").classList.remove("falta");
-  const r=document.querySelector(`input[name="wz_mode"][value="${m==="multi"?"multi":"uni"}"]`); if(r) r.checked=true; $("wz_sist").value=m==="multi"?"tri380":"mono220";
+  const r=document.querySelector(`input[name="wz_mode"][value="${["multi","com"].includes(m)?m:"uni"}"]`); if(r) r.checked=true; $("wz_sist").value=m==="uni"?"mono220":"tri380"; $("wzUsoBox").hidden=m!=="com";
   setTimeout(()=>{ if(!$("wizard").contains(document.activeElement)||document.activeElement===document.body) $("wz_nombre").focus(); },50); }
-document.querySelectorAll('input[name="wz_mode"]').forEach(r=>r.addEventListener("change",()=>{ $("wz_sist").value=r.value==="multi"?"tri380":"mono220"; }));
+document.querySelectorAll('input[name="wz_mode"]').forEach(r=>r.addEventListener("change",()=>{ $("wz_sist").value=r.value==="uni"?"mono220":"tri380"; $("wzUsoBox").hidden=r.value!=="com"; }));
 $("wizard").addEventListener("click",e=>{ const b=e.target.closest("[data-wz]"); if(e.target.id==="wizard"||(b&&b.dataset.wz==="close")) return asistente(false);
   if(!b||b.dataset.wz!=="ok") return;
   const nom=$("wz_nombre").value.trim(); if(!nom){ $("wzErr").hidden=false; $("wz_nombre").classList.add("falta"); $("wz_nombre").focus(); return; }
-  const m=radio("wz_mode")||"uni", o=proyectoVacio(m), sist=$("wz_sist").value;
+  // «Comercial y otros usos» es el modo unifamiliar con un uso de la Tabla 14 o de las Reglas 050-204 a 050-208
+  const md0=radio("wz_mode")||"uni", com=md0==="com", m=com?"uni":md0, o=proyectoVacio(m), sist=$("wz_sist").value;
+  if(com){ o.uso=$("wz_uso").value; o.tg_p=o.tc_p=String(VA_TOMA_COM); }
   o.p_nombre=nom.replace(/[<>]/g,""); o.p_prop=$("wz_prop").value.replace(/[<>]/g,""); o.p_ubic=$("wz_ubic").value.replace(/[<>]/g,""); o.p_proy=$("wz_proy").value.replace(/[<>]/g,""); o.p_cip=$("wz_cip").value.replace(/[<>]/g,"");
   if(m==="multi") o.sistG=sist; else o.sist=sist;
   asistente(false); aplicar(o); VIEW="unifilar"; HIST.length=0; REDO.length=0; abrirWS("vivienda"); calcularAhora(); toast("Proyecto creado: complete los datos marcados en ámbar"); });

@@ -574,9 +574,9 @@ body.ws-on{background:#e9edf2;overflow:hidden}
 
 /* Asistente de nuevo proyecto */
 .dx-t{margin:4px 0 0;font-family:var(--f-head);font-weight:600;font-size:22px;color:var(--navy)}
-.wz-box{width:min(640px,100%)}
-.wz-modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-.wz-mode{cursor:pointer}
+.wz-box{width:min(720px,100%)}
+.wz-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.wz-mode{cursor:pointer;position:relative}
 .wz-mode input{position:absolute;opacity:0;pointer-events:none}
 .wz-mode span{display:flex;flex-direction:column;gap:4px;padding:16px;border:1.5px solid var(--line);background:#fff;height:100%;transition:border-color .15s,box-shadow .15s}
 .wz-mode svg{width:30px;height:30px;color:var(--accent);margin-bottom:4px}
