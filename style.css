@@ -1048,3 +1048,7 @@ nav.tabs{margin-top:10px}
 .rib{height:auto}
 .col .rs{padding:2px 8px}
 }
+/* Atajos de teclado en la pestaña Ayuda de la cinta */
+.col.atajos .rs{cursor:default;gap:8px}
+.col.atajos .rs:hover{background:none}
+.col.atajos b{display:inline-block;min-width:46px;padding:0 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--panel);font:600 10.5px/16px var(--f-mono);text-align:center}

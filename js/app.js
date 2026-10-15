@@ -47,7 +47,7 @@ function exTree(){
   if(r) add(1,"Metrado","metrado","ok");
   $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`;
   // Contador de recomendaciones de diseño pendientes en el botón de la cinta
-  const rb=$("recBadge"); if(rb){ const k=r?recomendaciones(r).filter(x=>!(ACEP[r.mode]||{})[x.id]).length:0; rb.textContent=k; rb.hidden=!k; } }
+  const k=r?recomendaciones(r).filter(x=>!(ACEP[r.mode]||{})[x.id]).length:0; document.querySelectorAll(".rbadge").forEach(b=>{ b.textContent=k; b.hidden=!k; }); }
 function propTablero(tab){ const r=LAST; if(!r){ return selNode("proyecto"); } const tb=r.tabs.find(t=>t.tab===tab); if(!tb) return selNode("proyecto");
   const f=r.alims[tb.feeder], cs=r.circ.filter(q=>q.tab===tab), row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
   $("propSub").textContent=`Tablero ${tab}`;
