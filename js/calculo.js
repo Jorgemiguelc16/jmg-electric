@@ -17,20 +17,20 @@ function tuboPara(S,St,ncond){
   for(const [mm,pul,di] of TUBOS) if(a<=0.40*Math.PI*di*di/4) return {mm,pul};
   return {mm:null,pul:"> 3\""};
 }
-function dimensionar({I,K,L,V,cargados,c,fc,dvMax,Smin,Imin=0}){
-  const Id=Math.max(I*FD,Imin), itm=ITM.find(x=>x>=Id-1e-9)??null;
+function dimensionar({I,K,L,V,cargados,c,fc,dvMax,Smin,Imin=0,fd=FD}){
+  const Id=Math.max(I*fd,Imin), itm=ITM.find(x=>x>=Id-1e-9)??null;
   const key=c.aisl+(cargados===3?"3":"2"), tabla=T2[c.met][key], col=(c.aisl==="pvc"?0:2)+(cargados===3?1:0);
   for(let k=0;k<SECC.length;k++){
     const S=SECC[k]; if(S<Smin) continue;
     const Iz=tabla[k], Izc=Iz*fc, dV=K*c.rho*L*I/S, dVp=dV/V*100;
-    if(itm!==null&&Izc>=itm&&dVp<=dvMax+1e-9) return {Id,itm,col,S,Iz,Izc,dV,dVp,Imin};
+    if(itm!==null&&Izc>=itm&&dVp<=dvMax+1e-9) return {Id,fd,itm,col,S,Iz,Izc,dV,dVp,Imin};
   }
   const k=SECC.length-1, S=SECC[k], dV=K*c.rho*L*I/S;
-  return {Id,itm,col,S,Iz:tabla[k],Izc:tabla[k]*fc,dV,dVp:dV/V*100,Imin,fail:true};
+  return {Id,fd,itm,col,S,Iz:tabla[k],Izc:tabla[k]*fc,dV,dVp:dV/V*100,Imin,fail:true};
 }
 function alimentador(desc,P,sk,L,dvUp,dvSel,c,extra={}){
   const s=SIST[sk], I=P/(s.kI*s.V*c.fp);
-  const r=dimensionar({I,K:s.K,L,V:s.V,cargados:s.tri?3:2,c,fc:c.ft,dvMax:dvSel,Smin:c.sminA,Imin:extra.Imin||0});
+  const r=dimensionar({I,K:s.K,L,V:s.V,cargados:s.tri?3:2,c,fc:c.ft,dvMax:dvSel,Smin:c.sminA,Imin:extra.Imin||0,fd:extra.fd??FD});
   Object.assign(r,{desc,P,sk,s,I,L,dvUp,dvAc:dvUp+r.dVp},extra);
   r.St=tierraPara(r.itm||400); r.tubo=tuboPara(r.S,r.St,s.n);
   r.ok=!r.fail&&r.itm!==null&&r.Izc>=r.itm&&r.dvAc<=DV_ALIM+1e-9;
@@ -131,7 +131,7 @@ function calcUni(c){
   const md=mdVivienda({area,...cargasMD(cs)},false);
   const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
   const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
-  const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI});
+  const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI,fd:FD_VIV});
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,al.s,al.L,al.S);
   // Tablero de cada piso: TG si el piso se conecta al tablero general, TD-n si tiene tablero propio
@@ -142,7 +142,7 @@ function calcUni(c){
   // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
   PS.forEach(p=>{ const tab=tabDe(p.n); if(tab==="TG") return;
     const aP=p.area+(p.n===1?0.75*sot:0), mdP=mdVivienda({area:aP,...cargasMD(cs.filter(x=>tabCarga(x)===tab))},false);
-    const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP});
+    const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP,fd:FD_VIV});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); p.tab=tab; p.feeder=alims.length-1; p.md=mdP; p.areaC=aP;
     const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab,desc:`Tablero de distribución del ${ORD(p.n)} piso`,feeder:p.feeder,icc,pdc:pdcPara(icc),piso:p.n}); });
   const circ=[];
@@ -169,14 +169,14 @@ function calcMulti(c){
   const SV=serv.map((s,i)=>({...s,_i:i})).filter(s=>s.p>0);
   const Pserv=SV.reduce((s,x)=>s+x.p,0), maxMot=Math.max(0,...SV.filter(x=>x.tipo==="motor").map(x=>x.p)), mdServ=0.75*Pserv;
   const MD=mdDeptos+aireTot+mdServ;
-  const gen=alimentador("Alimentador general: acometida → tablero general TG",MD,sk,Lgen,0,c.dvGen,c,{pKey:"MD"});
+  const gen=alimentador("Alimentador general: acometida → tablero general TG",MD,sk,Lgen,0,c.dvGen,c,{pKey:"MD",fd:FD_VIV});
   gen.iccO=c.iccE; gen.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,gen.s,gen.L,gen.S);
   const alims=[gen], tabs=[];
   if(SV.length){ const f=alimentador("Alimentador TG → tablero de servicios generales TSG",Pserv+0.25*maxMot,sk,Lms,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"servP"});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab:"TSG",desc:"Tablero de servicios generales",feeder:1,icc,pdc:pdcPara(icc)}); }
   T.forEach((t,ti)=>{ const tab="TD-"+t.nombre.replace(/^Tipo\s*/i,""); t.tab=tab;
-    const f=alimentador(`Alimentador medidor → ${tab} (${t.nombre})`,t.md.MD,"mono220",t.Ld||1,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"tipo",ti,cant:t.cant,Imin:IMIN_DPTO});
+    const f=alimentador(`Alimentador medidor → ${tab} (${t.nombre})`,t.md.MD,"mono220",t.Ld||1,gen.dVp,DV_ALIM-gen.dVp,c,{pKey:"tipo",ti,cant:t.cant,Imin:IMIN_DPTO,fd:FD_VIV});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); const icc=iccAbajo(iccTG,f.s,f.L,f.S);
     tabs.push({tab,desc:`Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,feeder:alims.length-1,icc,pdc:pdcPara(icc)}); });
   const circ=[];

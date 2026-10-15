@@ -13,7 +13,7 @@
 <script src="casos.js"></script>
 <style>
   @page{size:A4;margin:18mm 16mm 16mm;
-    @top-left{content:"JMG - ELECTRIC v2.2 · Manual de usuario y referencia técnica";font:7.5pt Arial,sans-serif;color:#333}
+    @top-left{content:"JMG - ELECTRIC v2.3 · Manual de usuario y referencia técnica";font:7.5pt Arial,sans-serif;color:#333}
     @top-right{content:"JMG Projects & Energy";font:7.5pt Arial,sans-serif;color:#333}
     @bottom-right{content:"Página " counter(page) " de " counter(pages);font:7.5pt Arial,sans-serif;color:#333}}
   @page:first{@top-left{content:none}@top-right{content:none}@bottom-right{content:none}}
@@ -166,7 +166,7 @@ B+=tbl(["Parámetro","Descripción","Valor por defecto"],[
  ["Salidas máx. por circuito","Regla 070-3000.","12"],
  ["W por salida y por tomacorriente","Potencias usadas en el modo multifamiliar.","100 W · 180 W"],
  ["Espacios de reserva","Interruptores de reserva por tablero (Regla 050-108).","2"],
- ["Método de instalación","Columna de la Tabla 2 (NTP 370.301): A1, B1, B2 o C.","A1"],
+ ["Método de instalación","Columna de la Tabla 2 (NTP 370.301): A1, B1, B2 o C. B1 para tubo empotrado en ladrillo o concreto (Tabla 4, ítem 59).","B1"],
  ["Aislamiento","PVC 70 °C o XLPE/EPR 90 °C.","PVC 70 °C"],
  ["Temperatura ambiente","Factor de la Tabla 5A.","30 °C"],
  ["Circuitos por tubería","Factor de la Tabla 5C (circuitos derivados).","1"],
@@ -268,7 +268,7 @@ B+=sub("Circuitos derivados");
 B+=`<ul><li>Las salidas de cada grupo se reparten en ${mx(`⌈${mi("n")} / ${sb("n","máx")}⌉`)} circuitos con cantidades equilibradas.</li><li>Cada carga especial forma un circuito independiente; las trifásicas solo si el suministro es trifásico.</li><li>Los circuitos de motores usan interruptor curva D; los demás, curva C.</li></ul>`;
 B+=sub("Dimensionamiento de alimentadores y circuitos");
 B+=`<dl class="form"><dt>Corriente nominal</dt><dd>${mx(`${mi("I")} = ${fr(mi("P"),`${mi("k")} · ${mi("V")} · cos ${mi("φ")}`)}`)} &nbsp; ${mi("k")} = 1 monofásico, √3 trifásico</dd>
-<dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = máx(1.25 · ${mi("I")} ; ${sb("I","mín")})`)}; ${sb("I","mín")} solo en el alimentador principal de la vivienda (40 A) y en el de cada departamento (25 A).</dd>
+<dt>Corriente de diseño</dt><dd>${mx(`${sb("I","d")} = máx(${mi("f")} · ${mi("I")} ; ${sb("I","mín")})`)}; ${mi("f")} = 1.25 en circuitos derivados y en el alimentador de servicios generales (carga continua, Regla 050-104) y ${mi("f")} = 1.00 en los alimentadores de vivienda y de departamentos (carga no continua, Reglas 050-200(3) y 050-202(2)); ${sb("I","mín")} solo en el alimentador principal de la vivienda (40 A) y en el de cada departamento (25 A).</dd>
 <dt>Interruptor</dt><dd>El menor valor normalizado con ${mx(`${sb("I","n")} ≥ ${sb("I","d")}`)}.</dd>
 <dt>Conductor</dt><dd>La menor sección, no menor que la mínima configurada, que cumpla a la vez ${mx(`${sb("I","z")} · ${sb("F","c")} ≥ ${sb("I","n")}`)} y la caída de tensión. ${sb("F","c")} = ${sb("F","t")} · ${sb("F","a")} en circuitos derivados y ${sb("F","c")} = ${sb("F","t")} en alimentadores. Si ninguna sección cumple, se marca «Revisar».</dd>
 <dt>Caída de tensión</dt><dd>${mx(`Δ${mi("V")} = ${fr(`${mi("K")} · ${mi("ρ")} · ${mi("L")} · ${mi("I")}`,mi("S"))}`)} &nbsp; ${mi("K")} = 2 monofásico, √3 trifásico. Límites: alimentador principal 2.5 % (en edificios, el valor asignado al general); alimentadores secundarios 2.5 % menos lo consumido aguas arriba; circuito derivado mín(2.5 % ; 4 % − ΔV aguas arriba).</dd>
@@ -288,7 +288,7 @@ B+=fin;
 
 /* Lista de revisión */
 const REV=[
- ["Corriente de diseño","Se aplica 1.25 × I a todos los alimentadores y circuitos, también sobre la máxima demanda ya afectada por factores de demanda. Ejemplo C1: MD 9 kW monofásico → Id 56.8 A → ITM 63 A y conductor 2-1×25 mm².","¿Corresponde aplicar 1.25 sobre la MD o solo a cargas continuas y motores? ¿Es razonable el resultado de C1? Nota: las Reglas 050-200(3) y 050-202(2) indican que la carga total calculada de una vivienda no se considera carga continua para la Regla 050-104."],
+ ["Corriente de diseño","Desde la v2.3: 1.25 × I en circuitos derivados y en el alimentador de servicios generales (carga continua, Regla 050-104); 1.00 × I en los alimentadores de vivienda y de departamentos, porque las Reglas 050-200(3) y 050-202(2) indican que su carga calculada no es continua. Se mantienen los mínimos de 40 A y 25 A. Ejemplo C1 (método B1): MD 9 kW monofásico → I 45.5 A → ITM 50 A y conductor 2-1×10 mm² (hasta la v2.2: ITM 63 A y 2-1×25 mm²).","¿Conforme con no aplicar 1.25 a los alimentadores de vivienda? ¿Debe mantenerse en los circuitos derivados de alumbrado y tomacorrientes?"],
  ["Selección del interruptor y del conductor","El conductor se elige con Iz corregida ≥ In (no solo ≥ Id).","¿Es el criterio de coordinación que se exige?"],
  ["Factores de corrección en alimentadores","En alimentadores solo se aplica el factor de temperatura (Tabla 5A); el de agrupamiento (5C) solo en derivados.","¿Debe aplicarse también el agrupamiento a los alimentadores?"],
  ["Corrientes mínimas","40 A en el alimentador de la vivienda y 25 A en el de cada departamento; no se aplican a los alimentadores de piso ni al TSG.","¿Es correcto no exigir mínimo en los alimentadores de piso?"],
@@ -312,7 +312,8 @@ const REV=[
  ["Especificaciones técnicas y pruebas","Textos generales redactados para el expediente (PVC-SAP, cajas de fierro galvanizado, color del conductor de protección, pruebas).","Revisar redacción y requisitos."],
  ["Agrupamiento en el método C","Se aplica el ítem 1 de la Tabla 5C (agrupados en el aire, empotrados o encerrados) a todos los métodos. Para cables en una capa sobre pared (método C), la tabla da el ítem 2, con factores mayores (0,85; 0,79; 0,75…): la aplicación resulta más conservadora.","¿Debe usarse el ítem 2 de la Tabla 5C para el método C?"],
  ["Calentadores en edificios","En cada departamento (Regla 050-202) el calentador de agua se suma al 100 %, como en la Regla 050-200(1)(a)(v). La 050-202 no menciona expresamente los calentadores de agua (solo la calefacción); leído al pie de la letra, entrarían en «otras cargas» al 25 %.","¿Es correcto sumar los calentadores al 100 % en la 050-202?"],
- ["Diámetro de la varilla","La verificación de la Regla 060-702(3)(a) solo exige 13 mm (cobre); la aplicación no distingue la varilla de acero-cobre, que requiere 16 mm (5/8\").","¿Conviene pedir el material de la varilla y verificar 16 mm para acero-cobre?"]];
+ ["Diámetro de la varilla","La verificación de la Regla 060-702(3)(a) solo exige 13 mm (cobre); la aplicación no distingue la varilla de acero-cobre, que requiere 16 mm (5/8\").","¿Conviene pedir el material de la varilla y verificar 16 mm para acero-cobre?"],
+ ["Método de instalación por defecto","Desde la v2.3 el método por defecto es B1: según la Tabla 4 del CNE-U (ítem 59), los conductores aislados en tubo empotrado en paredes de mampostería (ladrillo o concreto, resistividad térmica ≤ 2 K·m/W) se calculan con el método B1. El método A1 corresponde a tubos en paredes térmicamente aislantes y sigue disponible.","¿Conforme con B1 como método por defecto para viviendas de albañilería y concreto?"]];
 B+=cap("Supuestos y decisiones a revisar");
 B+=`<p>Esta lista reúne los criterios de la aplicación que no provienen textualmente de una regla, o que dependen de una interpretación. Para cada punto se indica qué hace la aplicación y la pregunta para el revisor. Marque Conforme u Observación y anote sus comentarios.</p>`;
 B+=tbl(["N.°","Tema · qué hace la aplicación","Conforme","Observación"],REV.map(([t,d,q],i)=>[`R-${String(i+1).padStart(2,"0")}`,`<b>${t}.</b> ${d}<span class="q">${q}</span>`,"☐","☐"]),"rev");

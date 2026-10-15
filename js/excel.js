@@ -100,7 +100,8 @@ async function exportar(){
   par("ft","Factor de corrección por temperatura",c.ft,"—",`${c.temp} °C · Tabla 5A`,true);
   par("fa","Factor de corrección por agrupamiento",c.fa,"—",`${c.nag} circuito(s) por tubería · Tabla 5C`,true);
   { const rr=m; R.fc=`'Memoria'!$F$${rr}`; span(wsM,m,1,5,"Factor de corrección total en circuitos derivados",{box:1,ind:1}); cell(wsM,m,6,F(`F${rr-2}*F${rr-1}`,c.fc),{...val,fmt:"0.00"}); cell(wsM,m,7,"—",{...val,color:K.grey}); span(wsM,m,8,10,"Temperatura × agrupamiento",{box:1,size:8,color:K.grey}); m++; }
-  par("fd","Factor de corriente de diseño",FD,"—","Corriente de diseño = 1.25 × I",false);
+  par("fd","Factor de corriente de diseño en circuitos derivados",FD,"—","Carga continua · Regla 050-104",false);
+  par("fdV","Factor de corriente de diseño en alimentadores de vivienda",FD_VIV,"—","Carga no continua · Reglas 050-200(3) y 050-202(2)",false);
   par("dvA","Caída de tensión máxima en alimentadores",DV_ALIM,"%","Regla 050-102(1)",false,"0.0");
   par("dvD","Caída de tensión máxima en circuitos derivados",DV_DER,"%","Regla 050-102(2)",false,"0.0");
   par("dvT","Caída de tensión máxima total",DV_TOT,"%","Regla 050-102",false,"0.0");
@@ -208,7 +209,7 @@ async function exportar(){
     const pf=a.pKey==="MD"?F(MDREF,a.P):a.pKey==="servP"?F(servPRef,a.P):a.pKey==="piso"?F(`'Memoria'!$J$${pisoRow[a.piso]}`,a.P):F(`'Memoria'!$J$${tipoRow[r.T[a.ti].nombre]}`,a.P);
     span(wsC,k,1,3,a.desc,{box:1,ind:1,size:8.5}); cell(wsC,k,4,a.cant??1,{...val,fmt:"0"}); cell(wsC,k,5,pf,{...val,fmt:"0"});
     cell(wsC,k,6,a.s.tri?"3φ":"1φ",val); cell(wsC,k,7,a.s.V,val);
-    cell(wsC,k,8,F(fI(k),a.I),{...val,fmt:"0.00"}); cell(wsC,k,9,F(`MAX(H${k}*${R.fd},${a.Imin||0})`,a.Id),{...val,fmt:"0.00"});
+    cell(wsC,k,8,F(fI(k),a.I),{...val,fmt:"0.00"}); cell(wsC,k,9,F(`MAX(H${k}*${a.fd===FD_VIV?R.fdV:R.fd},${a.Imin||0})`,a.Id),{...val,fmt:"0.00"});
     cell(wsC,k,10,a.itm,{...inp,fmt:"0"}); cell(wsC,k,11,a.S,{...inp,fmt:"0.0"}); cell(wsC,k,12,F(fIz(k,a.col,R.ft,a.s.tri),a.Izc),{...val,fmt:"0.0"});
     cell(wsC,k,13,a.L,{...inp,fmt:"0.0"}); cell(wsC,k,14,F(fDV(k),a.dVp),{...val,fmt:"0.00"}); cell(wsC,k,15,F(i===0?`N${k}`:`N${k}+$O$${genRow}`,a.dvAc),{...val,fmt:"0.00",bold:1});
     cell(wsC,k,16,F(`IF(AND(I${k}<=J${k},J${k}<=L${k},O${k}<=${R.dvA}),"CONFORME","REVISAR")`,a.ok?"CONFORME":"REVISAR"),{...val,bold:1,size:8});

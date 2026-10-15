@@ -6,7 +6,7 @@ const T2={
   B1:{pvc2:[17.5,24,32,41,57,76,101,125,151,192,232,269],pvc3:[15.5,21,28,36,50,68,89,110,134,171,207,239],xl2:[23,31,42,54,75,100,133,164,198,253,306,354],xl3:[20,28,37,48,68,88,117,144,175,222,269,312]},
   B2:{pvc2:[16.5,23,30,38,52,69,90,111,133,168,201,232],pvc3:[15,20,27,34,46,62,80,99,118,149,179,206],xl2:[22,30,40,51,69,91,119,146,175,221,265,305],xl3:[19.5,26,35,44,60,80,105,128,154,194,233,268]},
   C:{pvc2:[19.5,27,36,46,63,85,112,138,168,213,258,299],pvc3:[17.5,24,32,41,57,76,96,119,144,184,223,259],xl2:[24,33,45,58,80,107,138,171,209,269,328,382],xl3:[22,30,40,52,71,96,119,147,179,229,278,322]}};
-const MET={A1:"A1 · Conductores aislados en tubo empotrado en pared",B1:"B1 · Conductores aislados en tubo sobre pared",B2:"B2 · Cable multipolar en tubo sobre pared",C:"C · Cable unipolar o multipolar sobre pared"};
+const MET={A1:"A1 · Conductores aislados en tubo empotrado en pared térmicamente aislante",B1:"B1 · Conductores aislados en tubo empotrado en mampostería o sobre pared (Tabla 4, ítems 4 y 59)",B2:"B2 · Cable multipolar en tubo sobre pared",C:"C · Cable unipolar o multipolar sobre pared"};
 const FT={pvc:{20:1.12,25:1.06,30:1,35:0.94,40:0.87,45:0.79},xl:{20:1.08,25:1.04,30:1,35:0.96,40:0.91,45:0.87}}; // Tabla 5A
 const FA={1:1,2:0.8,3:0.7,4:0.65,5:0.6,6:0.57}; // Tabla 5C, ítem 1
 const T16=[[20,2.5],[30,4],[60,6],[100,10],[200,16],[400,25]]; // conductor de protección según ITM
@@ -18,8 +18,11 @@ const OD={1.5:3.0,2.5:3.6,4:4.2,6:4.8,10:6.6,16:7.8,25:9.7,35:11.0,50:12.8,70:14
 const TUBOS=[[20,"3/4\"",19],[25,"1\"",24],[35,"1 1/4\"",32],[40,"1 1/2\"",38],[50,"2\"",49],[65,"2 1/2\"",61],[80,"3\"",74]];
 const TIPOS={calentador:"Calentador de agua / ducha (100 %)",cocina:"Cocina eléctrica",aire:"Aire acondicionado (100 %)",motor:"Motor (bomba, etc.)",otra:"Otra carga"};
 const TSERV={alum:"Alumbrado / tomacorrientes",motor:"Motor",otra:"Otra carga"};
+// FD: corriente de diseño de circuitos derivados y del alimentador de servicios generales (carga continua, Regla 050-104).
+// FD_VIV: alimentadores de vivienda y departamentos; su carga calculada no es continua (Reglas 050-200(3) y 050-202(2)).
+const FD_VIV=1;
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;
-const SQ3=Math.sqrt(3), VERSION="v2.2";
+const SQ3=Math.sqrt(3), VERSION="v2.3";
 const SIST={mono220:{tri:false,V:220,kI:1,K:2,n:2,txt:"1φ 220 V",nom:"Monofásico 220 V",fases:["—"]},
             tri220:{tri:true,V:220,kI:SQ3,K:SQ3,n:3,txt:"3φ 220 V",nom:"Trifásico 220 V",fases:["R-S","S-T","T-R"]},
             tri380:{tri:true,V:380,kI:SQ3,K:SQ3,n:4,txt:"3φ 380/220 V",nom:"Trifásico 380/220 V",fases:["R","S","T"]}};

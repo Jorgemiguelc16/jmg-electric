@@ -4,7 +4,7 @@
    de la pantalla no altere los casos. C1 a C8 son los casos del manual v2.1. */
 const BASE={
   p_nombre:"EJEMPLO · prueba",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable",p_cip:"",
-  fp:"0.9",maxSal:"12",pAl:"100",pTo:"180",reserva:"2",met:"A1",aisl:"pvc",temp:"30",nag:"1",sminD:"2.5",sminA:"4",rhoMode:"op",desig:"NH-80",
+  fp:"0.9",maxSal:"12",pAl:"100",pTo:"180",reserva:"2",met:"B1",aisl:"pvc",temp:"30",nag:"1",sminD:"2.5",sminA:"4",rhoMode:"op",desig:"NH-80",
   idMode:"grupo",iccE:"10",dvGen:"1.5",pDesp:"5",bajada:"1",area:"120",sot:"0",Lalim:"15",al_n:"18",al_p:"100",al_L:"20",tg_n:"22",tg_p:"180",tg_L:"22",
   tc_n:"6",tc_p:"180",tc_L:"12",Lgen:"10",Lms:"15",rho_s:"100",fr:"0.5",Lv:"2.4",dv:"0.0159",esqPisos:"tg",Ltd1:"",
   sist:"mono220",sistG:"tri380",FIX:null,pisos:[],
@@ -42,5 +42,6 @@ const CASOS_PRUEBA=[
   {id:"P8",tit:"Edificio de 24 departamentos (todos los tramos de demanda y reparto por mejora local)",p:caso("multi",{dvGen:"2",Lgen:"25",Lms:"20",
     tipos:[{nombre:"Tipo A",cant:12,area:70,nAl:10,nTo:12,coc:0,cal:1500,aire:0,otras:0,Ld:20,Lc:12},{nombre:"Tipo B",cant:8,area:95,nAl:14,nTo:16,coc:8000,cal:3500,aire:2500,otras:0,Ld:28,Lc:15},
       {nombre:"Tipo C",cant:4,area:140,nAl:18,nTo:22,coc:0,cal:3500,aire:3500,otras:3000,Ld:36,Lc:20}]})},
-  {id:"P9",tit:"Edificio sin servicios generales · trifásico 220 V",p:caso("multi",{sistG:"tri220",dvGen:"1",serv:[]})}
+  {id:"P9",tit:"Edificio sin servicios generales · trifásico 220 V",p:caso("multi",{sistG:"tri220",dvGen:"1",serv:[]})},
+  {id:"P10",tit:"Método A1: tubo en pared térmicamente aislante",p:caso("uni",{met:"A1"})}
 ];
