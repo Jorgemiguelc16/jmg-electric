@@ -13,7 +13,7 @@
 <script src="casos.js"></script>
 <style>
   @page{size:A4;margin:18mm 16mm 16mm;
-    @top-left{content:"JMG - ELECTRIC v2.3 · Manual de usuario y referencia técnica";font:7.5pt Arial,sans-serif;color:#333}
+    @top-left{content:"JMG - ELECTRIC v2.4 · Manual de usuario y referencia técnica";font:7.5pt Arial,sans-serif;color:#333}
     @top-right{content:"JMG Projects & Energy";font:7.5pt Arial,sans-serif;color:#333}
     @bottom-right{content:"Página " counter(page) " de " counter(pages);font:7.5pt Arial,sans-serif;color:#333}}
   @page:first{@top-left{content:none}@top-right{content:none}@bottom-right{content:none}}
@@ -145,7 +145,7 @@ B+=cap("Vivienda unifamiliar");
 B+=sub("Datos de la vivienda");
 B+=`<p>En <b>Vivienda</b> se ingresan el área techada, el área de sótano (se computa al 75 %) y la longitud del alimentador desde el medidor hasta el tablero general TG. En <b>Sistema eléctrico</b> se elige monofásico 220 V, trifásico 380/220 V o trifásico 220 V.</p>`;
 B+=sub("Salidas");
-B+=`<p>Para alumbrado, tomacorrientes generales y tomacorrientes de cocina o lavandería se indica la <b>cantidad de salidas</b>, la <b>potencia por salida</b> (100 W y 180 W típicos) y la <b>longitud</b> desde el tablero hasta la salida más alejada. La aplicación forma los circuitos con un máximo de 12 salidas cada uno (Regla 070-3000).</p>`;
+B+=`<p>Para alumbrado, tomacorrientes generales y tomacorrientes de cocina o lavandería se indica la <b>cantidad de salidas</b>, la <b>potencia por salida</b> (100 W y 180 W típicos) y la <b>longitud</b> desde el tablero hasta la salida más alejada. La aplicación forma los circuitos con un máximo de 12 salidas cada uno (Regla 070-3000).</p><p>Si hay <b>luminarias de distintas potencias</b>, las salidas de la potencia principal se indican en la fila de alumbrado y las demás con <b>+ Luminarias de otra potencia</b> (cantidad, W por salida y, si la vivienda tiene varios pisos, el piso). Por ejemplo, 25 luminarias de las que 8 son de 36 W: 17 salidas de 100 W en la fila y 8 × 36 W en la lista. Los circuitos de alumbrado se llenan en ese orden con la potencia real de cada salida, siempre con un máximo de 12 salidas por circuito; el ejemplo da tres circuitos de 900 W, 800 W y 288 W. Estas luminarias aumentan la potencia instalada y la corriente de los circuitos, pero no la máxima demanda, que el CNE calcula por área (Regla 050-200).</p>`;
 B+=sub("Cargas especiales");
 B+=`<p>Cada carga especial (ducha o terma, cocina eléctrica, aire acondicionado, motor u otra carga) tiene su propio circuito. Se indica la descripción, el tipo, las fases, la potencia y la longitud. Las cargas trifásicas solo se aplican si el suministro es trifásico. En viviendas de varios pisos se elige además el <b>tablero</b> del que se alimenta.</p>`;
 B+=sub("Viviendas de varios pisos");
@@ -156,7 +156,7 @@ B+=`<p>En <b>Vivienda › Pisos y tableros</b>, el botón <b>+ Agregar piso</b> 
 B+=fin;
 
 B+=cap("Edificio multifamiliar");
-B+=`<p>En el modo multifamiliar el edificio se describe por <b>tipos de departamento</b>. Para cada tipo se indica la cantidad de unidades, el área, la longitud del alimentador (medidor → tablero del departamento), las salidas de alumbrado y tomacorrientes, la cocina, el calentador, el aire acondicionado, otras cargas mayores de 1 500 W y la longitud de los circuitos.</p>
+B+=`<p>En el modo multifamiliar el edificio se describe por <b>tipos de departamento</b>. Para cada tipo se indica la cantidad de unidades, el área, la longitud del alimentador (medidor → tablero del departamento), las salidas de alumbrado y tomacorrientes, la cocina, el calentador, el aire acondicionado, otras cargas mayores de 1 500 W y la longitud de los circuitos.</p><p>Las salidas de alumbrado de cada departamento usan la potencia por salida de Parámetros. Las <b>luminarias de otra potencia</b> se agregan debajo de la lista de departamentos, indicando el tipo al que pertenecen y la cantidad por departamento.</p>
 <p>Los <b>servicios generales</b> (alumbrado de áreas comunes, iluminación de emergencia, electrobombas, intercomunicadores) se agrupan en el tablero TSG. En <b>Sistema eléctrico</b> se indican el sistema del edificio y las longitudes del alimentador general y del alimentador al TSG. El banco de medidores se ubica en el primer piso (Norma DGE, 301.C).</p>`;
 B+=fin;
 

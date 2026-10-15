@@ -9,7 +9,7 @@ const LKEY="jmg-electric-proyectos";
 const nuevoId=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function libLoad(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
 function libSave(L){ try{ localStorage.setItem(LKEY,JSON.stringify(L)); return true; }catch(e){ return false; } }
-function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,FIX,ACEP,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
+function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,lums,lumsT,FIX,ACEP,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
 const esEjemplo=()=>/^EJEMPLO\b/.test($("p_nombre").value.trim());
 function saveDraft(){
   if(esEjemplo()){ PID=null; try{ localStorage.setItem(SKEY,JSON.stringify(estado())); }catch(e){} return; }
@@ -24,7 +24,7 @@ function limpiarLista(a,plantilla,nums=[]){ return Array.isArray(a)?a.filter(x=>
 function aplicar(o){
   PID=typeof o.id==="string"&&/^[\w-]{1,40}$/.test(o.id)?o.id:null;
   KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=String(o[k]).replace(/[<>]/g,""); else if(k==="esqPisos"||k==="Ltd1"||k==="p_cip"||k==="resAl") $(k).value=DEFV[k]; });
-  [["cargas",cargas],["tipos",tipos],["serv",serv],["pisos",pisos]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases"))||(k==="pisos"?[]:null); if(L){ a.length=0; a.push(...L); } });
+  [["cargas",cargas],["tipos",tipos],["serv",serv],["pisos",pisos],["lums",lums],["lumsT",lumsT]].forEach(([k,a])=>{ const L=limpiarLista(o[k],LISTS[k].nuevo(),LISTS[k].f.filter(f=>f.t==="number"||f.k==="fases").map(f=>f.k).filter(x=>x!=="fases"))||(["pisos","lums","lumsT"].includes(k)?[]:null); if(L){ a.length=0; a.push(...L); } });
   const fx=o.FIX&&typeof o.FIX==="object"?o.FIX:{}, ok=v=>v&&typeof v==="object"?Object.fromEntries(Object.entries(v).filter(([,x])=>typeof x==="string")):{};
   FIX={uni:ok(fx.uni),multi:ok(fx.multi)};
   const ac=o.ACEP&&typeof o.ACEP==="object"?o.ACEP:{}; ACEP={uni:ok(ac.uni),multi:ok(ac.multi)};
@@ -34,13 +34,13 @@ function aplicar(o){
   const f0=FORZAR; FORZAR=true; try{ setMode(o.MODE==="multi"?"multi":"uni"); } finally{ FORZAR=f0; }
 }
 const PKEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","area","sot","Lalim","Ltd1","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"];
-function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],pisos:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
+function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],pisos:[],lums:[],lumsT:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
 function nuevoProyecto(m){
   aplicar(proyectoVacio(m));
   irSec("proyecto"); try{ $("p_nombre").focus(); }catch(e){}
 }
 function cargarEjemplo(m){
-  aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),pisos:[],FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
+  aplicar({id:null,...DEFV,MODE:m,cargas:clon(DEF.cargas),tipos:clon(DEF.tipos),serv:clon(DEF.serv),pisos:[],lums:[],lumsT:[],FIX:null,sist:"mono220",sistG:"tri380"}); setTab("calculo");
   const v={p_nombre:m==="multi"?"EJEMPLO · Edificio multifamiliar de 8 departamentos":"EJEMPLO · Vivienda unifamiliar",p_prop:"Propietario de ejemplo",p_ubic:"Arequipa, Perú",p_proy:"Ing. responsable"};
   Object.entries(v).forEach(([k,x])=>$(k).value=x); VIEW="unifilar"; calcularAhora(); irSec("resultados");
 }

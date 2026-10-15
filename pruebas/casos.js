@@ -45,5 +45,8 @@ const CASOS_PRUEBA=[
   {id:"P9",tit:"Edificio sin servicios generales · trifásico 220 V",p:caso("multi",{sistG:"tri220",dvGen:"1",serv:[]})},
   {id:"P10",tit:"Método A1: tubo en pared térmicamente aislante",p:caso("uni",{met:"A1"})},
   {id:"P11",tit:"Vivienda sin reserva en alimentadores (0 %, Regla 050-200(3))",p:caso("uni",{resAl:"0"})},
-  {id:"P12",tit:"Edificio sin reserva en alimentadores (0 %, Regla 050-202(2))",p:caso("multi",{resAl:"0"})}
+  {id:"P12",tit:"Edificio sin reserva en alimentadores (0 %, Regla 050-202(2))",p:caso("multi",{resAl:"0"})},
+  {id:"P13",tit:"Luminarias de distintas potencias: 17 × 100 W + 8 × 36 W",p:caso("uni",{al_n:"17",lums:[{n:8,p:36,piso:1}]})},
+  {id:"P14",tit:"Vivienda de 2 pisos con luminarias de otra potencia en cada piso",p:caso("uni",{sist:"tri380",area:"90",Ltd1:"6",pisos:[{area:80,Ld:10,al_n:10,al_L:15,tg_n:12,tg_L:16,tc_n:0,tc_L:null}],lums:[{n:6,p:50,piso:2},{n:4,p:20,piso:1}]})},
+  {id:"P15",tit:"Edificio con luminarias de otra potencia por tipo de departamento",p:caso("multi",{lumsT:[{n:4,p:20,tipo:0},{n:2,p:60,tipo:1}]})}
 ];

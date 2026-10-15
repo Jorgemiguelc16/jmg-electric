@@ -22,7 +22,7 @@ const TSERV={alum:"Alumbrado / tomacorrientes",motor:"Motor",otra:"Otra carga"};
 // Los alimentadores de vivienda y departamentos usan 1 + reserva (parámetro resAl): su carga calculada no es continua
 // (Reglas 050-200(3) y 050-202(2)), por lo que la norma admite 0 %; 25 % es la reserva para ampliaciones usual en la práctica.
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;
-const SQ3=Math.sqrt(3), VERSION="v2.3";
+const SQ3=Math.sqrt(3), VERSION="v2.4";
 const SIST={mono220:{tri:false,V:220,kI:1,K:2,n:2,txt:"1φ 220 V",nom:"Monofásico 220 V",fases:["—"]},
             tri220:{tri:true,V:220,kI:SQ3,K:SQ3,n:3,txt:"3φ 220 V",nom:"Trifásico 220 V",fases:["R-S","S-T","T-R"]},
             tri380:{tri:true,V:380,kI:SQ3,K:SQ3,n:4,txt:"3φ 380/220 V",nom:"Trifásico 380/220 V",fases:["R","S","T"]}};

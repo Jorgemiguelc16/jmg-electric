@@ -60,11 +60,15 @@ function mdVivienda({area,coc,cal,aire,otras},multi){
   const sinAire=basica+mdCoc+cal+mdOtras;
   return {basica,coc,mdCoc,cal,aire,otras,mdOtras,sinAire,MD:sinAire+aire};
 }
+// Potencia de las salidas ini..ini+n-1 de una lista mixta [[cantidad, W por salida], ...] (luminarias de distintas potencias)
+const potMix=(mix,ini,n)=>{ let P=0, pos=0; for(const [m,p] of mix){ const a=Math.max(ini,pos), b=Math.min(ini+n,pos+m); if(b>a) P+=(b-a)*p; pos+=m; } return P; };
+// Luminarias de otra potencia que se suman a una salida de alumbrado: {n, mix} o null
+const lumsExtra=(L,n0,p0)=>{ const v=L.map(x=>[Math.max(0,Math.round(+x.n||0)),+x.p||0]).filter(([m,p])=>m>0&&p>0); if(!v.length) return null; return {n:v.reduce((s,[m])=>s+m,0),P:v.reduce((s,[m,p])=>s+m*p,0),mix:[[n0,p0],...v]}; };
 function grupos(list,c,tab,dvUp,feeder){
   const out=[]; let k=0;
-  list.forEach(g=>{ if(g.n<=0) return; const nc=Math.ceil(g.n/c.maxSal); let rest=g.n;
-    for(let i=0;i<nc;i++){ const n=Math.ceil(rest/(nc-i)); rest-=n;
-      const q=circuito({tab,id:"C-"+(++k),desc:g.desc+(nc>1?` ${i+1}`:""),tipo:g.tipo,n,P:n*g.p,L:g.L,fases:1},c,dvUp,feeder); q.src=g.src||null; out.push(q); } });
+  list.forEach(g=>{ if(g.n<=0) return; const nc=Math.ceil(g.n/c.maxSal); let rest=g.n, ini=0;
+    for(let i=0;i<nc;i++){ const n=Math.ceil(rest/(nc-i)); rest-=n; const P=g.mix?potMix(g.mix,ini,n):n*g.p; ini+=n;
+      const q=circuito({tab,id:"C-"+(++k),desc:g.desc+(nc>1?` ${i+1}`:""),tipo:g.tipo,n,P,L:g.L,fases:1},c,dvUp,feeder); q.src=g.src||null; out.push(q); } });
   return out;
 }
 // Factor de agrupamiento de varillas en paralelo (separación ≥ longitud de varilla), con interpolación lineal
@@ -130,7 +134,9 @@ function calcUni(c){
     return {coc:sum("cocina"),cal:sum("calentador"),aire:sum("aire"),otras:list.filter(x=>(x.tipo==="otra"||x.tipo==="motor")&&x.p>1500).reduce((s,x)=>s+x.p,0)}; };
   const md=mdVivienda({area,...cargasMD(cs)},false);
   const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
-  const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
+  // Luminarias de otra potencia de cada piso (con un solo piso, todas van al 1er piso)
+  const exP=p=>lumsExtra(lums.filter(x=>(varios?Math.round(+x.piso||1):1)===p.n),p.al.n,pw.al), alX=p=>{ const e=exP(p); return e?{n:p.al.n+e.n,mix:e.mix}:{}; };
+  const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+(exP(p)?.P||0)+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
   const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:IMIN_UNI,fd:c.fdA,viv:true});
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,al.s,al.L,al.S);
@@ -149,7 +155,7 @@ function calcUni(c){
   tabs.forEach(tb=>{ const f=alims[tb.feeder], up=tb.feeder?f.dvAc:al.dVp;
     const PT=PS.filter(p=>tabDe(p.n)===tb.tab);
     const src=(p,k)=>p.n===1?{t:"grp",k}:{t:"piso",i:p.i,k};
-    const list=grupos(PT.flatMap(p=>[{...p.al,p:pw.al,desc:"Alumbrado",tipo:"Alumbrado",src:src(p,"al")},{...p.tg,p:pw.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:src(p,"tg")},{...p.tc,p:pw.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:src(p,"tc")}]),c,tb.tab,up,tb.feeder);
+    const list=grupos(PT.flatMap(p=>[{...p.al,p:pw.al,...alX(p),desc:"Alumbrado",tipo:"Alumbrado",src:src(p,"al")},{...p.tg,p:pw.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:src(p,"tg")},{...p.tc,p:pw.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:src(p,"tc")}]),c,tb.tab,up,tb.feeder);
     cs.forEach((x,ix)=>{ if(!(x.p>0)||tabCarga(x)!==tb.tab) return; const q=circuito({tab:tb.tab,id:"C-"+(list.length+1),desc:x.nombre||"Carga especial",tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,up,tb.feeder); q.src={t:"cargas",i:ix}; list.push(q); });
     asignarID(list,c); circ.push(...list); });
   const bal=balancear(circ,sk,FIX.uni);
@@ -159,6 +165,8 @@ function calcUni(c){
 function calcMulti(c){
   const sk=radio("sistG")||"tri380", Lgen=num("Lgen")||1, Lms=num("Lms")||1;
   const T=tipos.map((t,i)=>({...t,_i:i})).filter(t=>t.cant>0).map(t=>({...t,cant:Math.round(t.cant),md:mdVivienda(t,true)})).sort((a,b)=>b.md.sinAire-a.md.sinAire);
+  // Luminarias de otra potencia de cada tipo de departamento
+  const exT=t=>lumsExtra(lumsT.filter(x=>Math.round(+x.tipo||0)===t._i),t.nAl||0,c.pAl), alT=t=>{ const e=exT(t); return e?{n:(t.nAl||0)+e.n,mix:e.mix}:{}; };
   const units=[]; T.forEach((t,ti)=>{for(let k=0;k<t.cant;k++) units.push({ti,nombre:t.nombre,md:t.md.sinAire,P:t.md.MD,f3:false,ref:`${t.nombre} · Nº ${k+1}`});});
   const fac=i=>i<1?1:i<3?0.65:i<5?0.40:i<20?0.30:0.25;
   units.forEach((u,i)=>{u.ord=i+1; u.f=fac(i); u.dem=u.md*u.f;});
@@ -183,7 +191,7 @@ function calcMulti(c){
   if(SV.length){ const f=alims[1]; const l=SV.map((x,i)=>{ const q=circuito({tab:"TSG",id:"S-"+(i+1),desc:x.nombre||"Carga común",tipo:TSERV[x.tipo],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,f.dvAc,1); q.src={t:"serv",i:x._i}; return q; }); asignarID(l,c); circ.push(...l); }
   T.forEach((t,ti)=>{
     const fi=alims.findIndex(a=>a.pKey==="tipo"&&a.ti===ti), up=alims[fi].dvAc;
-    const list=grupos([{n:t.nAl,p:c.pAl,L:t.Lc||1,desc:"Alumbrado",tipo:"Alumbrado"},{n:t.nTo,p:c.pTo,L:t.Lc||1,desc:"Tomacorrientes",tipo:"Tomacorriente"}],c,t.tab,up,fi);
+    const list=grupos([{n:t.nAl,p:c.pAl,...alT(t),L:t.Lc||1,desc:"Alumbrado",tipo:"Alumbrado"},{n:t.nTo,p:c.pTo,L:t.Lc||1,desc:"Tomacorrientes",tipo:"Tomacorriente"}],c,t.tab,up,fi);
     [["Cocina eléctrica",t.coc,"Cocina eléctrica"],["Calentador de agua / ducha",t.cal,"Calentador de agua / ducha"],["Aire acondicionado",t.aire,"Aire acondicionado"],["Otras cargas > 1500 W",t.otras,"Otra carga"]]
       .forEach(([d,p,tp])=>{ if(p>0) list.push(circuito({tab:t.tab,id:"C-"+(list.length+1),desc:d,tipo:tp,n:1,P:p,L:t.Lc||1,fases:1},c,up,fi)); });
     list.forEach(q=>{ q.src={t:"tipo",i:t._i}; }); asignarID(list,c); circ.push(...list);
@@ -192,7 +200,7 @@ function calcMulti(c){
   const balItems=[...units.map(u=>({...u,key:u.ref})),...circ.filter(q=>q.tab==="TSG")];
   const bal=balancear(balItems,sk,FIX.multi);
   const emerg=SV.some(s=>/emergencia/i.test(s.nombre));
-  const CI=T.reduce((s,t)=>s+t.cant*(t.nAl*c.pAl+t.nTo*c.pTo+t.coc+t.cal+t.aire+t.otras),0)+Pserv;
+  const CI=T.reduce((s,t)=>s+t.cant*(t.nAl*c.pAl+(exT(t)?.P||0)+t.nTo*c.pTo+t.coc+t.cal+t.aire+t.otras),0)+Pserv;
   return {mode:"multi",iccTG,c,sk,T,units,tramos,mdDeptos,aireTot,SV,Pserv,mdServ,maxMot,MD,CI,alims,circ,tabs,bal,emerg,pat:pozo(c.pat),
     contratada:Math.ceil(MD/500)/2, conexion:"Conexión en derivación con banco de medidores (Norma DGE, 301.C)", Selec:tierraElectrodo(gen.Izc)};
 }
