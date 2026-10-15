@@ -45,7 +45,9 @@ function exTree(){
   else N.push(`<div class="tn lock" style="padding-left:26px"><i class="dot"></i><span>Tableros y circuitos · complete los datos</span></div>`);
   add(1,"Parámetros de diseño","param",document.querySelector("#fs-p-car .inv,#fs-p-cond .inv,#fs-p-prot .inv,#fs-p-pat .inv")?"bad":"ok");
   if(r) add(1,"Metrado","metrado","ok");
-  $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`; }
+  $("exTree").innerHTML=N.join(""); $("exCount").textContent=r?`${r.circ.length} circuitos`:`${WSF.length} pendientes`;
+  // Contador de recomendaciones de diseño pendientes en el botón de la cinta
+  const rb=$("recBadge"); if(rb){ const k=r?recomendaciones(r).filter(x=>!(ACEP[r.mode]||{})[x.id]).length:0; rb.textContent=k; rb.hidden=!k; } }
 function propTablero(tab){ const r=LAST; if(!r){ return selNode("proyecto"); } const tb=r.tabs.find(t=>t.tab===tab); if(!tb) return selNode("proyecto");
   const f=r.alims[tb.feeder], cs=r.circ.filter(q=>q.tab===tab), row=(k,v)=>`<tr><td>${k}</td><td>${v}</td></tr>`;
   $("propSub").textContent=`Tablero ${tab}`;
@@ -115,7 +117,8 @@ $("ws").addEventListener("click",e=>{
   else if(a==="xlsx"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para exportar"); $("btnXlsx").click(); toast("Generando memoria de cálculo…"); }
   else if(a==="print"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para imprimir"); $("btnPrint").click(); }
   else if(a==="undo") histGo(-1); else if(a==="redo") histGo(1);
-  else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
+  else if(a==="rec"){ if(!LAST) return toast("Complete los datos para ver los resultados"); verVista("verif"); setTimeout(()=>document.querySelector("#results .rec-card")?.scrollIntoView({behavior:"smooth",block:"start"}),80); }
+  else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":nm==="lums"?"salidas":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
   else if(a.startsWith("web:")){ cerrarWS(true); setTab(a.slice(4)); } });
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-dl]")) return; if(DESACT) calcularAhora(); if(e.target.closest("#ws [data-dl]")&&!LAST) toast("Complete los datos para descargar el unifilar"); },true);
 $("expMsg").textContent=""; new MutationObserver(()=>{ const t=$("expMsg").textContent; if(t&&!$("ws").hidden) toast(t); }).observe($("expMsg"),{childList:true,characterData:true,subtree:true});
@@ -181,3 +184,6 @@ document.querySelectorAll("#ws .sp").forEach(sp=>{ const k=sp.dataset.sp, p=PANE
     const up=()=>{ sp.classList.remove("drag"); document.body.classList.remove("arrastrando"); removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); panes(true); };
     addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
   sp.addEventListener("dblclick",()=>{ p.w=null; panes(true); toast("Ancho restablecido"); }); });
+// Rueda del mouse sobre la cinta: desplaza los grupos hacia los lados cuando no caben en la pantalla
+document.querySelector(".ap-ribbon").addEventListener("wheel",e=>{ const el=e.currentTarget;
+  if(el.scrollWidth>el.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){ el.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});

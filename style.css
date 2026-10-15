@@ -1039,3 +1039,12 @@ nav.tabs{margin-top:10px}
 .rec-t{font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .rec-s{color:var(--muted)}
 .rec-a{display:flex;gap:10px;align-items:center;margin-top:8px}
+/* Contador de recomendaciones pendientes sobre el botón de la cinta */
+.rb{position:relative}
+.rbadge{position:absolute;top:1px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#d9a23a;color:#fff;font:700 10.5px/17px var(--f-mono);font-style:normal;text-align:center;box-shadow:0 0 0 2px var(--ws-ribbon,#f7f8fa)}
+/* Cinta con más comandos: altura según el contenido (tres filas de botones pequeños) y barra de desplazamiento fina si no cabe */
+@media screen{
+.ap-ribbon{height:auto;min-height:84px;scrollbar-width:thin}
+.rib{height:auto}
+.col .rs{padding:2px 8px}
+}
