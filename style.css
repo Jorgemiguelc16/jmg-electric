@@ -1052,3 +1052,8 @@ nav.tabs{margin-top:10px}
 .col.atajos .rs{cursor:default;gap:8px}
 .col.atajos .rs:hover{background:none}
 .col.atajos b{display:inline-block;min-width:46px;padding:0 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--panel);font:600 10.5px/16px var(--f-mono);text-align:center}
+/* Escala del espacio de trabajo (Ajustes; 80 % por defecto) y compensación del zoom del navegador en las páginas de la web */
+@media screen and (min-width:900px){
+.app{zoom:var(--zws,.8);width:calc(100vw / var(--zws,.8));height:calc(100vh / var(--zws,.8));right:auto;bottom:auto}
+}
+body:not(.ws-on){zoom:var(--zsite,1)}

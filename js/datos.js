@@ -63,7 +63,7 @@ function ayudas(){ Object.entries(HLP).forEach(([id,t])=>{ const el=$(id); if(!e
 /* Globo de ayuda flotante (no lo recortan los paneles) */
 (function(){ const tip=document.createElement("div"); tip.className="tipbox"; tip.hidden=true; document.body.appendChild(tip);
   const show=e=>{ const t=e.target.closest&&e.target.closest(".ii"); if(!t) return; tip.textContent=t.dataset.tip; tip.hidden=false; const r=t.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
-    let x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8), y=r.top-h-8; if(y<8) y=r.bottom+8; tip.style.left=x+"px"; tip.style.top=y+"px"; };
+    let x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8), y=r.top-h-8; if(y<8) y=r.bottom+8; const z=parseFloat(getComputedStyle(document.body).zoom)||1; tip.style.left=x/z+"px"; tip.style.top=y/z+"px"; };
   const hide=e=>{ if(e.target.closest&&e.target.closest(".ii")) tip.hidden=true; };
   document.addEventListener("mouseover",show); document.addEventListener("focusin",show); document.addEventListener("mouseout",hide); document.addEventListener("focusout",hide); document.addEventListener("scroll",()=>tip.hidden=true,true); })();
 const PHL={lums:{n:"ej. 8",p:"ej. 36"},lumsT:{n:"ej. 4",p:"ej. 20"},cargas:{nombre:"ej. Ducha eléctrica",p:"ej. 3500",L:"ej. 12"},tipos:{cant:"ej. 6",area:"ej. 85",Ld:"ej. 25",nAl:"ej. 12",nTo:"ej. 14",coc:"0 si no hay",cal:"0 si no hay",aire:"0 si no hay",otras:"0 si no hay",Lc:"ej. 15"},serv:{nombre:"ej. Electrobomba de agua",p:"ej. 800",L:"ej. 30"},pisos:{area:"ej. 90",Ld:"ej. 8",al_n:"ej. 10",al_L:"ej. 18",tg_n:"ej. 12",tg_L:"ej. 20",tc_n:"0 si no hay",tc_L:"ej. 12"}};

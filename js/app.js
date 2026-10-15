@@ -180,7 +180,8 @@ document.addEventListener("click",e=>{ const b=e.target.closest(".pane-tg,.ph-x"
 document.querySelectorAll("#ws .sp").forEach(sp=>{ const k=sp.dataset.sp, p=PANE[k];
   sp.addEventListener("pointerdown",e=>{ e.preventDefault(); try{ sp.setPointerCapture(e.pointerId); }catch(_){} sp.classList.add("drag"); document.body.classList.add("arrastrando");
     const mv=ev=>{ const r=apMain.getBoundingClientRect(), otro=PANE[k==="left"?"right":"left"], wo=otro.on?document.querySelector("#ws "+otro.cls).offsetWidth:0;
-      const w=k==="left"?ev.clientX-r.left:r.right-ev.clientX; p.w=Math.round(Math.max(170,Math.min(640,r.width-wo-360,w))); panes(false); };
+      // Las coordenadas del mouse están en píxeles de pantalla; se dividen por la escala del espacio de trabajo
+      const S=parseFloat(getComputedStyle($("ws")).zoom)||1, w=(k==="left"?ev.clientX-r.left:r.right-ev.clientX)/S; p.w=Math.round(Math.max(170,Math.min(640,r.width/S-wo-360,w))); panes(false); };
     const up=()=>{ sp.classList.remove("drag"); document.body.classList.remove("arrastrando"); removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); panes(true); };
     addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
   sp.addEventListener("dblclick",()=>{ p.w=null; panes(true); toast("Ancho restablecido"); }); });
