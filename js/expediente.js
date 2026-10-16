@@ -168,7 +168,7 @@ function expediente(r,estilo="formal"){
 
   /* ---------- PORTADA E ÍNDICE ---------- */
   const portada=`<section class="ex-cover">
-    <div class="ex-cv-top"><img src="logo.png?v=2.4.1" alt="">${estilo==="formal"?`<div><b>JMG Projects &amp; Energy</b><span>${proyCip}</span></div>`:`<div><b>JMG - ELECTRIC</b><span>JMG Projects &amp; Energy</span></div>`}</div>
+    <div class="ex-cv-top"><span class="jmg-sello"><svg viewBox="140 265 1640 795" role="img" aria-label="JMG Projects &amp; Energy"><use href="#jmg-logo"/></svg></span>${estilo==="formal"?`<div><b>JMG Projects &amp; Energy</b><span>${proyCip}</span></div>`:`<div><b>JMG - ELECTRIC</b><span>JMG Projects &amp; Energy</span></div>`}</div>
     <div class="ex-cv-mid"><p class="ex-cv-eye">Expediente técnico</p><h1>Instalaciones eléctricas interiores</h1><p class="ex-cv-sub">${tipoEd}</p><h2>${esc(nom)}</h2></div>
     <dl class="ex-cv-dl"><dt>Propietario</dt><dd>${esc(P.prop||"—")}</dd><dt>Ubicación</dt><dd>${esc(P.ubic||"—")}</dd><dt>Proyectista</dt><dd>${proyCip}</dd>
       <dt>Máxima demanda</dt><dd>${fmt(md/1000,2)} kW · ${s0.nom}</dd><dt>Potencia a contratar</dt><dd>${fmt(r.contratada,1)} kW</dd><dt>Fecha</dt><dd>${fecha}</dd></dl>

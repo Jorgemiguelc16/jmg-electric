@@ -1058,3 +1058,17 @@ nav.tabs{margin-top:10px}
 .app{zoom:var(--zws,.8);width:calc(100vw / var(--zws,.8));height:calc(100vh / var(--zws,.8));right:auto;bottom:auto}
 }
 body:not(.ws-on){zoom:var(--zsite,1)}
+
+/* Logo de JMG Projects & Energy (vectorial): sello horizontal negro y monograma */
+.jmg-sello{flex:none;display:inline-block;background:#0b0b0c;border-radius:10px;padding:10px 14px;box-shadow:0 2px 6px rgba(0,0,0,.18);line-height:0}
+.jmg-sello svg{display:block;width:132px;height:auto}
+#markLogo{align-self:center}
+.brandline .jmg-sello{padding:8px 11px;border-radius:8px}.brandline .jmg-sello svg{width:96px}
+.wl-head .jmg-sello{padding:8px 11px;border-radius:8px}.wl-head .jmg-sello svg{width:92px}
+.contact-logo{display:grid;place-items:center;width:100%;aspect-ratio:3/2;background:#0b0b0c}
+.contact-logo .jmg-sello{box-shadow:none;background:none;padding:0}.contact-logo .jmg-sello svg{width:min(70%,260px);margin:auto}
+.contact-logo .jmg-sello{display:block;width:100%;text-align:center}
+span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;background:#0b0b0c;border:1px solid #3a3f46;border-radius:5px;border-bottom:1px solid #3a3f46}
+.jmg-mono svg{display:block;width:20px;height:auto}
+.ex-cv-top .jmg-sello{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ex-cv-top .jmg-sello svg{width:120px}
+@media (max-width:560px){ .jmg-sello svg{width:104px} }
