@@ -101,7 +101,7 @@ B+=parte("I","Manual de usuario","Cómo crear un proyecto, ingresar los datos de
 
 B+=cap("Introducción");
 B+=sub("Qué es JMG - ELECTRIC");
-B+=`<p>JMG - ELECTRIC es una aplicación web para el cálculo de instalaciones eléctricas interiores de <b>viviendas unifamiliares</b> (de uno o varios pisos) y <b>edificios multifamiliares</b>, conforme al Código Nacional de Electricidad – Utilización (CNE-U), al Reglamento Nacional de Edificaciones, Norma EM.010, y a la Norma DGE de conexiones en baja tensión. Funciona en el navegador, sin instalación, en <b>jorgemiguelc16.github.io/jmg-electric</b>.</p>
+B+=`<p>JMG - ELECTRIC es una aplicación web para el cálculo de instalaciones eléctricas interiores de <b>viviendas unifamiliares</b> (de uno o varios pisos), <b>edificios multifamiliares</b> y <b>otros usos</b>: oficinas, locales comerciales y demás actividades de la Tabla 14, escuelas, hospitales y hoteles, conforme al Código Nacional de Electricidad – Utilización (CNE-U), al Reglamento Nacional de Edificaciones, Norma EM.010, y a la Norma DGE de conexiones en baja tensión. Funciona en el navegador, sin instalación, en <b>jorgemiguelc16.github.io/jmg-electric</b>.</p>
 <p>A partir de los datos del proyecto calcula la máxima demanda, los alimentadores y circuitos derivados, las protecciones, la caída de tensión, el cortocircuito, el balance de fases y la puesta a tierra; dibuja el diagrama unifilar y genera el metrado, la memoria de cálculo en Excel y el expediente técnico en PDF.</p>`;
 B+=sub("Alcance del cálculo");
 B+=`<ul>${ALCANCE.map(t=>`<li>${t}</li>`).join("")}</ul>`;
@@ -113,7 +113,7 @@ B+=cap("Primeros pasos");
 B+=sub("Pantalla de inicio");
 B+=`<p>Desde Inicio se crea un proyecto nuevo, se abre el último proyecto o se carga un <b>proyecto de ejemplo</b> para explorar la aplicación. Las pestañas superiores dan acceso a Proyectos (biblioteca), Herramientas (calculadoras rápidas), Normas aplicadas, Guía y Soporte.</p>`+fig("inicio","Figura 1. Pantalla de inicio.");
 B+=sub("Crear un proyecto nuevo");
-B+=`<p>El asistente pide el <b>tipo de edificación</b> (vivienda unifamiliar o edificio multifamiliar), el nombre del proyecto (obligatorio), el propietario, la ubicación, el proyectista, su <b>número de CIP</b> y el sistema de suministro. Al continuar se abre el espacio de trabajo con los datos pendientes marcados en ámbar.</p>`+fig("asistente","Figura 2. Asistente de nuevo proyecto.");
+B+=`<p>El asistente pide el <b>tipo de edificación</b> (vivienda unifamiliar, edificio multifamiliar o comercial y otros usos, con el uso específico de la edificación), el nombre del proyecto (obligatorio), el propietario, la ubicación, el proyectista, su <b>número de CIP</b> y el sistema de suministro. Al continuar se abre el espacio de trabajo con los datos pendientes marcados en ámbar.</p>`+fig("asistente","Figura 2. Asistente de nuevo proyecto.");
 B+=sub("Guardar y abrir proyectos");
 B+=`<ul><li>El proyecto se <b>guarda automáticamente</b> en el navegador cuando tiene nombre. Los proyectos de ejemplo no se guardan.</li>
 <li>La pestaña <b>Proyectos</b> lista los proyectos guardados con las acciones Abrir, Duplicar, Exportar y Eliminar.</li>
@@ -384,7 +384,7 @@ B+=fin;
 
 /* ---------- portada e índice ---------- */
 const portada=`<section class="portada"><div class="top"><img src="${typeof LOGO_JPG==="string"?LOGO_JPG:"../logo.png"}" alt=""><div><b>JMG Projects &amp; Energy</b><span>JMG - ELECTRIC · versión ${VERSION}</span></div></div>
-<div class="mid"><p class="eye">Documentación</p><h1>Manual de usuario y referencia técnica</h1><p class="sub">Cálculo de instalaciones eléctricas interiores en viviendas y edificios multifamiliares</p></div>
+<div class="mid"><p class="eye">Documentación</p><h1>Manual de usuario y referencia técnica</h1><p class="sub">Cálculo de instalaciones eléctricas interiores en viviendas, edificios multifamiliares, oficinas, comercios, escuelas, hospitales y hoteles</p></div>
 <dl><dt>Aplicación</dt><dd>JMG - ELECTRIC ${VERSION} · jorgemiguelc16.github.io/jmg-electric</dd><dt>Normativa</dt><dd>CNE-Utilización · RNE EM.010 · Norma DGE</dd><dt>Autor</dt><dd>Jorge Miguel Condori Huayllani</dd><dt>Fecha</dt><dd>${fecha}</dd></dl>
 <div class="foot"><span>Parte I · Manual de usuario</span><span>Parte II · Referencia técnica para revisores</span></div></section>`;
 const indice=`<section class="cap toc"><h1>Índice</h1><ol>${TOC.map(([n,t,c,id])=>`<li class="${c}"><a href="#${id}"><span>${n}</span>${t}</a></li>`).join("")}</ol></section>`;
