@@ -1196,3 +1196,4 @@ span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;bac
 @media (max-width:900px){ .jtop-tit{display:none} .jtop-der{margin-left:auto} }
 .jside{padding-top:6px}.jside .tab{padding:5px 16px}.mi-firma{margin-top:4px;padding-block:5px}
 .jfoto{background-position:center top}
+.jtop .nom b,.jtop .nom small,.jtop .firma{white-space:nowrap}
