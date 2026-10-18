@@ -1188,3 +1188,8 @@ span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;bac
 :root[data-theme="dark"] .c-hero::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 62%,transparent);pointer-events:none}
 :root[data-theme="dark"] .c-hero>*{z-index:1}
 :root[data-theme="dark"] .c-thumb{background:#f4f5f2}
+.c-hero .c-eye{margin:0 0 1px;font:600 10.5px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#8a6a00}
+.c-hero h1{font-size:21px;text-wrap:balance}
+.c-hero p:last-child{font-size:12.5px}
+:root[data-theme="dark"] .c-hero .c-eye{color:#ffc800}
+@media (min-width:1000px){ .c-hero{flex-wrap:nowrap} .c-hero .t{flex:1 1 auto;min-width:0} .c-acts{flex:none} }
