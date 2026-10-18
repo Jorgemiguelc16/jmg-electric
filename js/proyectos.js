@@ -9,7 +9,7 @@ const LKEY="jmg-electric-proyectos";
 const nuevoId=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function libLoad(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
 function libSave(L){ try{ localStorage.setItem(LKEY,JSON.stringify(L)); return true; }catch(e){ return false; } }
-function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,lums,lumsT,toms,tomsT,FIX,ACEP,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
+function estado(){ const o={app:"JMG-ELECTRIC",version:VERSION,id:PID,savedAt:new Date().toISOString(),MODE,cargas,tipos,serv,pisos,lums,lumsT,toms,tomsT,FIX,ACEP,res:RESUMEN,sist:radio("sist"),sistG:radio("sistG")}; KEYS.forEach(k=>o[k]=$(k).value); return o; }
 const esEjemplo=()=>/^EJEMPLO\b/.test($("p_nombre").value.trim());
 function saveDraft(){
   if(esEjemplo()){ PID=null; try{ localStorage.setItem(SKEY,JSON.stringify(estado())); }catch(e){} return; }

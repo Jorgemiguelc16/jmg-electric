@@ -41,7 +41,7 @@ function setTab(t){
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
   document.querySelectorAll(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+t);
   try{ localStorage.setItem("jmg-electric-tab",t); }catch(e){}
-  if(t==="inicio"){ refreshLast(); heroDraw(); requestAnimationFrame(fijarLado); }
+  if(t==="inicio"){ refreshLast(); centro(); }
   if(t==="proy") renderProy();
   if(t==="herr") herr();
   if(t==="soporte") refrSoporte();
@@ -84,10 +84,12 @@ function validar(){
   }
   return E;
 }
+// Resumen del último cálculo que se guarda con el proyecto (Centro de ingeniería): datos pendientes, conforme y máxima demanda
+let RESUMEN=null;
 function faltantes(){
-  const F=[], vacio=v=>v==null||v===""||!(parseFloat(v)>0), val=id=>$(id)?$(id).value:"";
+  let tot=0; const F=[], vacio=v=>v==null||v===""||!(parseFloat(v)>0), val=id=>$(id)?$(id).value:"";
   document.querySelectorAll(".falta").forEach(e=>e.classList.remove("falta"));
-  const req=(id,l,cond)=>{ if(cond===undefined?vacio(val(id)):cond){ F.push({id,l}); const el=$(id); if(el) el.classList.add("falta"); } };
+  const req=(id,l,cond)=>{ tot++; if(cond===undefined?vacio(val(id)):cond){ F.push({id,l}); const el=$(id); if(el) el.classList.add("falta"); } };
   if(MODE==="uni"){
     req("area","Área techada de la vivienda"); req("Lalim","Longitud del alimentador");
     [["al","alumbrado"],["tg","tomacorrientes"]].forEach(([k,t])=>{ req(k+"_n",`Número de salidas de ${t}`); req(k+"_p",`Potencia por salida de ${t}`); req(k+"_L",`Longitud de los circuitos de ${t}`); });
@@ -105,7 +107,7 @@ function faltantes(){
     if(serv.length) req("Lms","Longitud al tablero de servicios generales");
     serv.forEach((x,i)=>{ const n=x.nombre||`Carga común ${i+1}`; req(`serv_p_${i}`,`${n}: potencia`,vacio(x.p)); req(`serv_L_${i}`,`${n}: longitud`,vacio(x.L)); });
   }
-  return F;
+  F.total=tot; return F;
 }
 // Textos de Vivienda y Salidas según la vivienda tenga uno o varios pisos
 function uiPisos(){
@@ -137,7 +139,7 @@ function update(){
       <p class="hint">Los resultados aparecen automáticamente al completar los datos marcados en ámbar. Haga clic en un dato para ir a él.</p>
       <ul class="faltan">${F.map(x=>`<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul>
       <p class="hint">¿Prefiere explorar primero? <button type="button" class="linkbtn" data-ej2="${MODE==="uni"&&usoAct()!=="viv"?"com":MODE}">Cargue un proyecto de ejemplo</button>.</p></div></section>`;
-    saveDraft(); hdrEstado(); wsRefresh(F); return; }
+    RESUMEN={pend:F.length,tot:F.total}; saveDraft(); hdrEstado(); wsRefresh(F); return; }
   $("btnPrint").disabled=false;
   const errs=validar();
   if(MODE==="multi"&&!tipos.some(t=>t.cant>0)){ LAST=null; $("btnXlsx").disabled=true;
@@ -145,6 +147,7 @@ function update(){
   $("btnXlsx").disabled=false;
   const c=ctx();
   const r=MODE==="uni"?calcUni(c):calcMulti(c); LAST=r;
+  RESUMEN={pend:0,tot:F.total,ok:r.alims.every(a=>a.ok)&&r.circ.every(q=>q.ok),MD:Math.round(r.mode==="multi"?r.MD:r.md.MD)};
   $("projline").innerHTML=`<span>Proyecto: <b>${esc(c.proj.nombre||"—")}</b></span><span>Propietario: <b>${esc(c.proj.prop||"—")}</b></span><span>Ubicación: <b>${esc(c.proj.ubic||"—")}</b></span><span>Proyectista: <b>${esc(c.proj.proy||"—")}</b></span>`;
   render(r); saveDraft(); hdrEstado();
   wsRefresh([]);
