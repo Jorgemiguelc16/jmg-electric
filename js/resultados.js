@@ -91,7 +91,7 @@ function cardDemanda(r){ let html="";
         <tr><td class="t">Cargas especiales</td><td class="t">Potencia nominal del equipo · Regla ${U.regla}(1)</td><td>${fmt(m.esp,0)}</td><td>—</td></tr>
         <tr><td class="t"><b>Carga total</b></td><td class="t">Carga por área + cargas especiales</td><td><b>${fmt(m.total,0)}</b></td><td>—</td></tr>
         ${m.tramos.map((t,i)=>`<tr><td class="t">Factor de demanda · ${fmt(t.a,1)} m²</td><td class="t">${t.fal} % ${m.tramos.length===1?"(edificación hasta 900 m²)":i===0?"(primeros 900 m², según la carga por m²)":"(exceso sobre 900 m²)"} · Regla ${U.regla}(2)</td><td>${fmt(t.inst,0)}</td><td>${fmt(t.d,0)}</td></tr>`).join("")}
-        <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div>
+        ${r.md.libre>0?`<tr><td class="t">Áreas libres no techadas · ${fmt(r.c.aLib,1)} m² × ${fmt(r.c.wLib,1)} W/m²</td><td class="t">Criterio del proyectista (no indicado en el CNE) · al 100 %</td><td>${fmt(r.md.libre,0)}</td><td>${fmt(r.md.libre,0)}</td></tr>`:""}<tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div>
         <div class="body"><p class="hint">A diferencia de la Tabla 14, en esta regla el factor de demanda se aplica a toda la carga, incluidas las cargas especiales (aire acondicionado, equipos, alumbrado especial); solo la calefacción se rige por la Sección 270. No se aplica la corriente mínima de 40 A, propia de viviendas; la carga de los alimentadores se considera continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.</p></div></section>`;
       } else
       html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda · ${esc(U.n)}</span><span class="ref">050-210 · Tabla 14</span></h2><div class="tbl-wrap"><table>
@@ -99,7 +99,7 @@ function cardDemanda(r){ let html="";
       <tr><td class="t">Carga por área · ${fmt(r.area,1)} m² × ${U.w} W/m²</td><td class="t">Tabla 14 · ${ext}</td><td>${fmt(m.carga,0)}</td><td>—</td></tr>
       ${m.tramos.map(t=>`<tr><td class="t">Factor de demanda · ${fmt(t.a,1)} m²</td><td class="t">${t.fal} % (alimentadores; acometida ${t.fac} %)</td><td>${fmt(t.inst,0)}</td><td>${fmt(t.d,0)}</td></tr>`).join("")}
       <tr><td class="t">Cargas especiales</td><td class="t">Potencia nominal del equipo · 050-210(b)</td><td>${fmt(m.esp,0)}</td><td>${fmt(m.esp,0)}</td></tr>
-      <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div>
+      ${r.md.libre>0?`<tr><td class="t">Áreas libres no techadas · ${fmt(r.c.aLib,1)} m² × ${fmt(r.c.wLib,1)} W/m²</td><td class="t">Criterio del proyectista (no indicado en el CNE) · al 100 %</td><td>${fmt(r.md.libre,0)}</td><td>${fmt(r.md.libre,0)}</td></tr>`:""}<tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div>
       <div class="body"><p class="hint">Los factores de la Tabla 14 se aplican a la carga por área; las cargas especiales (equipos, aire acondicionado, vitrinas, cómputo) se suman a su potencia nominal. No se aplica la corriente mínima de 40 A de la Regla 050-200(1)(b), propia de viviendas; la carga de los alimentadores se considera continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.</p></div></section>`;
       if(PT.length) html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda por piso · tableros de distribución</span><span class="ref">${U.regla?"Regla "+U.regla:"050-210"} por piso</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Piso</th><th class="t">Tablero</th><th>Área (m²)</th><th>Carga por área (W)</th><th>Cargas especiales (W)</th><th>MD piso (W)</th><th>I (A)</th></tr></thead><tbody>
@@ -115,7 +115,7 @@ function cardDemanda(r){ let html="";
       <tr><td class="t">Calentadores de agua / duchas</td><td class="t">Al 100 %</td><td>${fmt(m.cal,0)}</td><td>${fmt(m.cal,0)}</td></tr>
       <tr><td class="t">Aire acondicionado</td><td class="t">Al 100 %</td><td>${fmt(m.aire,0)}</td><td>${fmt(m.aire,0)}</td></tr>
       <tr><td class="t">Otras cargas mayores de 1 500 W</td><td class="t">${m.coc>0?"Al 25 % (existe cocina)":"Al 100 % hasta 6 kW y 25 % del exceso"}</td><td>${fmt(m.otras,0)}</td><td>${fmt(m.mdOtras,0)}</td></tr>
-      <tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div></section>`;
+      ${r.md.libre>0?`<tr><td class="t">Áreas libres no techadas · ${fmt(r.c.aLib,1)} m² × ${fmt(r.c.wLib,1)} W/m²</td><td class="t">Criterio del proyectista (no indicado en el CNE) · al 100 %</td><td>${fmt(r.md.libre,0)}</td><td>${fmt(r.md.libre,0)}</td></tr>`:""}<tr class="total"><td class="t" colspan="3">Máxima demanda</td><td>${fmt(m.MD,0)}</td></tr></tbody></table></div></section>`;
       const PT=r.PS.filter(p=>p.md);
       if(PT.length) html+=`<section class="card"><h2><span><span class="num"></span>Máxima demanda por piso · tableros de distribución</span><span class="ref">050-200 por piso</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Piso</th><th class="t">Tablero</th><th>Área (m²)</th><th>Carga básica</th><th>Cocina</th><th>Calentador</th><th>Aire acond.</th><th>Otras &gt;1,5 kW</th><th>MD piso (W)</th><th>I (A)</th></tr></thead><tbody>

@@ -46,7 +46,7 @@ const USOS={
 // Potencia por tomacorriente en usos comerciales: criterio de ingeniería (no lo fija el CNE-U); margen para varios equipos por punto
 const VA_TOMA_COM=250;
 const RHO_CU=0.0175, FD=1.25, DV_ALIM=2.5, DV_DER=2.5, DV_TOT=4, IMIN_UNI=40, IMIN_DPTO=25;
-const SQ3=Math.sqrt(3), VERSION="v2.4";
+const SQ3=Math.sqrt(3), VERSION="v2.5";
 const SIST={mono220:{tri:false,V:220,kI:1,K:2,n:2,txt:"1φ 220 V",nom:"Monofásico 220 V",fases:["—"]},
             tri220:{tri:true,V:220,kI:SQ3,K:SQ3,n:3,txt:"3φ 220 V",nom:"Trifásico 220 V",fases:["R-S","S-T","T-R"]},
             tri380:{tri:true,V:380,kI:SQ3,K:SQ3,n:4,txt:"3φ 380/220 V",nom:"Trifásico 380/220 V",fases:["R","S","T"]}};

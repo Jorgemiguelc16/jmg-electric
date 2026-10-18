@@ -118,7 +118,8 @@ $("ws").addEventListener("click",e=>{
   else if(a==="print"){ if(DESACT) calcularAhora(); if(!LAST) return toast("Complete los datos para imprimir"); $("btnPrint").click(); }
   else if(a==="undo") histGo(-1); else if(a==="redo") histGo(1);
   else if(a==="rec"){ if(!LAST) return toast("Complete los datos para ver los resultados"); verVista("verif"); setTimeout(()=>document.querySelector("#results .rec-card")?.scrollIntoView({behavior:"smooth",block:"start"}),80); }
-  else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":nm==="lums"?"salidas":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
+  else if(a==="add:lumsP"||a==="add:tomsP"){ const nm=a==="add:lumsP"?"lums":"toms"; selNode("salidas"); readList(nm); LISTS[nm].arr.push({...LISTS[nm].nuevo(),piso:pisos.length+1}); renderList(nm); update(); setTimeout(()=>$("L_"+nm).scrollIntoView({block:"center"}),60); toast(`Elemento agregado en el ${ORD(pisos.length+1)} piso: complete sus datos`); }
+  else if(a.startsWith("add:")){ const nm=a.slice(4); selNode(nm==="cargas"?"cargas":nm==="serv"?"servicios":nm==="lums"||nm==="toms"?"salidas":"vivienda"); $("add_"+nm).click(); toast("Elemento agregado: complete sus datos"); }
   else if(a.startsWith("web:")){ cerrarWS(true); setTab(a.slice(4)); } });
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-dl]")) return; if(DESACT) calcularAhora(); if(e.target.closest("#ws [data-dl]")&&!LAST) toast("Complete los datos para descargar el unifilar"); },true);
 $("expMsg").textContent=""; new MutationObserver(()=>{ const t=$("expMsg").textContent; if(t&&!$("ws").hidden) toast(t); }).observe($("expMsg"),{childList:true,characterData:true,subtree:true});

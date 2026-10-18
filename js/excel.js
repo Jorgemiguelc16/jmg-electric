@@ -142,6 +142,7 @@ async function exportar(){
       md.tramos.forEach(t=>mr(`Carga por área · ${fmt(t.a,1)} m² × ${U.w} W/m²`,`Tabla 14: factor de demanda de alimentadores ${t.fal} % (acometida ${t.fac} %)`,t.a*U.w,F(`I${m}*${t.fal}/100`,t.d)));
       mr("Cargas especiales","Potencia nominal del equipo instalado · Regla 050-210(b)",F(`SUM(${P})`,md.esp),F(`I${m}`,md.esp));
       }
+      if(md.libre>0) mr("Áreas libres no techadas",`${fmt(r.c.aLib,1)} m² × ${fmt(r.c.wLib,1)} W/m² al 100 % · criterio del proyectista (no indicado en el CNE)`,md.libre,F(`I${m}`,md.libre));
       span(wsM,m,1,9,`MÁXIMA DEMANDA · ${U.n.toUpperCase()} (W)`,{box:1,ind:1}); cell(wsM,m,10,F(`SUM(J${d0+1}:J${m-1})`,md.MD),{...val,fmt:"0"}); tot(wsM,m,1,10);
       MDREF=`'Memoria'!$J$${m}`; m+=1;
       m=nota(wsM,m,LM,`Área servida según las dimensiones exteriores${r.sot>0?", incluido el sótano":""}. No se aplica la corriente mínima de 40 A (propia de viviendas); la carga de los alimentadores es continua (Regla 050-104(3)) y su corriente de diseño es 1.25 × I.${U.regla?` En la Regla ${U.regla} el factor de demanda se aplica a toda la carga, incluidas las cargas especiales.`:""}`)+1;
@@ -165,6 +166,7 @@ async function exportar(){
     mr("Calentadores de agua y duchas","100 %",F(`SUMIFS(${P},${T},"Calentador de agua / ducha")`,md.cal),F(`I${m}`,md.cal));
     mr("Aire acondicionado","100 %",F(`SUMIFS(${P},${T},"Aire acondicionado")`,md.aire),F(`I${m}`,md.aire));
     mr("Otras cargas mayores de 1 500 W","25 % si existe cocina; si no, 100 % hasta 6 kW + 25 % del exceso",F(`SUMIFS(${P},${T},"Otra carga",${P},">1500")+SUMIFS(${P},${T},"Motor",${P},">1500")`,md.otras),F(`IF($I$${rC}>0,0.25*I${m},MIN(I${m},6000)+0.25*MAX(0,I${m}-6000))`,md.mdOtras));
+    if(md.libre>0) mr("Áreas libres no techadas",`${fmt(r.c.aLib,1)} m² × ${fmt(r.c.wLib,1)} W/m² al 100 % · criterio del proyectista (no indicado en el CNE)`,md.libre,F(`I${m}`,md.libre));
     span(wsM,m,1,9,"MÁXIMA DEMANDA DE LA VIVIENDA (W)",{box:1,ind:1}); cell(wsM,m,10,F(`SUM(J${d0}:J${m-1})`,md.MD),{...val,fmt:"0"}); tot(wsM,m,1,10);
     MDREF=`'Memoria'!$J$${m}`; m+=2;
     const PT=r.PS.filter(p=>p.md);

@@ -2,7 +2,7 @@
 function ctx(){
   const aisl=$("aisl").value, temp=+$("temp").value, nag=+$("nag").value, met=$("met").value, ft=FT[aisl][temp]??1, fa=FA[nag]??1;
   return {aisl,temp,nag,met,ft,fa,fc:ft*fa,fp:num("fp")||0.9,maxSal:Math.max(1,Math.min(12,Math.round(num("maxSal")||12))),pAl:num("pAl"),pTo:num("pTo"),
-    reserva:+$("reserva").value, uso:$("uso")?.value||"viv", resAl:+$("resAl").value, fdA:1+(+$("resAl").value)/100, sminD:parseFloat($("sminD").value), sminA:parseFloat($("sminA").value), idMode:$("idMode").value, dvGen:parseFloat($("dvGen").value), iccE:num("iccE")||10,
+    reserva:+$("reserva").value, uso:$("uso")?.value||"viv", resAl:+$("resAl").value, aLib:Math.max(0,num("aLib")), wLib:Math.max(0,num("wLib")), fdA:1+(+$("resAl").value)/100, sminD:parseFloat($("sminD").value), sminA:parseFloat($("sminA").value), idMode:$("idMode").value, dvGen:parseFloat($("dvGen").value), iccE:num("iccE")||10,
     proj:{nombre:$("p_nombre").value,prop:$("p_prop").value,ubic:$("p_ubic").value,proy:$("p_proy").value,cip:$("p_cip").value.replace(/[<>]/g,"").trim()},
     pat:{rho:num("rho_s")||100,fr:num("fr")||1,Lv:num("Lv")||2.4,dv:parseFloat($("dv").value)},
     rho:$("rhoMode").value==="20"?RHO_CU:(aisl==="pvc"?0.0209:0.0223),
@@ -154,11 +154,15 @@ function calcUni(c){
   const cargasMD=list=>{ const sum=t=>list.filter(x=>x.tipo===t).reduce((s,x)=>s+x.p,0);
     return {coc:sum("cocina"),cal:sum("calentador"),aire:sum("aire"),otras:list.filter(x=>(x.tipo==="otra"||x.tipo==="motor")&&x.p>1500).reduce((s,x)=>s+x.p,0)}; };
   const mdDe=(a,list,aE=0)=>viv?mdVivienda({area:a,...cargasMD(list)},false):mdUso(c.uso,a,list,aE);
-  const md=mdDe(area,cs,PS.reduce((s,p)=>s+(p.aE||0),0));
+  // Áreas libres no techadas (patios, jardines, cocheras abiertas): carga unitaria elegida por el proyectista (p. ej. 5 W/m²), al 100 %;
+  // no figura en el CNE, se suma a la máxima demanda general y a la del 1er piso cuando este tiene tablero propio
+  const libre=c.aLib*c.wLib, conLib=m=>libre>0?{...m,libre,sinAire:m.sinAire+libre,MD:m.MD+libre}:{...m,libre:0};
+  const md=conLib(mdDe(area,cs,PS.reduce((s,p)=>s+(p.aE||0),0)));
   const pw={al:num("al_p"),tg:num("tg_p"),tc:num("tc_p")};
   // Luminarias de otra potencia de cada piso (con un solo piso, todas van al 1er piso)
   const exP=p=>lumsExtra(lums.filter(x=>(varios?Math.round(+x.piso||1):1)===p.n),p.al.n,pw.al), alX=p=>{ const e=exP(p); return e?{n:p.al.n+e.n,mix:e.mix}:{}; };
-  const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+(exP(p)?.P||0)+p.tg.n*pw.tg+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0);
+  const exPt=p=>lumsExtra(toms.filter(x=>(varios?Math.round(+x.piso||1):1)===p.n),p.tg.n,pw.tg), tgX=p=>{ const e=exPt(p); return e?{n:p.tg.n+e.n,mix:e.mix}:{}; };
+  const CI=PS.reduce((s,p)=>s+(p.al.n*pw.al+(exP(p)?.P||0)+p.tg.n*pw.tg+(exPt(p)?.P||0)+p.tc.n*pw.tc),0)+cs.reduce((s,x)=>s+x.p,0)+libre;
   const al=alimentador("Alimentador medidor → tablero general TG",md.MD,sk,Lalim,0,DV_ALIM,c,{pKey:"MD",Imin:ImV,fd:fdV,viv});
   al.iccO=c.iccE; al.pdc=pdcPara(c.iccE);
   const iccTG=iccAbajo(c.iccE,al.s,al.L,al.S);
@@ -169,7 +173,7 @@ function calcUni(c){
   const alims=[al], tabs=[{tab:"TG",desc:viv?"Tablero general de la vivienda":"Tablero general",feeder:0,icc:iccTG,pdc:pdcPara(iccTG)}];
   // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
   PS.forEach(p=>{ const tab=tabDe(p.n); if(tab==="TG") return;
-    const aP=p.area+(p.n===1?fSot*sot:0), mdP=mdDe(aP,cs.filter(x=>tabCarga(x)===tab),p.aE);
+    const aP=p.area+(p.n===1?fSot*sot:0), mdP0=mdDe(aP,cs.filter(x=>tabCarga(x)===tab),p.aE), mdP=p.n===1?conLib(mdP0):mdP0;
     const f=alimentador(`Alimentador TG → ${tab} (${ORD(p.n)} piso)`,mdP.MD,sk,p.Ld,al.dVp,DV_ALIM-al.dVp,c,{pKey:"piso",piso:p.n,mdP,areaP:aP,fd:fdV,viv});
     f.iccO=iccTG; f.pdc=pdcPara(iccTG); alims.push(f); p.tab=tab; p.feeder=alims.length-1; p.md=mdP; p.areaC=aP;
     const icc=iccAbajo(iccTG,f.s,f.L,f.S); tabs.push({tab,desc:`Tablero de distribución del ${ORD(p.n)} piso`,feeder:p.feeder,icc,pdc:pdcPara(icc),piso:p.n}); });
@@ -177,7 +181,7 @@ function calcUni(c){
   tabs.forEach(tb=>{ const f=alims[tb.feeder], up=tb.feeder?f.dvAc:al.dVp;
     const PT=PS.filter(p=>tabDe(p.n)===tb.tab);
     const src=(p,k)=>p.n===1?{t:"grp",k}:{t:"piso",i:p.i,k};
-    const list=grupos(PT.flatMap(p=>[{...p.al,p:pw.al,...alX(p),desc:"Alumbrado",tipo:"Alumbrado",src:src(p,"al")},{...p.tg,p:pw.tg,desc:"Tomacorrientes",tipo:"Tomacorriente",src:src(p,"tg")},{...p.tc,p:pw.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:src(p,"tc")}]),c,tb.tab,up,tb.feeder);
+    const list=grupos(PT.flatMap(p=>[{...p.al,p:pw.al,...alX(p),desc:"Alumbrado",tipo:"Alumbrado",src:src(p,"al")},{...p.tg,p:pw.tg,...tgX(p),desc:"Tomacorrientes",tipo:"Tomacorriente",src:src(p,"tg")},{...p.tc,p:pw.tc,desc:"Tomacorrientes cocina / lavandería",tipo:"Tomacorriente",src:src(p,"tc")}]),c,tb.tab,up,tb.feeder);
     cs.forEach((x,ix)=>{ if(!(x.p>0)||tabCarga(x)!==tb.tab) return; const q=circuito({tab:tb.tab,id:"C-"+(list.length+1),desc:x.nombre||"Carga especial",tipo:TIPOS[x.tipo].split(" (")[0],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,up,tb.feeder); q.src={t:"cargas",i:ix}; list.push(q); });
     asignarID(list,c); circ.push(...list); });
   const bal=balancear(circ,sk,FIX.uni);
@@ -189,6 +193,7 @@ function calcMulti(c){
   const T=tipos.map((t,i)=>({...t,_i:i})).filter(t=>t.cant>0).map(t=>({...t,cant:Math.round(t.cant),md:mdVivienda(t,true)})).sort((a,b)=>b.md.sinAire-a.md.sinAire);
   // Luminarias de otra potencia de cada tipo de departamento
   const exT=t=>lumsExtra(lumsT.filter(x=>Math.round(+x.tipo||0)===t._i),t.nAl||0,c.pAl), alT=t=>{ const e=exT(t); return e?{n:(t.nAl||0)+e.n,mix:e.mix}:{}; };
+  const exTt=t=>lumsExtra(tomsT.filter(x=>Math.round(+x.tipo||0)===t._i),t.nTo||0,c.pTo), toT=t=>{ const e=exTt(t); return e?{n:(t.nTo||0)+e.n,mix:e.mix}:{}; };
   const units=[]; T.forEach((t,ti)=>{for(let k=0;k<t.cant;k++) units.push({ti,nombre:t.nombre,md:t.md.sinAire,P:t.md.MD,f3:false,ref:`${t.nombre} · Nº ${k+1}`});});
   const fac=i=>i<1?1:i<3?0.65:i<5?0.40:i<20?0.30:0.25;
   units.forEach((u,i)=>{u.ord=i+1; u.f=fac(i); u.dem=u.md*u.f;});
@@ -213,7 +218,7 @@ function calcMulti(c){
   if(SV.length){ const f=alims[1]; const l=SV.map((x,i)=>{ const q=circuito({tab:"TSG",id:"S-"+(i+1),desc:x.nombre||"Carga común",tipo:TSERV[x.tipo],n:1,P:x.p,L:x.L||1,fases:x.fases,skTri:sk},c,f.dvAc,1); q.src={t:"serv",i:x._i}; return q; }); asignarID(l,c); circ.push(...l); }
   T.forEach((t,ti)=>{
     const fi=alims.findIndex(a=>a.pKey==="tipo"&&a.ti===ti), up=alims[fi].dvAc;
-    const list=grupos([{n:t.nAl,p:c.pAl,...alT(t),L:t.Lc||1,desc:"Alumbrado",tipo:"Alumbrado"},{n:t.nTo,p:c.pTo,L:t.Lc||1,desc:"Tomacorrientes",tipo:"Tomacorriente"}],c,t.tab,up,fi);
+    const list=grupos([{n:t.nAl,p:c.pAl,...alT(t),L:t.Lc||1,desc:"Alumbrado",tipo:"Alumbrado"},{n:t.nTo,p:c.pTo,...toT(t),L:t.Lc||1,desc:"Tomacorrientes",tipo:"Tomacorriente"}],c,t.tab,up,fi);
     [["Cocina eléctrica",t.coc,"Cocina eléctrica"],["Calentador de agua / ducha",t.cal,"Calentador de agua / ducha"],["Aire acondicionado",t.aire,"Aire acondicionado"],["Otras cargas > 1500 W",t.otras,"Otra carga"]]
       .forEach(([d,p,tp])=>{ if(p>0) list.push(circuito({tab:t.tab,id:"C-"+(list.length+1),desc:d,tipo:tp,n:1,P:p,L:t.Lc||1,fases:1},c,up,fi)); });
     list.forEach(q=>{ q.src={t:"tipo",i:t._i}; }); asignarID(list,c); circ.push(...list);
@@ -222,7 +227,7 @@ function calcMulti(c){
   const balItems=[...units.map(u=>({...u,key:u.ref})),...circ.filter(q=>q.tab==="TSG")];
   const bal=balancear(balItems,sk,FIX.multi);
   const emerg=SV.some(s=>/emergencia/i.test(s.nombre));
-  const CI=T.reduce((s,t)=>s+t.cant*(t.nAl*c.pAl+(exT(t)?.P||0)+t.nTo*c.pTo+t.coc+t.cal+t.aire+t.otras),0)+Pserv;
+  const CI=T.reduce((s,t)=>s+t.cant*(t.nAl*c.pAl+(exT(t)?.P||0)+t.nTo*c.pTo+(exTt(t)?.P||0)+t.coc+t.cal+t.aire+t.otras),0)+Pserv;
   return {mode:"multi",iccTG,c,sk,T,units,tramos,mdDeptos,aireTot,SV,Pserv,mdServ,maxMot,MD,CI,alims,circ,tabs,bal,emerg,pat:pozo(c.pat),
     contratada:Math.ceil(MD/500)/2, conexion:"Conexión en derivación con banco de medidores (Norma DGE, 301.C)", Selec:tierraElectrodo(gen.Izc)};
 }
@@ -267,13 +272,13 @@ function recomendaciones(r){
   if(mg.length) R.push({id:"margen|"+mg.map(nom).join(","),tipo:"sub",tit:"Poco margen de caída de tensión o de capacidad",
     txt:`${mg.slice(0,4).map(nom).join("; ")}${mg.length>4?` y ${mg.length-4} más`:""}: ${mg.length>1?"usan":"usa"} el 90 % o más del límite de caída de tensión o de la capacidad del conductor.`,
     sug:"Cumplen, pero cualquier carga o longitud adicional los dejaría fuera de norma. Considere la siguiente sección si se prevén ampliaciones.",ir:irItem(mg[0])});
-  // Umbral de tomacorrientes: 180 W en vivienda (CNE tomo V: 180 VA) y 250 VA en usos comerciales (criterio de diseño); los circuitos
-  // con luminarias de otra potencia no se evalúan en alumbrado, porque esas potencias son las reales de los equipos
+  // Umbral de tomacorrientes: 180 W en vivienda (CNE tomo V: 180 VA) y 250 VA en usos comerciales (criterio de diseño).
+  // El alumbrado no se evalúa: con luminarias LED es normal usar menos de 100 W por salida (se usa la potencia real del equipo)
   const tTo=r.viv===false?VA_TOMA_COM:180;
-  const pw=r.circ.filter(q=>q.n>0&&((q.tipo==="Alumbrado"&&!q.mix&&q.P/q.n<100)||(q.tipo==="Tomacorriente"&&q.P/q.n<tTo)));
-  if(pw.length) R.push({id:"pot",tipo:"sub",tit:"Potencia por salida menor que la usual",
-    txt:`Se usan menos de 100 W por salida de alumbrado o menos de ${tTo} W por tomacorriente.`,
-    sug:r.viv===false?`En oficinas y usos comerciales se adopta ${VA_TOMA_COM} VA por tomacorriente como criterio de diseño, por la conexión de varios equipos por punto (impresoras, fotocopiadoras, computadoras). Use valores menores solo si están justificados.`:"Los valores usuales de diseño son 100 W y 180 W (el CNE tomo V indica 180 VA por salida de tomacorriente). Use valores menores solo si están justificados.",ir:{foco:r.mode==="multi"?"pAl":"al_p",lab:"Ir a Potencia por salida"}});
+  const pw=r.circ.filter(q=>q.n>0&&q.tipo==="Tomacorriente"&&!q.mix&&q.P/q.n<tTo);
+  if(pw.length) R.push({id:"pot",tipo:"sub",tit:"Potencia por tomacorriente menor que la usual",
+    txt:`Se usan menos de ${tTo} W por tomacorriente.`,
+    sug:r.viv===false?`En oficinas y usos comerciales se adopta ${VA_TOMA_COM} VA por tomacorriente como criterio de diseño, por la conexión de varios equipos por punto (impresoras, fotocopiadoras, computadoras). Use valores menores solo si están justificados.`:"El valor usual de diseño es 180 W por tomacorriente (el CNE tomo V indica 180 VA por salida). Use valores menores solo si están justificados.",ir:{foco:r.mode==="multi"?"pTo":"tg_p",lab:"Ir a Potencia por tomacorriente"}});
   if(c.temp<30) R.push({id:"temp",tipo:"sub",tit:"Temperatura ambiente menor de 30 °C",
     txt:`Con ${c.temp} °C la Tabla 5A aumenta la capacidad de los conductores (factor ${fmt(c.ft,2)}).`,
     sug:"Use la temperatura del lugar más caluroso por donde pasan los conductores (techos, muros expuestos al sol).",ir:{foco:"temp",lab:"Ir a Temperatura ambiente"}});
