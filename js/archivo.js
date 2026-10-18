@@ -23,7 +23,7 @@ $("fileOpen").addEventListener("change",()=>{
 document.querySelectorAll("[data-new]").forEach(b=>b.addEventListener("click",()=>asistente(true,b.dataset.new)));
 document.querySelectorAll("[data-start]").forEach(b=>b.addEventListener("click",()=>{ const d=loadDraft(); if(d&&d.p_nombre&&!/^EJEMPLO\b/.test(d.p_nombre)) setTab("calculo"); else asistente(true,"uni"); }));
 document.querySelectorAll("[data-ej]").forEach(b=>b.addEventListener("click",()=>cargarEjemplo(b.dataset.ej)));
-$("ver").textContent=VERSION; $("verBadge").textContent=" · "+VERSION+" Beta"; if($("wsVer")) $("wsVer").textContent=VERSION+" Beta";
+if($("ver")) $("ver").textContent=VERSION; if($("verBadge")) $("verBadge").textContent=" · "+VERSION+" Beta"; if($("wsVer")) $("wsVer").textContent=VERSION+" Beta";
 
 const draft=loadDraft();
 if(draft&&draft.p_nombre==="Vivienda unifamiliar — Urb. Los Álamos"){ draft.p_nombre=""; if(draft.p_prop==="—") draft.p_prop=""; if(draft.p_ubic==="Arequipa, Perú") draft.p_ubic=""; }

@@ -27,7 +27,7 @@ function centro(){
     <div class="acts-row"><button type="button" class="btn sm" data-c="nuevo">Nuevo proyecto</button><button type="button" class="btn sec sm" data-c="ej" data-v="uni">Ejemplo de vivienda</button><button type="button" class="btn sec sm" data-c="ej" data-v="multi">Ejemplo de edificio</button><button type="button" class="btn sec sm" data-c="ej" data-v="com">Ejemplo de oficina</button></div></div>`; return; }
   $("cProys").innerHTML=arr.slice(0,3).map(o=>{ const t=tipoProy(o), r=o.res;
     const av=!r?null:r.pend>0?Math.max(5,Math.round(100*(1-r.pend/Math.max(r.tot||1,r.pend)))):100;
-    const est=!r?`<span>Abra el proyecto para actualizar su estado</span>`:r.pend>0?`<span class="pend">● ${r.pend} dato${r.pend===1?"":"s"} pendiente${r.pend===1?"":"s"}</span>`
+    const est=!r?`<span title="Abra el proyecto una vez para ver su avance y su estado">● Ábralo para actualizar</span>`:r.pend>0?`<span class="pend">● ${r.pend} dato${r.pend===1?"":"s"} pendiente${r.pend===1?"":"s"}</span>`
       :r.ok?`<span class="okk">● Conforme${r.MD?` · ${fmt(r.MD/1000,2)} kW`:""}</span>`:`<span class="bad">● Revisar</span>`;
     return `<article class="c-card"><div class="c-thumb"><img src="${CIMG[t.k]}" alt="" loading="lazy"><span class="c-tag">${esc(t.tag)}</span></div>
       <div class="c-cb"><h3>${esc(o.p_nombre)}</h3><p class="d">${descProy(o,t)}</p>
