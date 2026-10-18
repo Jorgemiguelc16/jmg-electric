@@ -265,6 +265,33 @@ B+=cap("Normas aplicadas");
 B+=tbl(["Norma","Título","Contenido aplicado","Uso en la aplicación"],NORMAS.map(([a,b,c,d])=>[`<b>${a}</b>`,b,c,d]));
 B+=sub("Contenido del expediente · EM.010, Art. 8");
 B+=`<ol>${DOCS.map(t=>`<li>${t}</li>`).join("")}</ol>`;
+B+=sub("Qué sale de la norma y qué es criterio de ingeniería");
+B+=`<p>Todos los cálculos se basan en el CNE-Utilización, el RNE EM.010 y la Norma DGE. Unos pocos valores no están fijados por esas normas: son criterios de ingeniería o del proyectista, se indican como tales en la aplicación, en la memoria y en este manual, y todos se pueden cambiar. Ninguno se presenta como requisito de la norma.</p>`;
+B+=`<p><b>Valores tomados de la norma</b></p>`;
+B+=tbl(["Tema","Valor o criterio","Fuente"],[
+ ["Máxima demanda de vivienda","Carga básica 2 500 W hasta 90 m² + 1 000 W por cada 90 m²; cocina, calentadores, aire acondicionado y otras cargas con sus factores; sótano al 75 %","CNE-U, Reglas 050-110 y 050-200"],
+ ["Máxima demanda de departamentos","1 500 W hasta 45 m², 1 000 W por los segundos 45 m² y 1 000 W por cada 90 m²; factores del edificio 100 / 65 / 40 / 30 / 25 %; cargas comunes al 75 %","CNE-U, Regla 050-202"],
+ ["Oficinas, comercios y otros usos","W/m² por actividad y factores de demanda de la Tabla 14; cargas especiales a potencia nominal","CNE-U, Regla 050-210 y Tabla 14"],
+ ["Escuelas, hospitales y hoteles","W/m² y factores sobre la carga total, hasta y sobre 900 m²","CNE-U, Reglas 050-204, 050-206 y 050-208"],
+ ["Corriente mínima del alimentador","40 A en vivienda unifamiliar; 25 A por departamento","CNE-U, Reglas 050-200(1)(b) y 050-202"],
+ ["Carga continua","Corriente de diseño 1.25 × I en usos no residenciales y servicios generales; la carga de vivienda no es continua","CNE-U, Reglas 050-104(3), 050-200(3) y 050-202(2)"],
+ ["Capacidad de los conductores","Tabla 2 con los factores de temperatura (Tabla 5A) y de agrupamiento (Tabla 5C); método B1 para tubo empotrado en mampostería","CNE-U, Tablas 2, 4, 5A y 5C"],
+ ["Límites de caída de tensión",`${DV_ALIM} % en alimentadores, ${DV_DER} % en circuitos derivados y ${DV_TOT} % en total`,"CNE-U, Regla 050-102"],
+ ["Salidas por circuito","Máximo 12","CNE-U, Regla 070-3000"],
+ ["Potencia por tomacorriente en vivienda","180 VA por salida","CNE tomo V"],
+ ["Protección y tableros","Interruptor general, diferenciales de 30 mA, espacios de reserva","CNE-U, Reglas 150-400 y 050-108; Norma DGE"],
+ ["Puesta a tierra","Varilla de 2 m como mínimo, resistencia no mayor de 25 Ω, secciones de los conductores de tierra","CNE-U, Reglas 060-702 y 060-712, Tablas 16 y 17"],
+ ["Sistemas y conexiones","220 V y 380/220 V, tipos de conexión, poder de corte","Norma DGE"],
+ ["Contenido del expediente y firma","Documentos del proyecto; responsabilidad del ingeniero colegiado","RNE EM.010, Art. 8"]]);
+B+=`<p><b>Criterios de ingeniería o del proyectista (no fijados por la norma)</b></p>`;
+B+=tbl(["Criterio","Valor por defecto","Qué dice la norma","Cómo cambiarlo"],[
+ ["Reserva en alimentadores de vivienda","25 % (Id = 1.25 × I), práctica usual de diseño para ampliaciones","La carga de vivienda no es continua: la norma admite 0 % (Reglas 050-200(3) y 050-202(2))","Parámetros › Protección › Reserva en alimentadores (25 % o 0 %)"],
+ ["Potencia por tomacorriente en oficinas y comercios","250 VA, por la conexión de varios equipos por punto","El CNE-Utilización no fija un valor","Salidas › W por tomacorriente"],
+ ["Carga del área libre no techada","5 W/m² al 100 %; el área es 0 por defecto, así que solo interviene si se ingresa","El CNE-Utilización no considera áreas libres","Vivienda › Área libre y carga unitaria"],
+ ["Potencia por salida de alumbrado","100 W como valor de partida","El CNE no fija un valor; se ingresa la potencia real del equipo (por ejemplo, LED)","Salidas › W por salida"],
+ ["Fórmula de caída de tensión","ΔV = K · ρ · L · I / S (fórmula resistiva, del lado seguro)","El CNE fija los límites, no la fórmula","—"],
+ ["Umbrales de las recomendaciones de diseño","Dos calibres sobre lo necesario, 90 % del límite, 180 W por tomacorriente, 30 °C","Son avisos de diseño, no incumplimientos de la norma","Se aceptan en Recomendaciones de diseño"]]);
+
 B+=fin;
 
 B+=`<section class="ancho">`; n1++; n2=0; TOC.push([`${n1}`,"Datos normativos incorporados","l0",tid(`${n1}`)]);
