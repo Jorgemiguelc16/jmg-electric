@@ -1194,6 +1194,5 @@ span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;bac
 .jtop-der{margin-left:0}
 @media (max-width:1150px){ .jtop-tit small{display:none} }
 @media (max-width:900px){ .jtop-tit{display:none} .jtop-der{margin-left:auto} }
-.jside{padding-top:8px}.jside .tab{padding:6px 16px}.mi-firma{margin-top:6px}
-.jfoto{max-height:none;min-height:150px;background-size:auto 100%;background-position:center bottom;background-color:#0c121c}
-.jfoto::before{background:linear-gradient(#131518,rgba(19,21,24,0) 18%,rgba(19,21,24,0) 70%,rgba(19,21,24,.8))}
+.jside{padding-top:6px}.jside .tab{padding:5px 16px}.mi-firma{margin-top:4px;padding-block:5px}
+.jfoto{background-position:center top}
