@@ -1,10 +1,3 @@
-function refreshLast(){
-  const o=loadDraft(), box=$("lastBox"); if(!box) return;
-  if(!o||!o.p_nombre){ box.hidden=true; return; }
-  box.hidden=false;
-  const f=o.savedAt?new Date(o.savedAt).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"}):"";
-  $("lastTxt").textContent=`${o.p_nombre} · ${o.MODE==="multi"?"Multifamiliar":"Unifamiliar"}${f?" · "+f:""}`;
-}
 $("btnSave").addEventListener("click",async()=>{
   const nm=($("p_nombre").value||"proyecto").replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g,"").trim().slice(0,60)||"proyecto";
   const nombre=`JMG-ELECTRIC - ${nm}.json`, blob=new Blob([JSON.stringify(estado(),null,1)],{type:"application/json"});

@@ -115,7 +115,7 @@ async function exportar(){
   m=nota(wsM,m,LM,"Las celdas sombreadas en azul son datos de entrada: al modificarlas, el libro recalcula los resultados.")+1;
 
   m=seccion(wsM,m,LM,"2.  CÁLCULO DE LA MÁXIMA DEMANDA");
-  let MDREF, servTotRef=null, servPRef=null, tipoRow={}, pisoRow={};
+  let MDREF, servPRef=null, tipoRow={}, pisoRow={};
   if(!multi){
     m=sub(wsM,m,LM,"2.1  Cargas especiales");
     m=thead(wsM,m,[[1,4,"Descripción"],[5,6,"Tipo de carga"],[7,7,"Fases"],[8,8,"Potencia (W)"],[9,9,"Longitud (m)"],[10,10,"Circuito"]]);
@@ -225,7 +225,7 @@ async function exportar(){
     const sM=sr("Motor de mayor potencia",`SUMPRODUCT(MAX((E${s0}:E${s1}="Motor")*H${s0}:H${s1}))`,r.maxMot);
     const sD=sr("Potencia de diseño del alimentador TSG (+25 % del mayor motor)",`H${sT}+0.25*H${sM}`,r.Pserv+0.25*r.maxMot,true);
     wsM.getCell(rS,9).value=F(`0.75*H${sT}`,r.mdServ);
-    servTotRef=`'Memoria'!$H$${sT}`; servPRef=`'Memoria'!$H$${sD}`; m++;
+    servPRef=`'Memoria'!$H$${sD}`; m++;
   }
 
   /* ---------- CÁLCULOS ---------- */
@@ -287,7 +287,6 @@ async function exportar(){
   }
   k=seccion(wsC,k,LC,`${r.bal?"4":"3"}.  CORRIENTE DE CORTOCIRCUITO Y PODER DE CORTE`);
   k=thead(wsC,k,[[1,3,"Punto de la instalación"],[4,5,"Sistema"],[6,7,"Icc estimada (kA)"],[8,9,"PdC mínimo (kA)"],[10,13,"Dispositivos"]]);
-  const icc0=k;
   [["Punto de entrega (acometida)",a0.s.txt,c.iccE,a0.pdc,"Interruptor general"],...r.tabs.map(tb=>[`Tablero ${tb.tab}`,r.alims[tb.feeder].s.txt,tb.icc,tb.pdc,"Interruptores de circuitos derivados"])].forEach(([p,s,i,pd,d])=>{
     span(wsC,k,1,3,p,{box:1,ind:1}); span(wsC,k,4,5,s,val); span(wsC,k,6,7,i,{...val,fmt:"0.00"}); span(wsC,k,8,9,pd,{...val,bold:1,fmt:"0.0"}); span(wsC,k,10,13,d,{box:1,size:8}); k++; });
   k=nota(wsC,k,LC,"Estimación: impedancia de la fuente a partir de la corriente de cortocircuito del punto de entrega, más la resistencia de los conductores (ρ a 20 °C). El poder de corte se elige igual o mayor que la corriente calculada (Norma DGE, 303.B.2; IEC 60898-1).");

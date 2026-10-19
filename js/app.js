@@ -5,7 +5,7 @@ const NODETIT={proyecto:"Datos del proyecto",suministro:"Suministro",vivienda:"V
 let NODE="proyecto", WSF=[], RIB="proyecto";
 try{ const x=localStorage.getItem("jmg-electric-node"); if(x) NODE=x; }catch(e){}
 const fsDe=n=>{ const v=NODEFS[n]; return Array.isArray(v)?v:v?v[MODE]:null; };
-function abrirWS(n){ document.body.classList.add("ws-on"); $("ws").hidden=false; TAB="calculo"; try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} if(n) selNode(n); else selNode(NODE); }
+function abrirWS(n){ document.body.classList.add("ws-on"); $("ws").hidden=false; try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} if(n) selNode(n); else selNode(NODE); }
 function cerrarWS(silencioso){ document.body.classList.remove("ws-on"); $("ws").hidden=true; if(!silencioso) setTab("inicio"); }
 // compatibilidad con llamadas anteriores
 function irSec(sec){ const map={proyecto:"proyecto",suministro:"suministro",vivienda:"vivienda",cargas:MODE==="multi"?"servicios":"salidas",param:"param",resultados:null,exportar:null};

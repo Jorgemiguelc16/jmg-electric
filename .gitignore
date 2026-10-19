@@ -1,0 +1,6 @@
+# Herramientas de desarrollo instaladas con npm (se reinstalan con «npm install»)
+node_modules/
+# Copias temporales de las capturas de prueba
+_v_*.html
+_cap*.html
+_t.html

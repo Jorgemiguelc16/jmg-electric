@@ -1,0 +1,5 @@
+# logo.js es una imagen codificada en una sola línea; referencia.js la genera pruebas/index.html
+js/logo.js
+pruebas/
+manual/
+node_modules/

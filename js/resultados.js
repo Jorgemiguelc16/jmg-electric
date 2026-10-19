@@ -5,7 +5,7 @@ const condTxt=(n,S,c)=>`${n}-1×${S} mm²${c&&c.desig?" "+c.desig:""}`;
 const sugerencia=r=>{ const m=r.bal&&r.bal.mayor; if(!m||r.bal.desbMin<=10) return "";
   return r.mode==="uni"?`Sugerencia: divida el circuito ${m.id} (${m.desc}, ${fmt(m.P,0)} W) en dos circuitos o aliméntelo como carga trifásica.`
     :`Sugerencia: el reparto está limitado por unidades de gran carga (${m.ref||m.desc}, ${fmt(m.P,0)} W); evalúe un suministro trifásico para ellas o redistribuya las cargas comunes.`; };
-let MODE="uni", TAB="inicio", LAST=null, FIX={uni:{},multi:{}}, ACEP={uni:{},multi:{}}, VIEW="resumen", PID=null;
+let MODE="uni", LAST=null, FIX={uni:{},multi:{}}, ACEP={uni:{},multi:{}}, VIEW="resumen", PID=null;
 try{ VIEW=localStorage.getItem("jmg-electric-view")||"resumen"; }catch(e){}
 const VORDEN=["resumen","demanda","alims","cuadro","balance","unifilar","metrado","verif"];
 const VLBL={resumen:"Resumen",demanda:"Máxima demanda",alims:"Alimentadores",cuadro:"Cuadro de cargas",balance:"Balance de fases",unifilar:"Diagrama unifilar",metrado:"Metrado",verif:"Verificaciones"};

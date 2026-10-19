@@ -65,8 +65,6 @@ const HLPL={lums:{n:"Salidas de alumbrado con otra potencia; se suman a las del 
   tipos:{cant:"Cuántos departamentos iguales hay de este tipo.",area:"Área techada de un departamento de este tipo.",Ld:"Desde el medidor del departamento hasta su tablero.",nAl:"Puntos de luz de un departamento.",nTo:"Tomacorrientes de un departamento.",coc:"Potencia de la cocina eléctrica; 0 si no hay.",cal:"Terma o ducha eléctrica; 0 si no hay.",aire:"Aire acondicionado; 0 si no hay.",otras:"Otras cargas mayores de 1500 W (horno, secadora…); 0 si no hay.",Lc:"Hasta la salida más alejada del departamento."},
   serv:{tipo:"Motor aplica curva D y conductor al 125 %.",p:"Potencia nominal de la carga común.",L:"Recorrido desde el tablero TSG hasta la carga."},
   pisos:{area:"Área techada de este piso; su máxima demanda se calcula con la Regla 050-200.",Ld:"Desde el tablero general TG hasta el tablero de este piso.",al_n:"Puntos de luz de este piso.",al_L:"Hasta la salida de alumbrado más alejada del piso.",tg_n:"Tomacorrientes generales de este piso.",tg_L:"Hasta el tomacorriente más alejado del piso.",tc_n:"Tomacorrientes de cocina y lavandería del piso; 0 si no hay.",tc_L:"Hasta el tomacorriente de cocina más alejado."}};
-// Ayuda de cada dato: se muestra al pasar el cursor (atributo title); desde la v2.5 ya no se dibuja el círculo (i)
-const ii=()=>"";
 function ayudas(){ Object.entries(HLP).forEach(([id,t])=>{ const el=$(id); if(!el) return; el.title=t; const lb=el.closest("label"); if(lb) lb.title=t; }); }
 /* Globo de ayuda flotante (no lo recortan los paneles) */
 (function(){ const tip=document.createElement("div"); tip.className="tipbox"; tip.hidden=true; document.body.appendChild(tip);

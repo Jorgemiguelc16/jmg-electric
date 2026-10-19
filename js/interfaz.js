@@ -37,11 +37,11 @@ function setMode(m){
 function setTab(t){
   if(t==="calculo"){ abrirWS(null); try{ localStorage.setItem("jmg-electric-tab","calculo"); }catch(e){} return; }
   if(document.body.classList.contains("ws-on")) cerrarWS(true);
-  TAB=t; document.body.classList.toggle("en-inicio",t==="inicio");
+  document.body.classList.toggle("en-inicio",t==="inicio");
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
   document.querySelectorAll(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+t);
   try{ localStorage.setItem("jmg-electric-tab",t); }catch(e){}
-  if(t==="inicio"){ refreshLast(); centro(); }
+  if(t==="inicio") centro();
   if(t==="proy") renderProy();
   if(t==="herr") herr();
   if(t==="soporte") refrSoporte();

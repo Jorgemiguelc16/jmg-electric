@@ -35,10 +35,6 @@ function aplicar(o){
 }
 const PKEYS=["p_nombre","p_prop","p_ubic","p_proy","p_cip","area","sot","aLib","Lalim","Ltd1","al_n","al_p","al_L","tg_n","tg_p","tg_L","tc_n","tc_p","tc_L","Lgen","Lms"];
 function proyectoVacio(m){ const o={id:null,...DEFV,MODE:m,cargas:[],tipos:[LISTS.tipos.nuevo()],serv:[],pisos:[],lums:[],lumsT:[],toms:[],tomsT:[],FIX:null,sist:"mono220",sistG:"tri380"}; PKEYS.forEach(k=>o[k]=""); ["al_p","tg_p","tc_p"].forEach(k=>o[k]=DEFV[k]); o.tipos[0].nombre="Tipo A"; return o; }
-function nuevoProyecto(m){
-  aplicar(proyectoVacio(m));
-  irSec("proyecto"); try{ $("p_nombre").focus(); }catch(e){}
-}
 // Ejemplo de oficina (Tabla 14): 250 m², trifásico, tomacorrientes de 250 VA, aire acondicionado y equipos de cómputo
 const EJ_OFICINA={uso:"oficina",sist:"tri380",area:"250",sot:"0",Lalim:"20",al_n:"32",al_p:"100",al_L:"28",tg_n:"30",tg_p:String(VA_TOMA_COM),tg_L:"30",tc_n:"0",tc_p:String(VA_TOMA_COM),tc_L:"12",
   cargas:[{nombre:"Aire acondicionado sala de reuniones",tipo:"aire",fases:3,p:3500,L:18,piso:0},{nombre:"Aire acondicionado oficinas",tipo:"aire",fases:3,p:5000,L:24,piso:0},
