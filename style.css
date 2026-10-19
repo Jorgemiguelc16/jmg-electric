@@ -1255,3 +1255,19 @@ body.sin-acceso .page,body.sin-acceso #ws,body.sin-acceso .welcome{visibility:hi
 .cu-menu button:hover{background:#f4f5f2}.cu-menu svg{width:17px;height:17px;flex:none}
 .cu-menu .adm-badge,.jside .adm-badge{margin-left:auto;background:#ffc800;color:#111;border-radius:9px;padding:0 7px;font:700 11px/18px var(--f-body);font-style:normal}
 .acc-lema .jmg-sello{justify-self:start}
+/* Pantalla de ingreso: foto completa de las torres, logo con borde translúcido y título completo en el cielo */
+.acc-foto{background:#0b1220 url(img/torres-noche.jpg) 20% center/cover no-repeat;display:block;padding:0}
+.acc-foto::before{background:linear-gradient(90deg,rgba(11,18,32,0) 30%,rgba(11,18,32,.55) 75%),linear-gradient(0deg,rgba(11,18,32,.55),rgba(11,18,32,0) 25%)}
+.acc-lema{position:absolute;top:36px;right:36px;left:42%;max-width:none;display:grid;gap:10px;justify-items:start}
+.acc-logo{display:inline-block;line-height:0;padding:14px 18px;border-radius:16px;background:rgba(10,14,22,.35);border:1px solid rgba(255,200,0,.35);box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 10px 30px rgba(0,0,0,.35),0 0 24px rgba(255,200,0,.12);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.acc-logo svg{width:190px;height:auto;filter:drop-shadow(0 0 10px rgba(255,200,0,.25))}
+.acc-lema .acc-eye{margin:4px 0 0;font:600 10.5px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#ffc800}
+.acc-lema h2{margin:0;font:600 24px/1.25 var(--f-head);color:#fff;text-wrap:balance;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.acc-lema .acc-usos{margin:0;font-size:14px;line-height:1.5;color:#e6e8eb}
+.acc-lema .acc-norma{margin:0;font-size:12.5px;color:#aab2bd;border-top:2px solid #ffc800;padding-top:8px}
+.acc-frase{position:absolute;right:36px;bottom:24px;font:500 10px var(--f-mono);letter-spacing:.24em;color:#c9cdd3}
+.acc-box h1 small{display:block;margin-top:3px;font:500 12px var(--f-body);color:#8a6a00;letter-spacing:.02em}
+@media (max-width:1100px){ .acc-lema{left:36%;top:24px;right:24px} .acc-lema h2{font-size:20px} .acc-logo svg{width:150px} }
+@media (max-width:800px){ .acc-foto{min-height:300px;background-position:15% center} .acc-lema{position:absolute;left:auto;top:16px;right:16px;width:58%} .acc-lema h2{font-size:16px} .acc-lema .acc-usos{font-size:12px} .acc-lema .acc-norma{display:none} .acc-logo{padding:8px 10px}.acc-logo svg{width:110px} .acc-frase{right:16px;bottom:10px} }
+.acc-foto::before{background:linear-gradient(90deg,rgba(11,18,32,0) 32%,rgba(11,18,32,.7) 62%),linear-gradient(0deg,rgba(11,18,32,.55),rgba(11,18,32,0) 25%)}
+.acc-lema .acc-usos,.acc-lema .acc-norma{font-family:var(--f-body);font-weight:400}
