@@ -19,5 +19,5 @@ document.querySelectorAll("[data-welcome]").forEach(b=>b.addEventListener("click
 /* Inicio: la columna derecha acompaña el desplazamiento */
 function fijarLado(){ const el=document.querySelector(".home>:nth-child(2)"); if(!el) return; el.style.top=Math.min(12,innerHeight-el.offsetHeight-12)+"px"; }
 addEventListener("resize",fijarLado); addEventListener("load",fijarLado);
-{ let visto=null; try{ visto=localStorage.getItem(WKEY); }catch(e){} if(!visto) setTimeout(()=>bienvenida(true),350); }
+// La bienvenida se muestra al entrar con una cuenta aprobada (js/acceso.js); el administrador recibe su saludo personal
 refreshLast(); setTab(["inicio","calculo","proy","herr","normas","guia","novedades","soporte","acerca","ajustes"].includes(tab0)?tab0:"inicio");

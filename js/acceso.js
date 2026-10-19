@@ -12,7 +12,7 @@ const FB_CONFIG={
 };
 const ADMIN_CORREO="jorgemiguel16621@gmail.com";
 const USOS_CUENTA=["Estudiante de ingeniería","Ingeniero proyectista","Docente","Técnico electricista","Otro"];
-let USUARIO=null, FICHA=null, esAdminCuenta=false, desFicha=null, desAdmin=null, SALUDADO=false;
+let USUARIO=null, FICHA=null, esAdminCuenta=false, desFicha=null, desAdmin=null, SALUDADO=false, BIENVENIDO=false;
 
 const ACC=$("acceso"), accVista=v=>{ ACC.querySelectorAll("[data-av]").forEach(x=>x.hidden=x.dataset.av!==v); const m=$("accMsg"); m.textContent=""; m.className="acc-msg"; };
 const accMsg=(t,ok)=>{ const m=$("accMsg"); m.textContent=t; m.className="acc-msg "+(ok?"ok":"bad"); };
@@ -38,7 +38,7 @@ function seguirFicha(u){
     FICHA=s.exists?s.data():null; cuentaUI();
     if(esAdminCuenta){ abrirPlataforma(true); return; }
     if(!FICHA){ $("solNombre").value=u.displayName||""; accVista("completar"); abrirPlataforma(false); return; }
-    if(FICHA.estado==="aprobado"){ abrirPlataforma(true); return; }
+    if(FICHA.estado==="aprobado"){ abrirPlataforma(true); if(!BIENVENIDO){ BIENVENIDO=true; setTimeout(()=>bienvenida(true),300); } return; }
     $("pendCorreo").textContent=u.email;
     accVista(FICHA.estado==="pendiente"?"pendiente":"denegado"); abrirPlataforma(false);
   },e=>{ accVista("ingreso"); accError(e); abrirPlataforma(false); });
@@ -109,19 +109,19 @@ $("admLista").addEventListener("click",async e=>{ const b=e.target.closest("[dat
    las solicitudes y los proyectos pendientes, y de vez en cuando una frase de ánimo */
 function saludoJorge(np){
   const h=new Date().getHours(), azar=a=>a[Math.floor(Math.random()*a.length)];
-  const [tit,txt]=h<5?["¡Jorge! 😅","Ya es tarde… guarda tu avance y a dormir, mañana seguimos."]
-    :h<12?["¡Buenos días, Jorge! ☀️","Un café y a calcular, que hoy sale algo bueno."]
-    :h<19?["¡Buenas tardes, Jorge! 💪","Vamos con todo, que el proyecto no se calcula solo."]
-    :["¡Buenas noches, Jorge! 🌙","No te desveles mucho, ¿eh? Descansar también es parte del trabajo."];
+  const [tit,txt]=h<5?["¡Jorge! 😅🦉","Ya es tarde… guarda tu avance y a dormir 😴💤 Mañana seguimos con todo 🌟"]
+    :h<12?["¡Buenos días, Jorge! ☀️😄","Un cafecito ☕ y a calcular, que hoy sale algo bueno 🤩✨"]
+    :h<19?["¡Buenas tardes, Jorge! 😎💪","Vamos con todo 🔥, que el proyecto no se calcula solo 😉⚡"]
+    :["¡Buenas noches, Jorge! 🌙😊","No te desveles mucho, ¿eh? 🥱 Descansar también es parte del trabajo 💛"];
   let pp=0; try{ pp=Object.values(libLoad()).filter(o=>o&&o.res&&o.res.pend>0).length; }catch(_){}
   const avisos=[];
-  if(np) avisos.push(`Por cierto, <b>${np} persona${np===1?"":"s"}</b> quiere${np===1?"":"n"} unirse a JMG-ELECTRIC 👀 <button type="button" class="linkbtn" data-sj="admin">Revisar</button>`);
-  if(pp) avisos.push(`Tienes <b>${pp} proyecto${pp===1?"":"s"}</b> con datos por completar 📝 <button type="button" class="linkbtn" data-sj="proy">Ver</button>`);
-  if(!avisos.length) avisos.push("Todo al día ✓ Tu plataforma te espera.");
-  const extra=Math.random()<0.5?azar(["Recuerda: cada cálculo bien hecho es una instalación segura. 🔌","Paso a paso, JMG-ELECTRIC sigue creciendo. ¡Estoy orgulloso de lo que estás logrando! 🚀",
-    "Hoy es un buen día para aprender una regla nueva del CNE. 📘","«El desarrollo progresivo del hombre depende vitalmente de la invención.» — Nikola Tesla ⚡"]):"";
+  if(np) avisos.push(`Por cierto, <b>${np} persona${np===1?"":"s"}</b> quiere${np===1?"":"n"} unirse a JMG-ELECTRIC 👀🎉 <button type="button" class="linkbtn" data-sj="admin">Revisar</button>`);
+  if(pp) avisos.push(`Tienes <b>${pp} proyecto${pp===1?"":"s"}</b> con datos por completar 📝✍️ <button type="button" class="linkbtn" data-sj="proy">Ver</button>`);
+  if(!avisos.length) avisos.push("Todo al día ✅😌 Tu plataforma te espera 🏗️⚡");
+  const extra=Math.random()<0.7?azar(["Recuerda: cada cálculo bien hecho es una instalación segura 🔌🛡️😊","Paso a paso, JMG-ELECTRIC sigue creciendo 📈 ¡Estoy orgulloso de lo que estás logrando! 🚀🥳",
+    "Hoy es un buen día para aprender una regla nueva del CNE 📘🤓","«El desarrollo progresivo del hombre depende vitalmente de la invención.» — Nikola Tesla ⚡🧠","Tú puedes con esto y con mucho más 💪😄🌟","¡A darle, ingeniero en camino! 👷‍♂️⚡🎓"]):"";
   const c=document.createElement("div"); c.className="saludo"; c.setAttribute("role","status");
-  c.innerHTML=`<button type="button" class="saludo-x" data-sj="x" aria-label="Cerrar">×</button><b class="saludo-t">${tit}</b><p>Qué bueno verte de vuelta. ¿Qué construimos hoy? ${txt}</p>${avisos.map(a=>`<p class="saludo-a">${a}</p>`).join("")}${extra?`<p class="saludo-e">${extra}</p>`:""}<button type="button" class="btn saludo-ok" data-sj="x">¡Vamos! 💪</button>`;
+  c.innerHTML=`<button type="button" class="saludo-x" data-sj="x" aria-label="Cerrar">×</button><b class="saludo-t">${tit}</b><p>Qué bueno verte de vuelta 🤗 ¿Qué construimos hoy? 🛠️ ${txt}</p>${avisos.map(a=>`<p class="saludo-a">${a}</p>`).join("")}${extra?`<p class="saludo-e">${extra}</p>`:""}<button type="button" class="btn saludo-ok" data-sj="x">¡Vamos! 💪😄</button>`;
   document.body.appendChild(c); requestAnimationFrame(()=>c.classList.add("on"));
   const cerrar=()=>{ c.classList.remove("on"); setTimeout(()=>c.remove(),300); };
   let t=setTimeout(cerrar,20000); c.addEventListener("mouseenter",()=>clearTimeout(t)); c.addEventListener("mouseleave",()=>{ t=setTimeout(cerrar,8000); });
