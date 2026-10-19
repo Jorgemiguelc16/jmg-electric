@@ -1271,3 +1271,5 @@ body.sin-acceso .page,body.sin-acceso #ws,body.sin-acceso .welcome{visibility:hi
 @media (max-width:800px){ .acc-foto{min-height:300px;background-position:15% center} .acc-lema{position:absolute;left:auto;top:16px;right:16px;width:58%} .acc-lema h2{font-size:16px} .acc-lema .acc-usos{font-size:12px} .acc-lema .acc-norma{display:none} .acc-logo{padding:8px 10px}.acc-logo svg{width:110px} .acc-frase{right:16px;bottom:10px} }
 .acc-foto::before{background:linear-gradient(90deg,rgba(11,18,32,0) 32%,rgba(11,18,32,.7) 62%),linear-gradient(0deg,rgba(11,18,32,.55),rgba(11,18,32,0) 25%)}
 .acc-lema .acc-usos,.acc-lema .acc-norma{font-family:var(--f-body);font-weight:400}
+.acc-logo{padding:0;border:0;border-radius:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;margin-bottom:6px}
+.acc-logo svg{width:210px;filter:drop-shadow(0 0 18px rgba(255,200,0,.28)) drop-shadow(0 4px 14px rgba(0,0,0,.55))}
