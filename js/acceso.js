@@ -12,7 +12,7 @@ const FB_CONFIG={
 };
 const ADMIN_CORREO="jorgemiguel16621@gmail.com";
 const USOS_CUENTA=["Estudiante de ingeniería","Ingeniero proyectista","Docente","Técnico electricista","Otro"];
-let USUARIO=null, FICHA=null, esAdminCuenta=false, desFicha=null, desAdmin=null;
+let USUARIO=null, FICHA=null, esAdminCuenta=false, desFicha=null, desAdmin=null, SALUDADO=false;
 
 const ACC=$("acceso"), accVista=v=>{ ACC.querySelectorAll("[data-av]").forEach(x=>x.hidden=x.dataset.av!==v); const m=$("accMsg"); m.textContent=""; m.className="acc-msg"; };
 const accMsg=(t,ok)=>{ const m=$("accMsg"); m.textContent=t; m.className="acc-msg "+(ok?"ok":"bad"); };
@@ -91,6 +91,7 @@ function adminLista(){
   desAdmin=firebase.firestore().collection("usuarios").onSnapshot(q=>{
     const L=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.estado==="pendiente"?0:1)-(b.estado==="pendiente"?0:1)||((b.creado?.seconds||0)-(a.creado?.seconds||0)));
     const np=L.filter(x=>x.estado==="pendiente").length;
+    if(!SALUDADO){ SALUDADO=true; saludoJorge(np); }
     document.querySelectorAll(".adm-badge").forEach(x=>{ x.textContent=np; x.hidden=!np; });
     const f=t=>t?new Date(t.seconds*1000).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"}):"—";
     $("admLista").innerHTML=!L.length?`<p class="hint" style="padding:16px">Aún no hay solicitudes de cuenta.</p>`:
@@ -104,4 +105,28 @@ $("admLista").addEventListener("click",async e=>{ const b=e.target.closest("[dat
   try{ await firebase.firestore().collection("usuarios").doc(b.dataset.id).update({estado:b.dataset.adm,revisado:firebase.firestore.FieldValue.serverTimestamp()}); }
   catch(err){ b.disabled=false; toast("No se pudo actualizar: "+(err.code||err.message)); } });
 
+/* Bienvenida personal del administrador: aparece cada vez que entra, con un saludo según la hora,
+   las solicitudes y los proyectos pendientes, y de vez en cuando una frase de ánimo */
+function saludoJorge(np){
+  const h=new Date().getHours(), azar=a=>a[Math.floor(Math.random()*a.length)];
+  const [tit,txt]=h<5?["¡Jorge! 😅","Ya es tarde… guarda tu avance y a dormir, mañana seguimos."]
+    :h<12?["¡Buenos días, Jorge! ☀️","Un café y a calcular, que hoy sale algo bueno."]
+    :h<19?["¡Buenas tardes, Jorge! 💪","Vamos con todo, que el proyecto no se calcula solo."]
+    :["¡Buenas noches, Jorge! 🌙","No te desveles mucho, ¿eh? Descansar también es parte del trabajo."];
+  let pp=0; try{ pp=Object.values(libLoad()).filter(o=>o&&o.res&&o.res.pend>0).length; }catch(_){}
+  const avisos=[];
+  if(np) avisos.push(`Por cierto, <b>${np} persona${np===1?"":"s"}</b> quiere${np===1?"":"n"} unirse a JMG-ELECTRIC 👀 <button type="button" class="linkbtn" data-sj="admin">Revisar</button>`);
+  if(pp) avisos.push(`Tienes <b>${pp} proyecto${pp===1?"":"s"}</b> con datos por completar 📝 <button type="button" class="linkbtn" data-sj="proy">Ver</button>`);
+  if(!avisos.length) avisos.push("Todo al día ✓ Tu plataforma te espera.");
+  const extra=Math.random()<0.5?azar(["Recuerda: cada cálculo bien hecho es una instalación segura. 🔌","Paso a paso, JMG-ELECTRIC sigue creciendo. ¡Estoy orgulloso de lo que estás logrando! 🚀",
+    "Hoy es un buen día para aprender una regla nueva del CNE. 📘","«El desarrollo progresivo del hombre depende vitalmente de la invención.» — Nikola Tesla ⚡"]):"";
+  const c=document.createElement("div"); c.className="saludo"; c.setAttribute("role","status");
+  c.innerHTML=`<button type="button" class="saludo-x" data-sj="x" aria-label="Cerrar">×</button><b class="saludo-t">${tit}</b><p>Qué bueno verte de vuelta. ¿Qué construimos hoy? ${txt}</p>${avisos.map(a=>`<p class="saludo-a">${a}</p>`).join("")}${extra?`<p class="saludo-e">${extra}</p>`:""}<button type="button" class="btn saludo-ok" data-sj="x">¡Vamos! 💪</button>`;
+  document.body.appendChild(c); requestAnimationFrame(()=>c.classList.add("on"));
+  const cerrar=()=>{ c.classList.remove("on"); setTimeout(()=>c.remove(),300); };
+  let t=setTimeout(cerrar,20000); c.addEventListener("mouseenter",()=>clearTimeout(t)); c.addEventListener("mouseleave",()=>{ t=setTimeout(cerrar,8000); });
+  c.addEventListener("click",e=>{ const b=e.target.closest("[data-sj]"); if(!b) return; if(b.dataset.sj!=="x") setTab(b.dataset.sj); cerrar(); });
+}
+
 iniciarAcceso();
+
