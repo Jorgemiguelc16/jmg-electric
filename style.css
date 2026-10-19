@@ -1209,3 +1209,49 @@ span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;bac
 .pr-sum.plegado>:not(.st){display:none}
 .pr-sum.plegado .st{margin:0}
 .pr-sum.plegado .st::after{transform:rotate(-90deg)}
+
+/* ================= v2.7 · Acceso con cuenta: pantalla de ingreso, menú de cuenta y Administración ================= */
+body.sin-acceso{overflow:hidden}
+body.sin-acceso .page,body.sin-acceso #ws,body.sin-acceso .welcome{visibility:hidden}
+.acceso{position:fixed;inset:0;z-index:9999;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(360px,1fr);background:#f4f5f2;color:#16191d;font-family:var(--f-body)}
+.acc-foto{position:relative;background:#0c121c url(img/torre-noche.jpg) center 30%/cover no-repeat;display:flex;align-items:flex-end;padding:40px}
+.acc-foto::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,15,17,.55),rgba(13,15,17,.1) 40%,rgba(13,15,17,.85))}
+.acc-lema{position:relative;color:#e6e8eb;max-width:440px;display:grid;gap:14px}
+.acc-lema .jmg-sello svg{width:150px}
+.acc-lema p{margin:0;font:600 19px/1.4 var(--f-head);color:#fff}
+.acc-lema small{font:500 10px var(--f-mono);letter-spacing:.24em;color:#c9cdd3;border-top:2px solid #ffc800;padding-top:8px}
+.acc-panel{overflow:auto;display:grid;place-items:center;padding:32px 24px}
+.acc-box{width:min(400px,100%);display:grid;gap:12px}
+.acc-box h1{margin:0;font:600 26px var(--f-head);border-left:4px solid #ffc800;padding-left:12px}
+.acc-sub{margin:0;color:#5f6670}
+.acc-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:10px 14px;border:1px solid #d5d9de;border-radius:8px;background:#fff;color:#16191d;font:600 14px var(--f-body)}
+.acc-google:hover{border-color:#9aa0a8}.acc-google svg{width:20px;height:20px}
+.acc-o{display:flex;align-items:center;gap:10px;margin:2px 0;color:#8d939b;font-size:12px}
+.acc-o::before,.acc-o::after{content:"";flex:1;height:1px;background:#e2e4df}
+.acc-form{display:grid;gap:10px}
+.acc-form label{display:grid;gap:4px;font-size:12.5px;color:#4b525a;font-weight:500}
+.acc-form input,.acc-form select{width:100%;padding:9px 11px;border:1px solid #d5d9de;border-radius:8px;font:14px var(--f-body);background:#fff;color:#16191d}
+.acc-form input:focus,.acc-form select:focus{outline:2px solid #ffc800;outline-offset:0;border-color:#c99d00}
+.acc-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn.acc-prim{background:#ffc800;color:#111;border:0;box-shadow:0 2px 0 #c99d00;font-weight:600;padding:10px;border-radius:8px;margin-top:4px}
+.acc-box button:disabled{opacity:.6;cursor:wait}
+.acc-links{margin:0;text-align:right;font-size:12.5px}
+.acc-alt{margin:4px 0 0;font-size:13px;color:#5f6670;text-align:center}
+.acc-alt .linkbtn,.acc-links .linkbtn{color:#14304f;font-weight:600}
+.acc-estado{border-radius:10px;padding:14px 16px;display:grid;gap:6px}
+.acc-estado.pe{background:#fff5cc;border:1px solid #f0d77a}.acc-estado.bad{background:#f8e2df;border:1px solid #e9b8b2}
+.acc-estado p{margin:0;font-size:13px;line-height:1.5}
+.acc-msg{margin:0;min-height:1em;font-size:13px}
+.acc-msg.bad{color:#a3302a}.acc-msg.ok{color:#1f8a4c}
+.acc-pie{margin:8px 0 0;font-size:11px;color:#8d939b;line-height:1.45}
+@media (max-width:800px){ .acceso{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)} .acc-panel{padding:20px 16px;place-items:start center} .acc-foto{min-height:150px;padding:20px} .acc-lema p{font-size:15px} .acc-lema .jmg-sello svg{width:110px} .acc-2{grid-template-columns:1fr} }
+/* Menú de la cuenta */
+.cu-box{position:relative}
+.jib .dot-n{position:absolute;top:-3px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ffc800;color:#111;font:700 10px/16px var(--f-body)}
+.cu-menu{position:absolute;right:0;top:40px;z-index:30;width:250px;background:#fff;color:#16191d;border:1px solid #d5d9de;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:6px;display:grid}
+.cu-h{margin:0;padding:8px 10px 10px;border-bottom:1px solid #e2e4df;margin-bottom:4px}
+.cu-h b{display:block;font-size:14px}.cu-h small{color:#5f6670;font-size:12px;word-break:break-all}
+.cu-menu button{display:flex;align-items:center;gap:10px;background:none;border:0;border-radius:6px;padding:8px 10px;color:#16191d;font:500 13px var(--f-body);text-align:left}
+.cu-menu button:hover{background:#f4f5f2}.cu-menu svg{width:17px;height:17px;flex:none}
+.cu-menu .adm-badge,.jside .adm-badge{margin-left:auto;background:#ffc800;color:#111;border-radius:9px;padding:0 7px;font:700 11px/18px var(--f-body);font-style:normal}
+.acc-lema .jmg-sello{justify-self:start}
