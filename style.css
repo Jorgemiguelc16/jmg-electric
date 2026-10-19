@@ -1197,3 +1197,15 @@ span.jmg-mono.ap-logo{display:grid;place-items:center;width:26px;height:22px;bac
 .jside{padding-top:6px}.jside .tab{padding:5px 16px}.mi-firma{margin-top:4px;padding-block:5px}
 .jfoto{background-position:center top}
 .jtop .nom b,.jtop .nom small,.jtop .firma{white-space:nowrap}
+
+/* v2.6.2 · Mano de arrastre sobre el unifilar y resumen del proyecto plegable e independiente */
+.ap-doc .unif{cursor:grab}.ap-doc.arrastre .unif{cursor:grabbing}
+.pr-sum{margin:8px;border:1px solid var(--line);border-radius:10px;box-shadow:0 2px 8px rgba(20,48,79,.10);overflow:auto}
+.pr-sum:before{border-radius:10px 10px 0 0}
+.pr-sum .st{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+.pr-sum .st::after{content:"▾";font-size:12px;color:var(--muted);transition:transform .15s}
+.pr-sum .st:hover{color:var(--navy)}
+.pr-sum.plegado{padding-block:8px}
+.pr-sum.plegado>:not(.st){display:none}
+.pr-sum.plegado .st{margin:0}
+.pr-sum.plegado .st::after{transform:rotate(-90deg)}
