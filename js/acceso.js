@@ -25,9 +25,16 @@ function accError(e){
     "auth/unauthorized-domain":"Este sitio no está autorizado para ingresar. Avise al administrador.","permission-denied":"No tiene permiso para esta acción."};
   accMsg(T[c]||"No se pudo completar la acción"+(c?` (${c})`:"")+".");
 }
-function abrirPlataforma(v){ document.body.classList.toggle("sin-acceso",!v); ACC.hidden=!!v; }
+let ENTRO=false;
+function abrirPlataforma(v){ document.body.classList.toggle("sin-acceso",!v); ACC.hidden=!!v;
+  if(v&&!ENTRO){ ENTRO=true; setTab("inicio"); } if(!v) ENTRO=false; }
 function cuentaUI(){
-  const u=USUARIO; $("cuNombre").textContent=(FICHA&&FICHA.nombre)||(u&&u.displayName)||"Mi cuenta"; $("cuCorreo").textContent=u?u.email:"";
+  const u=USUARIO, nom=(FICHA&&FICHA.nombre)||(u&&u.displayName)||""; $("cuNombre").textContent=nom||"Mi cuenta"; $("cuCorreo").textContent=u?u.email:"";
+  // Foto de la cuenta de Google; si no hay (correo y contraseña) o no carga, la inicial del nombre
+  const av=$("cuAvatar"), ini=(nom||(u&&u.email)||"?").trim().charAt(0).toUpperCase();
+  av.hidden=!u; av.textContent=ini; av.classList.remove("foto");
+  if(u&&u.photoURL){ const im=new Image(); im.alt=""; im.referrerPolicy="no-referrer"; im.onload=()=>{ av.textContent=""; av.appendChild(im); av.classList.add("foto"); }; im.src=u.photoURL; }
+  $("cuBtn").classList.toggle("con-av",!!u);
   document.querySelectorAll(".solo-admin").forEach(x=>x.hidden=!esAdminCuenta);
 }
 

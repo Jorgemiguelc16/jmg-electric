@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>/* Tema antes de dibujar la página: claro o gris (se elige en la pestaña Ajustes) */(function(){var t="claro";try{t=localStorage.getItem("jmg-electric-tema")||"claro"}catch(e){}if(t==="oscuro")t="gris";if(t!=="gris")t="claro";var h=document.documentElement;h.setAttribute("data-theme",t==="gris"?"dark":"light");h.setAttribute("data-tema",t);h.setAttribute("data-paleta","grafito")})();</script>
-<link rel="stylesheet" href="style.css?v=2.7.2">
+<link rel="stylesheet" href="style.css?v=2.7.3">
 </head>
 <body class="sin-acceso">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="jmg-letras" fill="#ffc800"><path d="M159 623H307V733H445V285H594V872H159Z"/><path d="M650 285H824L903 438L826 575L798 521V872H650Z"/><path d="M1020 287L826 631H920L860 870L1054 551H955Z"/><path d="M1048 285H1223V872H1075V521H993Z"/><path d="M1280 285H1761V423H1429V733H1611V656H1508V519H1761V872H1280Z"/></g><g id="jmg-logo"><use href="#jmg-letras"/><text x="159" y="1050" font-family="'Chakra Petch','Arial Black',sans-serif" font-weight="700" font-size="172" fill="#ffc800" textLength="1602" lengthAdjust="spacing">PROJECTS &amp; ENERGY</text></g></defs></svg>
@@ -60,7 +60,7 @@
     <div class="jtop-der">
       <span class="firma">JMG PROJECTS &amp; ENERGY</span><span class="vl"></span>
       <button class="jib" type="button" data-go="novedades" title="Novedades de la versión" aria-label="Novedades"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="dot"></span></button>
-      <div class="cu-box"><button class="jib user" type="button" id="cuBtn" title="Mi cuenta" aria-label="Mi cuenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19c1.2-3 3.8-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg><span class="adm-badge dot-n" hidden></span></button>
+      <div class="cu-box"><button class="jib user" type="button" id="cuBtn" title="Mi cuenta" aria-label="Mi cuenta"><span class="cu-av" id="cuAvatar" hidden></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19c1.2-3 3.8-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg><span class="adm-badge dot-n" hidden></span></button>
         <div class="cu-menu" id="cuMenu" hidden><p class="cu-h"><b id="cuNombre">Mi cuenta</b><small id="cuCorreo"></small></p>
           <button type="button" class="solo-admin" data-go="admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Administración <span class="adm-badge" hidden></span></button>
           <button type="button" data-go="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Ajustes</button>
@@ -619,29 +619,29 @@
     <p class="acc-pie">JMG Projects &amp; Energy · Los resultados son de referencia; la responsabilidad del diseño recae en el ingeniero colegiado que suscribe el expediente.</p>
   </div></div>
 </div>
-<script src="js/logo.js?v=2.7.2"></script>
-<script src="js/tablas-cne.js?v=2.7.2"></script>
-<script src="js/textos.js?v=2.7.2"></script>
-<script src="js/datos.js?v=2.7.2"></script>
-<script src="js/calculo.js?v=2.7.2"></script>
-<script src="js/resultados.js?v=2.7.2"></script>
-<script src="js/metrado.js?v=2.7.2"></script>
-<script src="js/unifilar.js?v=2.7.2"></script>
-<script src="js/expediente.js?v=2.7.2"></script>
-<script src="js/interfaz.js?v=2.7.2"></script>
-<script src="js/excel.js?v=2.7.2"></script>
-<script src="js/descargas.js?v=2.7.2"></script>
-<script src="js/sitio.js?v=2.7.2"></script>
-<script src="js/proyectos.js?v=2.7.2"></script>
-<script src="js/herramientas.js?v=2.7.2"></script>
-<script src="js/archivo.js?v=2.7.2"></script>
-<script src="js/app.js?v=2.7.2"></script>
-<script src="js/centro.js?v=2.7.2"></script>
-<script src="js/inicio.js?v=2.7.2"></script>
-<script src="js/tema.js?v=2.7.2"></script>
+<script src="js/logo.js?v=2.7.3"></script>
+<script src="js/tablas-cne.js?v=2.7.3"></script>
+<script src="js/textos.js?v=2.7.3"></script>
+<script src="js/datos.js?v=2.7.3"></script>
+<script src="js/calculo.js?v=2.7.3"></script>
+<script src="js/resultados.js?v=2.7.3"></script>
+<script src="js/metrado.js?v=2.7.3"></script>
+<script src="js/unifilar.js?v=2.7.3"></script>
+<script src="js/expediente.js?v=2.7.3"></script>
+<script src="js/interfaz.js?v=2.7.3"></script>
+<script src="js/excel.js?v=2.7.3"></script>
+<script src="js/descargas.js?v=2.7.3"></script>
+<script src="js/sitio.js?v=2.7.3"></script>
+<script src="js/proyectos.js?v=2.7.3"></script>
+<script src="js/herramientas.js?v=2.7.3"></script>
+<script src="js/archivo.js?v=2.7.3"></script>
+<script src="js/app.js?v=2.7.3"></script>
+<script src="js/centro.js?v=2.7.3"></script>
+<script src="js/inicio.js?v=2.7.3"></script>
+<script src="js/tema.js?v=2.7.3"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/acceso.js?v=2.7.2"></script>
+<script src="js/acceso.js?v=2.7.3"></script>
 </body>
 </html>
