@@ -1,7 +1,8 @@
-/* ================= Acceso con cuenta (Firebase Authentication + Firestore) =================
-   Cualquiera puede solicitar una cuenta (correo y contraseña, o Google); la solicitud queda «pendiente» en
-   usuarios/{uid} y solo el administrador la aprueba desde la sección Administración. Las reglas de Firestore
-   impiden que un usuario se apruebe a sí mismo. Mientras no haya acceso, la pantalla de ingreso cubre la plataforma. */
+/* ACCESO CON CUENTA (Firebase Authentication + Firestore)
+   Pantalla de ingreso, solicitud de cuenta, aprobación por el administrador (sección Administración),
+   menú de la cuenta con su foto y saludo personal del administrador. La solicitud queda «pendiente» en
+   usuarios/{uid}; las reglas de seguridad (consola de Firebase › Firestore › Reglas) impiden que un usuario
+   se apruebe a sí mismo y solo dejan aprobar al correo del administrador. */
 const FB_CONFIG = {
   apiKey: "AIzaSyCMH5sUD_-NXUv3WYfPGVgS2rE07prOenM",
   authDomain: "jmg-electric-c3904.firebaseapp.com",
@@ -216,17 +217,13 @@ $("accFormIngreso").addEventListener("submit", async e => {
   accOcupado(false);
 });
 const fichaNueva = (u, nombre, uso) =>
-  firebase
-    .firestore()
-    .collection("usuarios")
-    .doc(u.uid)
-    .set({
-      nombre,
-      correo: u.email,
-      uso,
-      estado: "pendiente",
-      creado: firebase.firestore.FieldValue.serverTimestamp()
-    });
+  firebase.firestore().collection("usuarios").doc(u.uid).set({
+    nombre,
+    correo: u.email,
+    uso,
+    estado: "pendiente",
+    creado: firebase.firestore.FieldValue.serverTimestamp()
+  });
 $("accFormRegistro").addEventListener("submit", async e => {
   e.preventDefault();
   const nombre = $("regNombre").value.trim(),

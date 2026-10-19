@@ -1,4 +1,5 @@
-/* ================= Fondo: alimentadores y ondas trifásicas ================= */
+/* PÁGINAS DE LA WEB
+   Fondo animado, alcance, glosario, preguntas frecuentes, novedades y formulario de soporte. */
 (function () {
   const NS = "http://www.w3.org/2000/svg",
     g = $("feeders"),

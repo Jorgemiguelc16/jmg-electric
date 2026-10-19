@@ -1,4 +1,6 @@
-/* ================= Presentación ================= */
+/* PRESENTACIÓN DE RESULTADOS
+   Estado global (MODE, LAST, VIEW…) y las tarjetas del panel central: tablas de alimentadores y
+   circuitos, máxima demanda, balance de fases, suministro, puesta a tierra, alertas y recomendaciones. */
 const pill = (ok, yes = "Cumple", no = "No cumple") =>
   `<span class="pill ${ok ? "ok" : "bad"}">${ok ? yes : no}</span>`;
 const pillS = (st, t) => `<span class="pill ${st}">${t}</span>`;

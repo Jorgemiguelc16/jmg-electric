@@ -1,3 +1,5 @@
+/* DESCARGAS
+   Guardar archivos (Excel, PDF, DXF, JSON), diálogos de exportación y acciones del panel de resultados. */
 const msg = $("expMsg"),
   btn = $("btnXlsx");
 let downloads = null;

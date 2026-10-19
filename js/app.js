@@ -1,4 +1,6 @@
-/* ================= JMG - ELECTRIC 2.0 · Aplicación del proyecto ================= */
+/* ESPACIO DE TRABAJO
+   Explorador del proyecto (árbol), panel de propiedades, cinta de opciones y sus acciones, deshacer y
+   rehacer, asistente de nuevo proyecto, paneles laterales y avisos (toast). */
 const NODEFS = {
   proyecto: ["fs-proy", "fs-tipo"],
   suministro: { uni: ["fs-sum-uni"], multi: ["fs-sum-multi"] },

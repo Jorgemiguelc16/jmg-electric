@@ -1,4 +1,5 @@
-/* ================= Navegación y eventos ================= */
+/* ARRANQUE Y NAVEGACIÓN
+   Conecta el menú, carga el último proyecto y abre la sección inicial. Ventana de bienvenida. */
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.go)));
 document.querySelectorAll("[data-calc]").forEach(el => {

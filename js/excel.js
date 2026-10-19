@@ -1,4 +1,6 @@
-/* ================= Exportación a Excel ================= */
+/* MEMORIA DE CÁLCULO EN EXCEL
+   Genera el libro .xlsx (con la librería ExcelJS) con fórmulas vinculadas: parámetros, máxima demanda,
+   alimentadores, circuitos, puesta a tierra, metrado y verificaciones. */
 async function exportar() {
   const r = LAST,
     c = r.c,

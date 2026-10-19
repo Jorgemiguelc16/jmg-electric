@@ -1,4 +1,5 @@
-/* ================= Centro de ingeniería (Inicio): resumen y proyectos guardados en este navegador ================= */
+/* CENTRO DE INGENIERÍA (INICIO)
+   Contadores y tarjetas de los proyectos guardados, con su avance y el estado del último cálculo. */
 // Cada proyecto guarda al calcularse un resumen (res): datos pendientes, conforme o no y máxima demanda (ver update y estado)
 const CIMG = { viv: "img/plano-vivienda.jpg", multi: "img/unifilar-edificio.jpg", otro: "img/plano-local.jpg" };
 const icoSt = (c, d) =>

@@ -1,4 +1,5 @@
-/* ================= Diagrama unifilar ================= */
+/* DIAGRAMA UNIFILAR
+   Dibuja el unifilar en SVG con el cuadro de cargas y el rótulo, y lo convierte a PNG y DXF (AutoCAD). */
 function unifilar(r) {
   const c = r.c,
     o = [],

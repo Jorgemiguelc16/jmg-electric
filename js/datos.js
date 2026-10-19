@@ -1,4 +1,7 @@
-/* ================= Datos editables (listas) ================= */
+/* DATOS EDITABLES Y AYUDAS
+   Valores por defecto, listas editables (cargas especiales, pisos, departamentos, servicios, luminarias y
+   tomacorrientes de otra potencia), sus formularios (renderList/readList) y los textos de ayuda (HLP)
+   que aparecen al pasar el cursor sobre cada dato. */
 const DEF = {
   cargas: [
     { nombre: "Ducha eléctrica", tipo: "calentador", fases: 1, p: 3500, L: 12 },

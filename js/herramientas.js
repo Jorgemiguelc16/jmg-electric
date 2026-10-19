@@ -1,4 +1,6 @@
-/* ================= Herramientas ================= */
+/* HERRAMIENTAS RÁPIDAS
+   Calculadoras independientes: caída de tensión, conductor e interruptor, motor, puesta a tierra con
+   varias varillas y conversión de potencia. */
 function herr() {
   const g = id => parseFloat($(id).value),
     out = (id, rows) => {

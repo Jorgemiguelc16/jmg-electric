@@ -1,4 +1,9 @@
-/* ================= Motor de cálculo ================= */
+/* MOTOR DE CÁLCULO (el corazón de la plataforma)
+   ctx() lee los parámetros; dimensionar() elige interruptor y sección por capacidad (Tabla 2 con 5A y 5C)
+   y por caída de tensión (Regla 050-102); mdVivienda/mdUso calculan la máxima demanda (Reglas 050-200,
+   050-202, 050-204 a 050-210 y Tabla 14); calcUni y calcMulti arman alimentadores y circuitos;
+   balancear() reparte las fases; pozo() calcula la puesta a tierra; recomendaciones() da los avisos.
+   Cualquier cambio aquí debe pasar las pruebas de pruebas/index.html. */
 function ctx() {
   const aisl = $("aisl").value,
     temp = +$("temp").value,

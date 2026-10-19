@@ -1,4 +1,6 @@
-/* ================= Contenido informativo ================= */
+/* TEXTOS INFORMATIVOS
+   Alcance, normas aplicadas, criterios, glosario, preguntas frecuentes, novedades por versión y
+   documentos del expediente. Solo texto; lo muestran sitio.js, el manual y el expediente. */
 const ALCANCE = [
   "Máxima demanda · Reglas 050-200 y 050-202",
   "Otros usos · Regla 050-210 y Tabla 14; escuelas, hospitales y hoteles (050-204 a 050-208)",

@@ -1,3 +1,7 @@
+/* CICLO DE CÁLCULO Y PANTALLA
+   update() es el ciclo principal: revisa los datos que faltan, calcula, muestra los resultados y guarda.
+   También: cambio de modo (vivienda/edificio), navegación entre secciones (setTab), validación de datos
+   y textos que cambian según el uso de la edificación. */
 let PRINT = null;
 function render(r) {
   const k = [];

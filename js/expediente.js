@@ -1,4 +1,6 @@
-/* ================= Expediente técnico para imprimir en PDF (RNE EM.010, Art. 8) ================= */
+/* EXPEDIENTE TÉCNICO EN PDF (RNE EM.010, Art. 8)
+   Arma el documento para imprimir: portada, memoria descriptiva y de cálculo, tablas, unifilar y anexos,
+   en estilo formal o a color. */
 // Estilos: "formal" (blanco y negro, para presentar a la entidad) o "jmg" (con los colores de la plataforma)
 function expediente(r, estilo = "formal") {
   const c = r.c,

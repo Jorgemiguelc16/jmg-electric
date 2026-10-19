@@ -1,4 +1,8 @@
-/* ================= Tablas del CNE-Utilización ================= */
+/* TABLAS DEL CNE-UTILIZACIÓN Y CONSTANTES DEL CÁLCULO
+   Secciones normalizadas, capacidad de corriente (Tabla 2), métodos de instalación (Tabla 4), factores
+   de temperatura y agrupamiento (Tablas 5A y 5C), tierra (Tablas 16 y 17), interruptores, tubos, usos de
+   la Tabla 14 y sistemas de suministro. Solo datos: cualquier valor aquí cambia los resultados.
+   Se usa en: calculo.js, resultados.js, excel.js, expediente.js, el manual y las pruebas. */
 const SECC = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120];
 // Tabla 2 CNE-U: capacidad de corriente (A), cobre, 30 °C. [PVC 2 cond, PVC 3 cond, XLPE 2 cond, XLPE 3 cond] por método
 const T2 = {

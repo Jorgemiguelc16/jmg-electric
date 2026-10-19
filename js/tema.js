@@ -1,4 +1,6 @@
-/* ================= Tema de la pantalla: claro o gris (Ajustes) ================= */
+/* APARIENCIA
+   Tema claro o gris, tamaño del espacio de trabajo, zoom y mano de arrastre del panel central y
+   resumen del proyecto plegable. */
 const TEMAKEY = "jmg-electric-tema";
 function aplicarTema(t) {
   if (t === "oscuro") t = "gris";

@@ -1,4 +1,6 @@
-/* ================= Proyectos y borrador local ================= */
+/* PROYECTOS
+   Guardado automático en el navegador (localStorage), biblioteca de proyectos, abrir/duplicar/exportar,
+   proyectos nuevos y de ejemplo (vivienda, edificio y oficina). */
 const KEYS = [
   "p_nombre",
   "p_prop",

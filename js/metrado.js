@@ -1,4 +1,5 @@
-/* ================= Metrado ================= */
+/* METRADO
+   Cantidades de materiales (conductores, tubos, cajas, interruptores, tableros) a partir del resultado. */
 const PULG = { 0.0127: '1/2"', 0.0159: '5/8"', 0.0191: '3/4"' };
 function metrado(r) {
   const c = r.c,

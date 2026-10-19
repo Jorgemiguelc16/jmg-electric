@@ -1,3 +1,5 @@
+/* ARCHIVO
+   Guardar y abrir proyectos .json, versión en pantalla y botones de nuevo proyecto y ejemplos. */
 $("btnSave").addEventListener("click", async () => {
   const nm =
     ($("p_nombre").value || "proyecto")
