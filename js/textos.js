@@ -153,7 +153,7 @@ const FAQ = [
 const NOVEDADES = [
   [
     "v2.7",
-    "Acceso con cuenta: pantalla de ingreso con Google o con correo y contraseña, recuperación de contraseña, solicitud de cuenta con aprobación del administrador y sección Administración para aprobar, rechazar o desactivar cuentas. Menú de la cuenta con cierre de sesión en la barra superior, con la foto de la cuenta de Google o la inicial del nombre. Al ingresar, la plataforma se abre en Inicio y muestra la bienvenida. El cálculo no cambia."
+    "Acceso con cuenta: pantalla de ingreso con Google o con correo y contraseña, recuperación de contraseña, solicitud de cuenta con aprobación del administrador y sección Administración para aprobar, rechazar o desactivar cuentas. Menú de la cuenta con cierre de sesión en la barra superior, con la foto de la cuenta de Google o la inicial del nombre. Al iniciar sesión, la plataforma se abre en Inicio y muestra la bienvenida, con «Continuar» y el último proyecto del usuario. La ayuda de datos y botones aparece en un globo con la letra y la escala de la plataforma. Ajustes queda solo con el tema y el espacio de trabajo. El cálculo no cambia."
   ],
   [
     "v2.6",
