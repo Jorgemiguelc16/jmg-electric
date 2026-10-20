@@ -5888,3 +5888,9 @@ body.sin-acceso .welcome {
   line-height: 1.2;
   text-wrap: balance;
 }
+.wl-acts .btn[data-wl="continuar"] {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -19,7 +19,8 @@ let USUARIO = null,
   desFicha = null,
   desAdmin = null,
   SALUDADO = false,
-  BIENVENIDO = false;
+  BIENVENIDO = false,
+  INGRESO = false;
 
 const ACC = $("acceso"),
   accVista = v => {
@@ -116,14 +117,14 @@ function seguirFicha(u) {
         }
         if (FICHA.estado === "aprobado") {
           abrirPlataforma(true);
-          // Bienvenida formal: solo la primera vez que cada cuenta entra en este navegador
-          // (el administrador recibe en cambio su saludo personal en cada ingreso)
+          // Bienvenida formal cada vez que la persona inicia sesión (y la primera vez en este navegador);
+          // al recargar con la sesión guardada no se repite. El administrador recibe su saludo personal.
           const clave = "jmg-electric-bienvenida-" + u.uid;
           let vista = false;
           try {
             vista = !!localStorage.getItem(clave);
           } catch (_) {}
-          if (!BIENVENIDO && !vista) {
+          if (!BIENVENIDO && (INGRESO || !vista)) {
             BIENVENIDO = true;
             try {
               localStorage.setItem(clave, "1");
@@ -194,6 +195,7 @@ ACC.addEventListener("click", async e => {
   if (a === "google") {
     accOcupado(true);
     try {
+      INGRESO = true;
       await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
     } catch (err) {
       accError(err);
@@ -220,6 +222,7 @@ $("accFormIngreso").addEventListener("submit", async e => {
   e.preventDefault();
   accOcupado(true);
   try {
+    INGRESO = true;
     await firebase.auth().signInWithEmailAndPassword($("accCorreo").value.trim(), $("accClave").value);
   } catch (err) {
     accError(err);
@@ -251,6 +254,7 @@ $("accFormRegistro").addEventListener("submit", async e => {
   }
   accOcupado(true);
   try {
+    INGRESO = true;
     const cr = await firebase.auth().createUserWithEmailAndPassword(correo, c1);
     await cr.user.updateProfile({ displayName: nombre });
     await fichaNueva(cr.user, nombre, uso);

@@ -14,14 +14,23 @@ ayudas();
 if (draft) aplicar(draft);
 else aplicar(proyectoVacio("uni"));
 
-/* Bienvenida: solo la primera visita */
+/* Bienvenida (se abre al iniciar sesión, desde js/acceso.js). Si la persona ya tiene proyectos guardados,
+   el botón principal continúa el último en lugar de abrir un ejemplo. */
 const WKEY = "jmg-electric-bienvenida";
 function bienvenida(abrir) {
   const w = $("welcome");
   w.hidden = !abrir;
   document.body.classList.toggle("wl-open", abrir);
-  if (abrir) w.querySelector(".wl-acts .btn").focus();
-  else
+  if (abrir) {
+    const b = w.querySelector(".wl-acts .btn"),
+      u = Object.values(libLoad())
+        .filter(o => o && o.id && o.p_nombre && !/^EJEMPLO\b/.test(o.p_nombre))
+        .sort((a, c) => String(c.savedAt).localeCompare(String(a.savedAt)))[0];
+    b.dataset.wl = u ? "continuar" : "ejemplo";
+    b.dataset.id = u ? u.id : "";
+    b.innerHTML = u ? `Continuar: <b>${esc(u.p_nombre)}</b>` : "Ver un ejemplo";
+    b.focus();
+  } else
     try {
       localStorage.setItem(WKEY, "1");
     } catch (e) {}
@@ -31,6 +40,13 @@ $("welcome").addEventListener("click", e => {
   if (e.target.id === "welcome" || b) {
     bienvenida(false);
     if (b && b.dataset.wl === "ejemplo") cargarEjemplo("uni");
+    if (b && b.dataset.wl === "continuar") {
+      const o = libLoad()[b.dataset.id];
+      if (o) {
+        aplicar(o);
+        setTab("calculo");
+      }
+    }
   }
 });
 addEventListener("keydown", e => {
