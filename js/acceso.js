@@ -116,8 +116,18 @@ function seguirFicha(u) {
         }
         if (FICHA.estado === "aprobado") {
           abrirPlataforma(true);
-          if (!BIENVENIDO) {
+          // Bienvenida formal: solo la primera vez que cada cuenta entra en este navegador
+          // (el administrador recibe en cambio su saludo personal en cada ingreso)
+          const clave = "jmg-electric-bienvenida-" + u.uid;
+          let vista = false;
+          try {
+            vista = !!localStorage.getItem(clave);
+          } catch (_) {}
+          if (!BIENVENIDO && !vista) {
             BIENVENIDO = true;
+            try {
+              localStorage.setItem(clave, "1");
+            } catch (_) {}
             setTimeout(() => bienvenida(true), 300);
           }
           return;

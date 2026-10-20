@@ -5881,3 +5881,10 @@ body.sin-acceso .welcome {
   object-fit: cover;
   display: block;
 }
+.wl-head h2 .nw {
+  white-space: nowrap;
+}
+.wl-head h2 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
