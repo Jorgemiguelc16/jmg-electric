@@ -32,7 +32,7 @@ try {
 } catch (_) {}
 
 /* Pestaña Ajustes: paneles laterales y versión */
-$("ajVer").textContent = VERSION + " Beta";
+// La versión y los datos de la plataforma se muestran en Acerca de (ya no en Ajustes)
 $("aj_paneles").addEventListener("click", () => {
   Object.values(PANE).forEach(p => {
     p.on = true;

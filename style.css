@@ -5894,3 +5894,8 @@ body.sin-acceso .welcome {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.aj-ws > .aj-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
