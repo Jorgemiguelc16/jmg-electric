@@ -328,40 +328,77 @@ function ayudas() {
   Object.entries(HLP).forEach(([id, t]) => {
     const el = $(id);
     if (!el) return;
-    el.title = t;
+    el.dataset.ayuda = t;
     const lb = el.closest("label");
-    if (lb) lb.title = t;
+    if (lb) lb.dataset.ayuda = t;
   });
 }
-/* Globo de ayuda flotante (no lo recortan los paneles) */
+/* Globo de ayuda propio (con la letra y el tamaño de la plataforma) en lugar del globo nativo del navegador.
+   Muestra el texto de data-ayuda; los atributos title de botones y elementos se pasan a data-ayuda al pasar
+   el cursor, para que todo use el mismo globo. No lo recortan los paneles porque cuelga de body. */
 (function () {
   const tip = document.createElement("div");
   tip.className = "tipbox";
+  tip.setAttribute("role", "tooltip");
   tip.hidden = true;
   document.body.appendChild(tip);
-  const show = e => {
-    const t = e.target.closest && e.target.closest(".ii");
-    if (!t) return;
-    tip.textContent = t.dataset.tip;
+  let actual = null,
+    espera = null;
+  const objetivo = e => {
+    const t = e.target.closest && e.target.closest("[data-ayuda],[title]");
+    if (!t || t.closest(".tipbox")) return null;
+    if (t.hasAttribute("title")) {
+      const tx = t.getAttribute("title");
+      t.removeAttribute("title");
+      if (!tx) return null;
+      t.dataset.ayuda = tx;
+      if (!t.getAttribute("aria-label") && !t.textContent.trim()) t.setAttribute("aria-label", tx);
+    }
+    return t.dataset.ayuda ? t : null;
+  };
+  const mostrar = t => {
+    tip.textContent = t.dataset.ayuda;
+    // En el espacio de trabajo la pantalla está a escala (80 % por defecto): el globo usa la misma escala
+    const ws = t.closest("#ws"),
+      k = ws ? parseFloat(getComputedStyle(ws).zoom) || 1 : 1;
+    tip.style.fontSize = (12 * k).toFixed(1) + "px";
+    tip.style.padding = `${(7 * k).toFixed(1)}px ${(10 * k).toFixed(1)}px`;
+    tip.style.maxWidth = Math.round(280 * k) + "px";
     tip.hidden = false;
     const r = t.getBoundingClientRect(),
       w = tip.offsetWidth,
       h = tip.offsetHeight;
-    let x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8),
-      y = r.top - h - 8;
-    if (y < 8) y = r.bottom + 8;
+    let x = Math.min(Math.max(8, r.left), innerWidth - w - 8),
+      y = r.bottom + 6;
+    if (y + h > innerHeight - 8) y = r.top - h - 6;
     const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
     tip.style.left = x / z + "px";
     tip.style.top = y / z + "px";
   };
-  const hide = e => {
-    if (e.target.closest && e.target.closest(".ii")) tip.hidden = true;
+  const ocultar = () => {
+    clearTimeout(espera);
+    actual = null;
+    tip.hidden = true;
   };
-  document.addEventListener("mouseover", show);
-  document.addEventListener("focusin", show);
-  document.addEventListener("mouseout", hide);
-  document.addEventListener("focusout", hide);
-  document.addEventListener("scroll", () => (tip.hidden = true), true);
+  document.addEventListener("mouseover", e => {
+    const t = objetivo(e);
+    if (t === actual) return;
+    ocultar();
+    if (!t) return;
+    actual = t;
+    espera = setTimeout(() => actual === t && mostrar(t), 350);
+  });
+  document.addEventListener("focusin", e => {
+    const t = objetivo(e);
+    ocultar();
+    if (t) {
+      actual = t;
+      mostrar(t);
+    }
+  });
+  document.addEventListener("focusout", ocultar);
+  document.addEventListener("mousedown", ocultar);
+  document.addEventListener("scroll", ocultar, true);
 })();
 const PHL = {
   lums: { n: "ej. 8", p: "ej. 36" },
@@ -441,7 +478,7 @@ function renderList(name) {
             f.t === "select"
               ? `<select id="${id}">${(typeof f.o === "function" ? f.o() : f.o).map(([ov, ol]) => `<option value="${ov}"${String(ov) === String(v) ? " selected" : ""}>${ol}</option>`).join("")}</select>`
               : `<input id="${id}" type="${f.t}"${f.t === "number" ? ' min="0" step="any"' : ""} value="${v == null ? "" : esc(v)}"${PHL[name]?.[f.k] ? ` placeholder="${PHL[name][f.k]}"` : ""}>`;
-          return `<label class="${f.full ? "full" : ""}"${HLPL[name]?.[f.k] ? ` title="${esc(HLPL[name][f.k])}"` : ""}><span class="lt">${f.l}</span>${c}</label>`;
+          return `<label class="${f.full ? "full" : ""}"${HLPL[name]?.[f.k] ? ` data-ayuda="${esc(HLPL[name][f.k])}"` : ""}><span class="lt">${f.l}</span>${c}</label>`;
         })
         .join("") +
       `</div>`;

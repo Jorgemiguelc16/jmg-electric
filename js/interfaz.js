@@ -128,7 +128,7 @@ function hdrEstado() {
   if (!b) return;
   b.hidden = !(n && !/^EJEMPLO\b/.test(n));
   b.querySelector("b").textContent = n;
-  b.title = n ? `Abrir «${n}» en el espacio de trabajo` : "";
+  b.dataset.ayuda = n ? `Abrir «${n}» en el espacio de trabajo` : "";
 }
 function validar() {
   const E = [],
