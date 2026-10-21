@@ -607,17 +607,6 @@ addEventListener("keydown", e => {
 });
 
 $("esqPisos").addEventListener("change", () => renderList("cargas"));
-// Al elegir un conductor del catálogo, el aislamiento toma la columna de la Tabla 2 que le corresponde
-$("desig").addEventListener("change", () => {
-  const k = condDe($("desig").value);
-  if (!k) return;
-  $("desig").value = k;
-  if ($("aisl").value !== CONDS[k].a) {
-    $("aisl").value = CONDS[k].a;
-    calcularAhora();
-    toast(`${k}: se calcula con la columna ${CONDS[k].a === "pvc" ? "PVC 70 °C" : "XLPE / EPR 90 °C"} de la Tabla 2`);
-  }
-});
 // Al cambiar el uso: 250 VA por tomacorriente en usos comerciales (criterio de diseño) y 180 W en vivienda, salvo que el usuario haya puesto otro valor
 $("uso").addEventListener("change", () => {
   const com = usoAct() !== "viv";

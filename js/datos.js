@@ -250,8 +250,7 @@ const HLP = {
   temp: "Temperatura ambiente del recorrido; corrige la ampacidad (Tabla 5A).",
   nag: "Circuitos que comparten la misma tubería; corrige la ampacidad (Tabla 5C).",
   rhoMode: "Resistividad del cobre usada para la caída de tensión.",
-  desig:
-    "Designación comercial que aparece en tablas y en el unifilar (por ejemplo, NH-80). Al elegir un conductor de la lista, el aislamiento toma la columna de la Tabla 2 que le corresponde; si no coinciden, se avisa en Verificaciones.",
+  desig: "Designación comercial que aparece en tablas y en el unifilar (por ejemplo, NH-80).",
   sminD: "Sección mínima en circuitos derivados, aunque el cálculo permita menos.",
   sminA: "Sección mínima en alimentadores, aunque el cálculo permita menos.",
   resAl:
@@ -328,27 +327,6 @@ const HLPL = {
 /* Equipos adicionales del tablero: se marcan en cada tablero (panel Propiedades) y aparecen en el diagrama
    unifilar, el metrado, la memoria Excel y el expediente. No intervienen en el cálculo de la instalación.
    c = abreviatura en el unifilar; d = descripción para el metrado (tri = tablero trifásico) */
-/* Conductores comerciales comunes y la columna de la Tabla 2 del CNE con que se calculan.
-   t = temperatura máxima del aislamiento según el fabricante; a = columna: "pvc" (70 °C) o "xl" (XLPE / EPR 90 °C).
-   Los de PVC de 75, 80 o 90 °C se calculan con la columna de 70 °C, del lado seguro (criterio del proyectista). */
-const CONDS = {
-  "NH-80": { t: 80, a: "pvc", d: "libre de halógenos, 80 °C" },
-  "TW-80": { t: 80, a: "pvc", d: "PVC, 80 °C" },
-  THW: { t: 75, a: "pvc", d: "PVC, 75 °C" },
-  "THW-90": { t: 90, a: "pvc", d: "PVC, 90 °C" },
-  NYY: { t: 70, a: "pvc", d: "cable de energía de PVC, 70 °C" },
-  "NH-90": { t: 90, a: "xl", d: "libre de halógenos, 90 °C" },
-  "LSOHX-90": { t: 90, a: "xl", d: "XLPE libre de halógenos, 90 °C" },
-  N2XOH: { t: 90, a: "xl", d: "XLPE libre de halógenos, 90 °C" },
-  N2XH: { t: 90, a: "xl", d: "XLPE libre de halógenos, 90 °C" }
-};
-// Conductor del catálogo que corresponde a la designación escrita (sin distinguir mayúsculas ni espacios)
-const condDe = d => {
-  const k = String(d || "")
-    .toUpperCase()
-    .replace(/\s+/g, "");
-  return Object.keys(CONDS).find(x => x.toUpperCase() === k) || null;
-};
 const EQT = {
   dps: {
     n: "Protector contra sobretensiones (DPS)",
