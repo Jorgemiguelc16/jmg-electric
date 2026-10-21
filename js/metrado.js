@@ -37,6 +37,7 @@ function metrado(r) {
     const tb = r.tabs.find(t => t.tab === q.tab);
     add(itm, `${q.f3 ? 3 : 2}|${q.itm}|${q.curva}|${tb.pdc}`, n);
   });
+  const eqm = {};
   let mods = {},
     nRes = 0;
   r.tabs.forEach(tb => {
@@ -57,6 +58,11 @@ function metrado(r) {
       add(ids, `${pol}|${q.idRat}`, n);
     });
     mods[tb.tab] = { n, m, desc: tb.desc };
+    const tri = r.alims[tb.feeder].s.tri;
+    equiposDe(tb.tab).forEach(([k, d]) => {
+      add(eqm, d.d(tri), n);
+      m += k === "dps" ? (tri ? 4 : 2) : k === "med" ? (tri ? 4 : 2) : 2;
+    });
     nRes += c.reserva * n;
   });
   let al = 0,
@@ -118,6 +124,9 @@ function metrado(r) {
   it("Interruptor unipolar simple, 10 A, 250 V", "und", inter, "Estimado: uno por cada 2 salidas de alumbrado");
   it("Salida de fuerza para carga especial", "und", esp, "Ducha, cocina, bomba u otra carga");
   sec("TABLEROS Y PROTECCIONES");
+  Object.entries(eqm).forEach(([dsc, k]) =>
+    it(dsc, "und", k, "Equipo adicional del tablero · criterio del proyectista")
+  );
   Object.entries(mods).forEach(([t, v]) =>
     it(`Tablero ${t} de distribución, empotrado, para ${v.m} polos`, "und", v.n, v.desc)
   );

@@ -16,6 +16,7 @@ let MODE = "uni",
   LAST = null,
   FIX = { uni: {}, multi: {} },
   ACEP = { uni: {}, multi: {} },
+  TEQ = { uni: {}, multi: {} },
   VIEW = "resumen",
   PID = null;
 try {

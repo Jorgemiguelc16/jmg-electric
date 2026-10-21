@@ -73,7 +73,17 @@ function unifilar(r) {
     const ncol = cs.length + fd.length + nres,
       xe = col0 + (ncol - 1) * CW + 26;
     T(X + 60, Y + 14, `TABLERO ${tb.tab}`, { s: 11.5, b: 1, f: NAVY });
-    T(X + 60, Y + 28, `${tb.desc} · Icc ≈ ${fmt(tb.icc, 2)} kA · PdC mín. ${tb.pdc} kA`, { s: 8.5, f: GR });
+    const eqs = equiposDe(tb.tab);
+    T(
+      X + 60,
+      Y + 28,
+      `${tb.desc} · Icc ≈ ${fmt(tb.icc, 2)} kA · PdC mín. ${tb.pdc} kA${eqs.length ? ` · Equipos: ${eqs.map(([, d]) => d.c).join(", ")}` : ""}`,
+      {
+        s: 8.5,
+        f: GR
+      }
+    );
+
     if (entrada) {
       o.push(`<circle cx="${X + 40}" cy="${Y + 6}" r="3" fill="#fff" stroke="${INK}" stroke-width="1.2"/>`);
       L(X + 40, Y + 9, X + 40, yb);
@@ -93,6 +103,22 @@ function unifilar(r) {
       f: "#2f7a4b",
       rot: -90
     });
+    // DPS del tablero: entre la barra y tierra (los demás equipos se nombran bajo el título del tablero)
+    if (eqs.length) {
+      if (eqs.some(([k]) => k === "dps")) {
+        const xd = X + 58;
+        L(xd, yb, xd, yb + 18);
+        o.push(
+          `<rect x="${xd - 9}" y="${yb + 18}" width="18" height="26" fill="#fff" stroke="${INK}" stroke-width="1.2"/>`
+        );
+        L(xd - 3, yb + 24, xd + 1, yb + 30, 1);
+        L(xd + 1, yb + 30, xd - 4, yb + 30, 1);
+        L(xd - 4, yb + 30, xd, yb + 37, 1);
+        L(xd, yb + 44, xd, yb + 58, 1.2, "#2f7a4b", "5 3");
+        tierra(xd, yb + 58);
+        T(xd + 12, yb + 34, "DPS", { s: 7.5, b: 1, f: INK });
+      }
+    }
     // Agrupación de diferenciales
     const grp = [];
     cs.forEach((q, i) => {

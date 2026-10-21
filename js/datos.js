@@ -324,6 +324,39 @@ const HLPL = {
     tc_L: "Hasta el tomacorriente de cocina más alejado."
   }
 };
+/* Equipos adicionales del tablero: se marcan en cada tablero (panel Propiedades) y aparecen en el diagrama
+   unifilar, el metrado, la memoria Excel y el expediente. No intervienen en el cálculo de la instalación.
+   c = abreviatura en el unifilar; d = descripción para el metrado (tri = tablero trifásico) */
+const EQT = {
+  dps: {
+    n: "Protector contra sobretensiones (DPS)",
+    c: "DPS",
+    d: tri =>
+      `Protector contra sobretensiones transitorias (DPS) tipo 2, ${tri ? "4P (3F+N)" : "2P (F+N)"}, In 20 kA, Up ≤ 1.5 kV`,
+    a: "Protege los equipos contra sobretensiones transitorias de origen atmosférico o de maniobra. Se conecta entre las barras del tablero y la barra de tierra."
+  },
+  rel: {
+    n: "Protector de sobretensión y subtensión",
+    c: "Relé de tensión",
+    d: tri =>
+      `Relé de protección de sobretensión y subtensión ${tri ? "trifásico" : "monofásico"}, con rearme automático`,
+    a: "Desconecta la instalación si la tensión de la red sube o baja fuera de los límites ajustados y la reconecta al normalizarse."
+  },
+  med: {
+    n: "Medidor de energía",
+    c: "Medidor",
+    d: tri => `Medidor de energía ${tri ? "trifásico" : "monofásico"} para riel DIN`,
+    a: "Registra el consumo del tablero; útil en tableros de servicios generales o de áreas que se facturan aparte."
+  },
+  ctr: {
+    n: "Contactor con reloj horario",
+    c: "Contactor + reloj",
+    d: tri => `Contactor ${tri ? "tripolar" : "bipolar"} con reloj horario para riel DIN`,
+    a: "Enciende y apaga circuitos por horario, por ejemplo el alumbrado de áreas comunes o exteriores."
+  }
+};
+// Equipos marcados en un tablero del modo actual: [[clave, definición], ...]
+const equiposDe = tab => Object.entries(EQT).filter(([k]) => ((TEQ[MODE] || {})[tab] || {})[k]);
 function ayudas() {
   Object.entries(HLP).forEach(([id, t]) => {
     const el = $(id);

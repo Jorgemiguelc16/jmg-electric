@@ -97,6 +97,7 @@ function estado() {
     tomsT,
     FIX,
     ACEP,
+    TEQ,
     res: RESUMEN,
     sist: radio("sist"),
     sistG: radio("sistG")
@@ -188,6 +189,24 @@ function aplicar(o) {
   FIX = { uni: ok(fx.uni), multi: ok(fx.multi) };
   const ac = o.ACEP && typeof o.ACEP === "object" ? o.ACEP : {};
   ACEP = { uni: ok(ac.uni), multi: ok(ac.multi) };
+  // Equipos adicionales por tablero: solo claves conocidas y valores verdaderos
+  const te = o.TEQ && typeof o.TEQ === "object" ? o.TEQ : {},
+    okq = v =>
+      v && typeof v === "object"
+        ? Object.fromEntries(
+            Object.entries(v)
+              .filter(([, x]) => x && typeof x === "object")
+              .map(([t, x]) => [
+                t,
+                Object.fromEntries(
+                  Object.keys(EQT)
+                    .filter(k => x[k] === true)
+                    .map(k => [k, true])
+                )
+              ])
+          )
+        : {};
+  TEQ = { uni: okq(te.uni), multi: okq(te.multi) };
   const sv = v => (["mono220", "tri220", "tri380"].includes(v) ? v : null);
   renderSys("sys_uni", "sist", sv(o.sist) || "mono220");
   renderSys("sys_multi", "sistG", sv(o.sistG) || "tri380");

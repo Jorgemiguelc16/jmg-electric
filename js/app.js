@@ -213,8 +213,16 @@ function propTablero(tab) {
   $("propSub").textContent = `Tablero ${tab}`;
   $("propBody").innerHTML =
     `<div class="pc"><div class="st">Tablero ${tab}</div><p class="pc-d">${esc(tb.desc)}</p><table class="rt">${row("Alimentado por", esc(f.desc))}${row("Potencia", `${fmt(f.P, 0)} W`)}${row("Conductor", `${f.s.n}-1×${f.S} mm²`)}${row("Interruptor", `${f.s.tri ? 3 : 2}×${f.itm ?? "—"} A`)}${row("ΔV acumulada", `${fmt(f.dvAc, 2)} %`)}${row("Icc en barras", `${fmt(tb.icc, 2)} kA`)}${row("Poder de corte", `${tb.pdc} kA`)}${row("Circuitos", `${cs.length} + ${r.c.reserva} reserva`)}${row("Verificación", cs.every(q => q.ok) && f.ok ? '<span class="okb">CONFORME</span>' : '<span class="badb">REVISAR</span>')}</table>
+    <div class="st" style="margin-top:12px">Equipos adicionales</div><p class="pc-d">Aparecen en el unifilar, el metrado y la memoria. No cambian el cálculo; su uso es criterio del proyectista.</p>
+    ${Object.entries(EQT)
+      .map(
+        ([k, d]) =>
+          `<label class="chk pc-eq" data-ayuda="${esc(d.a)}"><input type="checkbox" data-teq="${tab}|${k}"${((TEQ[MODE] || {})[tab] || {})[k] ? " checked" : ""}>${d.n}</label>`
+      )
+      .join("")}
     <button type="button" class="btn sec sm pc-go" data-view="cuadro">Ver cuadro de cargas</button></div>`;
 }
+
 function propCircuito(key) {
   const r = LAST;
   const q = r && r.circ.find(x => x.key === key);
@@ -293,6 +301,19 @@ $("propBody").addEventListener("input", e => {
   }
 });
 $("propBody").addEventListener("change", e => {
+  const eq = e.target.dataset.teq;
+  if (eq) {
+    const [tab, k] = eq.split("|"),
+      m = (TEQ[MODE] = TEQ[MODE] || {}),
+      t = (m[tab] = m[tab] || {});
+    if (e.target.checked) t[k] = true;
+    else delete t[k];
+    if (!Object.keys(t).length) delete m[tab];
+    update();
+    histPush();
+    toast(`${EQT[k].n}: ${e.target.checked ? "agregado al" : "quitado del"} tablero ${tab}`);
+    return;
+  }
   if (e.target.dataset.bl && e.target.tagName === "SELECT") {
     const ev = new Event("input", { bubbles: true });
     e.target.dispatchEvent(ev);
@@ -469,6 +490,15 @@ $("ws").addEventListener("click", e => {
       () => document.querySelector("#results .rec-card")?.scrollIntoView({ behavior: "smooth", block: "start" }),
       80
     );
+  } else if (a === "add:cctv" || a === "add:cctvS") {
+    // Videovigilancia: carga especial (vivienda u otros usos) o carga común del edificio, con su circuito propio
+    const nm = a === "add:cctv" ? "cargas" : "serv";
+    selNode(nm === "cargas" ? "cargas" : "servicios");
+    readList(nm);
+    LISTS[nm].arr.push({ ...LISTS[nm].nuevo(), nombre: "Sistema de videovigilancia (CCTV)", tipo: "otra" });
+    renderList(nm);
+    update();
+    toast("CCTV agregado: su potencia es la suma de cámaras, grabador (NVR/DVR) y switch PoE");
   } else if (a === "add:lumsP" || a === "add:tomsP") {
     const nm = a === "add:lumsP" ? "lums" : "toms";
     selNode("salidas");
