@@ -246,7 +246,7 @@ const HLP = {
   pTo: "Potencia por tomacorriente en departamentos (modo multifamiliar).",
   reserva: "Espacios libres por tablero para ampliaciones (Regla 050-108, EM.010).",
   met: "Forma de instalación del conductor (CNE-U, Tablas 3 y 4). B1 = tubo empotrado en ladrillo o concreto (mampostería) o sobre pared; A1 = tubo en pared térmicamente aislante.",
-  aisl: "Temperatura máxima del aislamiento; define la columna de la Tabla 2.",
+  aisl: "Temperatura máxima de servicio del aislamiento indicada por el fabricante; define la columna de la Tabla 2 del CNE: PVC 70 °C o XLPE / EPR 90 °C. Si el conductor tiene una temperatura intermedia, use la columna de 70 °C, del lado seguro (criterio del proyectista).",
   temp: "Temperatura ambiente del recorrido; corrige la ampacidad (Tabla 5A).",
   nag: "Circuitos que comparten la misma tubería; corrige la ampacidad (Tabla 5C).",
   rhoMode: "Resistividad del cobre usada para la caída de tensión.",
