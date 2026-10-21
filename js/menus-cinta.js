@@ -290,6 +290,16 @@
         abrir(mn, `<h4>${h}</h4>` + its.map(x => (x ? item(x[0], x[1], x[2], false) : sep)).join(""));
         return;
       }
+      // Calculadoras (pestaña Herramientas): app.js abre la página Herramientas; aquí se lleva a la elegida
+      const hr = e.target.closest(".ap-ribbon [data-herr]");
+      if (hr)
+        setTimeout(() => {
+          const c = $(hr.dataset.herr)?.closest(".card");
+          if (!c) return;
+          c.scrollIntoView({ behavior: "smooth", block: "start" });
+          c.classList.add("resalta");
+          setTimeout(() => c.classList.remove("resalta"), 1600);
+        }, 80);
       // «Ir al dato» y demás opciones usan las acciones normales; el menú se cierra después
       if (e.target.closest(".mc-menu")) setTimeout(cerrar, 0);
     },
