@@ -5903,3 +5903,75 @@ body.sin-acceso .welcome {
   margin: 2px 0;
   white-space: normal;
 }
+
+/* v2.8 · Menús desplegables de la cinta (js/menus-cinta.js) */
+.mc-caret {
+  font-size: 8px;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+.ap-ribbon .mc-open {
+  background: var(--ws-hover, #e7eef8);
+  border-color: var(--ws-hover-b, #cfdbea);
+}
+.mc-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 230px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--ws-pane, #fff);
+  color: var(--ws-text, #1f2a36);
+  border: 1px solid var(--ws-line, #d6dde6);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(20, 48, 79, 0.18);
+  padding: 4px;
+}
+.mc-menu h4 {
+  margin: 4px 9px 5px;
+  font: 600 10.5px var(--f-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ws-text2, #66737f);
+}
+.mc-mi {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  width: 100%;
+  border: 0;
+  background: none;
+  border-radius: 5px;
+  padding: 6px 10px 6px 4px;
+  text-align: left;
+  cursor: pointer;
+  font: 400 12.5px var(--f-body);
+  color: inherit;
+}
+.mc-mi:hover,
+.mc-mi:focus-visible {
+  background: var(--ws-hover, #e7eef8);
+  outline: none;
+}
+.mc-mi.sel {
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 #ffc800;
+}
+.mc-mi small {
+  display: block;
+  font-size: 11px;
+  color: var(--ws-text2, #66737f);
+  font-weight: 400;
+}
+.mc-ck {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: #c99d00;
+  font-weight: 700;
+}
+.mc-sep {
+  height: 1px;
+  background: var(--ws-line, #d6dde6);
+  margin: 4px 6px;
+}
