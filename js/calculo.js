@@ -1104,6 +1104,28 @@ function recomendaciones(r) {
       sug: "Si los conductores van dentro de tubos empotrados, corresponde el método B1.",
       ir: { foco: "met", lab: "Ir a Método de instalación" }
     });
+  // Designación y aislamiento deben corresponder al mismo conductor
+  const kc = condDe(c.desig);
+  if (kc && CONDS[kc].a !== c.aisl)
+    R.push(
+      c.aisl === "xl"
+        ? {
+            id: "cond|" + kc,
+            tipo: "sub",
+            tit: "Aislamiento distinto al del conductor",
+            txt: `Se calcula con la columna XLPE / EPR 90 °C de la Tabla 2, pero la designación es ${kc} (${CONDS[kc].d}): las capacidades de corriente usadas son mayores que las que corresponden a ese conductor.`,
+            sug: "Cambie el aislamiento a PVC 70 °C o use un conductor de XLPE o EPR (N2XOH, NH-90).",
+            ir: { foco: "aisl", lab: "Ir a Aislamiento" }
+          }
+        : {
+            id: "cond|" + kc,
+            tipo: "sobre",
+            tit: "Conductor de 90 °C calculado como PVC 70 °C",
+            txt: `La designación ${kc} (${CONDS[kc].d}) corresponde a la columna XLPE / EPR 90 °C de la Tabla 2; con PVC 70 °C el cálculo queda del lado seguro, pero puede sobredimensionar.`,
+            sug: "Si el conductor es el indicado, cambie el aislamiento a XLPE / EPR 90 °C.",
+            ir: { foco: "aisl", lab: "Ir a Aislamiento" }
+          }
+    );
   const l1 = items.filter(x => x.L <= 1);
   if (l1.length)
     R.push({
