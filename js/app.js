@@ -437,6 +437,7 @@ function wsRefresh(F) {
     if (NODE.startsWith("tab:") && !$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4));
   }
   if (FC_KEY && !FC_APL) renderFicha();
+  if (TC_PEND) tcSync();
 }
 /* Cinta de opciones y acciones */
 $("ws").addEventListener("click", e => {
@@ -495,6 +496,7 @@ $("ws").addEventListener("click", e => {
   } else if (a === "undo") histGo(-1);
   else if (a === "redo") histGo(1);
   else if (a === "cond") cuadroCond(true);
+  else if (a === "tcargas") tablaCargas(ac.dataset.tct);
   else if (a === "ficha") {
     // El circuito seleccionado en el explorador o, si no hay, el primero
     if (DESACT) calcularAhora();

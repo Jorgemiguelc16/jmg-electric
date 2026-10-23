@@ -6675,3 +6675,150 @@ body.sin-acceso .welcome {
   font-size: 11.5px;
   line-height: 1.45;
 }
+
+/* v2.8 · Tabla de cargas especiales (js/tabla-cargas.js): hoja de datos con celdas editables (blancas) y columnas
+   de resultado (grises). Usa la rejilla del cuadro de conductores (.cd-tabla) con sus propios anchos. */
+.tc-tabs {
+  margin-top: 8px;
+  padding: 0 8px;
+}
+.tc-tabs[hidden] {
+  display: none;
+}
+.tc-tabs + .tc-tabla {
+  margin-top: 0;
+  border-top: 0;
+}
+.tc-tabla th.tc-n {
+  width: 36px;
+}
+.tc-tabla th.c-tipo {
+  width: 150px;
+}
+.tc-tabla th.c-fases {
+  width: 56px;
+}
+.tc-tabla th.c-dep {
+  width: 110px;
+}
+.tc-tabla th.c-piso {
+  width: 150px;
+}
+.tc-tabla th.c-num {
+  width: 86px;
+}
+.tc-tabla th.c-cir {
+  width: 96px;
+}
+.tc-tabla th.c-i {
+  width: 58px;
+}
+.tc-tabla th.c-itm {
+  width: 68px;
+}
+.tc-tabla th.c-sec {
+  width: 76px;
+}
+.tc-tabla th.c-est {
+  width: 104px;
+}
+.tc-tabla td.tc-n {
+  color: var(--dl-ink2);
+  text-align: center;
+}
+.tc-tabla td.tc-e {
+  padding: 0;
+}
+.tc-tabla td.tc-e input {
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: 400 12px var(--f-body);
+  font-variant-numeric: tabular-nums;
+  box-shadow: none;
+}
+.tc-tabla td.tc-e input[type="number"] {
+  text-align: right;
+}
+.tc-tabla td.tc-e input:hover {
+  border-color: var(--dl-btn-b);
+  background: var(--dl-cell);
+}
+.tc-tabla td.tc-e input:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  background: var(--dl-cell);
+}
+.tc-tabla td.tc-e input::placeholder {
+  color: var(--dl-ink2);
+  opacity: 0.6;
+  font-style: italic;
+}
+/* Dato obligatorio vacío: ámbar, como en los formularios */
+.tc-tabla td.tc-falta,
+.tc-tabla tr:nth-child(even) td.tc-falta {
+  background: var(--falta-bg, #fffaf0);
+  box-shadow: inset 0 -2px 0 #e0a43a;
+}
+/* Resultado del circuito: solo lectura */
+.tc-tabla td.tc-r,
+.tc-tabla tbody tr:nth-child(even) td.tc-r {
+  background: var(--dl-th);
+  color: var(--dl-ink2);
+}
+.tc-tabla td.c-cir[data-ficha-tc] {
+  color: var(--dl-acc);
+  cursor: pointer;
+  user-select: none;
+}
+/* Fila seleccionada (para duplicar o quitar) */
+.tc-tabla tr.tc-sel td.tc-n {
+  background: var(--dl-acc);
+  color: #fff;
+  font-weight: 600;
+}
+.tc-tabla td.tc-vacio {
+  padding: 14px 10px;
+  color: var(--dl-ink2);
+  font-style: italic;
+}
+@container (max-width: 860px) {
+  .tc-tabla .c-i {
+    display: none;
+  }
+}
+@container (max-width: 720px) {
+  .tc-tabla .c-sec,
+  .tc-tabla .c-cir {
+    display: none;
+  }
+}
+/* Angosta: columnas más estrechas para que la descripción conserve su espacio; el estado queda como cuadrito */
+@container (max-width: 640px) {
+  .tc-tabla th.c-tipo {
+    width: 112px;
+  }
+  .tc-tabla th.c-dep {
+    width: 90px;
+  }
+  .tc-tabla th.c-piso {
+    width: 110px;
+  }
+  .tc-tabla th.c-num {
+    width: 66px;
+  }
+  .tc-tabla th.c-est {
+    width: 30px;
+    font-size: 0;
+  }
+  .tc-tabla .cd-est {
+    font-size: 0;
+  }
+  .tc-tabla .cd-est:before {
+    margin-right: 0;
+  }
+}
