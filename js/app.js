@@ -277,7 +277,7 @@ function circRes(key) {
     return;
   }
   const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
-  box.innerHTML = `<div class="st">Resultado del circuito</div><table class="rt">${row("Potencia", `${fmt(q.P, 0)} W · ${q.f3 ? "3φ" : "1φ"} ${q.s.V} V`)}${row("Corriente nominal", `${fmt(q.I, 2)} A`)}${row("Corriente de diseño", `${fmt(q.Id, 2)} A`)}${row("Interruptor", `${q.f3 ? 3 : 2}×${q.itm ?? "—"} A · ${q.curva}`)}${row("Conductor", `${q.f3 ? 4 : 2}-1×${q.S} mm²${LAST.c.desig ? " " + esc(LAST.c.desig) : ""}`)}${row("Iz corregida", `${fmt(q.Izc, 1)} A`)}${row("ΔV circuito / total", `${fmt(q.dVp, 2)} / ${fmt(q.dVt, 2)} %`)}${row("Diferencial", `${q.idName} · ${q.f3 ? 4 : 2}×${q.idRat} A`)}${row("Tubo", q.tubo.mm ? `${q.tubo.mm} mm` : q.tubo.pul)}${row("Verificación", q.ok ? '<span class="okb">CONFORME</span>' : '<span class="badb">REVISAR</span>')}</table>`;
+  box.innerHTML = `<div class="st">Resultado del circuito</div><table class="rt">${row("Potencia", `${fmt(q.P, 0)} W · ${q.f3 ? "3φ" : "1φ"} ${q.s.V} V`)}${row("Corriente nominal", `${fmt(q.I, 2)} A`)}${row("Corriente de diseño", `${fmt(q.Id, 2)} A`)}${row("Interruptor", `${q.f3 ? 3 : 2}×${q.itm ?? "—"} A · ${q.curva}`)}${row("Conductor", `${q.f3 ? 4 : 2}-1×${q.S} mm²${LAST.c.desig ? " " + esc(LAST.c.desig) : ""}`)}${row("Iz corregida", `${fmt(q.Izc, 1)} A`)}${row("ΔV circuito / total", `${fmt(q.dVp, 2)} / ${fmt(q.dVt, 2)} %`)}${row("Diferencial", `${q.idName} · ${q.f3 ? 4 : 2}×${q.idRat} A`)}${row("Tubo", q.tubo.mm ? `${q.tubo.mm} mm` : q.tubo.pul)}${row("Verificación", q.ok ? '<span class="okb">CONFORME</span>' : '<span class="badb">REVISAR</span>')}</table><button type="button" class="btn sec sm pc-go" data-ficha="${esc(key)}">Ver ficha del circuito</button>`;
 }
 $("propBody").addEventListener("input", e => {
   const t = e.target;
@@ -426,6 +426,7 @@ function wsRefresh(F) {
     }
     if (NODE.startsWith("tab:") && !$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4));
   }
+  if (FC_KEY && !FC_APL) renderFicha();
 }
 /* Cinta de opciones y acciones */
 $("ws").addEventListener("click", e => {
@@ -484,7 +485,13 @@ $("ws").addEventListener("click", e => {
   } else if (a === "undo") histGo(-1);
   else if (a === "redo") histGo(1);
   else if (a === "cond") cuadroCond(true);
-  else if (a === "rec") {
+  else if (a === "ficha") {
+    // El circuito seleccionado en el explorador o, si no hay, el primero
+    if (DESACT) calcularAhora();
+    if (!LAST || !LAST.circ.length) return toast("Complete los datos para ver los circuitos");
+    const k = NODE.startsWith("circ:") ? NODE.slice(5) : "";
+    fichaCirc(LAST.circ.some(q => q.key === k) ? k : LAST.circ[0].key);
+  } else if (a === "rec") {
     if (!LAST) return toast("Complete los datos para ver los resultados");
     verVista("verif");
     setTimeout(

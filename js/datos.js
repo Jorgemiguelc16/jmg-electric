@@ -387,16 +387,20 @@ function ayudas() {
       t.dataset.ayuda = tx;
       if (!t.getAttribute("aria-label") && !t.textContent.trim()) t.setAttribute("aria-label", tx);
     }
-    return t.dataset.ayuda ? t : null;
+    if (!t.dataset.ayuda) return null;
+    // Si el globo solo repite el texto que ya se lee completo en pantalla, no aporta nada
+    const vis = t.textContent.trim();
+    if (vis && vis === t.dataset.ayuda.trim() && t.scrollWidth <= t.clientWidth) return null;
+    return t;
   };
   const mostrar = t => {
     tip.textContent = t.dataset.ayuda;
     // En el espacio de trabajo la pantalla está a escala (80 % por defecto): el globo usa la misma escala
     const ws = t.closest("#ws"),
       k = ws ? parseFloat(getComputedStyle(ws).zoom) || 1 : 1;
-    tip.style.fontSize = (12 * k).toFixed(1) + "px";
-    tip.style.padding = `${(7 * k).toFixed(1)}px ${(10 * k).toFixed(1)}px`;
-    tip.style.maxWidth = Math.round(280 * k) + "px";
+    tip.style.fontSize = (11 * k).toFixed(1) + "px";
+    tip.style.padding = `${(4 * k).toFixed(1)}px ${(8 * k).toFixed(1)}px`;
+    tip.style.maxWidth = Math.round(260 * k) + "px";
     tip.hidden = false;
     const r = t.getBoundingClientRect(),
       w = tip.offsetWidth,
@@ -419,12 +423,13 @@ function ayudas() {
     ocultar();
     if (!t) return;
     actual = t;
-    espera = setTimeout(() => actual === t && mostrar(t), 350);
+    espera = setTimeout(() => actual === t && mostrar(t), 600);
   });
+  // Con el teclado (Tab) el globo aparece al llegar al control; con un clic, no
   document.addEventListener("focusin", e => {
     const t = objetivo(e);
     ocultar();
-    if (t) {
+    if (t && e.target.matches(":focus-visible")) {
       actual = t;
       mostrar(t);
     }
