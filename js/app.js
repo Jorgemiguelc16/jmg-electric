@@ -275,8 +275,17 @@ function propCircuito(key) {
     ed = `<p class="pc-d">Circuito del departamento <b>${esc(t ? t.nombre : "")}</b>. Sus datos se editan en el tipo de departamento.</p><button type="button" class="btn sec sm" data-node="vivienda">Editar ${esc(t ? t.nombre : "departamento")}</button>`;
   }
   $("propBody").innerHTML =
-    `<div class="pc"><div class="st">Datos del circuito</div>${ed}</div><div class="pc" id="circRes"></div>`;
+    `<div class="pc"><div class="st">Datos del circuito</div>${ed}</div>${faseCircuito(q)}<div class="pc" id="circRes"></div>`;
   circRes(key);
+}
+/* Fase de un circuito monofásico con suministro trifásico: «Automática» (la asigna el balance de fases) o fijada
+   en R, S o T. Es el mismo dato FIX que se fija en Resultados › Balance de fases y en el editor de cargas. En el
+   edificio solo los circuitos de servicios generales tienen fase propia; los departamentos van completos a una fase. */
+function faseCircuito(q) {
+  const r = LAST;
+  if (!r || !r.bal || q.f3 || !q.fase || q.fase === "—" || q.fase === "3φ") return "";
+  const fx = (FIX[MODE] || {})[q.key] || "";
+  return `<div class="pc"><div class="st">Conexión</div><label class="pr" data-ayuda="Por defecto la asigna el balance de fases para repartir las cargas; elija R, S o T para fijarla."><span>Fase</span><select data-fasefix="${esc(q.key)}"><option value=""${fx ? "" : " selected"}>Automática${fx ? "" : ` (${q.fase})`}</option>${r.bal.nm.map(f => `<option value="${f}"${f === fx ? " selected" : ""}>${f}</option>`).join("")}</select></label></div>`;
 }
 function circRes(key) {
   const box = $("circRes");
@@ -311,6 +320,18 @@ $("propBody").addEventListener("input", e => {
   }
 });
 $("propBody").addEventListener("change", e => {
+  // Fase del circuito: se fija o vuelve a automática y se recalcula el balance
+  const ff = e.target.dataset.fasefix;
+  if (ff) {
+    const fx = (FIX[MODE] = FIX[MODE] || {});
+    if (e.target.value) fx[ff] = e.target.value;
+    else delete fx[ff];
+    update();
+    histPush();
+    if (NODE === "circ:" + ff) propCircuito(ff);
+    toast(e.target.value ? `Fase ${e.target.value} fijada` : "Fase automática");
+    return;
+  }
   const eq = e.target.dataset.teq;
   if (eq) {
     const [tab, k] = eq.split("|"),
