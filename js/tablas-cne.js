@@ -145,7 +145,7 @@ const RHO_CU = 0.0175,
   IMIN_UNI = 40,
   IMIN_DPTO = 25;
 const SQ3 = Math.sqrt(3),
-  VERSION = "v2.7";
+  VERSION = "v2.8";
 const SIST = {
   mono220: { tri: false, V: 220, kI: 1, K: 2, n: 2, txt: "1φ 220 V", nom: "Monofásico 220 V", fases: ["—"] },
   tri220: {

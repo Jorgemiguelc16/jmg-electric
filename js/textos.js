@@ -152,6 +152,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.8",
+    "Cuadro de conductores (Resultados › Cuadro de conductores): todos los alimentadores y circuitos en una tabla, con la sección automática (la menor que cumple capacidad y caída de tensión) y la opción de elegir una de las tres siguientes; el cálculo nunca acepta una menor y avisa las secciones mayores como recomendación. Ficha del circuito (doble clic en un circuito o Resultados › Ficha del circuito): pestañas Carga, Conductor, Protección y Caída de tensión, con ▲▼ para recorrer los circuitos y los datos de la carga editables con Aceptar, Cancelar y Aplicar. Las dos son ventanas de escritorio que se mueven, se redimensionan y recuerdan su tamaño. Equipos adicionales del tablero (DPS, relé de tensión, medidor y contactor con reloj) en el unifilar, el metrado y la memoria, y botón de videovigilancia (CCTV). Menús desplegables en la cinta para elegir datos y agregar cargas, DXF para AutoCAD en Proyecto › Exportar y calculadoras en Herramientas. Ayuda del aislamiento según la temperatura del fabricante. Globo de ayuda más discreto, que solo aparece cuando aporta. Sin elecciones en el cuadro de conductores, el cálculo no cambia."
+  ],
+  [
     "v2.7",
     "Acceso con cuenta: pantalla de ingreso con Google o con correo y contraseña, recuperación de contraseña, solicitud de cuenta con aprobación del administrador y sección Administración para aprobar, rechazar o desactivar cuentas. Menú de la cuenta con cierre de sesión en la barra superior, con la foto de la cuenta de Google o la inicial del nombre. Al iniciar sesión, la plataforma se abre en Inicio y muestra la bienvenida, con «Continuar» y el último proyecto del usuario. La ayuda de datos y botones aparece en un globo con la letra y la escala de la plataforma. Ajustes queda solo con el tema y el espacio de trabajo. El cálculo no cambia."
   ],
