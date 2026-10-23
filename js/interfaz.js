@@ -271,6 +271,11 @@ function faltantes() {
         ["Lc", "longitud de los circuitos"]
       ].forEach(([k, l]) => req(`tipos_${k}_${i}`, `${n}: ${l}`, vacio(t[k])));
     });
+    cargasT.forEach((x, i) => {
+      const n = x.nombre || `Carga especial ${i + 1}`;
+      req(`cargasT_p_${i}`, `${n}: potencia`, vacio(x.p));
+      req(`cargasT_L_${i}`, `${n}: longitud`, vacio(x.L));
+    });
     if (serv.length) req("Lms", "Longitud al tablero de servicios generales");
     serv.forEach((x, i) => {
       const n = x.nombre || `Carga común ${i + 1}`;

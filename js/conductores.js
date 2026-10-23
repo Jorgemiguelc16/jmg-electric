@@ -59,7 +59,7 @@ function renderCond() {
       ? `<select data-secf="${esc(key)}" aria-label="Sección de ${esc(nombre)}">${ops
           .map(
             (S, i) =>
-              `<option value="${i ? S : ""}"${(i ? pend === S : !pend) ? " selected" : ""}>${i ? `${S} mm² · ΔV ${fmt(dvAc(S), 2)} %` : `${S} mm² · Auto`}</option>`
+              `<option value="${i ? S : ""}"${(i ? pend === S : !pend) ? " selected" : ""}>${i ? `${S} mm² · ΔV ${fmt(dvAc(S), 2)} %` : `${S} mm²`}</option>`
           )
           .join("")}</select>`
       : `<b>${x.S} mm²</b>`;

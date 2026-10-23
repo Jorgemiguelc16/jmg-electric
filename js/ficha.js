@@ -42,25 +42,35 @@ function cerrarFicha() {
    formulario (campo). */
 function fcEditables(q) {
   const t = q.src && q.src.t;
-  if (t === "cargas" || t === "serv") {
+  if (t === "cargas" || t === "serv" || t === "cargasT") {
     const it = LISTS[t].arr[q.src.i];
     if (!it) return [];
-    const tipos_ = t === "cargas" ? TIPOS : TSERV,
+    const tipos_ = t === "serv" ? TSERV : TIPOS,
       E = [
         { id: "nombre", l: "Descripción", tipo: "text", v: it.nombre, lista: t },
         { id: "tipo", l: "Tipo de carga", tipo: "select", v: it.tipo, o: Object.entries(tipos_), lista: t },
         { id: "p", l: "Potencia", tipo: "number", v: it.p, u: "W", lista: t },
-        {
-          id: "fases",
-          l: "Fases",
-          tipo: "select",
-          v: it.fases,
-          o: [
-            [1, "Monofásica"],
-            [3, "Trifásica"]
-          ],
-          lista: t
-        },
+        // Las cargas de los departamentos son monofásicas; en su lugar se elige el tipo de departamento
+        t === "cargasT"
+          ? {
+              id: "dep",
+              l: "Departamento",
+              tipo: "select",
+              v: it.dep,
+              o: tipos.map((x, i) => [i, x.nombre || `Tipo ${i + 1}`]),
+              lista: t
+            }
+          : {
+              id: "fases",
+              l: "Fases",
+              tipo: "select",
+              v: it.fases,
+              o: [
+                [1, "Monofásica"],
+                [3, "Trifásica"]
+              ],
+              lista: t
+            },
         { id: "L", l: "Longitud", tipo: "number", v: it.L, u: "m", lista: t }
       ];
     if (t === "cargas" && pisos.length)
@@ -233,7 +243,7 @@ function aplicarFicha() {
           ? String(v).trim() === ""
             ? null
             : parseFloat(v) || 0
-          : d.id === "fases" || d.id === "piso"
+          : d.id === "fases" || d.id === "piso" || d.id === "dep"
             ? +v
             : String(v).replace(/[<>]/g, "");
       lista = d.lista;

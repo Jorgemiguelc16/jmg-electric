@@ -192,6 +192,17 @@ function asignarID(cs, c) {
     });
   }
 }
+// Cargas especiales sumadas por tipo para la máxima demanda (Reglas 050-200(1)(a) y 050-202(1)(a)): cocinas,
+// calentadores y aire acondicionado; en «otras» solo las cargas y motores mayores de 1500 W
+function cargasMD(list) {
+  const sum = t => list.filter(x => x.tipo === t).reduce((s, x) => s + x.p, 0);
+  return {
+    coc: sum("cocina"),
+    cal: sum("calentador"),
+    aire: sum("aire"),
+    otras: list.filter(x => (x.tipo === "otra" || x.tipo === "motor") && x.p > 1500).reduce((s, x) => s + x.p, 0)
+  };
+}
 // 050-200(1)(a) y 050-202(1)(a)
 function mdVivienda({ area, coc, cal, aire, otras }, multi) {
   const basica = multi
@@ -540,15 +551,6 @@ function calcUni(c) {
     sk = radio("sist") || "mono220",
     Lalim = num("Lalim") || 1;
   const cs = cargas.map(x => ({ ...x }));
-  const cargasMD = list => {
-    const sum = t => list.filter(x => x.tipo === t).reduce((s, x) => s + x.p, 0);
-    return {
-      coc: sum("cocina"),
-      cal: sum("calentador"),
-      aire: sum("aire"),
-      otras: list.filter(x => (x.tipo === "otra" || x.tipo === "motor") && x.p > 1500).reduce((s, x) => s + x.p, 0)
-    };
-  };
   const mdDe = (a, list, aE = 0) =>
     viv ? mdVivienda({ area: a, ...cargasMD(list) }, false) : mdUso(c.uso, a, list, aE);
   // Áreas libres no techadas (patios, jardines, cocheras abiertas): carga unitaria elegida por el proyectista (p. ej. 5 W/m²), al 100 %;
@@ -729,10 +731,17 @@ function calcMulti(c) {
   const sk = radio("sistG") || "tri380",
     Lgen = num("Lgen") || 1,
     Lms = num("Lms") || 1;
+  // Cargas especiales de cada tipo de departamento (lista cargasT): sumadas por tipo para la máxima demanda,
+  // su potencia total (Pesp) para la carga instalada y su número (nEsp) para el metrado
+  const espT = i => cargasT.filter(x => Math.round(+x.dep || 0) === i && x.p > 0);
   const T = tipos
     .map((t, i) => ({ ...t, _i: i }))
     .filter(t => t.cant > 0)
-    .map(t => ({ ...t, cant: Math.round(t.cant), md: mdVivienda(t, true) }))
+    .map(t => {
+      const ce = espT(t._i),
+        u = { ...t, ...cargasMD(ce), Pesp: ce.reduce((s, x) => s + x.p, 0), nEsp: ce.length };
+      return { ...u, cant: Math.round(t.cant), md: mdVivienda(u, true) };
+    })
     .sort((a, b) => b.md.sinAire - a.md.sinAire);
   // Luminarias de otra potencia de cada tipo de departamento
   const exT = t =>
@@ -892,24 +901,28 @@ function calcMulti(c) {
       up,
       fi
     );
-    [
-      ["Cocina eléctrica", t.coc, "Cocina eléctrica"],
-      ["Calentador de agua / ducha", t.cal, "Calentador de agua / ducha"],
-      ["Aire acondicionado", t.aire, "Aire acondicionado"],
-      ["Otras cargas > 1500 W", t.otras, "Otra carga"]
-    ].forEach(([d, p, tp]) => {
-      if (p > 0)
-        list.push(
-          circuito(
-            { tab: t.tab, id: "C-" + (list.length + 1), desc: d, tipo: tp, n: 1, P: p, L: t.Lc || 1, fases: 1 },
-            c,
-            up,
-            fi
-          )
-        );
-    });
     list.forEach(q => {
       q.src = { t: "tipo", i: t._i };
+    });
+    cargasT.forEach((x, ix) => {
+      if (Math.round(+x.dep || 0) !== t._i || !(x.p > 0)) return;
+      const q = circuito(
+        {
+          tab: t.tab,
+          id: "C-" + (list.length + 1),
+          desc: x.nombre || "Carga especial",
+          tipo: TIPOS[x.tipo].split(" (")[0],
+          n: 1,
+          P: x.p,
+          L: x.L || 1,
+          fases: 1
+        },
+        c,
+        up,
+        fi
+      );
+      q.src = { t: "cargasT", i: ix };
+      list.push(q);
     });
     asignarID(list, c);
     circ.push(...list);
@@ -924,10 +937,7 @@ function calcMulti(c) {
   const emerg = SV.some(s => /emergencia/i.test(s.nombre));
   const CI =
     T.reduce(
-      (s, t) =>
-        s +
-        t.cant *
-          (t.nAl * c.pAl + (exT(t)?.P || 0) + t.nTo * c.pTo + (exTt(t)?.P || 0) + t.coc + t.cal + t.aire + t.otras),
+      (s, t) => s + t.cant * (t.nAl * c.pAl + (exT(t)?.P || 0) + t.nTo * c.pTo + (exTt(t)?.P || 0) + t.Pesp),
       0
     ) + Pserv;
   return {
@@ -1082,7 +1092,7 @@ function recomendaciones(r) {
         .slice(0, 4)
         .map(x => `${nom(x)}: ${x.S} mm² elegido; cumple desde ${x.Sauto} mm²`)
         .join("; ")}${ma.length > 4 ? ` y ${ma.length - 4} más` : ""}.`,
-      sug: "El conductor mayor también cumple la norma, pero cuesta más. Si no hay un motivo para usarlo, vuelva a «Automático» en el cuadro de conductores.",
+      sug: "El conductor mayor también cumple la norma, pero cuesta más. Si no hay un motivo para usarlo, vuelva a la sección automática (la primera de la lista) en el cuadro de conductores.",
       ir: { act: "cond", lab: "Abrir el cuadro de conductores" }
     });
   const im = r.alims.filter(a => a.Imin && a.Id === a.Imin && a.Imin >= 2 * a.I);

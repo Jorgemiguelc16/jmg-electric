@@ -89,6 +89,7 @@ function estado() {
     MODE,
     cargas,
     tipos,
+    cargasT,
     serv,
     pisos,
     lums,
@@ -153,7 +154,28 @@ function limpiarLista(a, plantilla, nums = []) {
         })
     : null;
 }
+/* Proyectos anteriores a la v2.8: las cargas especiales de cada tipo de departamento eran cuatro totales en W
+   (cocina, calentador, aire acondicionado y otras > 1500 W). Cada total con valor pasa a ser una fila de la lista
+   cargasT, con la longitud de los circuitos del departamento; la máxima demanda y los circuitos quedan iguales. */
+function migrarCargasT(o) {
+  if (Array.isArray(o.cargasT) || !Array.isArray(o.tipos)) return o;
+  const L = [];
+  o.tipos.forEach((t, i) => {
+    if (!t || typeof t !== "object") return;
+    [
+      ["coc", "cocina", "Cocina eléctrica"],
+      ["cal", "calentador", "Calentador de agua / ducha"],
+      ["aire", "aire", "Aire acondicionado"],
+      ["otras", "otra", "Otras cargas mayores de 1500 W"]
+    ].forEach(([k, tipo, nombre]) => {
+      const p = parseFloat(t[k]) || 0;
+      if (p > 0) L.push({ nombre, tipo, p, L: parseFloat(t.Lc) || null, dep: i });
+    });
+  });
+  return { ...o, cargasT: L };
+}
 function aplicar(o) {
+  o = migrarCargasT(o);
   PID = typeof o.id === "string" && /^[\w-]{1,40}$/.test(o.id) ? o.id : null;
   KEYS.forEach(k => {
     if (o[k] != null && $(k)) $(k).value = String(o[k]).replace(/[<>]/g, "");
@@ -163,6 +185,7 @@ function aplicar(o) {
   [
     ["cargas", cargas],
     ["tipos", tipos],
+    ["cargasT", cargasT],
     ["serv", serv],
     ["pisos", pisos],
     ["lums", lums],
@@ -178,7 +201,7 @@ function aplicar(o) {
           .filter(f => f.t === "number" || f.k === "fases")
           .map(f => f.k)
           .filter(x => x !== "fases")
-      ) || (["pisos", "lums", "lumsT", "toms", "tomsT"].includes(k) ? [] : null);
+      ) || (["pisos", "lums", "lumsT", "toms", "tomsT", "cargasT"].includes(k) ? [] : null);
     if (L) {
       a.length = 0;
       a.push(...L);
@@ -255,6 +278,7 @@ function proyectoVacio(m) {
     MODE: m,
     cargas: [],
     tipos: [LISTS.tipos.nuevo()],
+    cargasT: [],
     serv: [],
     pisos: [],
     lums: [],
@@ -302,6 +326,7 @@ function cargarEjemplo(m) {
     MODE: md,
     cargas: clon(DEF.cargas),
     tipos: clon(DEF.tipos),
+    cargasT: clon(DEF.cargasT),
     serv: clon(DEF.serv),
     pisos: [],
     lums: [],

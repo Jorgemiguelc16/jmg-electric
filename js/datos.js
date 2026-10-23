@@ -1,6 +1,6 @@
 /* DATOS EDITABLES Y AYUDAS
-   Valores por defecto, listas editables (cargas especiales, pisos, departamentos, servicios, luminarias y
-   tomacorrientes de otra potencia), sus formularios (renderList/readList) y los textos de ayuda (HLP)
+   Valores por defecto, listas editables (cargas especiales de la vivienda y de los departamentos, pisos,
+   departamentos, servicios, luminarias y tomacorrientes de otra potencia), sus formularios (renderList/readList) y los textos de ayuda (HLP)
    que aparecen al pasar el cursor sobre cada dato. */
 const DEF = {
   cargas: [
@@ -9,8 +9,14 @@ const DEF = {
     { nombre: "Horno eléctrico", tipo: "otra", fases: 1, p: 2000, L: 10 }
   ],
   tipos: [
-    { nombre: "Tipo A", cant: 6, area: 85, nAl: 12, nTo: 14, coc: 0, cal: 1500, aire: 0, otras: 0, Ld: 25, Lc: 15 },
-    { nombre: "Tipo B", cant: 2, area: 120, nAl: 16, nTo: 20, coc: 0, cal: 3500, aire: 0, otras: 2000, Ld: 32, Lc: 18 }
+    { nombre: "Tipo A", cant: 6, area: 85, nAl: 12, nTo: 14, Ld: 25, Lc: 15 },
+    { nombre: "Tipo B", cant: 2, area: 120, nAl: 16, nTo: 20, Ld: 32, Lc: 18 }
+  ],
+  // Cargas especiales de los departamentos: dep = índice del tipo de departamento
+  cargasT: [
+    { nombre: "Terma eléctrica", tipo: "calentador", p: 1500, L: 15, dep: 0 },
+    { nombre: "Ducha eléctrica", tipo: "calentador", p: 3500, L: 18, dep: 1 },
+    { nombre: "Horno eléctrico", tipo: "otra", p: 2000, L: 18, dep: 1 }
   ],
   serv: [
     { nombre: "Alumbrado de áreas comunes", tipo: "alum", fases: 1, p: 800, L: 30 },
@@ -21,6 +27,7 @@ const DEF = {
 };
 const cargas = JSON.parse(JSON.stringify(DEF.cargas)),
   tipos = JSON.parse(JSON.stringify(DEF.tipos)),
+  cargasT = JSON.parse(JSON.stringify(DEF.cargasT)),
   serv = JSON.parse(JSON.stringify(DEF.serv)),
   pisos = [];
 // Luminarias de otra potencia: se suman a las salidas de alumbrado de un piso (lums) o de un tipo de departamento (lumsT)
@@ -103,10 +110,6 @@ const LISTS = {
       { k: "Ld", l: "Long. alimentador (m)", t: "number" },
       { k: "nAl", l: "Salidas de alumbrado", t: "number" },
       { k: "nTo", l: "Tomacorrientes", t: "number" },
-      { k: "coc", l: "Cocina eléctrica (W)", t: "number" },
-      { k: "cal", l: "Calentador / ducha (W)", t: "number" },
-      { k: "aire", l: "Aire acondicionado (W)", t: "number" },
-      { k: "otras", l: "Otras cargas > 1500 W (W)", t: "number" },
       { k: "Lc", l: "Long. de circuitos (m)", t: "number" }
     ],
     nuevo: () => ({
@@ -115,26 +118,48 @@ const LISTS = {
       area: null,
       nAl: null,
       nTo: null,
-      coc: 0,
-      cal: 0,
-      aire: 0,
-      otras: 0,
       Ld: null,
       Lc: null
     }),
-    // al quitar un tipo, se quitan sus luminarias y las de los tipos siguientes bajan un número
+    // al quitar un tipo, se quitan sus luminarias y cargas especiales, y las de los tipos siguientes bajan un número
     quitar: i => {
-      [lumsT, tomsT].forEach(L => {
-        for (let k = L.length - 1; k >= 0; k--) {
-          if (L[k].tipo === i) L.splice(k, 1);
-          else if (L[k].tipo > i) L[k].tipo--;
+      [
+        [lumsT, "tipo"],
+        [tomsT, "tipo"],
+        [cargasT, "dep"]
+      ].forEach(([L, k]) => {
+        for (let j = L.length - 1; j >= 0; j--) {
+          if (L[j][k] === i) L.splice(j, 1);
+          else if (L[j][k] > i) L[j][k]--;
         }
       });
     },
     luego: () => {
       renderList("lumsT");
       renderList("tomsT");
+      renderList("cargasT");
     }
+  },
+  /* Cargas especiales de los departamentos, una fila por equipo, igual que en la vivienda unifamiliar. Cada una
+     tiene su circuito; para la máxima demanda (Regla 050-202(1)(a)) se suman por tipo como en la Regla 050-200.
+     Son monofásicas: cada departamento se calcula con suministro monofásico. */
+  cargasT: {
+    arr: cargasT,
+    lab: "Carga especial",
+    f: [
+      { k: "nombre", l: "Descripción", t: "text", full: 1 },
+      { k: "tipo", l: "Tipo de carga", t: "select", o: Object.entries(TIPOS) },
+      {
+        k: "dep",
+        l: "Departamento",
+        t: "select",
+        o: () => tipos.map((t, i) => [String(i), t.nombre || `Tipo ${i + 1}`]),
+        n: 1
+      },
+      { k: "p", l: "Potencia (W)", t: "number" },
+      { k: "L", l: "Longitud (m)", t: "number" }
+    ],
+    nuevo: () => ({ nombre: "", tipo: "otra", p: null, L: null, dep: 0 })
   },
   serv: {
     arr: serv,
@@ -302,11 +327,13 @@ const HLPL = {
     Ld: "Desde el medidor del departamento hasta su tablero.",
     nAl: "Puntos de luz de un departamento.",
     nTo: "Tomacorrientes de un departamento.",
-    coc: "Potencia de la cocina eléctrica; 0 si no hay.",
-    cal: "Terma o ducha eléctrica; 0 si no hay.",
-    aire: "Aire acondicionado; 0 si no hay.",
-    otras: "Otras cargas mayores de 1500 W (horno, secadora…); 0 si no hay.",
     Lc: "Hasta la salida más alejada del departamento."
+  },
+  cargasT: {
+    tipo: "Define cómo entra en la máxima demanda del departamento (Regla 050-202(1)(a)): cocina, 6 kW + 40 % del exceso sobre 12 kW; calentador y aire acondicionado, 100 %; otras cargas y motores mayores de 1500 W, 25 % si hay cocina eléctrica o, si no la hay, 100 % hasta 6 kW y 25 % del exceso. Las de 1500 W o menos tienen su circuito, pero ya están cubiertas por la carga básica.",
+    dep: "Tipo de departamento que tiene este equipo; se repite en cada departamento de ese tipo.",
+    p: "Potencia nominal del equipo.",
+    L: "Recorrido desde el tablero del departamento hasta el equipo."
   },
   serv: {
     tipo: "Motor aplica curva D y conductor al 125 %.",
@@ -448,12 +475,9 @@ const PHL = {
     Ld: "ej. 25",
     nAl: "ej. 12",
     nTo: "ej. 14",
-    coc: "0 si no hay",
-    cal: "0 si no hay",
-    aire: "0 si no hay",
-    otras: "0 si no hay",
     Lc: "ej. 15"
   },
+  cargasT: { nombre: "ej. Terma eléctrica", p: "ej. 1500", L: "ej. 15" },
   serv: { nombre: "ej. Electrobomba de agua", p: "ej. 800", L: "ej. 30" },
   pisos: {
     area: "ej. 90",

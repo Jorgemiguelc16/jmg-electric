@@ -231,17 +231,27 @@ function propCircuito(key) {
   let ed = "";
   const inp = (lbl, attr, val, unit, ph = "") =>
     `<label class="pr"><span>${lbl}</span><span class="in-u"><input type="number" min="0" step="any" ${attr} value="${val ?? ""}" placeholder="${ph}">${unit ? `<em>${unit}</em>` : ""}</span></label>`;
-  if (q.src && (q.src.t === "cargas" || q.src.t === "serv")) {
+  if (q.src && (q.src.t === "cargas" || q.src.t === "serv" || q.src.t === "cargasT")) {
     const L = LISTS[q.src.t],
-      it = L.arr[q.src.i];
+      it = L.arr[q.src.i],
+      dep = q.src.t === "cargasT";
     if (it) {
-      const tipos_ = q.src.t === "cargas" ? TIPOS : TSERV;
+      const tipos_ = q.src.t === "serv" ? TSERV : TIPOS;
       ed = `<label class="pr"><span>Descripción</span><input type="text" data-bl="${q.src.t}|${q.src.i}|nombre" value="${esc(it.nombre)}"></label>
       <label class="pr"><span>Tipo de carga</span><select data-bl="${q.src.t}|${q.src.i}|tipo">${Object.entries(tipos_)
         .map(([k, v]) => `<option value="${k}"${k === it.tipo ? " selected" : ""}>${v}</option>`)
         .join("")}</select></label>
       ${inp("Potencia", `data-bl="${q.src.t}|${q.src.i}|p"`, it.p, "W")}
-      <label class="pr"><span>Fases</span><select data-bl="${q.src.t}|${q.src.i}|fases"><option value="1"${it.fases == 1 ? " selected" : ""}>Monofásica</option><option value="3"${it.fases == 3 ? " selected" : ""}>Trifásica</option></select></label>
+      ${
+        dep
+          ? `<label class="pr"><span>Departamento</span><select data-bl="cargasT|${q.src.i}|dep">${tipos
+              .map(
+                (t, i) =>
+                  `<option value="${i}"${i === +it.dep ? " selected" : ""}>${esc(t.nombre || `Tipo ${i + 1}`)}</option>`
+              )
+              .join("")}</select></label>`
+          : `<label class="pr"><span>Fases</span><select data-bl="${q.src.t}|${q.src.i}|fases"><option value="1"${it.fases == 1 ? " selected" : ""}>Monofásica</option><option value="3"${it.fases == 3 ? " selected" : ""}>Trifásica</option></select></label>`
+      }
       ${inp("Longitud", `data-bl="${q.src.t}|${q.src.i}|L"`, it.L, "m")}
       ${
         q.src.t === "cargas" && pisos.length
@@ -291,7 +301,7 @@ $("propBody").addEventListener("input", e => {
         ? t.value.trim() === ""
           ? null
           : parseFloat(t.value) || 0
-        : k === "fases" || k === "piso"
+        : k === "fases" || k === "piso" || k === "dep"
           ? +t.value
           : t.value.replace(/[<>]/g, "");
     renderList(nm);

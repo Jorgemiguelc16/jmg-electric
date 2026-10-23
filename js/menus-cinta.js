@@ -2,7 +2,7 @@
    Agrega ▾ a botones de la cinta para elegir datos y agregar elementos sin pasar por el panel Propiedades:
    - parámetros (método, temperatura, reservas, diferenciales…): lista de opciones con la actual marcada ✓;
    - Agregar carga, Agregar carga común y Luminarias: cargas típicas y salidas de otra potencia por piso o
-     por tipo de departamento.
+     por tipo de departamento; en el edificio, las cargas típicas se agregan al tipo de departamento elegido.
    Los cambios usan los mismos formularios y listas del proyecto, recalculan y se pueden deshacer. */
 (function () {
   const ws = document.getElementById("ws");
@@ -63,6 +63,23 @@
         ["Otra carga", { ccarga: "otra" }, ""]
       ]
     ],
+    // Cargas especiales de los departamentos: las típicas, agrupadas por tipo de departamento
+    cargasT: () => {
+      const it = [];
+      tipos.forEach((t, i) => {
+        const d = t.nombre || `Tipo ${i + 1}`;
+        if (i) it.push(null);
+        [
+          ["Terma o ducha eléctrica", "terma", "100 %"],
+          ["Cocina eléctrica", "cocina", "6 kW + 40 % del exceso sobre 12 kW"],
+          ["Aire acondicionado", "aire", "100 %"],
+          ["Horno eléctrico", "horno", ""],
+          ["Videovigilancia (CCTV)", "cctv", ""],
+          ["Otra carga", "otra", ""]
+        ].forEach(([l, k, n]) => it.push([`${d} · ${l}`, { ccarga: k, cdep: i }, n]));
+      });
+      return ["Agregar carga especial del departamento · CNE-U 050-202", it];
+    },
     serv: () => [
       "Agregar carga común · CNE-U 050-202 (75 %)",
       [
@@ -122,6 +139,10 @@
   });
   ws.querySelectorAll('.ap-ribbon [data-act="add:cargas"]').forEach(b => {
     b.dataset.mmenu = "cargas";
+    caret(b);
+  });
+  ws.querySelectorAll('.ap-ribbon [data-act="add:cargasT"]').forEach(b => {
+    b.dataset.mmenu = "cargasT";
     caret(b);
   });
   ws.querySelectorAll('.ap-ribbon [data-act="add:serv"]').forEach(b => {
@@ -238,12 +259,14 @@
       }
       const cg = e.target.closest(".mc-menu [data-ccarga]");
       if (cg) {
-        const [nm, tipo, nombre] = CARGAS[cg.dataset.ccarga];
+        const [nm0, tipo, nombre] = CARGAS[cg.dataset.ccarga],
+          dep = cg.dataset.cdep,
+          nm = dep != null ? "cargasT" : nm0;
         cerrar();
         agregar(
           nm,
-          { tipo, nombre },
-          nm === "cargas" ? "cargas" : "servicios",
+          dep != null ? { tipo, nombre, dep: +dep } : { tipo, nombre },
+          nm === "cargas" ? "cargas" : nm === "cargasT" ? "vivienda" : "servicios",
           `${nombre || "Carga"} agregada: escriba su potencia y longitud`
         );
         return;

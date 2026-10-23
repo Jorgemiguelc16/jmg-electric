@@ -80,7 +80,7 @@ function metrado(r) {
     r.T.forEach(t => {
       al += t.nAl * t.cant;
       to += t.nTo * t.cant;
-      esp += [t.coc, t.cal, t.aire, t.otras].filter(x => x > 0).length * t.cant;
+      esp += t.nEsp * t.cant;
     });
     esp += r.circ.filter(q => q.tab === "TSG").length;
   }
