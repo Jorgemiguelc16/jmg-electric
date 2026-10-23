@@ -42,6 +42,7 @@
     cctv: ["cargas", "otra", "Sistema de videovigilancia (CCTV)"],
     otra: ["cargas", "otra", ""],
     s_alum: ["serv", "alum", "Alumbrado de áreas comunes"],
+    s_emerg: ["serv", "alum", "Iluminación de emergencia"],
     s_bomba: ["serv", "motor", "Electrobomba de agua"],
     s_asc: ["serv", "motor", "Ascensor"],
     s_cctv: ["serv", "otra", "Sistema de videovigilancia (CCTV)"],
@@ -84,6 +85,7 @@
       "Agregar carga común · CNE-U 050-202 (75 %)",
       [
         ["Alumbrado de áreas comunes", { ccarga: "s_alum" }, ""],
+        ["Iluminación de emergencia", { ccarga: "s_emerg" }, "Rutas de evacuación"],
         ["Electrobomba de agua", { ccarga: "s_bomba" }, ""],
         ["Ascensor", { ccarga: "s_asc" }, ""],
         ["Portón eléctrico", { ccarga: "s_porton" }, ""],
