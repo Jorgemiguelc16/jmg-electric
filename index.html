@@ -485,14 +485,12 @@
 </div>
 
 <!-- Asistente de nuevo proyecto -->
-<div class="welcome" id="condDlg" hidden>
-  <div class="wl-box cd-box" role="dialog" aria-modal="true" aria-labelledby="cdT">
-    <button class="wl-x" type="button" data-cd="close" aria-label="Cerrar">×</button>
-    <p class="wl-eyebrow">Resultados · Conductores</p>
-    <h2 id="cdT" class="dx-t">Cuadro de conductores</h2>
-    <p class="wl-lead">La plataforma elige en cada tramo la menor sección que cumple la capacidad de corriente (Tabla 2 con 5A y 5C) y la caída de tensión (Regla 050-102). En la lista aparecen esa sección y las tres siguientes, todas dentro de la norma.</p>
-    <div id="cdBody"></div>
-    <div class="wl-acts"><button class="btn" type="button" data-cd="close">Cerrar</button><button class="btn sec" type="button" data-cd="auto" id="cdAuto">Todo en automático</button></div>
+<div class="welcome cd-ov" id="condDlg" hidden>
+  <div class="cd-box" role="dialog" aria-modal="true" aria-labelledby="cdT">
+    <div class="cd-bar"><span id="cdT">Cuadro de conductores</span><button type="button" data-cd="max" title="Maximizar o restaurar" aria-label="Maximizar o restaurar"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="9" height="9"/></svg></button><button type="button" data-cd="cancel" title="Cerrar sin aplicar (Esc)" aria-label="Cerrar">×</button></div>
+    <p class="cd-info">Cada tramo usa la menor sección que cumple la capacidad de corriente (Tabla 2 con 5A y 5C) y la caída de tensión (Regla 050-102). La lista ofrece esa sección y las tres siguientes; los cambios se aplican con «Aplicar» o «Aceptar».</p>
+    <div class="cd-tabla" id="cdBody"></div>
+    <div class="cd-pie"><button class="btn sm sec" type="button" data-cd="auto" id="cdAuto">Todo en automático</button><span class="cd-nota" id="cdNota"></span><button class="btn sm" type="button" data-cd="ok">Aceptar</button><button class="btn sm sec" type="button" data-cd="cancel">Cancelar</button><button class="btn sm sec" type="button" data-cd="apply" id="cdApply">Aplicar</button></div>
   </div>
 </div>
 <div class="welcome" id="wizard" hidden>
