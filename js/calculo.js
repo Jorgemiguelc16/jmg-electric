@@ -62,7 +62,11 @@ function tuboPara(S, St, ncond) {
   for (const [mm, pul, di] of TUBOS) if (a <= (0.4 * Math.PI * di * di) / 4) return { mm, pul };
   return { mm: null, pul: '> 3"' };
 }
-function dimensionar({ I, K, L, V, cargados, c, fc, dvMax, Smin, Imin = 0, fd = FD }) {
+/* Secciones elegidas en el cuadro de conductores (SECF del modo en cálculo), por tramo: «A·descripción» en
+   alimentadores y «tablero·circuito» en derivados. dimensionar() solo acepta una sección mayor que la mínima
+   que cumple capacidad y caída de tensión; una igual o menor se ignora y queda la automática. */
+let SFX = {};
+function dimensionar({ I, K, L, V, cargados, c, fc, dvMax, Smin, Imin = 0, fd = FD, Sfix = 0 }) {
   const Id = Math.max(I * fd, Imin),
     itm = ITM.find(x => x >= Id - 1e-9) ?? null;
   const key = c.aisl + (cargados === 3 ? "3" : "2"),
@@ -75,7 +79,26 @@ function dimensionar({ I, K, L, V, cargados, c, fc, dvMax, Smin, Imin = 0, fd = 
       Izc = Iz * fc,
       dV = (K * c.rho * L * I) / S,
       dVp = (dV / V) * 100;
-    if (itm !== null && Izc >= itm && dVp <= dvMax + 1e-9) return { Id, fd, itm, col, S, Iz, Izc, dV, dVp, Imin };
+    if (itm !== null && Izc >= itm && dVp <= dvMax + 1e-9) {
+      const j = Sfix > S ? SECC.indexOf(Sfix) : -1;
+      if (j > k) {
+        const dVf = (K * c.rho * L * I) / Sfix;
+        return {
+          Id,
+          fd,
+          itm,
+          col,
+          S: Sfix,
+          Iz: tabla[j],
+          Izc: tabla[j] * fc,
+          dV: dVf,
+          dVp: (dVf / V) * 100,
+          Imin,
+          Sauto: S
+        };
+      }
+      return { Id, fd, itm, col, S, Iz, Izc, dV, dVp, Imin };
+    }
   }
   const k = SECC.length - 1,
     S = SECC[k],
@@ -96,7 +119,8 @@ function alimentador(desc, P, sk, L, dvUp, dvSel, c, extra = {}) {
     dvMax: dvSel,
     Smin: c.sminA,
     Imin: extra.Imin || 0,
-    fd: extra.fd ?? FD
+    fd: extra.fd ?? FD,
+    Sfix: SFX["A·" + desc]
   });
   Object.assign(r, { desc, P, sk, s, I, L, dvUp, dvAc: dvUp + r.dVp }, extra);
   r.St = tierraPara(r.itm || 400);
@@ -117,7 +141,8 @@ function circuito({ tab, id, desc, tipo, n, P, L, fases, skTri }, c, dvUp, feede
     c,
     fc: c.fc,
     dvMax: Math.min(DV_DER, DV_TOT - dvUp),
-    Smin: c.sminD
+    Smin: c.sminD,
+    Sfix: SFX[`${tab}·${id}`]
   });
   const motor = /^motor/i.test(tipo || "");
   Object.assign(r, {
@@ -499,6 +524,7 @@ function mdUso(uso, area, cs, aE = 0) {
   };
 }
 function calcUni(c) {
+  SFX = SECF.uni || {};
   const PS = pisosUni(),
     varios = PS.length > 1,
     esq = varios ? $("esqPisos").value : "tg";
@@ -699,6 +725,7 @@ function calcUni(c) {
   };
 }
 function calcMulti(c) {
+  SFX = SECF.multi || {};
   const sk = radio("sistG") || "tri380",
     Lgen = num("Lgen") || 1,
     Lms = num("Lms") || 1;
@@ -985,6 +1012,27 @@ function alertas(r) {
 // Recomendaciones de diseño: no son incumplimientos (esos van en alertas), sino decisiones que cumplen la norma pero
 // conviene revisar porque llevan a conductores mayores de lo necesario (sobre) o dejan poco margen (ajustado).
 // Solo leen el resultado; el proyectista puede aceptarlas y el cálculo continúa igual. Umbrales explicados en el manual.
+// Índice en SECC de la sección mínima solo por capacidad de corriente (sin caída de tensión); x.alim marca un alimentador
+function idxPorCorriente(x, c) {
+  const n3 = x.alim ? x.s.tri : x.f3,
+    tabla = T2[c.met][c.aisl + (n3 ? "3" : "2")],
+    fc = x.alim ? c.ft : c.fc,
+    Smin = x.alim ? c.sminA : c.sminD;
+  const k = SECC.findIndex((S, i) => S >= Smin && x.itm !== null && tabla[i] * fc >= x.itm);
+  return k < 0 ? null : k;
+}
+/* Fracción de la caída de tensión permitida que usa un tramo con la sección S (1 = en el límite). La caída del
+   tramo es inversamente proporcional a la sección. Alimentadores: acumulada ≤ 2.5 %; derivados: ≤ 2.5 % y total ≤ 4 % */
+function usoDV(x, S) {
+  const d = (x.dVp * x.S) / S;
+  return x.alim ? (x.dvUp + d) / DV_ALIM : Math.max(d / DV_DER, (x.dvUp + d) / DV_TOT);
+}
+// Poco margen: el tramo usa el 90 % o más del límite de caída de tensión o de la capacidad del conductor (umbral de revisión)
+const DV_MARGEN = 0.9;
+const pocoMargen = x =>
+  x.alim
+    ? x.dvAc >= DV_MARGEN * DV_ALIM
+    : x.dVp >= DV_MARGEN * DV_DER || x.dVt >= DV_MARGEN * DV_TOT || x.I >= DV_MARGEN * x.Izc;
 function recomendaciones(r) {
   const c = r.c,
     R = [],
@@ -1002,17 +1050,11 @@ function recomendaciones(r) {
             : { node: "vivienda", lab: "Ir a los datos del tablero" }
       : { node: "circ:" + x.key, lab: `Ir al circuito ${x.id}` };
   // Sección que bastaría solo por capacidad de corriente (sin caída de tensión)
-  const porCorriente = x => {
-    const n3 = x.alim ? x.s.tri : x.f3,
-      tabla = T2[c.met][c.aisl + (n3 ? "3" : "2")],
-      fc = x.alim ? c.ft : c.fc,
-      Smin = x.alim ? c.sminA : c.sminD;
-    const k = SECC.findIndex((S, i) => S >= Smin && x.itm !== null && tabla[i] * fc >= x.itm);
-    return k < 0 ? null : k;
-  };
+  const porCorriente = x => idxPorCorriente(x, c);
+  // Sección automática (la mínima que cumple): la elegida en el cuadro de conductores no cuenta aquí
   const dv = items.filter(x => {
     const k = porCorriente(x);
-    return k !== null && SECC.indexOf(x.S) - k >= 2;
+    return k !== null && SECC.indexOf(x.Sauto ?? x.S) - k >= 2;
   });
   if (dv.length)
     R.push({
@@ -1021,10 +1063,27 @@ function recomendaciones(r) {
       tit: "Secciones definidas por la caída de tensión",
       txt: `${dv
         .slice(0, 4)
-        .map(x => `${nom(x)}: ${x.S} mm² (por corriente bastaría ${SECC[porCorriente(x)]} mm², L = ${fmt(x.L, 1)} m)`)
+        .map(
+          x =>
+            `${nom(x)}: ${x.Sauto ?? x.S} mm² (por corriente bastaría ${SECC[porCorriente(x)]} mm², L = ${fmt(x.L, 1)} m)`
+        )
         .join("; ")}${dv.length > 4 ? ` y ${dv.length - 4} más` : ""}.`,
       sug: "Si la longitud es correcta, la sección es la que exige la Regla 050-102. Para reducirla, acerque el tablero a las cargas, divida el circuito o use un tablero de distribución intermedio.",
       ir: irItem(dv[0])
+    });
+  // Secciones elegidas en el cuadro de conductores, mayores que la mínima que cumple
+  const ma = items.filter(x => x.Sauto);
+  if (ma.length)
+    R.push({
+      id: "secf|" + ma.map(x => `${nom(x)}:${x.S}`).join(","),
+      tipo: "sobre",
+      tit: "Secciones mayores que la mínima que cumple",
+      txt: `${ma
+        .slice(0, 4)
+        .map(x => `${nom(x)}: ${x.S} mm² elegido; cumple desde ${x.Sauto} mm²`)
+        .join("; ")}${ma.length > 4 ? ` y ${ma.length - 4} más` : ""}.`,
+      sug: "El conductor mayor también cumple la norma, pero cuesta más. Si no hay un motivo para usarlo, vuelva a «Automático» en el cuadro de conductores.",
+      ir: { act: "cond", lab: "Abrir el cuadro de conductores" }
     });
   const im = r.alims.filter(a => a.Imin && a.Id === a.Imin && a.Imin >= 2 * a.I);
   if (im.length)
@@ -1057,18 +1116,15 @@ function recomendaciones(r) {
       sug: "Es el mínimo que admite la norma (Reglas 050-200(3) y 050-202(2)). Úselo si no se prevén ampliaciones; en caso contrario, elija 25 %.",
       ir: { foco: "resAl", lab: "Ir a Reserva en alimentadores" }
     });
-  const mg = items.filter(
-    x =>
-      x.ok && (x.alim ? x.dvAc >= 0.9 * DV_ALIM : x.dVp >= 0.9 * DV_DER || x.dVt >= 0.9 * DV_TOT || x.I >= 0.9 * x.Izc)
-  );
+  const mg = items.filter(x => x.ok && pocoMargen(x));
   if (mg.length)
     R.push({
       id: "margen|" + mg.map(nom).join(","),
       tipo: "sub",
       tit: "Poco margen de caída de tensión o de capacidad",
       txt: `${mg.slice(0, 4).map(nom).join("; ")}${mg.length > 4 ? ` y ${mg.length - 4} más` : ""}: ${mg.length > 1 ? "usan" : "usa"} el 90 % o más del límite de caída de tensión o de la capacidad del conductor.`,
-      sug: "Cumplen, pero cualquier carga o longitud adicional los dejaría fuera de norma. Considere la siguiente sección si se prevén ampliaciones.",
-      ir: irItem(mg[0])
+      sug: "Cumplen, pero cualquier carga o longitud adicional los dejaría fuera de norma. Si se prevén ampliaciones o el recorrido en obra puede ser más largo, elija la sección siguiente en el cuadro de conductores.",
+      ir: { act: "cond", lab: "Abrir el cuadro de conductores" }
     });
   // Umbral de tomacorrientes: 180 W en vivienda (CNE tomo V: 180 VA) y 250 VA en usos comerciales (criterio de diseño).
   // El alumbrado no se evalúa: con luminarias LED es normal usar menos de 100 W por salida (se usa la potencia real del equipo)

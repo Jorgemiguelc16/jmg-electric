@@ -98,6 +98,7 @@ function estado() {
     FIX,
     ACEP,
     TEQ,
+    SECF,
     res: RESUMEN,
     sist: radio("sist"),
     sistG: radio("sistG")
@@ -207,6 +208,11 @@ function aplicar(o) {
           )
         : {};
   TEQ = { uni: okq(te.uni), multi: okq(te.multi) };
+  // Secciones elegidas en el cuadro de conductores: solo secciones normalizadas (el cálculo verifica que cumplan)
+  const sf = o.SECF && typeof o.SECF === "object" ? o.SECF : {},
+    oks = v =>
+      v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([, S]) => SECC.includes(S))) : {};
+  SECF = { uni: oks(sf.uni), multi: oks(sf.multi) };
   const sv = v => (["mono220", "tri220", "tri380"].includes(v) ? v : null);
   renderSys("sys_uni", "sist", sv(o.sist) || "mono220");
   renderSys("sys_multi", "sistG", sv(o.sistG) || "tri380");

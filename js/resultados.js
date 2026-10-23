@@ -17,6 +17,7 @@ let MODE = "uni",
   FIX = { uni: {}, multi: {} },
   ACEP = { uni: {}, multi: {} },
   TEQ = { uni: {}, multi: {} },
+  SECF = { uni: {}, multi: {} },
   VIEW = "resumen",
   PID = null;
 try {
@@ -131,7 +132,7 @@ function cardRecom(r) {
     const a = ac[x.id];
     return `<li class="${x.tipo}${a ? " acep" : ""}"><div class="rec-h"><span class="rec-t">${x.tipo === "sobre" ? "Posible sobredimensionamiento" : "Criterio ajustado"}</span><b>${esc(x.tit)}</b></div>
     <p>${esc(x.txt)}</p><p class="rec-s"><b>Sugerencia:</b> ${esc(x.sug)}</p>
-    <div class="rec-a">${x.ir ? `<button type="button" class="btn sm" ${x.ir.foco ? `data-foco="${x.ir.foco}"` : x.ir.node ? `data-node="${esc(x.ir.node)}"` : `data-view="${x.ir.view}"`}>${esc(x.ir.lab)} →</button>` : ""}${
+    <div class="rec-a">${x.ir ? `<button type="button" class="btn sm" ${x.ir.act ? `data-act="${x.ir.act}"` : x.ir.foco ? `data-foco="${x.ir.foco}"` : x.ir.node ? `data-node="${esc(x.ir.node)}"` : `data-view="${x.ir.view}"`}>${esc(x.ir.lab)} →</button>` : ""}${
       a
         ? `<span class="pill ok">Aceptada${f(a) ? " · " + f(a) : ""}</span><button type="button" class="linkbtn" data-recundo="${esc(x.id)}">Deshacer</button>`
         : `<button type="button" class="btn sm sec" data-recacep="${esc(x.id)}">Entendido, lo acepto</button>`

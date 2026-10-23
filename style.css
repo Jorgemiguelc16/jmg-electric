@@ -5975,3 +5975,48 @@ body.sin-acceso .welcome {
   background: var(--ws-line, #d6dde6);
   margin: 4px 6px;
 }
+
+/* v2.8 · Cuadro de conductores (js/conductores.js) */
+.cd-box {
+  width: min(1180px, 100%);
+}
+.cd-wrap {
+  margin-top: 14px;
+  max-height: calc(100vh - 290px);
+  overflow: auto;
+  border: 1px solid var(--line2);
+}
+.cd-t thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.cd-t td small {
+  display: block;
+  font: 400 10.5px var(--f-body);
+  color: var(--muted);
+}
+.cd-t tr.cd-elegida td {
+  background: #fff8e1;
+}
+.cd-sel {
+  font: 400 12px var(--f-body);
+  padding: 3px 6px;
+  min-width: 225px;
+}
+.cd-uso {
+  display: inline-block;
+  width: 54px;
+  height: 7px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: var(--line2);
+}
+.cd-uso i {
+  display: block;
+  height: 100%;
+  background: #2f7a4b;
+}
+.cd-uso i.w {
+  background: #c48a0a;
+}

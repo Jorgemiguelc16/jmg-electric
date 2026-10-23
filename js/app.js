@@ -483,6 +483,7 @@ $("ws").addEventListener("click", e => {
     $("btnPrint").click();
   } else if (a === "undo") histGo(-1);
   else if (a === "redo") histGo(1);
+  else if (a === "cond") cuadroCond(true);
   else if (a === "rec") {
     if (!LAST) return toast("Complete los datos para ver los resultados");
     verVista("verif");
