@@ -77,7 +77,19 @@ function renderParam() {
   }).join("");
   ppPie();
 }
+// Franja de resultados: con cambios pendientes, la vista previa del cálculo
+let PP_T = null;
+function ppRes() {
+  const el = $("ppRes");
+  if (!el) return;
+  const hay = Object.keys(PP_PEND || {}).length,
+    r = hay ? previaCampos(PP_PEND) : LAST;
+  el.className = "tc-res" + (hay ? " previa" : "");
+  el.innerHTML = franjaProyecto(r, hay && !!r);
+}
 function ppPie() {
+  clearTimeout(PP_T);
+  PP_T = setTimeout(ppRes, 200);
   const n = Object.keys(PP_PEND || {}).length;
   $("ppApply").disabled = !n;
   $("ppNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";

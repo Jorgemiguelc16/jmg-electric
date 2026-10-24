@@ -30,9 +30,27 @@ const cdCambios = () => {
     p = CD_PEND || {};
   return [...new Set([...Object.keys(a), ...Object.keys(p)])].filter(k => a[k] !== p[k]).length;
 };
+/* Vista previa: el proyecto calculado con las secciones pendientes (SECF temporal), sin cambiarlo. Así las
+   columnas (ΔV, uso del límite, estado, y la ΔV de los circuitos aguas abajo de un alimentador) muestran el
+   resultado actualizado antes de aplicar. SECF se restaura siempre. */
+function cdPrevia() {
+  if (!cdCambios() || !LAST) return null;
+  const s0 = SECF[MODE];
+  try {
+    SECF[MODE] = { ...CD_PEND };
+    const c = ctx();
+    return MODE === "uni" ? calcUni(c) : calcMulti(c);
+  } catch (e) {
+    return null;
+  } finally {
+    SECF[MODE] = s0;
+    SFX = s0 || {};
+  }
+}
 function renderCond() {
-  const r = LAST;
-  if (!r || !CD_PEND) return;
+  if (!LAST || !CD_PEND) return;
+  const pv = cdPrevia(),
+    r = pv || LAST;
   const c = r.c,
     sf = SECF[r.mode] || (SECF[r.mode] = {}),
     varios = r.tabs.length > 1;
@@ -44,11 +62,10 @@ function renderCond() {
       kc = idxPorCorriente(y, c),
       porDV = kc !== null && SECC[kc] !== Sa,
       ops = x.fail ? [] : SECC.slice(ia, ia + 4),
-      dvAc = S => x.dvUp + (x.dVp * x.S) / S,
       uso = usoDV(y, x.S),
       nombre = alim ? x.desc : `${varios ? x.tab + " · " : ""}${x.id} ${x.desc}`;
     // Una elección que ya no es mayor que la automática (por ejemplo, tras alargar el tramo) deja de valer
-    if (sf[key] && !x.Sauto) {
+    if (!pv && sf[key] && !x.Sauto) {
       if (CD_PEND[key] === sf[key]) delete CD_PEND[key];
       delete sf[key];
     }
@@ -58,20 +75,17 @@ function renderCond() {
     const sel = ops.length
       ? `<select data-secf="${esc(key)}" aria-label="Sección de ${esc(nombre)}">${ops
           .map(
-            (S, i) =>
-              `<option value="${i ? S : ""}"${(i ? pend === S : !pend) ? " selected" : ""}>${i ? `${S} mm² · ΔV ${fmt(dvAc(S), 2)} %` : `${S} mm²`}</option>`
+            (S, i) => `<option value="${i ? S : ""}"${(i ? pend === S : !pend) ? " selected" : ""}>${S} mm²</option>`
           )
           .join("")}</select>`
       : `<b>${x.S} mm²</b>`;
-    const [ec, et] = mod
-      ? ["mod", "Sin aplicar"]
-      : !x.ok
-        ? ["bad", "No cumple"]
-        : x.Sauto
-          ? ["warn", "Sección mayor"]
-          : pocoMargen(y)
-            ? ["warn", "Poco margen"]
-            : ["ok", "Cumple"];
+    const [ec, et] = !x.ok
+      ? ["bad", "No cumple"]
+      : x.Sauto
+        ? ["warn", "Sección mayor"]
+        : pocoMargen(y)
+          ? ["warn", "Poco margen"]
+          : ["ok", "Cumple"];
     return `<tr${mod ? ' class="cd-mod"' : x.Sauto ? ' class="cd-elegida"' : ""}${alim ? "" : ` data-circ="${esc(key)}"`}><td class="t" title="${esc(nombre)}">${esc(nombre)}</td><td class="c-l">${fmt(x.L, 1)}</td><td>${fmt(x.I, 1)}</td><td class="c-itm">${x.itm ?? "—"}</td><td class="c-min" title="${porDV ? `Definida por la caída de tensión; por corriente bastaría ${SECC[kc]} mm²` : "Definida por la capacidad de corriente"}">${Sa}${porDV ? "<sup>ΔV</sup>" : ""}</td><td class="t c-sec">${sel}</td><td>${fmt(alim ? x.dvAc : x.dVt, 2)}</td><td class="c-uso"><span class="cd-uso"><i style="width:${Math.min(100, uso * 100).toFixed(0)}%"${uso >= DV_MARGEN ? ' class="w"' : ""}></i></span>${fmt(uso * 100, 0)}</td><td class="t"><span class="cd-est ${ec}" title="${et}">${et}</span></td></tr>`;
   };
   // Fila de grupo con una celda por columna (no colspan) para que las columnas ocultas no dejen espacio vacío
@@ -89,7 +103,7 @@ function renderCond() {
   const n = cdCambios();
   $("cdApply").disabled = !n;
   $("cdAuto").disabled = !Object.keys(CD_PEND).length;
-  $("cdNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";
+  $("cdNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar · vista previa del cálculo` : "";
 }
 function aplicarCond() {
   if (!cdCambios()) return;

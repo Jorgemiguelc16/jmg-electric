@@ -166,7 +166,19 @@ function renderDatos() {
       : "");
   dpPie();
 }
+// Franja de resultados: con cambios pendientes, la vista previa del cálculo
+let DP_T = null;
+function dpRes() {
+  const el = $("dpRes");
+  if (!el) return;
+  const hay = Object.keys(DP_PEND || {}).length,
+    r = hay ? previaCampos(DP_PEND) : LAST;
+  el.className = "tc-res" + (hay ? " previa" : "");
+  el.innerHTML = franjaProyecto(r, hay && !!r);
+}
 function dpPie() {
+  clearTimeout(DP_T);
+  DP_T = setTimeout(dpRes, 200);
   const n = Object.keys(DP_PEND || {}).length;
   $("dpApply").disabled = !n;
   $("dpNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";

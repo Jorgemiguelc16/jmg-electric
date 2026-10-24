@@ -95,3 +95,48 @@ const VW_BORDES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]
 document.querySelectorAll(".vw").forEach(b => b.insertAdjacentHTML("beforeend", VW_BORDES));
 // El fondo de la página queda fijo mientras haya alguna ventana o diálogo abierto
 const vwFondo = () => document.body.classList.toggle("wl-open", !!document.querySelector(".welcome:not([hidden])"));
+/* Vista previa de cambios en campos del formulario (ventanas Parámetros de diseño y Datos del proyecto): pone los
+   valores pendientes en sus campos (y en las listas que dependen de ellos), calcula el proyecto y lo deja todo
+   como estaba, aunque el cálculo falle. pend: {id: valor} o {"radio:nombre": valor}. Devuelve el resultado o null
+   si el proyecto tiene datos pendientes. */
+function previaCampos(pend) {
+  const ks = Object.keys(pend || {});
+  if (!ks.length || !LAST) return null;
+  const antes = [];
+  try {
+    ks.forEach(k => {
+      if (k.startsWith("radio:")) {
+        const nm = k.slice(6),
+          r0 = document.querySelector(`input[name="${nm}"]:checked`),
+          r1 = document.querySelector(`input[name="${nm}"][value="${pend[k]}"]`);
+        antes.push(() => r0 && (r0.checked = true));
+        if (r1) r1.checked = true;
+      } else {
+        const c = $(k);
+        if (!c) return;
+        const v0 = c.value;
+        antes.push(() => (c.value = v0));
+        c.value = pend[k];
+      }
+    });
+    Object.keys(LISTS).forEach(readList);
+    if (faltantes().length) return null;
+    const c = ctx();
+    return MODE === "uni" ? calcUni(c) : calcMulti(c);
+  } catch (e) {
+    return null;
+  } finally {
+    antes.reverse().forEach(f => f());
+    Object.keys(LISTS).forEach(readList);
+    faltantes();
+  }
+}
+// Franja con los resultados principales del proyecto (o su vista previa)
+function franjaProyecto(r, prev) {
+  if (!r)
+    return `<span class="tc-rt">${LAST ? "Con estos datos faltan datos obligatorios para calcular." : "Complete los datos para calcular."}</span>`;
+  const a = r.alims[0],
+    ok = r.alims.every(x => x.ok) && r.circ.every(q => q.ok),
+    dv = Math.max(...r.alims.map(x => x.dvAc), ...r.circ.map(q => q.dVt));
+  return `<i class="cd-est ${ok ? "ok" : "bad"}"></i><b>MD ${fmt((r.mode === "multi" ? r.MD : r.md.MD) / 1000, 2)} kW</b><span>Alimentador ${a.s.n}-1×${a.S} mm² · ITM ${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</span><span>ΔV máx ${fmt(dv, 2)} %</span><span>${r.circ.length} circuitos</span><span class="tc-ok">${ok ? "Conforme" : "Revisar"}</span>${prev ? `<em>Vista previa: así quedaría al aplicar</em>` : ""}`;
+}

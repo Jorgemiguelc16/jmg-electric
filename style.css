@@ -6201,16 +6201,16 @@ body.sin-acceso .welcome {
   overflow: visible;
   white-space: nowrap;
 }
-.cd-tabla tr.cd-elegida td {
+.cd-tabla tbody tr.cd-elegida td {
   background: #fff8e1;
 }
-.cd-tabla tr.cd-mod td {
+.cd-tabla tbody tr.cd-mod td {
   background: #e3effb;
 }
-:root[data-theme="dark"] .cd-tabla tr.cd-elegida td {
+:root[data-theme="dark"] .cd-tabla tbody tr.cd-elegida td {
   background: #2e2817;
 }
-:root[data-theme="dark"] .cd-tabla tr.cd-mod td {
+:root[data-theme="dark"] .cd-tabla tbody tr.cd-mod td {
   background: #1b3149;
 }
 .cd-tabla sup {
@@ -7097,4 +7097,10 @@ body.sin-acceso .welcome {
   border-left: 0;
   color: var(--muted);
   opacity: 0.85;
+}
+/* Franja de resultados de las ventanas Parámetros de diseño y Datos del proyecto */
+#ppRes,
+#dpRes {
+  flex: none;
+  margin: 8px 12px 0;
 }
