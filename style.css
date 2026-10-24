@@ -6690,7 +6690,7 @@ body.sin-acceso .welcome {
 }
 .tc-main {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 190px minmax(0, 1fr);
   gap: 10px;
   flex: 1;
   min-height: 0;
@@ -6788,6 +6788,7 @@ body.sin-acceso .welcome {
   flex: 1;
   min-width: 0;
   padding: 0 6px;
+  font-size: 14px;
 }
 .tc-der {
   container-type: inline-size;
@@ -6802,9 +6803,143 @@ body.sin-acceso .welcome {
   background-color: var(--falta-bg, #fffaf0);
   border-color: #e0a43a;
 }
-.tc-ficha {
-  justify-self: start;
-  margin-top: 4px;
+/* Datos de la carga en dos columnas; la descripción ocupa las dos */
+.tc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+}
+.tc-c {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tc-c.tc-ancho {
+  grid-column: 1 / -1;
+}
+.tc-c > span {
+  color: var(--dl-ink);
+  white-space: nowrap;
+}
+.tc-c input,
+.tc-c select {
+  min-width: 0;
+  width: 100%;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  box-shadow: none;
+}
+.tc-c input:focus,
+.tc-c select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  box-shadow: 0 0 0 1px var(--dl-acc);
+}
+.tc-c.mod input,
+.tc-c.mod select {
+  background-color: #e3effb;
+}
+:root[data-theme="dark"] .tc-c.mod input,
+:root[data-theme="dark"] .tc-c.mod select {
+  background-color: #1b3149;
+}
+/* Unidad dentro del cuadro, como en el panel Propiedades */
+.tc-u {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.tc-u input {
+  padding-right: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tc-u em {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dl-ink2);
+  font-style: normal;
+  pointer-events: none;
+}
+.tc-g {
+  margin-top: 12px;
+}
+/* Botones rápidos con las cargas típicas */
+.tc-rap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+.tc-rap > span {
+  margin-right: 2px;
+  color: var(--dl-ink2);
+  font-size: 11px;
+}
+.tc-rap .vw-btn {
+  min-width: 0;
+  height: 23px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+/* Franja del resultado del circuito; con cambios, vista previa */
+.tc-res {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--dl-grid2);
+  border-left: 3px solid var(--dl-grid2);
+  background: var(--dl-th);
+  font-variant-numeric: tabular-nums;
+}
+.tc-res:empty {
+  display: none;
+}
+.tc-res .cd-est {
+  font-size: 0;
+}
+.tc-res .cd-est:before {
+  margin: 0;
+}
+.tc-res b {
+  font-weight: 600;
+}
+.tc-res .tc-ok {
+  margin-left: auto;
+  font-weight: 600;
+}
+.tc-res .tc-rt {
+  color: var(--dl-ink2);
+}
+.tc-res.ir {
+  cursor: pointer;
+}
+.tc-res.ir:hover {
+  border-left-color: var(--gold, #d9a23a);
+}
+.tc-res.previa {
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: var(--dl-acc);
+}
+.tc-res em {
+  flex-basis: 100%;
+  color: var(--dl-acc);
+  font-size: 10.5px;
+  font-style: normal;
 }
 /* Angosta: la lista se reduce */
 @container (max-width: 640px) {
@@ -6813,9 +6948,6 @@ body.sin-acceso .welcome {
   }
   .tc-it em {
     display: none;
-  }
-  .tc-acc {
-    flex-direction: column;
   }
 }
 
@@ -6859,5 +6991,11 @@ body.sin-acceso .welcome {
     grid-template-columns: minmax(0, 1fr);
     gap: 3px;
     margin-bottom: 4px;
+  }
+}
+/* El formulario del editor pasa a una columna solo si él mismo queda angosto */
+@container (max-width: 380px) {
+  .tc-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
