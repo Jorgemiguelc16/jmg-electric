@@ -7166,6 +7166,7 @@ body.sin-acceso .welcome {
 /* La lista de tipos queda a la vista al bajar por el formulario */
 .dd-main .tc-izq {
   position: sticky;
+  z-index: 1;
   top: 0;
   align-self: start;
   max-height: 420px;
@@ -7287,7 +7288,9 @@ legend .dd-x {
   .dd-main {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Angosta: la lista va arriba del formulario y se desplaza con él (fija, se encimaría sobre los campos) */
   .dd-main .tc-izq {
+    position: static;
     max-height: 120px;
   }
 }
