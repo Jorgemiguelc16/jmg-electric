@@ -220,7 +220,7 @@ function propTablero(tab) {
           `<label class="chk pc-eq" data-ayuda="${esc(d.a)}"><input type="checkbox" data-teq="${tab}|${k}"${((TEQ[MODE] || {})[tab] || {})[k] ? " checked" : ""}>${d.n}</label>`
       )
       .join("")}
-    <button type="button" class="btn sec sm pc-go" data-view="cuadro">Ver cuadro de cargas</button></div>`;
+    <button type="button" class="btn sec sm pc-go" data-fichatab="${tab}">Ver ficha del tablero</button> <button type="button" class="btn sec sm pc-go" data-view="cuadro">Ver cuadro de cargas</button></div>`;
 }
 
 function propCircuito(key) {
@@ -459,6 +459,7 @@ function wsRefresh(F) {
   }
   if (FC_KEY && !FC_APL) renderFicha();
   if (TC_PEND) tcSync();
+  if (FT_TAB) renderTablero();
 }
 /* Cinta de opciones y acciones */
 $("ws").addEventListener("click", e => {
@@ -522,7 +523,17 @@ $("ws").addEventListener("click", e => {
   else if (a === "cond") cuadroCond(true);
   else if (a === "tcargas") tablaCargas(ac.dataset.tct);
   else if (a === "params") parametros(true);
-  else if (a === "ficha") {
+  else if (a === "fichatab") {
+    // El tablero seleccionado en el explorador (o el de su circuito) o, si no hay, el primero
+    if (DESACT) calcularAhora();
+    if (!LAST) return toast("Complete los datos para ver los tableros");
+    const k = NODE.startsWith("tab:")
+      ? NODE.slice(4)
+      : NODE.startsWith("circ:")
+        ? LAST.circ.find(q => q.key === NODE.slice(5))?.tab
+        : "";
+    fichaTablero(LAST.tabs.some(t => t.tab === k) ? k : LAST.tabs[0].tab);
+  } else if (a === "ficha") {
     // El circuito seleccionado en el explorador o, si no hay, el primero
     if (DESACT) calcularAhora();
     if (!LAST || !LAST.circ.length) return toast("Complete los datos para ver los circuitos");

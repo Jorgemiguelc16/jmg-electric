@@ -7014,3 +7014,52 @@ body.sin-acceso .welcome {
 .fc-est.previa legend {
   color: var(--dl-acc);
 }
+
+/* Ficha del tablero (js/ficha-tablero.js): circuitos en rejilla y equipos adicionales con su descripción */
+.ft-circ {
+  margin: 0;
+}
+.ft-circ tr[data-ftc] td {
+  cursor: default;
+  user-select: none;
+}
+.ft-eq {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.ft-eq:hover {
+  background: var(--dl-hover);
+}
+.ft-eq.mod {
+  border-color: var(--dl-acc);
+  background: #e3effb;
+}
+:root[data-theme="dark"] .ft-eq.mod {
+  background: #1b3149;
+}
+.fc-body label.ft-eq {
+  flex-direction: row;
+  margin: 0;
+  font-size: 12px;
+  color: var(--dl-ink);
+}
+.fc-body .ft-eq input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: var(--dl-acc);
+}
+.ft-eq span {
+  display: grid;
+  gap: 1px;
+}
+.ft-eq small {
+  color: var(--dl-ink2);
+  font-size: 11px;
+}
