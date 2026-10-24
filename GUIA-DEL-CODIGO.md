@@ -42,10 +42,18 @@ está al final de `index.html` y es este:
 | 15 | `herramientas.js` | Calculadoras rápidas |
 | 16 | `archivo.js` | Abrir y guardar `.json` |
 | 17 | `app.js` | Espacio de trabajo: árbol, propiedades, cinta |
-| 18 | `centro.js` | Centro de ingeniería (Inicio) |
-| 19 | `inicio.js` | Arranque y bienvenida |
-| 20 | `tema.js` | Tema, zoom y mano de arrastre |
-| 21 | `acceso.js` | Ingreso con cuenta y Administración |
+| 18 | `ventana.js` | Comportamiento común de las ventanas (mover, redimensionar, recordar tamaño) |
+| 19 | `conductores.js` | Ventana Cuadro de conductores |
+| 20 | `ficha.js` | Ventana Ficha del circuito (con vista previa) |
+| 21 | `ficha-tablero.js` | Ventana Ficha del tablero |
+| 22 | `tabla-cargas.js` | Ventana Editor de cargas especiales (con vista previa) |
+| 23 | `parametros.js` | Ventana Parámetros de diseño (se arma con el formulario de parámetros) |
+| 24 | `datos-proyecto.js` | Ventana Datos del proyecto (se arma con los formularios del panel) |
+| 25 | `menus-cinta.js` | Menús ▾ de la cinta (sistema eléctrico y agregar cargas) |
+| 26 | `centro.js` | Centro de ingeniería (Inicio) |
+| 27 | `inicio.js` | Arranque y bienvenida |
+| 28 | `tema.js` | Tema, zoom y mano de arrastre |
+| 29 | `acceso.js` | Ingreso con cuenta y Administración |
 
 Cada archivo empieza con un comentario que explica lo mismo con más detalle.
 
