@@ -152,6 +152,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.1",
+    "Editor de departamentos en Datos del proyecto: tipos de departamento con sus salidas de otra potencia y sus cargas especiales, y el resultado de cada uno con vista previa. Datos del proyecto más compacto y con el tipo de edificación editable. Vista previa del cálculo también en el cuadro de conductores, Parámetros de diseño y Datos del proyecto. En los cuadros de resultados, valores al 90 % o más de su límite en ámbar y doble clic para abrir la ficha del circuito o del tablero. Circuitos de departamentos y de pisos editables en su ficha y longitud del alimentador en la ficha del tablero. Reservas agrupadas en el explorador y panel Propiedades cerrado por defecto. El cálculo no cambia."
+  ],
+  [
     "v2.9",
     "Trabajo en ventanas: Datos del proyecto (proyecto, suministro, vivienda o edificio, salidas y pisos o departamentos), Parámetros de diseño (todos los criterios en pestañas, con su norma), Editor de cargas (lista de cargas, botones rápidos con las cargas típicas y vista previa del circuito mientras se escribe), Ficha del tablero (alimentador, barras, circuitos y equipos adicionales) y una Ficha del circuito más compacta, con vista previa en todas sus pestañas. Edificio multifamiliar: las cargas especiales de cada departamento se ingresan una por equipo, como en la vivienda, y cada una tiene su circuito (dos duchas son dos circuitos); los proyectos guardados se convierten solos y la máxima demanda usa el mismo criterio de la Regla 050-202. La fase de cada circuito monofásico se puede fijar (R, S o T) desde el panel, la ficha o el editor; por defecto la asigna el balance de fases. Iluminación de emergencia entre las cargas comunes típicas. Cinta ordenada: un botón principal por grupo, menús ▾ solo donde ahorran pasos e íconos en azul marino y cobre. Globo de ayuda más discreto y cuadro de conductores sin «Auto» repetido."
   ],
