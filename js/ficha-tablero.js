@@ -4,11 +4,15 @@
    js/calculo.js para el tablero y su alimentador (los mismos valores de la memoria). En la pestaña Equipos se
    marcan los equipos adicionales (DPS, relé de tensión, medidor, contactor con reloj): quedan pendientes hasta
    «Aplicar» o «Aceptar» y se guardan en TEQ, el mismo dato del panel Propiedades. No intervienen en el cálculo.
+   La longitud del alimentador también se edita aquí (en el mismo dato del formulario que le corresponde), con
+   vista previa del cálculo mientras está pendiente.
    Se abre con doble clic en un tablero del explorador, desde el panel Propiedades o desde la cinta
    (Resultados › Ficha del tablero). */
 let FT_TAB = null,
   FT_PEST = "alim",
-  FT_PEND = null;
+  FT_PEND = null,
+  FT_LONG = undefined,
+  FT_T = null;
 const FT_VW = ventanaMovil(document.querySelector("#ftDlg .vw"), "jmg-electric-ficha-tablero", {
   w: 560,
   h: 480,
@@ -17,11 +21,56 @@ const FT_VW = ventanaMovil(document.querySelector("#ftDlg .vw"), "jmg-electric-f
 });
 // Equipos marcados del tablero (pendientes si los hay)
 const ftEquipos = tab => FT_PEND || { ...((TEQ[MODE] || {})[tab] || {}) };
-const ftCambios = () => {
-  if (!FT_PEND) return 0;
-  const a = (TEQ[MODE] || {})[FT_TAB] || {};
-  return Object.keys(EQT).filter(k => !!FT_PEND[k] !== !!a[k]).length;
+/* Dónde está la longitud de cada alimentador: un campo del formulario (alimentador general, de servicios
+   generales o al TD-1) o un dato de la lista de departamentos o de pisos */
+function ftLongitud(a) {
+  if (!a) return null;
+  if (a.pKey === "MD") return { id: MODE === "multi" ? "Lgen" : "Lalim" };
+  if (a.pKey === "servP") return { id: "Lms" };
+  if (a.pKey === "tipo") {
+    const t = LAST && LAST.T && LAST.T[a.ti];
+    return t ? { id: "Ld", lista: "tipos", i: t._i } : null;
+  }
+  if (a.pKey === "piso") return a.piso === 1 ? { id: "Ltd1" } : { id: "Ld", lista: "pisos", i: a.piso - 2 };
+  return null;
+}
+const ftLongActual = d => (d.lista ? (LISTS[d.lista].arr[d.i] || {})[d.id] : $(d.id).value);
+const ftAlim = () => {
+  const tb = LAST && LAST.tabs.find(t => t.tab === FT_TAB);
+  return tb ? LAST.alims[tb.feeder] : null;
 };
+const ftLongCambio = () => {
+  const d = ftLongitud(ftAlim());
+  return !!d && FT_LONG !== undefined && String(FT_LONG) !== String(ftLongActual(d) ?? "");
+};
+const ftCambios = () => {
+  const a = (TEQ[MODE] || {})[FT_TAB] || {},
+    eq = FT_PEND ? Object.keys(EQT).filter(k => !!FT_PEND[k] !== !!a[k]).length : 0;
+  return eq + (ftLongCambio() ? 1 : 0);
+};
+// Escribe la longitud en su lugar (temporalmente para la vista previa, o al aplicar)
+function ftPonerLong(d, v) {
+  if (d.lista) {
+    const it = LISTS[d.lista].arr[d.i];
+    if (it) it[d.id] = String(v).trim() === "" ? null : parseFloat(v) || 0;
+  } else $(d.id).value = v;
+}
+// Vista previa: el proyecto calculado con la longitud pendiente, sin cambiarlo (se restaura siempre)
+function ftPrevia() {
+  if (!ftLongCambio() || !LAST) return null;
+  const d = ftLongitud(ftAlim()),
+    v0 = ftLongActual(d);
+  try {
+    ftPonerLong(d, FT_LONG);
+    const c = ctx();
+    return MODE === "uni" ? calcUni(c) : calcMulti(c);
+  } catch (e) {
+    return null;
+  } finally {
+    if (d.lista) LISTS[d.lista].arr[d.i][d.id] = v0;
+    else $(d.id).value = v0;
+  }
+}
 function fichaTablero(tab) {
   if (DESACT) calcularAhora();
   if (!LAST || !LAST.tabs.some(t => t.tab === tab)) return toast("Complete los datos para ver el tablero");
@@ -29,6 +78,7 @@ function fichaTablero(tab) {
   if (!nuevo && tab !== FT_TAB && ftCambios()) return toast("Aplique o cancele primero los cambios del tablero");
   FT_TAB = tab;
   FT_PEND = null;
+  FT_LONG = undefined;
   $("ftDlg").hidden = false;
   vwFondo();
   if (nuevo) FT_VW.abrir();
@@ -37,6 +87,7 @@ function fichaTablero(tab) {
 function cerrarTablero() {
   FT_TAB = null;
   FT_PEND = null;
+  FT_LONG = undefined;
   $("ftDlg").hidden = true;
   vwFondo();
 }
@@ -46,16 +97,22 @@ function renderTablero() {
     i = lista.findIndex(t => t.tab === FT_TAB),
     tb = lista[i];
   if (!tb) return cerrarTablero();
-  const a = r.alims[tb.feeder],
-    cs = r.circ.filter(q => q.tab === tb.tab),
+  // Con la longitud pendiente, los resultados son la vista previa
+  const dL = ftLongitud(r.alims[tb.feeder]),
+    rp = ftPrevia(),
+    rv = rp || r,
+    tv = rv.tabs.find(t => t.tab === tb.tab) || tb,
+    a = rv.alims[tv.feeder],
+    cs = rv.circ.filter(q => q.tab === tb.tab),
     ok = cs.every(q => q.ok) && a.ok,
-    pol = a.s.tri ? 3 : 2;
+    pol = a.s.tri ? 3 : 2,
+    vL = FT_LONG !== undefined ? FT_LONG : dL ? (ftLongActual(dL) ?? "") : a.L;
   $("ftT").textContent = `Propiedades del tablero · ${tb.tab}`;
   $("ftCab").innerHTML =
     `<div class="fc-f fc-id"><span>Tablero</span><output>${esc(tb.tab)}</output><span class="fc-nav"><button type="button" data-ft="prev" aria-label="Tablero anterior"${i ? "" : " disabled"}>▲</button><button type="button" data-ft="next" aria-label="Tablero siguiente"${i < lista.length - 1 ? "" : " disabled"}>▼</button></span></div>` +
     fcCampo("Descripción", esc(tb.desc)) +
     fcCampo("Circuitos", `${cs.length} + ${r.c.reserva} de reserva`) +
-    `<fieldset class="fc-g fc-est"><legend>Verificación</legend>${fcCheck(ok, ok ? "Conforme" : "Revisar")}</fieldset>`;
+    `<fieldset class="fc-g fc-est${rp ? " previa" : ""}"><legend>${rp ? "Vista previa" : "Verificación"}</legend>${fcCheck(ok, ok ? "Conforme" : "Revisar")}</fieldset>`;
   document
     .querySelectorAll("#ftTabs [data-ftp]")
     .forEach(b => b.setAttribute("aria-selected", b.dataset.ftp === FT_PEST ? "true" : "false"));
@@ -66,7 +123,9 @@ function renderTablero() {
         "Alimentador",
         fcCampo("Recorrido", esc(a.desc)) +
           fcCampo("Sistema", esc(a.s.nom)) +
-          fcCampo("Longitud", fmt(a.L, 1), "m") +
+          (dL
+            ? `<label class="fc-f fc-e${ftLongCambio() ? " mod" : ""}${!(parseFloat(vL) > 0) ? " tc-falta" : ""}"><span>Longitud</span><input data-ftl type="number" min="0" step="0.5" value="${esc(vL)}" aria-label="Longitud del alimentador"><em>m</em></label>`
+            : fcCampo("Longitud", fmt(a.L, 1), "m")) +
           fcCampo("Potencia", fmt(a.P, 0), "W")
       ) +
       fcGrupo(
@@ -88,8 +147,7 @@ function renderTablero() {
           fcCampo("Tubo", a.tubo.mm ? `${a.tubo.mm} mm (${a.tubo.pul})` : a.tubo.pul) +
           fcCampo("ΔV del tramo", `${fmt(a.dVp, 2)} %`) +
           fcCampo("ΔV acumulada", `${fmt(a.dvAc, 2)} %`, "", "Desde el suministro hasta este tablero")
-      ) +
-      `<p class="fc-nota">La longitud del alimentador se edita en Datos del proyecto.</p>`;
+      );
   } else if (FT_PEST === "tab") {
     // Circuitos del tablero en una rejilla; doble clic abre su ficha
     h =
@@ -116,7 +174,8 @@ function renderTablero() {
         .join("")}</fieldset>` +
       `<p class="fc-nota">Aparecen en el unifilar, el metrado y la memoria. No cambian el cálculo; su uso es criterio del proyectista.</p>`;
   }
-  $("ftBody").innerHTML = h;
+  $("ftBody").innerHTML =
+    (rp && FT_PEST !== "eq" ? `<p class="fc-prev">Vista previa con la longitud sin aplicar</p>` : "") + h;
   ftPie();
 }
 function ftPie() {
@@ -127,20 +186,42 @@ function ftPie() {
 // Guarda los equipos en TEQ (como el panel Propiedades), recalcula y guarda en el historial
 function aplicarTablero() {
   if (!ftCambios()) return;
-  const m = (TEQ[MODE] = TEQ[MODE] || {}),
-    t = Object.fromEntries(
-      Object.keys(EQT)
-        .filter(k => FT_PEND[k])
-        .map(k => [k, true])
-    );
-  if (Object.keys(t).length) m[FT_TAB] = t;
-  else delete m[FT_TAB];
+  // Longitud: en su campo del formulario (avisando con «input», como si se hubiera escrito allí) o en su lista
+  if (ftLongCambio()) {
+    const d = ftLongitud(ftAlim());
+    ftPonerLong(d, FT_LONG);
+    if (d.lista) renderList(d.lista);
+    else $(d.id).dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  FT_LONG = undefined;
+  if (FT_PEND) {
+    const m = (TEQ[MODE] = TEQ[MODE] || {}),
+      t = Object.fromEntries(
+        Object.keys(EQT)
+          .filter(k => FT_PEND[k])
+          .map(k => [k, true])
+      );
+    if (Object.keys(t).length) m[FT_TAB] = t;
+    else delete m[FT_TAB];
+  }
   FT_PEND = null;
   calcularAhora();
   histPush();
-  toast(`Equipos del tablero ${FT_TAB} aplicados`);
+  toast(`Tablero ${FT_TAB}: cambios aplicados`);
   renderTablero();
 }
+$("ftDlg").addEventListener("input", e => {
+  if (!e.target.matches("[data-ftl]")) return;
+  FT_LONG = e.target.value;
+  e.target.closest(".fc-e").classList.toggle("mod", ftLongCambio());
+  ftPie();
+  clearTimeout(FT_T);
+  FT_T = setTimeout(() => {
+    renderTablero();
+    const f = document.querySelector("#ftBody [data-ftl]");
+    if (f) f.focus();
+  }, 250);
+});
 $("ftDlg").addEventListener("change", e => {
   const c = e.target.closest("[data-fteq]");
   if (!c || !FT_TAB) return;
@@ -168,6 +249,7 @@ $("ftDlg").addEventListener("click", e => {
     if (ftCambios()) return toast("Aplique o cancele primero los cambios de este tablero");
     FT_TAB = lista[i + (a === "prev" ? -1 : 1)].tab;
     FT_PEND = null;
+    FT_LONG = undefined;
     renderTablero();
   } else if (a === "panel") {
     if (ftCambios()) return toast("Aplique o cancele primero los cambios del tablero");
@@ -183,6 +265,11 @@ $("ftBody").addEventListener("dblclick", e => {
 });
 // Teclado: ← → cambian de pestaña y ↑ ↓ de tablero fuera de los campos; Esc cierra sin aplicar
 $("ftDlg").addEventListener("keydown", e => {
+  if (e.target.matches("[data-ftl]") && e.key === "Enter") {
+    e.preventDefault();
+    FT_LONG = e.target.value;
+    return aplicarTablero();
+  }
   if (e.target.matches("input,select,textarea")) return;
   const T = ["alim", "tab", "eq"],
     k = { ArrowLeft: -1, ArrowRight: 1 }[e.key],

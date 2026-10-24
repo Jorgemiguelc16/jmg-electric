@@ -74,6 +74,27 @@ function fcEditables(q) {
     );
     if (t === "cargas" && pisos.length)
       E.push({ id: "piso", l: "Tablero", tipo: "select", v: it.piso, o: opcPiso(), lista: t });
+  } else if (t === "tipo") {
+    // Circuito de un tipo de departamento: sus salidas y su longitud son del tipo; la potencia por salida es la
+    // general de Parámetros (W por salida de alumbrado o por tomacorriente), común a todos los departamentos
+    const it = tipos[q.src.i];
+    if (!it) return [];
+    const al = q.tipo === "Alumbrado";
+    E.push(
+      { id: al ? "nAl" : "nTo", l: "Salidas", tipo: "number", v: it[al ? "nAl" : "nTo"], lista: "tipos" },
+      { id: al ? "pAl" : "pTo", l: "Por salida", tipo: "number", v: $(al ? "pAl" : "pTo").value, u: "W", campo: true },
+      { id: "Lc", l: "Longitud", tipo: "number", v: it.Lc, u: "m", lista: "tipos" }
+    );
+  } else if (t === "piso") {
+    // Circuito de un piso superior: salidas y longitud del piso; potencia por salida, la de Salidas
+    const it = pisos[q.src.i],
+      k = q.src.k;
+    if (!it) return [];
+    E.push(
+      { id: k + "_n", l: "Salidas", tipo: "number", v: it[k + "_n"], lista: "pisos" },
+      { id: k + "_p", l: "Por salida", tipo: "number", v: $(k + "_p").value, u: "W", campo: true },
+      { id: k + "_L", l: "Longitud", tipo: "number", v: it[k + "_L"], u: "m", lista: "pisos" }
+    );
   } else if (t === "grp") {
     const k = q.src.k;
     E.push(
@@ -122,9 +143,11 @@ function fcNota(q) {
   if (t === "grp")
     return `Datos de todas las salidas de ${nm[q.src.k]} (máximo ${ctx().maxSal} por circuito): al cambiarlos se recalculan todos los circuitos del grupo.`;
   if (t === "piso")
-    return `Circuito de ${nm[q.src.k]} del ${ORD(q.src.i + 2)} piso: sus salidas y longitudes se editan en Vivienda › Pisos y tableros («Abrir en el panel»).`;
-  if (t === "tipo")
-    return "Circuito de un tipo de departamento: sus datos se editan en el departamento («Abrir en el panel»).";
+    return `Datos de ${nm[q.src.k]} del ${ORD(q.src.i + 2)} piso: al cambiarlos se recalculan todos sus circuitos. La potencia por salida es la de Salidas, común a todos los pisos.`;
+  if (t === "tipo") {
+    const d = tipos[q.src.i];
+    return `Datos de ${q.tipo === "Alumbrado" ? "alumbrado" : "tomacorrientes"} del departamento ${esc(d?.nombre || "")}: se repiten en sus ${d?.cant ?? ""} unidades y al cambiarlos se recalculan todos sus circuitos. La potencia por salida es la de Parámetros, común a todos los departamentos.`;
+  }
   return "";
 }
 // Valor de un dato de lista con la misma conversión que el panel Propiedades
