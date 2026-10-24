@@ -104,7 +104,7 @@
     (b.querySelector("span") || b).appendChild(s);
     b.setAttribute("aria-haspopup", "menu");
   };
-  ws.querySelectorAll('.ap-ribbon [data-node="suministro"].rb').forEach(b => {
+  ws.querySelectorAll(".ap-ribbon [data-msist]").forEach(b => {
     b.dataset.mdd = "sistema";
     caret(b);
   });
