@@ -7104,3 +7104,54 @@ body.sin-acceso .welcome {
   flex: none;
   margin: 8px 12px 0;
 }
+/* Datos del proyecto: grilla de campos (textos y listas a todo lo ancho, números de a dos o tres por fila) */
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px 12px;
+}
+.dp-c {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+}
+.dp-c.ancho {
+  grid-column: 1 / -1;
+}
+.dp-c > span {
+  color: var(--dl-ink2);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+.dp-c input,
+.dp-c select {
+  min-width: 0;
+  width: 100%;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  box-shadow: none;
+}
+.dp-c input[type="number"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dp-c input:focus,
+.dp-c select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  box-shadow: 0 0 0 1px var(--dl-acc);
+}
+.dp-c.mod input,
+.dp-c.mod select {
+  background-color: #e3effb;
+}
+:root[data-theme="dark"] .dp-c.mod input,
+:root[data-theme="dark"] .dp-c.mod select {
+  background-color: #1b3149;
+}

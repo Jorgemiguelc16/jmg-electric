@@ -19,12 +19,12 @@ function dpPestanas() {
   const com = USOS[usoAct()];
   return MODE === "multi"
     ? [
-        ["proy", "Proyecto", ["fs-proy", "fs-tipo"]],
+        ["proy", "Proyecto", ["fs-proy"]],
         ["sum", "Suministro", ["fs-sum-multi"]],
         ["dep", "Departamentos", ["fs-tipos"], ["L_cargasT"], ["add_tipos", "+ Agregar tipo de departamento"]]
       ]
     : [
-        ["proy", "Proyecto", ["fs-proy", "fs-tipo"]],
+        ["proy", "Proyecto", ["fs-proy"]],
         ["sum", "Suministro", ["fs-sum-uni"]],
         ["viv", com ? "Edificación" : "Vivienda", ["fs-viv"]],
         ["sal", "Salidas", ["fs-sal"]],
@@ -46,6 +46,13 @@ function datosProyecto(abrir, tab) {
     vwFondo();
   }
 }
+// Tipo de edificación actual: vivienda unifamiliar, edificio multifamiliar u otros usos (Tabla 14)
+const dpTipoAct = () => (MODE === "multi" ? "multi" : usoAct() === "viv" ? "viv" : "com");
+const DP_TIPOS = [
+  ["viv", "Vivienda unifamiliar · Regla 050-200"],
+  ["multi", "Edificio multifamiliar · Regla 050-202"],
+  ["com", "Comercial y otros usos · Regla 050-210"]
+];
 // ¿El control está oculto dentro de su formulario (por ejemplo, un dato que no aplica al uso elegido)?
 const dpOculto = (c, fs) => {
   for (let e = c; e && e !== fs; e = e.parentElement) if (e.hidden) return true;
@@ -86,7 +93,9 @@ function dpCampo(c) {
   }
   const ay = c.closest("label")?.dataset.ayuda || c.dataset.ayuda,
     falta = c.classList.contains("falta") || c.classList.contains("inv") ? " tc-falta" : "";
-  return `<label class="fc-f fc-e pp-f${mod}${falta}"${ay ? ` data-ayuda="${esc(ay)}"` : ""}><span>${esc(txt)}</span>${ctl}</label>`;
+  // A todo lo ancho: las listas y el nombre del proyecto; los demás textos y números van de a dos o tres por fila
+  const ancho = c.tagName === "SELECT" || c.type === "radio" || c.id === "p_nombre" ? " ancho" : "";
+  return `<label class="dp-c fc-e${ancho}${mod}${falta}"${ay ? ` data-ayuda="${esc(ay)}"` : ""}><span>${esc(txt)}</span>${ctl}</label>`;
 }
 // Grupos de un formulario: los datos sueltos y uno por cada elemento de sus listas (cada piso, cada tipo…)
 function dpGrupos(fid, excluir) {
@@ -130,12 +139,12 @@ function dpGrupos(fid, excluir) {
   let h = [...porSub]
     .map(
       ([k, cs], j) =>
-        `<fieldset class="fc-g"><legend>${esc(k || tit)}${!j && norma ? ` <small>${esc(norma)}</small>` : ""}</legend>${cs.map(dpCampo).join("")}</fieldset>`
+        `<fieldset class="fc-g"><legend>${esc(k || tit)}${!j && norma ? ` <small>${esc(norma)}</small>` : ""}</legend><div class="dp-grid">${cs.map(dpCampo).join("")}</div></fieldset>`
     )
     .join("");
   items.forEach((cs, it) => {
     const ti = it.querySelector(".item-h span")?.textContent || "";
-    h += `<fieldset class="fc-g"><legend>${esc(ti)}</legend>${cs.map(dpCampo).join("")}</fieldset>`;
+    h += `<fieldset class="fc-g"><legend>${esc(ti)}</legend><div class="dp-grid">${cs.map(dpCampo).join("")}</div></fieldset>`;
   });
   return h;
 }
@@ -157,12 +166,18 @@ function renderDatos() {
         .filter(Boolean)
         .map(t => `<p class="fc-nota">${esc(t)}</p>`)
         .join("");
+  const tv = "_tipo" in DP_PEND ? DP_PEND._tipo : dpTipoAct(),
+    tipo =
+      DP_TAB === "proy"
+        ? `<fieldset class="fc-g"><legend>Tipo de edificación</legend><div class="dp-grid"><label class="dp-c fc-e ancho${"_tipo" in DP_PEND ? " mod" : ""}"><span>Tipo de edificación</span><select data-dp="_tipo" aria-label="Tipo de edificación">${DP_TIPOS.map(([v, t]) => `<option value="${v}"${v === tv ? " selected" : ""}>${t}</option>`).join("")}</select></label>${MODE === "uni" && !$("usoBox").hidden ? dpCampo($("uso")) : ""}</div></fieldset>`
+        : "";
   $("dpBody").innerHTML =
+    tipo +
     grupos +
     vacio +
     (add ? `<button type="button" class="vw-btn dp-add" data-dpadd="${add[0]}">${add[1]}</button>` : "") +
-    (DP_TAB === "proy"
-      ? `<p class="fc-nota">El tipo de edificación (vivienda, edificio u otros usos) se cambia en el panel Propiedades.</p>`
+    ("_tipo" in DP_PEND
+      ? `<p class="fc-nota">Al aplicar cambia el tipo de edificación: los datos de vivienda y de edificio se conservan por separado, y el cálculo cambia de regla.</p>`
       : "");
   dpPie();
 }
@@ -171,8 +186,13 @@ let DP_T = null;
 function dpRes() {
   const el = $("dpRes");
   if (!el) return;
-  const hay = Object.keys(DP_PEND || {}).length,
-    r = hay ? previaCampos(DP_PEND) : LAST;
+  const hay = Object.keys(DP_PEND || {}).length;
+  if (DP_PEND && "_tipo" in DP_PEND) {
+    el.className = "tc-res previa";
+    el.innerHTML = `<span class="tc-rt">El cambio de tipo de edificación se calcula al aplicar.</span>`;
+    return;
+  }
+  const r = hay ? previaCampos(DP_PEND) : LAST;
   el.className = "tc-res" + (hay ? " previa" : "");
   el.innerHTML = franjaProyecto(r, hay && !!r);
 }
@@ -187,7 +207,19 @@ function dpPie() {
 function aplicarDatos() {
   const ks = Object.keys(DP_PEND || {});
   if (!ks.length) return;
+  if ("_tipo" in DP_PEND) {
+    const v = DP_PEND._tipo,
+      multi = v === "multi";
+    if (multi !== (MODE === "multi")) setMode(multi ? "multi" : "uni");
+    if (!multi) {
+      const u = $("uso");
+      if (v === "viv" && u.value !== "viv") u.value = "viv";
+      if (v === "com" && u.value === "viv") u.value = "oficina";
+      u.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
   ks.forEach(k => {
+    if (k === "_tipo") return;
     if (k.startsWith("radio:")) {
       const r = document.querySelector(`input[name="${k.slice(6)}"][value="${DP_PEND[k]}"]`);
       if (r) {
@@ -206,19 +238,25 @@ function aplicarDatos() {
   calcularAhora();
   histPush();
   toast("Datos aplicados");
+  if (!dpPestanas().some(p => p[0] === DP_TAB)) DP_TAB = "proy";
   renderDatos();
 }
 $("dpDlg").addEventListener("input", e => {
   const el = e.target.closest("[data-dp]");
   if (!el || !DP_PEND) return;
   const k = el.dataset.dp,
-    act = k.startsWith("radio:")
-      ? document.querySelector(`input[name="${k.slice(6)}"]:checked`)?.value || ""
-      : ($(k)?.value ?? "");
+    act =
+      k === "_tipo"
+        ? dpTipoAct()
+        : k.startsWith("radio:")
+          ? document.querySelector(`input[name="${k.slice(6)}"]:checked`)?.value || ""
+          : ($(k)?.value ?? "");
   if (el.value === act) delete DP_PEND[k];
   else DP_PEND[k] = el.value;
-  el.closest(".pp-f").classList.toggle("mod", k in DP_PEND);
+  el.closest(".dp-c").classList.toggle("mod", k in DP_PEND);
   dpPie();
+  // El tipo de edificación cambia la nota de la pestaña
+  if (k === "_tipo") renderDatos();
 });
 $("dpDlg").addEventListener("change", e => {
   if (e.target.matches("select[data-dp]")) e.target.dispatchEvent(new Event("input", { bubbles: true }));
