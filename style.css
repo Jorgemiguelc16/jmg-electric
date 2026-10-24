@@ -7063,3 +7063,7 @@ body.sin-acceso .welcome {
   color: var(--dl-ink2);
   font-size: 11px;
 }
+/* Datos del proyecto: botón para agregar un piso o un tipo de departamento */
+.dp-add {
+  margin-top: 10px;
+}

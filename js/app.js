@@ -523,6 +523,7 @@ $("ws").addEventListener("click", e => {
   else if (a === "cond") cuadroCond(true);
   else if (a === "tcargas") tablaCargas(ac.dataset.tct);
   else if (a === "params") parametros(true);
+  else if (a === "dproy") datosProyecto(true, "proy");
   else if (a === "fichatab") {
     // El tablero seleccionado en el explorador (o el de su circuito) o, si no hay, el primero
     if (DESACT) calcularAhora();
