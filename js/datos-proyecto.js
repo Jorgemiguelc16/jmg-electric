@@ -9,31 +9,42 @@
 let DP_PEND = null,
   DP_TAB = "proy";
 const DP_VW = ventanaMovil(document.querySelector("#dpDlg .vw"), "jmg-electric-datos-proyecto", {
-  w: 640,
+  w: 760,
   h: 540,
   minW: 460,
   minH: 340
 });
-// Pestañas de cada modo: [clave, título, fieldsets, listas que no se muestran, botón de agregar]
+// Pestañas de cada modo: [clave, título, fieldsets, listas que no se muestran, botones de agregar]. La pestaña
+// Departamentos la dibuja el editor de departamentos (js/departamentos.js).
 function dpPestanas() {
   const com = USOS[usoAct()];
   return MODE === "multi"
     ? [
         ["proy", "Proyecto", ["fs-proy"]],
         ["sum", "Suministro", ["fs-sum-multi"]],
-        ["dep", "Departamentos", ["fs-tipos"], ["L_cargasT"], ["add_tipos", "+ Agregar tipo de departamento"]]
+        ["dep", "Departamentos", []]
       ]
     : [
         ["proy", "Proyecto", ["fs-proy"]],
         ["sum", "Suministro", ["fs-sum-uni"]],
         ["viv", com ? "Edificación" : "Vivienda", ["fs-viv"]],
-        ["sal", "Salidas", ["fs-sal"]],
-        ["pis", "Pisos", ["fs-pisos"], [], ["add_pisos", "+ Agregar piso"]]
+        [
+          "sal",
+          "Salidas",
+          ["fs-sal"],
+          [],
+          [
+            ["add_lums", "+ Luminarias de otra potencia"],
+            ["add_toms", "+ Tomacorrientes de otra potencia"]
+          ]
+        ],
+        ["pis", "Pisos", ["fs-pisos"], [], [["add_pisos", "+ Agregar piso"]]]
       ];
 }
 function datosProyecto(abrir, tab) {
   if (abrir) {
     DP_PEND = {};
+    if (MODE === "multi") depAbrir();
     if (tab) DP_TAB = tab;
     if (!dpPestanas().some(p => p[0] === DP_TAB)) DP_TAB = "proy";
     $("dpDlg").hidden = false;
@@ -42,6 +53,7 @@ function datosProyecto(abrir, tab) {
     renderDatos();
   } else {
     DP_PEND = null;
+    depCerrar();
     $("dpDlg").hidden = true;
     vwFondo();
   }
@@ -144,7 +156,9 @@ function dpGrupos(fid, excluir) {
     .join("");
   items.forEach((cs, it) => {
     const ti = it.querySelector(".item-h span")?.textContent || "";
-    h += `<fieldset class="fc-g"><legend>${esc(ti)}</legend><div class="dp-grid">${cs.map(dpCampo).join("")}</div></fieldset>`;
+    const del = it.querySelector(".link-del"),
+      lid = it.closest(".list")?.id;
+    h += `<fieldset class="fc-g"><legend>${esc(ti)}${del && lid ? ` <button type="button" class="dd-x" data-dpdel="${lid}|${del.dataset.i}" title="Quitar" aria-label="Quitar ${esc(ti)}">✕</button>` : ""}</legend><div class="dp-grid">${cs.map(dpCampo).join("")}</div></fieldset>`;
   });
   return h;
 }
@@ -175,10 +189,14 @@ function renderDatos() {
     tipo +
     grupos +
     vacio +
-    (add ? `<button type="button" class="vw-btn dp-add" data-dpadd="${add[0]}">${add[1]}</button>` : "") +
+    (DP_TAB === "dep" ? depHTML() : "") +
+    (add
+      ? `<div class="dp-adds">${add.map(([id, l]) => `<button type="button" class="vw-btn dp-add" data-dpadd="${id}">${l}</button>`).join("")}</div>`
+      : "") +
     ("_tipo" in DP_PEND
       ? `<p class="fc-nota">Al aplicar cambia el tipo de edificación: los datos de vivienda y de edificio se conservan por separado, y el cálculo cambia de regla.</p>`
       : "");
+  if (DP_TAB === "dep") depRes();
   dpPie();
 }
 // Franja de resultados: con cambios pendientes, la vista previa del cálculo
@@ -186,27 +204,29 @@ let DP_T = null;
 function dpRes() {
   const el = $("dpRes");
   if (!el) return;
-  const hay = Object.keys(DP_PEND || {}).length;
+  const hay = Object.keys(DP_PEND || {}).length + depCambios();
   if (DP_PEND && "_tipo" in DP_PEND) {
     el.className = "tc-res previa";
     el.innerHTML = `<span class="tc-rt">El cambio de tipo de edificación se calcula al aplicar.</span>`;
     return;
   }
-  const r = hay ? previaCampos(DP_PEND) : LAST;
+  const r = hay ? previaCampos(DP_PEND, depCambios() ? dpdListas() : {}) : LAST;
   el.className = "tc-res" + (hay ? " previa" : "");
   el.innerHTML = franjaProyecto(r, hay && !!r);
 }
 function dpPie() {
   clearTimeout(DP_T);
   DP_T = setTimeout(dpRes, 200);
-  const n = Object.keys(DP_PEND || {}).length;
+  const n = Object.keys(DP_PEND || {}).length + depCambios();
   $("dpApply").disabled = !n;
   $("dpNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";
 }
 // Escribe los valores en los campos del formulario, como si se hubieran escrito allí, y recalcula
 function aplicarDatos() {
   const ks = Object.keys(DP_PEND || {});
-  if (!ks.length) return;
+  if (!ks.length && !depCambios()) return;
+  // Departamentos: sus listas primero (el recálculo se hace al final)
+  depAplicar();
   if ("_tipo" in DP_PEND) {
     const v = DP_PEND._tipo,
       multi = v === "multi";
@@ -238,6 +258,8 @@ function aplicarDatos() {
   calcularAhora();
   histPush();
   toast("Datos aplicados");
+  if (MODE === "multi") depAbrir();
+  else depCerrar();
   if (!dpPestanas().some(p => p[0] === DP_TAB)) DP_TAB = "proy";
   renderDatos();
 }
@@ -268,7 +290,15 @@ $("dpDlg").addEventListener("click", e => {
     return renderDatos();
   }
   // Agregar un piso o un tipo de departamento: el mismo botón del formulario (se aplica al momento)
-  const ad = e.target.closest("[data-dpadd]");
+  const ad = e.target.closest("[data-dpadd]"),
+    dl = e.target.closest("[data-dpdel]");
+  if (dl) {
+    if (Object.keys(DP_PEND).length) return toast("Aplique o cancele primero los cambios");
+    const [lid, i] = dl.dataset.dpdel.split("|");
+    document.querySelector(`#${lid} .link-del[data-i="${i}"]`)?.click();
+    histPush();
+    return renderDatos();
+  }
   if (ad) {
     if (Object.keys(DP_PEND).length) return toast("Aplique o cancele primero los cambios");
     $(ad.dataset.dpadd).click();

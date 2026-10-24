@@ -97,12 +97,15 @@ document.querySelectorAll(".vw").forEach(b => b.insertAdjacentHTML("beforeend", 
 const vwFondo = () => document.body.classList.toggle("wl-open", !!document.querySelector(".welcome:not([hidden])"));
 /* Vista previa de cambios en campos del formulario (ventanas Parámetros de diseño y Datos del proyecto): pone los
    valores pendientes en sus campos (y en las listas que dependen de ellos), calcula el proyecto y lo deja todo
-   como estaba, aunque el cálculo falle. pend: {id: valor} o {"radio:nombre": valor}. Devuelve el resultado o null
-   si el proyecto tiene datos pendientes. */
-function previaCampos(pend) {
-  const ks = Object.keys(pend || {});
-  if (!ks.length || !LAST) return null;
-  const antes = [];
+   como estaba, aunque el cálculo falle. pend: {id: valor} o {"radio:nombre": valor}; listas: {nombre: arreglo}
+   reemplaza temporalmente listas completas (editor de departamentos). Devuelve el resultado o null si el proyecto
+   tiene datos pendientes. */
+function previaCampos(pend, listas = {}) {
+  const ks = Object.keys(pend || {}),
+    ls = Object.keys(listas);
+  if ((!ks.length && !ls.length) || !LAST) return null;
+  const antes = [],
+    copias = [];
   try {
     ks.forEach(k => {
       if (k.startsWith("radio:")) {
@@ -120,12 +123,23 @@ function previaCampos(pend) {
       }
     });
     Object.keys(LISTS).forEach(readList);
+    // Las listas se reemplazan después de leer el formulario, para que no las pise
+    ls.forEach(nm => {
+      const a = LISTS[nm].arr;
+      copias.push([a, a.slice()]);
+      a.length = 0;
+      a.push(...listas[nm]);
+    });
     if (faltantes().length) return null;
     const c = ctx();
     return MODE === "uni" ? calcUni(c) : calcMulti(c);
   } catch (e) {
     return null;
   } finally {
+    copias.forEach(([a, v]) => {
+      a.length = 0;
+      a.push(...v);
+    });
     antes.reverse().forEach(f => f());
     Object.keys(LISTS).forEach(readList);
     faltantes();
