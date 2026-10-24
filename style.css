@@ -6999,3 +6999,18 @@ body.sin-acceso .welcome {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Ficha del circuito: aviso de vista previa en las pestañas de resultados y verificación en vista previa */
+.fc-prev {
+  margin: 8px 0 0;
+  padding: 4px 8px;
+  border-left: 3px solid var(--dl-acc);
+  background: var(--dl-hover);
+  color: var(--dl-acc);
+  font-size: 11.5px;
+}
+.fc-est.previa {
+  border-style: dashed;
+}
+.fc-est.previa legend {
+  color: var(--dl-acc);
+}
