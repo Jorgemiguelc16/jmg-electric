@@ -299,3 +299,11 @@ $("propBody").addEventListener("click", e => {
   const b = e.target.closest("[data-fichatab]");
   if (b) fichaTablero(b.dataset.fichatab);
 });
+// Doble clic en las tablas de resultados: un circuito abre su ficha; la franja de un tablero o un alimentador, la
+// ficha del tablero
+$("results").addEventListener("dblclick", e => {
+  const c = e.target.closest("tr[data-ficha]"),
+    t = e.target.closest("tr[data-fichatab]");
+  if (c) fichaCirc(c.dataset.ficha);
+  else if (t) fichaTablero(t.dataset.fichatab);
+});

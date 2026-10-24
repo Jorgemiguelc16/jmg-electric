@@ -174,9 +174,11 @@ function exTree() {
         .forEach(q => add(2, `${q.id} &nbsp;${esc(q.desc)}`, "circ:" + q.key, q.ok ? "ok" : "bad"));
       const pre = tb.tab === "TSG" ? "S-" : "C-",
         n0 = r.circ.filter(q => q.tab === tb.tab).length;
-      for (let i = 1; i <= r.c.reserva; i++)
+      // Los espacios de reserva en una sola línea, para que el árbol muestre solo lo que se revisa
+      const nr = r.c.reserva;
+      if (nr)
         N.push(
-          `<div class="tn res" style="padding-left:42px"><i class="dot"></i><span>${pre}${n0 + i} &nbsp;Reserva</span></div>`
+          `<div class="tn res" style="padding-left:42px"><i class="dot"></i><span>${nr > 1 ? `${pre}${n0 + 1} a ${pre}${n0 + nr}` : `${pre}${n0 + 1}`} &nbsp;${nr} reserva${nr > 1 ? "s" : ""}</span></div>`
         );
     });
     add(1, `Puesta a tierra · ${fmt(r.pat.Rn ?? r.pat.Rt, 1)} Ω`, "pat", r.pat.Rn <= 25 || r.pat.ok ? "ok" : "bad");
@@ -772,7 +774,8 @@ try {
 /* Paneles laterales: cerrar, volver a abrir y cambiar el ancho arrastrando el borde */
 const PANE = {
   left: { cls: ".ap-left", v: "--wl", key: "jmg-electric-panel-izq", on: true, w: null },
-  right: { cls: ".ap-right", v: "--wr", key: "jmg-electric-panel-der", on: true, w: null }
+  // Cerrado por defecto desde la v2.9.1: todo se edita en ventanas; se respeta la elección que guardó el usuario
+  right: { cls: ".ap-right", v: "--wr", key: "jmg-electric-panel-der", on: false, w: null }
 };
 const apMain = document.querySelector("#ws .ap-main");
 function panes(guardar) {
