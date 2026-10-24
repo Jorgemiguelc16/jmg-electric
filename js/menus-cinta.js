@@ -1,36 +1,15 @@
 /* MENÚS DESPLEGABLES DE LA CINTA
-   Agrega ▾ a botones de la cinta para elegir datos y agregar elementos sin pasar por el panel Propiedades:
-   - parámetros (método, temperatura, reservas, diferenciales…): lista de opciones con la actual marcada ✓;
-   - Agregar carga, Agregar carga común y Luminarias: cargas típicas y salidas de otra potencia por piso o
-     por tipo de departamento; en el edificio, las cargas típicas se agregan al tipo de departamento elegido.
+   Agrega ▾ solo a los botones de la cinta donde elegir desde un menú ahorra pasos (regla de la v2.9):
+   - Sistema eléctrico: las opciones de suministro, con la actual marcada ✓;
+   - Agregar carga, Agregar carga común y Salidas de otra potencia: cargas típicas y salidas de otra potencia por
+     piso o por tipo de departamento; en el edificio, las cargas típicas se agregan al tipo de departamento elegido.
+   Los parámetros y el tipo de edificación no llevan menú: sus botones abren el dato en su formulario.
    Los cambios usan los mismos formularios y listas del proyecto, recalculan y se pueden deshacer. */
 (function () {
   const ws = document.getElementById("ws");
 
-  // Desplegables de datos: control del formulario, título, norma; tipo: lista, botones de opción o valores típicos
-  const DD = {
-    tipo: { t: "Tipo de edificación", n: "CNE-U 050-200 · 050-202 · 050-210" },
-    uso: { c: "uso", tipo: "sel", t: "Uso de la edificación", n: "CNE-U 050-200 a 050-210" },
-    sistema: { tipo: "radio", t: "Sistema eléctrico", n: "Norma DGE" },
-    met: { c: "met", tipo: "sel", t: "Método de instalación", n: "CNE-U Tabla 4" },
-    aisl: { c: "aisl", tipo: "sel", t: "Aislamiento", n: "CNE-U Tabla 2" },
-    temp: { c: "temp", tipo: "sel", t: "Temperatura ambiente", n: "CNE-U Tabla 5A" },
-    nag: { c: "nag", tipo: "sel", t: "Circuitos en el mismo tubo", n: "CNE-U Tabla 5C" },
-    sminD: { c: "sminD", tipo: "sel", t: "Sección mínima de circuitos derivados" },
-    maxSal: { c: "maxSal", tipo: "num", o: [8, 10, 12], t: "Salidas por circuito", n: "CNE-U 070-3000" },
-    fp: { c: "fp", tipo: "num", o: [0.85, 0.9, 0.95, 1], t: "Factor de potencia" },
-    reserva: { c: "reserva", tipo: "sel", t: "Espacios de reserva por tablero", n: "CNE-U 050-108" },
-    resAl: { c: "resAl", tipo: "sel", t: "Reserva en alimentadores", n: "CNE-U 050-200(3) · 050-202(2)" },
-    idMode: { c: "idMode", tipo: "sel", t: "Interruptores diferenciales", n: "CNE-U 150-400" },
-    iccE: {
-      c: "iccE",
-      tipo: "num",
-      o: [5, 10, 15, 25],
-      u: " kA",
-      t: "Cortocircuito de la red (Icc)",
-      n: "Norma DGE 110.F"
-    }
-  };
+  // Desplegable de datos: el sistema eléctrico (botones de opción del formulario)
+  const DD = { sistema: { tipo: "radio", t: "Sistema eléctrico", n: "Norma DGE" } };
   // Cargas típicas: [lista, tipo de carga, nombre]
   const CARGAS = {
     cocina: ["cargas", "cocina", "Cocina eléctrica"],
@@ -125,16 +104,6 @@
     (b.querySelector("span") || b).appendChild(s);
     b.setAttribute("aria-haspopup", "menu");
   };
-  ws.querySelectorAll(".ap-ribbon [data-foco]").forEach(b => {
-    if (DD[b.dataset.foco]) {
-      b.dataset.mdd = b.dataset.foco;
-      caret(b);
-    }
-  });
-  ws.querySelectorAll('.ap-ribbon [data-act="modo"]').forEach(b => {
-    b.dataset.mdd = "tipo";
-    caret(b);
-  });
   ws.querySelectorAll('.ap-ribbon [data-node="suministro"].rb').forEach(b => {
     b.dataset.mdd = "sistema";
     caret(b);
@@ -185,57 +154,25 @@
     `<button type="button" class="mc-mi${sel ? " sel" : ""}" role="menuitem"${atr(a)}><span class="mc-ck">${sel ? "✓" : ""}</span><span>${esc(l)}${s ? `<small>${esc(s)}</small>` : ""}</span></button>`;
   const sep = '<div class="mc-sep"></div>';
 
-  // Opciones de un desplegable de datos: [texto, valor, elegida]
-  function opciones(k) {
-    const d = DD[k];
-    if (k === "tipo") {
-      const com = MODE === "uni" && usoAct() !== "viv";
-      return [
-        ["Vivienda unifamiliar", "viv", MODE === "uni" && !com],
-        ["Edificio multifamiliar", "multi", MODE === "multi"],
-        ["Comercial y otros usos", "com", com]
-      ];
-    }
-    if (d.tipo === "radio") {
-      const nm = MODE === "multi" ? "sistG" : "sist";
-      return [...document.querySelectorAll(`input[name="${nm}"]`)].map(r => [
-        r.closest("label").querySelector(".t").firstChild.textContent.trim(),
-        r.value,
-        r.checked
-      ]);
-    }
-    const c = $(d.c);
-    if (d.tipo === "num")
-      return d.o.map(v => [String(v) + (d.u || ""), String(v), Math.abs((parseFloat(c.value) || 0) - v) < 1e-9]);
-    return [...c.options].map(o => [o.textContent, o.value, o.selected]);
+  // Opciones del desplegable del sistema eléctrico: [texto, valor, elegida]
+  function opciones() {
+    const nm = MODE === "multi" ? "sistG" : "sist";
+    return [...document.querySelectorAll(`input[name="${nm}"]`)].map(r => [
+      r.closest("label").querySelector(".t").firstChild.textContent.trim(),
+      r.value,
+      r.checked
+    ]);
   }
   function elegir(k, v) {
-    const d = DD[k];
-    if (k === "tipo") {
-      const multi = v === "multi";
-      if (multi !== (MODE === "multi")) setMode(multi ? "multi" : "uni");
-      if (!multi) {
-        const u = $("uso");
-        if (v === "viv" && u.value !== "viv") u.value = "viv";
-        if (v === "com" && u.value === "viv") u.value = "oficina";
-        u.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    } else if (d.tipo === "radio") {
-      const r = document.querySelector(`input[name="${MODE === "multi" ? "sistG" : "sist"}"][value="${v}"]`);
-      if (r) {
-        r.checked = true;
-        r.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    } else {
-      const c = $(d.c);
-      c.value = v;
-      c.dispatchEvent(new Event("input", { bubbles: true }));
-      c.dispatchEvent(new Event("change", { bubbles: true }));
+    const r = document.querySelector(`input[name="${MODE === "multi" ? "sistG" : "sist"}"][value="${v}"]`);
+    if (r) {
+      r.checked = true;
+      r.dispatchEvent(new Event("change", { bubbles: true }));
     }
     update();
     histPush();
-    const s = opciones(k).find(o => o[2]);
-    toast(`${d.t}: ${s ? s[0] : v}`);
+    const o = opciones().find(x => x[2]);
+    toast(`${DD[k].t}: ${o ? o[0] : v}`);
   }
   // Agrega un elemento a una lista del proyecto, muestra su formulario y recalcula
   function agregar(nm, extra, nodo, msg) {
@@ -292,15 +229,11 @@
         if (dd.classList.contains("mc-open")) return cerrar();
         const k = dd.dataset.mdd,
           d = DD[k],
-          ir = d.c
-            ? sep + item("Ir al dato…", { foco: d.c }, "", false)
-            : k === "sistema"
-              ? sep + item("Ver suministro…", { node: "suministro" }, "", false)
-              : "";
+          ir = sep + item("Ver suministro…", { node: "suministro" }, "", false);
         abrir(
           dd,
-          `<h4>${d.t}${d.n ? ` · ${d.n}` : ""}</h4>` +
-            opciones(k)
+          `<h4>${d.t} · ${d.n}</h4>` +
+            opciones()
               .map(([t, v, s]) => item(t, { mop: `${k}|${v}` }, "", s))
               .join("") +
             ir

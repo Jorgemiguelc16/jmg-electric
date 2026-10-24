@@ -500,8 +500,11 @@ $("ws").addEventListener("click", e => {
     );
   } else if (a === "salir") cerrarWS(false);
   else if (a === "modo") {
-    selNode("proyecto");
-    $("btnMode").click();
+    // Abre «Tipo de edificación» en el panel: el cambio, que es grande, se confirma con su botón y no desde la cinta
+    focoCampo("btnMode");
+    const f = $("fs-tipo");
+    f.classList.add("resalta");
+    setTimeout(() => f.classList.remove("resalta"), 1600);
   } else if (a === "calc") {
     calcularAhora();
     toast(LAST ? "Cálculo actualizado" : "Complete los datos para calcular");

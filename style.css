@@ -5197,7 +5197,8 @@ span.jmg-mono.ap-logo {
     background-size: 120% auto;
   }
 }
-.card.resalta {
+.card.resalta,
+fieldset.resalta {
   outline: 3px solid #ffc800;
   outline-offset: 2px;
   transition: outline-color 0.4s;
