@@ -170,15 +170,14 @@
     const o = opciones().find(x => x[2]);
     toast(`${DD[k].t}: ${o ? o[0] : v}`);
   }
-  // Agrega un elemento a una lista del proyecto, muestra su formulario y recalcula
+  // Agrega un elemento a una lista del proyecto, recalcula y abre la ventana donde se completa
   function agregar(nm, extra, nodo, msg) {
     readList(nm);
     LISTS[nm].arr.push({ ...LISTS[nm].nuevo(), ...extra });
     renderList(nm);
-    selNode(nodo);
     update();
     histPush();
-    setTimeout(() => $("L_" + nm)?.lastElementChild?.scrollIntoView({ block: "center" }), 60);
+    abrirLista(nm);
     toast(msg);
   }
 

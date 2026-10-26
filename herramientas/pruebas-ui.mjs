@@ -268,16 +268,71 @@ prueba("Editor de departamentos: salidas, cargas, duplicar y quitar", async ok =
   ok((await ev("tipos.length")) === 2 && (await ev("lumsT.length")) === 1, "quitar el tipo quita también lo suyo");
 });
 
-prueba("Panel Propiedades: fase del circuito", async ok => {
+prueba("Panel del proyecto: resumen, elemento elegido y por revisar", async ok => {
+  await ejemplo("uni");
+  ok(
+    !(await ev("document.querySelector('#propBody input, #propBody select, #propBody fieldset')")),
+    "el panel no tiene campos para editar"
+  );
+  ok(
+    /MD|Máxima demanda/.test(await ev("$('propBody').textContent")) &&
+      /Conforme/.test(await ev("$('propBody').textContent")),
+    "resumen con la máxima demanda y el estado"
+  );
+  await ev("selNode('circ:TG·C-6')");
+  ok(/C-6 · Ducha eléctrica/.test(await ev("$('propBody').textContent")), "muestra el circuito elegido");
+  await clic('#propBody .pp-abrir[data-node="circ:TG·C-6"]');
+  ok(!(await ev("$('fichaDlg').hidden")), "«Abrir ficha del circuito» abre la ficha");
+  await ev("cerrarFicha()");
+  // Un dato que falta: aparece en Por revisar y abre su ventana con el dato enfocado
+  await ev("cambiarDato('Lalim', ''); calcularAhora()");
+  ok(
+    await ev("!!document.querySelector('#propBody .pp-it.falta[data-foco=Lalim]')"),
+    "el dato que falta aparece en Por revisar"
+  );
+  await clic("#propBody .pp-it.falta[data-foco=Lalim]");
+  await esperar(250);
+  ok(
+    !(await ev("$('dpDlg').hidden")) && (await ev("document.activeElement.dataset.dp")) === "Lalim",
+    "abre Datos del proyecto con la longitud enfocada"
+  );
+});
+
+prueba("La cinta y los «Ir a…» abren la ventana del dato", async ok => {
   await ejemplo("uni");
   await ev(
-    "document.querySelector('input[name=sist][value=tri380]').checked = true; document.querySelector('input[name=sist][value=tri380]').dispatchEvent(new Event('change', {bubbles:true})); calcularAhora(); selNode('circ:TG·C-6')"
+    "document.querySelector('[data-tab-r=param]').click(); document.querySelector('.ap-ribbon [data-foco=met]').click()"
   );
-  ok(/Automática \(R\)/.test(await ev("document.querySelector('[data-fasefix]').textContent")), "fase automática R");
+  await esperar(250);
+  ok(
+    !(await ev("$('ppDlg').hidden")) && (await ev("document.activeElement.dataset.pp")) === "met",
+    "Método de instalación → Parámetros con el dato enfocado"
+  );
   await ev(
-    "(s => { s.value = 'S'; s.dispatchEvent(new Event('change', {bubbles:true})); })(document.querySelector('[data-fasefix]'))"
+    "parametros(false); document.querySelector('[data-tab-r=proyecto]').click(); document.querySelector('.ap-ribbon [data-act=modo]').click()"
   );
-  ok((await ev("LAST.circ.find(q => q.key === 'TG·C-6').fase")) === "S", "fase S fijada en el cálculo");
+  await esperar(250);
+  ok(
+    (await ev("document.activeElement.dataset.dp")) === "_tipo",
+    "Tipo de edificación → Datos del proyecto con el tipo enfocado"
+  );
+  await ev("datosProyecto(false); document.querySelector('.ap-ribbon .rb[data-fs=fs-pisos]').click()");
+  ok((await ev("DP_TAB")) === "pis" && !(await ev("$('dpDlg').hidden")), "Pisos y tableros → pestaña Pisos");
+  await ev(
+    "datosProyecto(false); document.querySelector('[data-tab-r=cargas]').click(); document.querySelector('.ap-ribbon [data-act=\"add:cctv\"]').click()"
+  );
+  ok(
+    !(await ev("$('tcDlg').hidden")) && /CCTV/.test(await ev("$('tcForm').textContent")),
+    "Videovigilancia agrega la carga y abre el editor en ella"
+  );
+  await ev(
+    "cerrarTabla(); cargas[cargas.length - 1].p = 300; cargas[cargas.length - 1].L = 15; renderList('cargas'); cambiarDato('met', 'A1'); calcularAhora(); verVista('verif')"
+  );
+  const b = "document.querySelector('#results .rec-card [data-foco=met], #propBody .pp-it[data-foco=met]')";
+  ok(await ev(`!!${b}`), "la recomendación del método A1 tiene su «Ir a…»");
+  await ev(`${b}.click()`);
+  await esperar(250);
+  ok((await ev("document.activeElement.dataset.pp")) === "met", "«Ir a…» abre Parámetros con el método enfocado");
 });
 
 prueba("Las ventanas se mueven y no salen de la pantalla", async ok => {

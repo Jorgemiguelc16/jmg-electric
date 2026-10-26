@@ -1,6 +1,7 @@
 /* ESPACIO DE TRABAJO
-   Explorador del proyecto (árbol), panel de propiedades, cinta de opciones y sus acciones, deshacer y
-   rehacer, asistente de nuevo proyecto, paneles laterales y avisos (toast). */
+   Explorador del proyecto (árbol), panel del proyecto (solo lectura, js/panel.js), cinta de opciones y sus
+   acciones, deshacer y rehacer, asistente de nuevo proyecto, paneles laterales y avisos (toast). Los datos se
+   ingresan en ventanas: un elemento del explorador o un botón de la cinta abre la suya (abrirNodo). */
 const NODEFS = {
   proyecto: ["fs-proy", "fs-tipo"],
   suministro: { uni: ["fs-sum-uni"], multi: ["fs-sum-multi"] },
@@ -69,27 +70,13 @@ function irSec(sec) {
 }
 function selNode(n) {
   if (n === "servicios" && MODE !== "multi") n = "cargas";
-  if ((n === "cargas" || n === "salidas") && MODE === "multi") n = "servicios";
+  if ((n === "cargas" || n === "salidas") && MODE === "multi") n = n === "cargas" ? "cargas" : "vivienda";
   NODE = n;
   try {
     localStorage.setItem("jmg-electric-node", n);
   } catch (e) {}
-  const pb = $("propBody"),
-    park = $("park");
-  [...pb.querySelectorAll(":scope > fieldset")].forEach(f => park.appendChild(f));
-  pb.innerHTML = "";
-  const fsl = fsDe(n);
-  if (fsl) {
-    fsl.forEach(id => {
-      const f = $(id);
-      if (f) pb.appendChild(f);
-    });
-    $("propSub").textContent = n === "vivienda" && MODE === "multi" ? "Departamentos" : NODETIT[n] || "";
-  } else if (n.startsWith("circ:")) propCircuito(n.slice(5));
-  else if (n.startsWith("tab:")) propTablero(n.slice(4));
-  if (n === "pat") verVista("resumen");
-  if (n === "metrado") verVista("metrado");
-  pb.scrollTop = 0;
+  $("propSub").textContent = "";
+  panelProyecto();
   exTree();
 }
 function verVista(v) {
@@ -99,18 +86,9 @@ function verVista(v) {
   } catch (e) {}
   if (LAST) update();
 }
+// Abre la ventana del dato y lo enfoca (js/panel.js)
 function focoCampo(id) {
-  const el = $(id);
-  if (!el) return;
-  const f = el.closest("fieldset[id]");
-  if (f && !$("propBody").contains(f)) {
-    const n = Object.keys(NODEFS).find(k => (fsDe(k) || []).includes(f.id));
-    if (n) selNode(n);
-  }
-  setTimeout(() => {
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.focus({ preventScroll: true });
-  }, 60);
+  abrirCampo(id);
 }
 const pendDe = n => {
   const fl = fsDe(n) || [];
@@ -194,7 +172,10 @@ function exTree() {
   );
   if (r) add(1, "Metrado", "metrado", "ok");
   $("exTree").innerHTML = N.join("");
-  $("exCount").textContent = r ? `${r.circ.length} circuitos` : `${WSF.length} pendientes`;
+  const cuenta = $("exCount");
+  cuenta.textContent = r ? r.circ.length : WSF.length;
+  cuenta.title = r ? `${r.circ.length} circuitos` : `${WSF.length} datos pendientes`;
+  cuenta.classList.toggle("falta", !r);
   // Contador de recomendaciones de diseño pendientes en el botón de la cinta
   const k = r ? recomendaciones(r).filter(x => !(ACEP[r.mode] || {})[x.id]).length : 0;
   document.querySelectorAll(".rbadge").forEach(b => {
@@ -202,156 +183,6 @@ function exTree() {
     b.hidden = !k;
   });
 }
-function propTablero(tab) {
-  const r = LAST;
-  if (!r) {
-    return selNode("proyecto");
-  }
-  const tb = r.tabs.find(t => t.tab === tab);
-  if (!tb) return selNode("proyecto");
-  const f = r.alims[tb.feeder],
-    cs = r.circ.filter(q => q.tab === tab),
-    row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
-  $("propSub").textContent = `Tablero ${tab}`;
-  $("propBody").innerHTML =
-    `<div class="pc"><div class="st">Tablero ${tab}</div><p class="pc-d">${esc(tb.desc)}</p><table class="rt">${row("Alimentado por", esc(f.desc))}${row("Potencia", `${fmt(f.P, 0)} W`)}${row("Conductor", `${f.s.n}-1×${f.S} mm²`)}${row("Interruptor", `${f.s.tri ? 3 : 2}×${f.itm ?? "—"} A`)}${row("ΔV acumulada", `${fmt(f.dvAc, 2)} %`)}${row("Icc en barras", `${fmt(tb.icc, 2)} kA`)}${row("Poder de corte", `${tb.pdc} kA`)}${row("Circuitos", `${cs.length} + ${r.c.reserva} reserva`)}${row("Verificación", cs.every(q => q.ok) && f.ok ? '<span class="okb">CONFORME</span>' : '<span class="badb">REVISAR</span>')}</table>
-    <div class="st" style="margin-top:12px">Equipos adicionales</div><p class="pc-d">Aparecen en el unifilar, el metrado y la memoria. No cambian el cálculo; su uso es criterio del proyectista.</p>
-    ${Object.entries(EQT)
-      .map(
-        ([k, d]) =>
-          `<label class="chk pc-eq" data-ayuda="${esc(d.a)}"><input type="checkbox" data-teq="${tab}|${k}"${((TEQ[MODE] || {})[tab] || {})[k] ? " checked" : ""}>${d.n}</label>`
-      )
-      .join("")}
-    <button type="button" class="btn sec sm pc-go" data-fichatab="${tab}">Ver ficha del tablero</button> <button type="button" class="btn sec sm pc-go" data-view="cuadro">Ver cuadro de cargas</button></div>`;
-}
-
-function propCircuito(key) {
-  const r = LAST;
-  const q = r && r.circ.find(x => x.key === key);
-  if (!q) return selNode("proyecto");
-  $("propSub").textContent = `${q.id} · ${q.desc}`;
-  let ed = "";
-  const inp = (lbl, attr, val, unit, ph = "") =>
-    `<label class="pr"><span>${lbl}</span><span class="in-u"><input type="number" min="0" step="any" ${attr} value="${val ?? ""}" placeholder="${ph}">${unit ? `<em>${unit}</em>` : ""}</span></label>`;
-  if (q.src && (q.src.t === "cargas" || q.src.t === "serv" || q.src.t === "cargasT")) {
-    const L = LISTS[q.src.t],
-      it = L.arr[q.src.i],
-      dep = q.src.t === "cargasT";
-    if (it) {
-      const tipos_ = q.src.t === "serv" ? TSERV : TIPOS;
-      ed = `<label class="pr"><span>Descripción</span><input type="text" data-bl="${q.src.t}|${q.src.i}|nombre" value="${esc(it.nombre)}"></label>
-      <label class="pr"><span>Tipo de carga</span><select data-bl="${q.src.t}|${q.src.i}|tipo">${Object.entries(tipos_)
-        .map(([k, v]) => `<option value="${k}"${k === it.tipo ? " selected" : ""}>${v}</option>`)
-        .join("")}</select></label>
-      ${inp("Potencia", `data-bl="${q.src.t}|${q.src.i}|p"`, it.p, "W")}
-      ${
-        dep
-          ? `<label class="pr"><span>Departamento</span><select data-bl="cargasT|${q.src.i}|dep">${tipos
-              .map(
-                (t, i) =>
-                  `<option value="${i}"${i === +it.dep ? " selected" : ""}>${esc(t.nombre || `Tipo ${i + 1}`)}</option>`
-              )
-              .join("")}</select></label>`
-          : `<label class="pr"><span>Fases</span><select data-bl="${q.src.t}|${q.src.i}|fases"><option value="1"${it.fases == 1 ? " selected" : ""}>Monofásica</option><option value="3"${it.fases == 3 ? " selected" : ""}>Trifásica</option></select></label>`
-      }
-      ${inp("Longitud", `data-bl="${q.src.t}|${q.src.i}|L"`, it.L, "m")}
-      ${
-        q.src.t === "cargas" && pisos.length
-          ? `<label class="pr"><span>Tablero</span><select data-bl="cargas|${q.src.i}|piso">${opcPiso()
-              .map(([v, l]) => `<option value="${v}"${+v === +it.piso ? " selected" : ""}>${l}</option>`)
-              .join("")}</select></label>`
-          : ""
-      }`;
-    }
-  } else if (q.src && q.src.t === "piso") {
-    const n = q.src.i + 2,
-      nm = { al: "alumbrado", tg: "tomacorrientes", tc: "tomacorrientes de cocina / lavandería" }[q.src.k];
-    ed = `<p class="pc-d">Circuito de <b>${nm}</b> del <b>${ORD(n)} piso</b> (tablero ${tabPiso(n)}). Sus salidas y longitudes se editan en Vivienda › Pisos y tableros.</p><button type="button" class="btn sec sm" data-node="vivienda">Editar el ${ORD(n)} piso</button>`;
-  } else if (q.src && q.src.t === "grp") {
-    const k = q.src.k,
-      nm = { al: "Alumbrado", tg: "Tomacorrientes", tc: "Tomacorrientes cocina / lavandería" }[k];
-    ed = `<p class="pc-d">Este circuito se arma con las salidas de <b>${nm}</b> (máximo ${ctx().maxSal} por circuito). Al cambiar estos datos se recalculan todos los circuitos del grupo.</p>
-      ${inp("Nº de salidas", `data-mirror="${k}_n"`, $(k + "_n").value, "")}${inp("Potencia por salida", `data-mirror="${k}_p"`, $(k + "_p").value, "W")}${inp("Longitud", `data-mirror="${k}_L"`, $(k + "_L").value, "m")}`;
-  } else if (q.src && q.src.t === "tipo") {
-    const t = tipos[q.src.i];
-    ed = `<p class="pc-d">Circuito del departamento <b>${esc(t ? t.nombre : "")}</b>. Sus datos se editan en el tipo de departamento.</p><button type="button" class="btn sec sm" data-node="vivienda">Editar ${esc(t ? t.nombre : "departamento")}</button>`;
-  }
-  $("propBody").innerHTML =
-    `<div class="pc"><div class="st">Datos del circuito</div>${ed}</div>${faseCircuito(q)}<div class="pc" id="circRes"></div>`;
-  circRes(key);
-}
-/* Fase de un circuito monofásico con suministro trifásico: «Automática» (la asigna el balance de fases) o fijada
-   en R, S o T. Es el mismo dato FIX que se fija en Resultados › Balance de fases y en el editor de cargas. En el
-   edificio solo los circuitos de servicios generales tienen fase propia; los departamentos van completos a una fase. */
-function faseCircuito(q) {
-  const r = LAST;
-  if (!r || !r.bal || q.f3 || !q.fase || q.fase === "—" || q.fase === "3φ") return "";
-  const fx = (FIX[MODE] || {})[q.key] || "";
-  return `<div class="pc"><div class="st">Conexión</div><label class="pr" data-ayuda="Por defecto la asigna el balance de fases para repartir las cargas; elija R, S o T para fijarla."><span>Fase</span><select data-fasefix="${esc(q.key)}"><option value=""${fx ? "" : " selected"}>Automática${fx ? "" : ` (${q.fase})`}</option>${r.bal.nm.map(f => `<option value="${f}"${f === fx ? " selected" : ""}>${f}</option>`).join("")}</select></label></div>`;
-}
-function circRes(key) {
-  const box = $("circRes");
-  if (!box) return;
-  const q = LAST && LAST.circ.find(x => x.key === key);
-  if (!q) {
-    box.innerHTML = "";
-    return;
-  }
-  const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
-  box.innerHTML = `<div class="st">Resultado del circuito</div><table class="rt">${row("Potencia", `${fmt(q.P, 0)} W · ${q.f3 ? "3φ" : "1φ"} ${q.s.V} V`)}${row("Corriente nominal", `${fmt(q.I, 2)} A`)}${row("Corriente de diseño", `${fmt(q.Id, 2)} A`)}${row("Interruptor", `${q.f3 ? 3 : 2}×${q.itm ?? "—"} A · ${q.curva}`)}${row("Conductor", `${q.f3 ? 4 : 2}-1×${q.S} mm²${LAST.c.desig ? " " + esc(LAST.c.desig) : ""}`)}${row("Iz corregida", `${fmt(q.Izc, 1)} A`)}${row("ΔV circuito / total", `${fmt(q.dVp, 2)} / ${fmt(q.dVt, 2)} %`)}${row("Diferencial", `${q.idName} · ${q.f3 ? 4 : 2}×${q.idRat} A · tipo ${q.idTipo || "A"}`)}${row("Tubo", q.tubo.mm ? `${q.tubo.mm} mm` : q.tubo.pul)}${row("Verificación", q.ok ? '<span class="okb">CONFORME</span>' : '<span class="badb">REVISAR</span>')}</table><button type="button" class="btn sec sm pc-go" data-ficha="${esc(key)}">Ver ficha del circuito</button>`;
-}
-$("propBody").addEventListener("input", e => {
-  const t = e.target;
-  if (t.dataset.bl) {
-    const [nm, i, k] = t.dataset.bl.split("|"),
-      it = LISTS[nm].arr[+i];
-    if (!it) return;
-    const f = LISTS[nm].f.find(x => x.k === k);
-    it[k] =
-      f && f.t === "number"
-        ? t.value.trim() === ""
-          ? null
-          : parseFloat(t.value) || 0
-        : k === "fases" || k === "piso" || k === "dep"
-          ? +t.value
-          : t.value.replace(/[<>]/g, "");
-    renderList(nm);
-  }
-  if (t.dataset.mirror) {
-    ponerDato(t.dataset.mirror, t.value);
-  }
-});
-$("propBody").addEventListener("change", e => {
-  // Fase del circuito: se fija o vuelve a automática y se recalcula el balance
-  const ff = e.target.dataset.fasefix;
-  if (ff) {
-    const fx = (FIX[MODE] = FIX[MODE] || {});
-    if (e.target.value) fx[ff] = e.target.value;
-    else delete fx[ff];
-    update();
-    histPush();
-    if (NODE === "circ:" + ff) propCircuito(ff);
-    toast(e.target.value ? `Fase ${e.target.value} fijada` : "Fase automática");
-    return;
-  }
-  const eq = e.target.dataset.teq;
-  if (eq) {
-    const [tab, k] = eq.split("|"),
-      m = (TEQ[MODE] = TEQ[MODE] || {}),
-      t = (m[tab] = m[tab] || {});
-    if (e.target.checked) t[k] = true;
-    else delete t[k];
-    if (!Object.keys(t).length) delete m[tab];
-    update();
-    histPush();
-    toast(`${EQT[k].n}: ${e.target.checked ? "agregado al" : "quitado del"} tablero ${tab}`);
-    return;
-  }
-  if (e.target.dataset.bl && e.target.tagName === "SELECT") {
-    const ev = new Event("input", { bubbles: true });
-    e.target.dispatchEvent(ev);
-  }
-});
 function toast(t) {
   const x = $("toast");
   x.textContent = t;
@@ -427,22 +258,8 @@ function wsRefresh(F) {
   $("wsName").textContent = n || "Proyecto sin nombre";
   $("wsModo").textContent = $("wsModoTxt").textContent = nomEdif();
   $("ws").dataset.mode = MODE;
-  const S = $("wsSum"),
-    r = LAST,
-    row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
-  if (!r)
-    S.innerHTML = `<div class="st">Datos pendientes</div><div class="sum-bar"><i style="width:${Math.max(6, 100 - Math.min(100, WSF.length * 10))}%"></i></div><ul class="sum-list">${WSF.slice(
-      0,
-      5
-    )
-      .map(f => `<li><button type="button" class="linkbtn" data-foco="${f.id}">${esc(f.l)}</button></li>`)
-      .join("")}${WSF.length > 5 ? `<li class="more">y ${WSF.length - 5} más…</li>` : ""}</ul>`;
-  else {
-    const a0 = r.alims[0],
-      md = r.mode === "multi" ? r.MD : r.md.MD,
-      maxDV = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt));
-    S.innerHTML = `<div class="st">Resumen del proyecto</div><div class="big"><small>Máxima demanda</small><b>${fmt(md / 1000, 2)} <small>kW</small></b></div><table class="rt">${row("Potencia a contratar", `${fmt(r.contratada, 1)} kW`)}${row("Alimentador", `${a0.s.n}-1×${a0.S} mm²`)}${row("Interruptor general", `${a0.s.tri ? 3 : 2}×${a0.itm ?? "—"} A`)}${row("ΔV máxima total", `${fmt(maxDV, 2)} %`)}${row("Puesta a tierra", `${fmt(r.pat.Rn ?? r.pat.Rt, 1)} Ω`)}</table>`;
-  }
+  const r = LAST;
+  panelProyecto();
   const ok = r && r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
     hh = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
   $("wsStatus").innerHTML =
@@ -451,14 +268,7 @@ function wsRefresh(F) {
       ? `<div>MD ${fmt((r.mode === "multi" ? r.MD : r.md.MD) / 1000, 2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri ? 3 : 2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt)), 2)} %</div><div class="${ok ? "g" : "b"}">${ok ? "CONFORME" : "REVISAR"}</div>`
       : `<div class="w">${WSF.length} dato${WSF.length === 1 ? "" : "s"} pendiente${WSF.length === 1 ? "" : "s"}</div>`) +
     `<div class="r">${n && !/^EJEMPLO\b/.test(n) ? `Guardado ${hh}` : /^EJEMPLO\b/.test(n) ? "Ejemplo · no se guarda" : "Sin nombre · no se guarda"} · ${VERSION}</div>`;
-  if (!$("ws").hidden) {
-    exTree();
-    if (NODE.startsWith("circ:")) {
-      if (r && r.circ.some(q => q.key === NODE.slice(5))) circRes(NODE.slice(5));
-      else selNode(MODE === "multi" ? "vivienda" : "salidas");
-    }
-    if (NODE.startsWith("tab:") && !$("propBody").contains(document.activeElement)) propTablero(NODE.slice(4));
-  }
+  if (!$("ws").hidden) exTree();
   if (FC_KEY && !FC_APL) renderFicha();
   if (TC_PEND) tcSync();
   if (FT_TAB) renderTablero();
@@ -474,11 +284,8 @@ $("ws").addEventListener("click", e => {
   }
   const nd = e.target.closest("[data-node]");
   if (nd && !e.target.closest("[data-act]")) {
-    selNode(nd.dataset.node);
-    if (nd.dataset.fs) {
-      const f = $(nd.dataset.fs);
-      if (f) setTimeout(() => f.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
-    }
+    if (nd.closest("#exTree")) selNode(nd.dataset.node);
+    else abrirNodo(nd.dataset.node, nd.dataset.fs);
     return;
   }
   const vw = e.target.closest("[data-view]");
@@ -503,11 +310,9 @@ $("ws").addEventListener("click", e => {
     );
   } else if (a === "salir") cerrarWS(false);
   else if (a === "modo") {
-    // Abre «Tipo de edificación» en el panel: el cambio, que es grande, se confirma con su botón y no desde la cinta
-    focoCampo("btnMode");
-    const f = $("fs-tipo");
-    f.classList.add("resalta");
-    setTimeout(() => f.classList.remove("resalta"), 1600);
+    // Abre Datos del proyecto con el tipo de edificación enfocado: el cambio, que es grande, se confirma al aplicar
+    abrirDatos("proy");
+    enfocar('#dpBody [data-dp="_tipo"]');
   } else if (a === "calc") {
     calcularAhora();
     toast(LAST ? "Cálculo actualizado" : "Complete los datos para calcular");
@@ -552,27 +357,27 @@ $("ws").addEventListener("click", e => {
   } else if (a === "add:cctv" || a === "add:cctvS") {
     // Videovigilancia: carga especial (vivienda u otros usos) o carga común del edificio, con su circuito propio
     const nm = a === "add:cctv" ? "cargas" : "serv";
-    selNode(nm === "cargas" ? "cargas" : "servicios");
     readList(nm);
     LISTS[nm].arr.push({ ...LISTS[nm].nuevo(), nombre: "Sistema de videovigilancia (CCTV)", tipo: "otra" });
     renderList(nm);
     update();
+    histPush();
+    abrirLista(nm);
     toast("CCTV agregado: su potencia es la suma de cámaras, grabador (NVR/DVR) y switch PoE");
   } else if (a === "add:lumsP" || a === "add:tomsP") {
     const nm = a === "add:lumsP" ? "lums" : "toms";
-    selNode("salidas");
     readList(nm);
     LISTS[nm].arr.push({ ...LISTS[nm].nuevo(), piso: pisos.length + 1 });
     renderList(nm);
     update();
-    setTimeout(() => $("L_" + nm).scrollIntoView({ block: "center" }), 60);
+    histPush();
+    abrirLista(nm);
     toast(`Elemento agregado en el ${ORD(pisos.length + 1)} piso: complete sus datos`);
   } else if (a.startsWith("add:")) {
     const nm = a.slice(4);
-    selNode(
-      nm === "cargas" ? "cargas" : nm === "serv" ? "servicios" : nm === "lums" || nm === "toms" ? "salidas" : "vivienda"
-    );
     $("add_" + nm).click();
+    histPush();
+    abrirLista(nm);
     toast("Elemento agregado: complete sus datos");
   } else if (a.startsWith("web:")) {
     cerrarWS(true);
