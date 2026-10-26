@@ -244,16 +244,138 @@ function alturas(r) {
     xb = xm - 22,
     paso = (xb - xa) / Math.max(S.length + GAP * (zonas.length - 1), 1);
   S.forEach((s, i) => (s.x = xa + paso * (i + 0.5 + GAP * zonas.indexOf(s.z))));
-  // Tubería (referencial): alumbrado y mandos por el techo; tomacorrientes y fuerza por el piso
-  const TECHO = { int: 3, braq: 8, emer: 9, aire: 8, itc: 9, luz: 8 },
-    PISO = { toma: 9, tomaC: 9, terma: 12, coc: 9, fza: 9 };
-  const yDe = s => (s.k === "luz" ? yT + 13 : Y(Math.min(Math.max(s.h, 0), a.techo)));
+  /* Aparatos como se ven instalados (vista frontal), centrados en el eje de la caja; en la leyenda va su símbolo
+     DGE. Cada uno indica cuánto sobresale arriba y abajo del eje, para que la tubería llegue a su borde. */
+  const ELI = (x, y, rx, ry, fi = "#fff") =>
+    o.push(
+      `<ellipse cx="${px2(x)}" cy="${px2(y)}" rx="${px2(rx)}" ry="${px2(ry)}" fill="${fi}" stroke="${INK}" stroke-width="1.1"/>`
+    );
+  const placa = (x, y, w, h) => {
+    R(x - w / 2, y - h / 2, w, h, { fi: "#fff", sw: 1.1 });
+    R(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4, { st: LN, sw: 0.6 });
+  };
+  const agujero = (x, y) => C(x, y, 1.1, { fi: INK, st: "" });
+  // Tomacorriente doble con toma de tierra (dos alvéolos y el contacto de tierra en cada módulo)
+  const enchufe = (x, y) => {
+    C(x, y, 5, { fi: "#f3f6f9" });
+    agujero(x - 2, y + 0.5);
+    agujero(x + 2, y + 0.5);
+    L(x, y - 3.4, x, y - 1.8, 1);
+  };
+  // Salida de fuerza: tomacorriente redondo de tres polos
+  const fuerza = (x, y, letra) => {
+    placa(x, y, 22, 24);
+    C(x, y, 7, { fi: "#f3f6f9" });
+    [90, 210, 330].forEach(g =>
+      agujero(x + 3.6 * Math.cos((g * Math.PI) / 180), y - 3.6 * Math.sin((g * Math.PI) / 180))
+    );
+    T(x + 14, y - 8, letra, { s: 7.5, b: 1, f: NAVY });
+  };
+  const APA = {
+    med: (x, y) => {
+      // Caja portamedidor con visor y cerradura
+      R(x - 15, y - 21, 30, 42, { fi: "#fff", sw: 1.3 });
+      R(x - 11, y - 16, 22, 20, { fi: "#eaf2fb", sw: 0.9 });
+      T(x, y - 8.5, "kWh", { s: 6, b: 1, a: "middle" });
+      R(x - 7, y - 4, 14, 5, { fi: "#fff", sw: 0.7 });
+      C(x + 9, y + 14, 1.6, { fi: INK, st: "" });
+      return [21, 21];
+    },
+    tab: (x, y, ht) => {
+      // Gabinete con puerta, chapa y señal de riesgo eléctrico; y es el borde superior
+      R(x - 16, y, 32, ht, { fi: "#fff", sw: 1.4 });
+      R(x - 13, y + 3, 26, ht - 6, { fi: "#f3f6f9", sw: 0.8 });
+      R(x + 8, y + ht / 2 - 5, 2.5, 10, { fi: INK, sw: 0.8 });
+      TRI(x - 6, y + 19, x + 6, y + 19, x, y + 8.5, "#ffd200");
+      L(x - 6, y + 19, x + 6, y + 19, 0.9);
+      L(x + 6, y + 19, x, y + 8.5, 0.9);
+      L(x, y + 8.5, x - 6, y + 19, 0.9);
+      L(x + 1, y + 11.5, x - 1.4, y + 15, 0.9);
+      L(x - 1.4, y + 15, x + 1.4, y + 15, 0.9);
+      L(x + 1.4, y + 15, x - 1, y + 18, 0.9);
+      return [0, ht];
+    },
+    int: (x, y) => {
+      // Placa con tecla basculante
+      placa(x, y, 18, 26);
+      R(x - 5, y - 8, 10, 16, { fi: "#f3f6f9", sw: 0.9 });
+      L(x - 5, y, x + 5, y, 0.6);
+      return [13, 13];
+    },
+    toma: (x, y) => {
+      placa(x, y, 18, 30);
+      enchufe(x, y - 7);
+      enchufe(x, y + 7);
+      return [15, 15];
+    },
+    braq: (x, y) => {
+      // Braquete: base en el muro y globo
+      R(x - 7, y - 14, 14, 5, { fi: "#fff", sw: 1 });
+      L(x, y - 9, x, y - 7, 1);
+      ELI(x, y + 2, 8, 9);
+      L(x - 8, y + 2, x + 8, y + 2, 0.6, LN);
+      return [14, 11];
+    },
+    luz: x => {
+      // Plafón en el techo: florón, vástago, pantalla y foco
+      R(x - 8, yT, 16, 3, { fi: "#fff", sw: 1 });
+      L(x, yT + 3, x, yT + 7, 1);
+      L(x - 6, yT + 7, x + 6, yT + 7, 1.1);
+      L(x + 6, yT + 7, x + 14, yT + 17, 1.1);
+      L(x + 14, yT + 17, x - 14, yT + 17, 1.1);
+      L(x - 14, yT + 17, x - 6, yT + 7, 1.1);
+      arco(x, yT + 17, 5, 0, 180, 8);
+      return [0, 0];
+    },
+    emer: (x, y) => {
+      // Equipo autónomo de dos faros con piloto de carga
+      L(x - 9, y - 6, x - 9, y - 9, 1);
+      L(x + 9, y - 6, x + 9, y - 9, 1);
+      C(x - 9, y - 12, 4.5);
+      C(x + 9, y - 12, 4.5);
+      R(x - 17, y - 6, 34, 13, { fi: "#fff", sw: 1.2 });
+      C(x + 12, y + 0.5, 1.6, { fi: "#2f7a4b", st: "" });
+      T(x - 3, y + 3, "EMERG.", { s: 4.8, b: 1, a: "middle", f: GR });
+      return [17, 7];
+    },
+    tomaC: (x, y) => APA.toma(x, y),
+    terma: (x, y) => {
+      // Terma eléctrica: tanque con termostato y tuberías de agua
+      R(x - 13, y - 22, 26, 44, { fi: "#fff", sw: 1.3 });
+      L(x - 13, y - 16, x + 13, y - 16, 0.6, LN);
+      L(x - 13, y + 16, x + 13, y + 16, 0.6, LN);
+      C(x, y + 6, 3.5, { fi: "#f3f6f9" });
+      L(x - 6, y + 22, x - 6, y + 28, 1.1);
+      L(x + 6, y + 22, x + 6, y + 28, 1.1);
+      return [22, 22];
+    },
+    coc: (x, y) => (fuerza(x, y, "C"), [12, 12]),
+    aire: (x, y) => (fuerza(x, y, "A"), [12, 12]),
+    fza: (x, y) => (fuerza(x, y, "F"), [12, 12]),
+    itc: (x, y) => {
+      // Interfono: rejilla del altavoz, micrófono y botón
+      placa(x, y, 20, 34);
+      [-11, -8, -5].forEach(d => L(x - 5, y + d, x + 5, y + d, 0.9));
+      C(x, y + 3, 1.5, { fi: INK, st: "" });
+      C(x, y + 10, 3.2, { fi: "#f3f6f9" });
+      return [17, 17];
+    }
+  };
+  // Tubería (referencial): alumbrado y mandos por el techo; tomacorrientes y fuerza por el piso; el tablero, por ambos
+  const yDe = s => (s.k === "luz" ? yT + 12 : Y(Math.min(Math.max(s.h, 0), a.techo))),
+    PORT = ["int", "braq", "emer", "aire", "itc", "tab"],
+    PORP = ["med", "tab", "toma", "tomaC", "terma", "coc", "fza"];
+  const dib = [];
   S.forEach(s => {
-    const y = yDe(s);
-    if (s.k in TECHO) L(s.x, yT, s.x, y - TECHO[s.k] * 1.15, 1, CU);
-    if (s.k in PISO) L(s.x, yP, s.x, y + PISO[s.k] * 1.15, 1, CU);
+    const y = yDe(s),
+      mark = o.length,
+      [ar, ab] = APA[s.k](s.x, y, 0.4 * k);
+    dib.push(o.splice(mark));
+    if (PORT.includes(s.k)) L(s.x, yT, s.x, y - ar, 1.1, CU);
+    if (PORP.includes(s.k)) L(s.x, yP, s.x, y + ab, 1.1, CU);
   });
-  S.forEach(s => SIM[s.k](s.x, yDe(s), 1.15, 0.4 * k));
+  // Los aparatos se dibujan encima de las tuberías
+  dib.forEach(d => o.push(...d));
   // Nombres y zonas debajo del piso
   const partir = (t, n) => {
     const ln = [];
@@ -330,7 +452,7 @@ function alturas(r) {
   };
   const notas = [
     `Alturas desde el NPT hasta el eje de la caja; el tablero, hasta su borde superior. El centro de luz va en el fondo de la losa (+${fmt(a.techo, 2)} m).`,
-    "Símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME), sección 093, redibujados conservando sus proporciones.",
+    "La elevación muestra los aparatos instalados; la leyenda, su símbolo de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME), sección 093, redibujado conservando sus proporciones.",
     `Norma A.120 del RNE: ${RIGE[rige]}. Interruptores y timbres hasta 1.35 m (Art. 11 d); alcance frontal de 0.40 a 1.20 m (Art. 10).`,
     "Las alturas sin límite en la A.120 (—) son criterio del proyectista: verifíquelas con la arquitectura, el mobiliario y los equipos. El medidor, según la concesionaria.",
     "Recorridos de tubería referenciales: alumbrado y mandos por el techo; tomacorrientes y salidas de fuerza por el piso."
