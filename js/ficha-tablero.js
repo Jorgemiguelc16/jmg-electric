@@ -59,17 +59,10 @@ function ftPonerLong(d, v) {
 function ftPrevia() {
   if (!ftLongCambio() || !LAST) return null;
   const d = ftLongitud(ftAlim()),
-    v0 = ftLongActual(d);
-  try {
-    ftPonerLong(d, FT_LONG);
-    const c = ctx();
-    return MODE === "uni" ? calcUni(c) : calcMulti(c);
-  } catch (e) {
-    return null;
-  } finally {
-    if (d.lista) LISTS[d.lista].arr[d.i][d.id] = v0;
-    else $(d.id).value = v0;
-  }
+    p = copiaProyecto();
+  if (d.lista) p[d.lista][d.i][d.id] = String(FT_LONG).trim() === "" ? null : parseFloat(FT_LONG) || 0;
+  else p[d.id] = FT_LONG;
+  return calcularCopia(p);
 }
 function fichaTablero(tab) {
   if (DESACT) calcularAhora();

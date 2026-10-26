@@ -1,14 +1,17 @@
 /* MOTOR DE CÁLCULO (el corazón de la plataforma)
-   ctx() lee los parámetros; dimensionar() elige interruptor y sección por capacidad (Tabla 2 con 5A y 5C)
+   calcular(proyecto) recibe los datos del proyecto (el mismo objeto que se guarda en el .json, estado() en
+   js/proyectos.js) y devuelve el resultado, sin leer nada de la pantalla. ctx() arma los parámetros; dimensionar() elige interruptor y sección por capacidad (Tabla 2 con 5A y 5C)
    y por caída de tensión (Regla 050-102); mdVivienda/mdUso calculan la máxima demanda (Reglas 050-200,
    050-202, 050-204 a 050-210 y Tabla 14); calcUni y calcMulti arman alimentadores y circuitos;
    balancear() reparte las fases; pozo() calcula la puesta a tierra; recomendaciones() da los avisos.
    Cualquier cambio aquí debe pasar las pruebas de pruebas/index.html. */
-function ctx() {
-  const aisl = $("aisl").value,
-    temp = +$("temp").value,
-    nag = +$("nag").value,
-    met = $("met").value,
+function ctx(p = estado()) {
+  const g = id => (p[id] == null ? "" : String(p[id])),
+    n = id => parseFloat(g(id)) || 0;
+  const aisl = g("aisl"),
+    temp = +g("temp"),
+    nag = +g("nag"),
+    met = g("met"),
     ft = FT[aisl][temp] ?? 1,
     fa = FA[nag] ?? 1;
   return {
@@ -19,40 +22,54 @@ function ctx() {
     ft,
     fa,
     fc: ft * fa,
-    fp: num("fp") || 0.9,
-    maxSal: Math.max(1, Math.min(12, Math.round(num("maxSal") || 12))),
-    pAl: num("pAl"),
-    pTo: num("pTo"),
-    reserva: +$("reserva").value,
-    uso: $("uso")?.value || "viv",
-    resAl: +$("resAl").value,
-    aLib: Math.max(0, num("aLib")),
-    wLib: Math.max(0, num("wLib")),
-    fdA: 1 + +$("resAl").value / 100,
-    sminD: parseFloat($("sminD").value),
-    sminA: parseFloat($("sminA").value),
-    idMode: $("idMode").value,
-    dvGen: parseFloat($("dvGen").value),
-    iccE: num("iccE") || 10,
+    fp: n("fp") || 0.9,
+    maxSal: Math.max(1, Math.min(12, Math.round(n("maxSal") || 12))),
+    pAl: n("pAl"),
+    pTo: n("pTo"),
+    reserva: +g("reserva"),
+    uso: g("uso") || "viv",
+    resAl: +g("resAl"),
+    aLib: Math.max(0, n("aLib")),
+    wLib: Math.max(0, n("wLib")),
+    fdA: 1 + +g("resAl") / 100,
+    sminD: parseFloat(g("sminD")),
+    sminA: parseFloat(g("sminA")),
+    idMode: g("idMode"),
+    dvGen: parseFloat(g("dvGen")),
+    iccE: n("iccE") || 10,
     proj: {
-      nombre: $("p_nombre").value,
-      prop: $("p_prop").value,
-      ubic: $("p_ubic").value,
-      proy: $("p_proy").value,
-      cip: $("p_cip").value.replace(/[<>]/g, "").trim()
+      nombre: g("p_nombre"),
+      prop: g("p_prop"),
+      ubic: g("p_ubic"),
+      proy: g("p_proy"),
+      cip: g("p_cip").replace(/[<>]/g, "").trim()
     },
-    pat: { rho: num("rho_s") || 100, fr: num("fr") || 1, Lv: num("Lv") || 2.4, dv: parseFloat($("dv").value) },
-    rho: $("rhoMode").value === "20" ? RHO_CU : aisl === "pvc" ? 0.0209 : 0.0223,
+    pat: { rho: n("rho_s") || 100, fr: n("fr") || 1, Lv: n("Lv") || 2.4, dv: parseFloat(g("dv")) },
+    rho: g("rhoMode") === "20" ? RHO_CU : aisl === "pvc" ? 0.0209 : 0.0223,
     rhoRef:
-      $("rhoMode").value === "20"
+      g("rhoMode") === "20"
         ? "Cobre a 20 °C"
         : aisl === "pvc"
           ? "Cobre a 70 °C · ρ20 (1 + 0,00393·50)"
           : "Cobre a 90 °C · ρ20 (1 + 0,00393·70)",
-    desig: $("desig").value.replace(/[<>]/g, "").trim(),
-    pDesp: Math.max(0, num("pDesp")),
-    bajada: Math.max(0, num("bajada"))
+    desig: g("desig").replace(/[<>]/g, "").trim(),
+    pDesp: Math.max(0, n("pDesp")),
+    bajada: Math.max(0, n("bajada"))
   };
+}
+/* Proyecto en cálculo: calcular() lo fija mientras calcula; calcUni, calcMulti y sus auxiliares leen de él */
+let P = null;
+const pv = id => (P[id] == null ? "" : String(P[id])),
+  pn = id => parseFloat(pv(id)) || 0;
+function calcular(p) {
+  const P0 = P;
+  P = p;
+  try {
+    const c = ctx(p);
+    return p.MODE === "multi" ? calcMulti(c) : calcUni(c);
+  } finally {
+    P = P0;
+  }
 }
 const tierraPara = itm => (T16.find(([a]) => itm <= a) || [0, 25])[1];
 const tierraElectrodo = amp => T17.find(([a]) => amp <= a)[1];
@@ -442,14 +459,14 @@ function pisosUni() {
   return [
     {
       n: 1,
-      area: num("area"),
-      aE: num("aE"),
-      Ld: num("Ltd1") || 1,
-      al: sal(num("al_n"), num("al_L")),
-      tg: sal(num("tg_n"), num("tg_L")),
-      tc: sal(num("tc_n"), num("tc_L"))
+      area: pn("area"),
+      aE: pn("aE"),
+      Ld: pn("Ltd1") || 1,
+      al: sal(pn("al_n"), pn("al_L")),
+      tg: sal(pn("tg_n"), pn("tg_L")),
+      tc: sal(pn("tc_n"), pn("tc_L"))
     },
-    ...pisos.map((p, i) => ({
+    ...P.pisos.map((p, i) => ({
       n: i + 2,
       i,
       area: p.area || 0,
@@ -535,10 +552,10 @@ function mdUso(uso, area, cs, aE = 0) {
   };
 }
 function calcUni(c) {
-  SFX = SECF.uni || {};
+  SFX = (P.SECF || {}).uni || {};
   const PS = pisosUni(),
     varios = PS.length > 1,
-    esq = varios ? $("esqPisos").value : "tg";
+    esq = varios ? pv("esqPisos") : "tg";
   // Uso: vivienda (Regla 050-200) u otro uso de la Tabla 14 (Regla 050-210). En otros usos el área es la servida (sótano al 100 %),
   // no hay corriente mínima de 40 A y la carga del alimentador es continua (Regla 050-104(3)): corriente de diseño 1.25 × I.
   const viv = !USOS[c.uso],
@@ -546,11 +563,11 @@ function calcUni(c) {
     ImV = viv ? IMIN_UNI : 0,
     fdV = viv ? c.fdA : FD;
   const areaT = PS.reduce((s, p) => s + p.area, 0),
-    sot = num("sot"),
+    sot = pn("sot"),
     area = areaT + fSot * sot,
-    sk = radio("sist") || "mono220",
-    Lalim = num("Lalim") || 1;
-  const cs = cargas.map(x => ({ ...x }));
+    sk = pv("sist") || "mono220",
+    Lalim = pn("Lalim") || 1;
+  const cs = P.cargas.map(x => ({ ...x }));
   const mdDe = (a, list, aE = 0) =>
     viv ? mdVivienda({ area: a, ...cargasMD(list) }, false) : mdUso(c.uso, a, list, aE);
   // Áreas libres no techadas (patios, jardines, cocheras abiertas): carga unitaria elegida por el proyectista (p. ej. 5 W/m²), al 100 %;
@@ -564,11 +581,11 @@ function calcUni(c) {
       PS.reduce((s, p) => s + (p.aE || 0), 0)
     )
   );
-  const pw = { al: num("al_p"), tg: num("tg_p"), tc: num("tc_p") };
+  const pw = { al: pn("al_p"), tg: pn("tg_p"), tc: pn("tc_p") };
   // Luminarias de otra potencia de cada piso (con un solo piso, todas van al 1er piso)
   const exP = p =>
       lumsExtra(
-        lums.filter(x => (varios ? Math.round(+x.piso || 1) : 1) === p.n),
+        P.lums.filter(x => (varios ? Math.round(+x.piso || 1) : 1) === p.n),
         p.al.n,
         pw.al
       ),
@@ -578,7 +595,7 @@ function calcUni(c) {
     };
   const exPt = p =>
       lumsExtra(
-        toms.filter(x => (varios ? Math.round(+x.piso || 1) : 1) === p.n),
+        P.toms.filter(x => (varios ? Math.round(+x.piso || 1) : 1) === p.n),
         p.tg.n,
         pw.tg
       ),
@@ -699,7 +716,7 @@ function calcUni(c) {
     asignarID(list, c);
     circ.push(...list);
   });
-  const bal = balancear(circ, sk, FIX.uni);
+  const bal = balancear(circ, sk, (P.FIX || {}).uni);
   return {
     mode: "uni",
     uso: viv ? "viv" : c.uso,
@@ -727,14 +744,14 @@ function calcUni(c) {
   };
 }
 function calcMulti(c) {
-  SFX = SECF.multi || {};
-  const sk = radio("sistG") || "tri380",
-    Lgen = num("Lgen") || 1,
-    Lms = num("Lms") || 1;
+  SFX = (P.SECF || {}).multi || {};
+  const sk = pv("sistG") || "tri380",
+    Lgen = pn("Lgen") || 1,
+    Lms = pn("Lms") || 1;
   // Cargas especiales de cada tipo de departamento (lista cargasT): sumadas por tipo para la máxima demanda,
   // su potencia total (Pesp) para la carga instalada y su número (nEsp) para el metrado
-  const espT = i => cargasT.filter(x => Math.round(+x.dep || 0) === i && x.p > 0);
-  const T = tipos
+  const espT = i => P.cargasT.filter(x => Math.round(+x.dep || 0) === i && x.p > 0);
+  const T = P.tipos
     .map((t, i) => ({ ...t, _i: i }))
     .filter(t => t.cant > 0)
     .map(t => {
@@ -746,7 +763,7 @@ function calcMulti(c) {
   // Luminarias de otra potencia de cada tipo de departamento
   const exT = t =>
       lumsExtra(
-        lumsT.filter(x => Math.round(+x.tipo || 0) === t._i),
+        P.lumsT.filter(x => Math.round(+x.tipo || 0) === t._i),
         t.nAl || 0,
         c.pAl
       ),
@@ -756,7 +773,7 @@ function calcMulti(c) {
     };
   const exTt = t =>
       lumsExtra(
-        tomsT.filter(x => Math.round(+x.tipo || 0) === t._i),
+        P.tomsT.filter(x => Math.round(+x.tipo || 0) === t._i),
         t.nTo || 0,
         c.pTo
       ),
@@ -805,7 +822,7 @@ function calcMulti(c) {
   }
   const mdDeptos = units.reduce((s, u) => s + u.dem, 0),
     aireTot = T.reduce((s, t) => s + t.aire * t.cant, 0);
-  const SV = serv.map((s, i) => ({ ...s, _i: i })).filter(s => s.p > 0);
+  const SV = P.serv.map((s, i) => ({ ...s, _i: i })).filter(s => s.p > 0);
   const Pserv = SV.reduce((s, x) => s + x.p, 0),
     maxMot = Math.max(0, ...SV.filter(x => x.tipo === "motor").map(x => x.p)),
     mdServ = 0.75 * Pserv;
@@ -904,7 +921,7 @@ function calcMulti(c) {
     list.forEach(q => {
       q.src = { t: "tipo", i: t._i };
     });
-    cargasT.forEach((x, ix) => {
+    P.cargasT.forEach((x, ix) => {
       if (Math.round(+x.dep || 0) !== t._i || !(x.p > 0)) return;
       const q = circuito(
         {
@@ -933,7 +950,7 @@ function calcMulti(c) {
       q.ref = `${q.id} · ${q.desc}`;
     });
   const balItems = [...units.map(u => ({ ...u, key: u.ref })), ...circ.filter(q => q.tab === "TSG")];
-  const bal = balancear(balItems, sk, FIX.multi);
+  const bal = balancear(balItems, sk, (P.FIX || {}).multi);
   const emerg = SV.some(s => /emergencia/i.test(s.nombre));
   const CI =
     T.reduce(

@@ -95,55 +95,55 @@ const VW_BORDES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]
 document.querySelectorAll(".vw").forEach(b => b.insertAdjacentHTML("beforeend", VW_BORDES));
 // El fondo de la página queda fijo mientras haya alguna ventana o diálogo abierto
 const vwFondo = () => document.body.classList.toggle("wl-open", !!document.querySelector(".welcome:not([hidden])"));
-/* Vista previa de cambios en campos del formulario (ventanas Parámetros de diseño y Datos del proyecto): pone los
-   valores pendientes en sus campos (y en las listas que dependen de ellos), calcula el proyecto y lo deja todo
-   como estaba, aunque el cálculo falle. pend: {id: valor} o {"radio:nombre": valor}; listas: {nombre: arreglo}
-   reemplaza temporalmente listas completas (editor de departamentos). Devuelve el resultado o null si el proyecto
-   tiene datos pendientes. */
-function previaCampos(pend, listas = {}) {
-  const ks = Object.keys(pend || {}),
-    ls = Object.keys(listas);
-  if ((!ks.length && !ls.length) || !LAST) return null;
-  const antes = [],
-    copias = [];
+/* Copia del proyecto actual para una vista previa: los datos de estado() con sus listas copiadas, de modo que
+   la ventana pueda cambiarlas sin tocar el proyecto. Se calcula con calcular(), que no lee la pantalla. */
+function copiaProyecto() {
+  const p = estado();
+  Object.keys(LISTS).forEach(k => (p[k] = (p[k] || []).map(x => ({ ...x }))));
+  p.FIX = { uni: { ...((p.FIX || {}).uni || {}) }, multi: { ...((p.FIX || {}).multi || {}) } };
+  p.SECF = { uni: { ...((p.SECF || {}).uni || {}) }, multi: { ...((p.SECF || {}).multi || {}) } };
+  return p;
+}
+// Calcula una copia del proyecto; null si le faltan datos obligatorios o el cálculo no es posible
+function calcularCopia(p) {
+  if (!LAST || faltantes(p).length) return null;
   try {
-    ks.forEach(k => {
-      if (k.startsWith("radio:")) {
-        const nm = k.slice(6),
-          r0 = document.querySelector(`input[name="${nm}"]:checked`),
-          r1 = document.querySelector(`input[name="${nm}"][value="${pend[k]}"]`);
-        antes.push(() => r0 && (r0.checked = true));
-        if (r1) r1.checked = true;
-      } else {
-        const c = $(k);
-        if (!c) return;
-        const v0 = c.value;
-        antes.push(() => (c.value = v0));
-        c.value = pend[k];
-      }
-    });
-    Object.keys(LISTS).forEach(readList);
-    // Las listas se reemplazan después de leer el formulario, para que no las pise
-    ls.forEach(nm => {
-      const a = LISTS[nm].arr;
-      copias.push([a, a.slice()]);
-      a.length = 0;
-      a.push(...listas[nm]);
-    });
-    if (faltantes().length) return null;
-    const c = ctx();
-    return MODE === "uni" ? calcUni(c) : calcMulti(c);
+    return calcular(p);
   } catch (e) {
     return null;
-  } finally {
-    copias.forEach(([a, v]) => {
-      a.length = 0;
-      a.push(...v);
-    });
-    antes.reverse().forEach(f => f());
-    Object.keys(LISTS).forEach(readList);
-    faltantes();
   }
+}
+// Valor de un dato de lista con la misma conversión que el formulario (readList)
+function valorLista(nm, k, v) {
+  const f = LISTS[nm].f.find(x => x.k === k);
+  if (!f) return v;
+  return f.t === "number"
+    ? String(v ?? "").trim() === ""
+      ? null
+      : parseFloat(v) || 0
+    : selNum(f)
+      ? +v
+      : String(v ?? "").replace(/[<>]/g, "");
+}
+/* Vista previa de cambios en campos del formulario (ventanas Parámetros de diseño y Datos del proyecto).
+   pend: {id: valor}, {"radio:nombre": valor} o, para un dato de lista, {"lista_campo_i": valor} (los ids del
+   formulario, por ejemplo pisos_area_0); listas: {nombre: arreglo} reemplaza listas completas (editor de
+   departamentos). Devuelve el resultado o null si faltan datos obligatorios. */
+function previaCampos(pend, listas = {}) {
+  const ks = Object.keys(pend || {});
+  if ((!ks.length && !Object.keys(listas).length) || !LAST) return null;
+  const p = copiaProyecto();
+  Object.entries(listas).forEach(([nm, a]) => (p[nm] = a.map(x => ({ ...x }))));
+  ks.forEach(k => {
+    if (k.startsWith("radio:")) return (p[k.slice(6)] = pend[k]);
+    const m = k.match(/^([a-zA-Z]+)_([a-zA-Z_]+?)_(\d+)$/);
+    if (m && LISTS[m[1]] && p[m[1]][+m[3]] && LISTS[m[1]].f.some(f => f.k === m[2])) {
+      p[m[1]][+m[3]][m[2]] = valorLista(m[1], m[2], pend[k]);
+      return;
+    }
+    p[k] = pend[k];
+  });
+  return calcularCopia(p);
 }
 // Franja con los resultados principales del proyecto (o su vista previa)
 function franjaProyecto(r, prev) {

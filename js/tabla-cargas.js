@@ -67,23 +67,9 @@ function tcCambios() {
 function tcPrevia() {
   if (!tcCambios()) return LAST;
   if (!LAST) return null;
-  const copia = tcListas().map(nm => [nm, LISTS[nm].arr.slice()]);
-  try {
-    tcListas().forEach(nm => {
-      const L = LISTS[nm];
-      L.arr.length = 0;
-      TC_PEND[nm].forEach(x => L.arr.push(tcFila(nm, x)));
-    });
-    const c = ctx();
-    return MODE === "uni" ? calcUni(c) : calcMulti(c);
-  } catch (e) {
-    return null;
-  } finally {
-    copia.forEach(([nm, a]) => {
-      LISTS[nm].arr.length = 0;
-      LISTS[nm].arr.push(...a);
-    });
-  }
+  const p = copiaProyecto();
+  tcListas().forEach(nm => (p[nm] = TC_PEND[nm].map(x => tcFila(nm, x))));
+  return calcularCopia(p);
 }
 function tablaCargas(tab) {
   if (!$("tcDlg").hidden) return;

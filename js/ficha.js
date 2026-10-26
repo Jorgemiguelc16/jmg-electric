@@ -169,37 +169,18 @@ const fcMismo = (r, key, src) =>
    Los datos se ponen solo durante el cálculo y se restauran siempre, aunque el cálculo falle. */
 function fcPrevia(q) {
   if (!fcHay() || !LAST || !q) return null;
-  const ed = fcEditables(q),
-    listas = [],
-    campos = [],
-    fx = FIX[MODE] || (FIX[MODE] = {}),
-    fx0 = { ...fx };
-  try {
-    ed.forEach(d => {
-      if (!(d.id in FC_PEND)) return;
-      const v = FC_PEND[d.id];
-      if (d.id === "_fase") {
-        if (v) fx[q.key] = v;
-        else delete fx[q.key];
-      } else if (d.campo) {
-        campos.push([d.id, $(d.id).value]);
-        $(d.id).value = v;
-      } else {
-        const it = LISTS[d.lista].arr[q.src.i];
-        listas.push([it, d.id, it[d.id]]);
-        it[d.id] = fcConv(d, v);
-      }
-    });
-    const c = ctx();
-    return fcMismo(MODE === "uni" ? calcUni(c) : calcMulti(c), q.key, q.src);
-  } catch (e) {
-    return null;
-  } finally {
-    listas.reverse().forEach(([it, k, v]) => (it[k] = v));
-    campos.reverse().forEach(([id, v]) => ($(id).value = v));
-    Object.keys(fx).forEach(k => delete fx[k]);
-    Object.assign(fx, fx0);
-  }
+  const p = copiaProyecto();
+  fcEditables(q).forEach(d => {
+    if (!(d.id in FC_PEND)) return;
+    const v = FC_PEND[d.id];
+    if (d.id === "_fase") {
+      if (v) p.FIX[MODE][q.key] = v;
+      else delete p.FIX[MODE][q.key];
+    } else if (d.campo) p[d.id] = v;
+    else p[d.lista][q.src.i][d.id] = fcConv(d, v);
+  });
+  const r = calcularCopia(p);
+  return r ? fcMismo(r, q.key, q.src) : null;
 }
 // Franja del resultado en la pestaña Carga (con cambios pendientes, la vista previa)
 function fcFranja(q, prev) {

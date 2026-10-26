@@ -210,21 +210,26 @@ function validar() {
 }
 // Resumen del último cálculo que se guarda con el proyecto (Centro de ingeniería): datos pendientes, conforme y máxima demanda
 let RESUMEN = null;
-function faltantes() {
+/* Datos obligatorios que faltan. Sin argumento revisa el proyecto en pantalla y los marca en ámbar; con un
+   proyecto (vista previa de una ventana) solo revisa sus datos, sin marcar nada. */
+function faltantes(p = null) {
   let tot = 0;
-  const F = [],
+  const D = p || estado(),
+    marcar = !p,
+    { cargas, pisos, tipos, cargasT, serv } = D,
+    F = [],
     vacio = v => v == null || v === "" || !(parseFloat(v) > 0),
-    val = id => ($(id) ? $(id).value : "");
-  document.querySelectorAll(".falta").forEach(e => e.classList.remove("falta"));
+    val = id => (D[id] == null ? "" : String(D[id]));
+  if (marcar) document.querySelectorAll(".falta").forEach(e => e.classList.remove("falta"));
   const req = (id, l, cond) => {
     tot++;
     if (cond === undefined ? vacio(val(id)) : cond) {
       F.push({ id, l });
-      const el = $(id);
+      const el = marcar && $(id);
       if (el) el.classList.add("falta");
     }
   };
-  if (MODE === "uni") {
+  if (D.MODE === "uni") {
     req("area", "Área techada de la vivienda");
     req("Lalim", "Longitud del alimentador");
     [
@@ -244,7 +249,7 @@ function faltantes() {
       req(`cargas_p_${i}`, `${n}: potencia`, vacio(x.p));
       req(`cargas_L_${i}`, `${n}: longitud`, vacio(x.L));
     });
-    if (pisos.length && $("esqPisos").value === "td") req("Ltd1", "Longitud del alimentador al tablero del 1er piso");
+    if (pisos.length && val("esqPisos") === "td") req("Ltd1", "Longitud del alimentador al tablero del 1er piso");
     pisos.forEach((p, i) => {
       const n = `${ORD(i + 2)} piso`;
       [
@@ -373,8 +378,9 @@ function update() {
     return;
   }
   $("btnXlsx").disabled = false;
-  const c = ctx();
-  const r = MODE === "uni" ? calcUni(c) : calcMulti(c);
+  // El motor recibe los datos del proyecto (el mismo objeto que se guarda en el .json) y no lee la pantalla
+  const r = calcular(estado()),
+    c = r.c;
   LAST = r;
   RESUMEN = {
     pend: 0,

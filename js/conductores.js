@@ -35,17 +35,9 @@ const cdCambios = () => {
    resultado actualizado antes de aplicar. SECF se restaura siempre. */
 function cdPrevia() {
   if (!cdCambios() || !LAST) return null;
-  const s0 = SECF[MODE];
-  try {
-    SECF[MODE] = { ...CD_PEND };
-    const c = ctx();
-    return MODE === "uni" ? calcUni(c) : calcMulti(c);
-  } catch (e) {
-    return null;
-  } finally {
-    SECF[MODE] = s0;
-    SFX = s0 || {};
-  }
+  const p = copiaProyecto();
+  p.SECF[MODE] = { ...CD_PEND };
+  return calcularCopia(p);
 }
 function renderCond() {
   if (!LAST || !CD_PEND) return;
