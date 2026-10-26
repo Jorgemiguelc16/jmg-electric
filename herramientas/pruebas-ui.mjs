@@ -319,6 +319,29 @@ prueba("Datos del proyecto: pisos (lista) y circuitos del 1er piso en un TD-1", 
   );
 });
 
+prueba("Doble clic en cada elemento del explorador abre su ventana", async ok => {
+  // Ventana (o vista) que debe quedar abierta tras el doble clic en cada elemento
+  const abierta = async () =>
+    ev(
+      "['dpDlg','ppDlg','tcDlg','fichaDlg','ftDlg','condDlg'].find(d => !$(d).hidden) || (VIEW === 'metrado' ? 'metrado' : '')"
+    );
+  const cerrar = () =>
+    ev(
+      "cerrarFicha(); cerrarTablero(); cerrarTabla(); cuadroCond(false); parametros(false); datosProyecto(false); verVista('resumen')"
+    );
+  for (const m of ["uni", "multi"]) {
+    await ejemplo(m);
+    const nodos = await J("[...document.querySelectorAll('#exTree [data-node]')].map(x => x.dataset.node)");
+    for (const nd of nodos) {
+      await dobleClic(`#exTree [data-node="${nd}"]`);
+      await esperar(150);
+      const v = await abierta();
+      ok(!!v, `${m}: «${nd}» abre una ventana`);
+      await cerrar();
+    }
+  }
+});
+
 prueba("Lo que se escribe en el panel pasa a los datos del proyecto (PROY)", async ok => {
   await ejemplo("uni");
   await ev("selNode('vivienda')");
