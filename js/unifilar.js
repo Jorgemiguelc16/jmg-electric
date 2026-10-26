@@ -854,6 +854,6 @@ function svgPng(svg, scale = 2) {
 }
 function cardUnifilar(r, nro) {
   const u = unifilar(r);
-  return `<section class="card"><h2><span><span class="num">${nro}</span>Diagrama unifilar</span><span class="ref"><button type="button" class="btn sec sm" data-dl="svg">Descargar SVG</button><button type="button" class="btn sec sm" data-dl="png">Descargar PNG</button><button type="button" class="btn sec sm" data-dl="dxf" title="Para AutoCAD">Descargar DXF</button></span></h2>
+  return `<section class="card"><h2><span><span class="num">${nro}</span>Diagrama unifilar</span></h2>
   <div class="unif">${u.svg}</div><div class="body"><p class="hint">Generado automáticamente a partir del cálculo: protecciones, conductores, diferenciales, puesta a tierra y cuadro de cargas exigido por la EM.010 (Art. 8). Se incluye también en la memoria de Excel.</p></div></section>`;
 }

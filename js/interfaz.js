@@ -78,15 +78,21 @@ function render(r) {
       .join("")}
     <p class="aviso-norma">Cálculos conforme al CNE-Utilización, RNE EM.010 y Normas DGE vigentes. Como en todo proyecto eléctrico, los resultados deben ser verificados por el profesional responsable antes de su ejecución.</p>`;
   };
-  html += `<nav class="vtabs" role="tablist" aria-label="Resultados">${VORDEN.filter(k => S[k])
-    .map(
-      k =>
-        `<button type="button" role="tab" class="vtab${st[k] ? " " + st[k] : ""}" data-view="${k}" aria-selected="${k === VIEW}">${VLBL[k]}</button>`
-    )
-    .join("")}</nav>`;
   html += `<div class="vpanel">${S[VIEW]()}</div>`;
   html += `<p class="aviso-norma">Cálculos conforme al CNE-Utilización, RNE EM.010 y Normas DGE vigentes. Como en todo proyecto eléctrico, los resultados deben ser verificados por el profesional responsable antes de su ejecución.</p>`;
   $("results").innerHTML = html;
+  vistasCinta(S, st);
+}
+// La vista se elige en la cinta (Resultados › Vistas): se marca la vista abierta, se ocultan las que el proyecto
+// no tiene y un punto avisa lo que no cumple (rojo) o hay por revisar (ámbar)
+function vistasCinta(S, st) {
+  document.querySelectorAll(".rb[data-view]").forEach(b => {
+    const k = b.dataset.view;
+    b.hidden = !!S && !S[k];
+    b.classList.toggle("on", !!S && k === VIEW);
+    b.classList.toggle("bad", st[k] === "bad");
+    b.classList.toggle("warn", st[k] === "warn");
+  });
 }
 function setMode(m) {
   MODE = m;
@@ -361,6 +367,7 @@ function update() {
       <p class="hint">Los resultados aparecen automáticamente al completar los datos marcados en ámbar. Haga clic en un dato para ir a él.</p>
       <ul class="faltan">${F.map(x => `<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul>
       <p class="hint">¿Prefiere explorar primero? <button type="button" class="linkbtn" data-ej2="${MODE === "uni" && usoAct() !== "viv" ? "com" : MODE}">Cargue un proyecto de ejemplo</button>.</p></div></section>`;
+    vistasCinta(null, {});
     RESUMEN = { pend: F.length, tot: F.total };
     saveDraft();
     hdrEstado();

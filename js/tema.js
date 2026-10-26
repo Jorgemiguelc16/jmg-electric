@@ -100,7 +100,7 @@ $("apDoc").addEventListener(
   let p = null;
   const zm = el => el.currentCSSZoom || 1;
   d.addEventListener("mousedown", e => {
-    if (e.button !== 0 || e.target.closest("input,select,textarea,button,a,label,.vtabs")) return;
+    if (e.button !== 0 || e.target.closest("input,select,textarea,button,a,label")) return;
     const u = e.target.closest(".unif"),
       h = u && u.scrollWidth > u.clientWidth ? u : d.scrollWidth > d.clientWidth ? d : null;
     if (ZC <= 1 && !u) return;

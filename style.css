@@ -1060,48 +1060,6 @@ tr.fix td {
 .num:empty {
   display: none;
 }
-.vtabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  padding: 6px;
-}
-.vtab {
-  flex: none;
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 7px 13px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
-  position: relative;
-  white-space: nowrap;
-}
-.vtab:hover {
-  background: var(--panel2);
-  color: var(--navy);
-}
-.vtab[aria-selected="true"] {
-  background: var(--navy);
-  color: #fff;
-  border-color: var(--navy);
-}
-.vtab.bad::after,
-.vtab.warn::after {
-  content: "";
-  position: absolute;
-  top: 5px;
-  right: 4px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--bad);
-}
-.vtab.warn::after {
-  background: #c98a12;
-}
 .vpanel {
   display: flex;
   flex-direction: column;
@@ -2202,36 +2160,6 @@ body.ws-on {
 }
 .app #results > .kpis {
   display: none;
-}
-.app .vtabs {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  background: #eef2f6;
-  border: 0;
-  border-bottom: 1px solid #d5dbe2;
-  box-shadow: none;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-.app .vtab {
-  padding: 8px 15px;
-  font-size: 12.5px;
-  border: 0;
-  border-right: 1px solid #d5dbe2;
-  color: #5b6876;
-  background: none;
-  border-radius: 0;
-}
-.app .vtab[aria-selected="true"] {
-  background: #fff;
-  color: #14304f;
-  font-weight: 600;
-  box-shadow: inset 0 2px 0 #14304f;
 }
 .app .vpanel {
   flex: 1;
@@ -3554,11 +3482,6 @@ a.rb {
   .tab[aria-selected="true"] {
     border-bottom-color: var(--accent);
   }
-  .vtab[aria-selected="true"] {
-    background: var(--btn-bg);
-    border-color: var(--btn-bg);
-    color: var(--btn-ink);
-  }
   .ii {
     border-color: var(--muted);
     color: var(--muted);
@@ -3704,26 +3627,6 @@ a.rb {
     border-color: var(--ws-line);
     border-radius: 12px;
     box-shadow: var(--shadow-h);
-  }
-  .app .vtabs {
-    background: var(--ws-pane-h);
-    border-bottom-color: var(--ws-line);
-  }
-  .app .vtab {
-    color: var(--ws-text2);
-    border-right-color: var(--ws-line);
-    transition:
-      background 0.15s,
-      color 0.15s;
-  }
-  .app .vtab:hover {
-    background: var(--ws-hover);
-    color: var(--ws-text);
-  }
-  .app .vtab[aria-selected="true"] {
-    background: var(--ws-doc);
-    color: var(--navy);
-    border-color: var(--ws-line);
   }
   .app .vpanel {
     background-color: var(--ws-doc);
@@ -3914,9 +3817,6 @@ a.rb {
   .tn.sel {
     box-shadow: inset 3px 0 0 var(--accent);
   }
-  .app .vtab[aria-selected="true"] {
-    box-shadow: inset 0 -3px 0 var(--accent);
-  }
 }
 /* v2.2 · Selector de paleta, cinta compacta y plegable, versión sin recuadro */
 @media screen {
@@ -3950,9 +3850,6 @@ a.rb {
   }
   #ws.cinta-oculta .ap-ribbon {
     display: none;
-  }
-  .app .vtab {
-    padding: 6px 13px;
   }
   .app .vpanel {
     padding: 12px;
@@ -4353,7 +4250,7 @@ span.jmg-mono.ap-logo {
 .ap-center {
   position: relative;
 }
-#results > :not(.vtabs) {
+#results > * {
   zoom: var(--zc, 1);
 }
 .ap-doc.zoom-on {
@@ -7122,6 +7019,31 @@ legend .dd-x {
   font: 600 10px var(--f-mono);
   letter-spacing: 0;
   text-align: center;
+}
+/* Vistas de resultados: se eligen solo en la cinta; el botón de la vista abierta queda marcado y un punto avisa
+   lo que no cumple (rojo) o hay por revisar (ámbar) */
+.rb[data-view].on {
+  background: #dbe7f5;
+  border-color: #b9cde4;
+  box-shadow: inset 0 -2px 0 var(--gold, #d9a23a);
+}
+.rb[data-view].bad::after,
+.rb[data-view].warn::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bad);
+}
+.rb[data-view].warn::after {
+  background: #c98a12;
+}
+:root[data-theme="dark"] .rb[data-view].on {
+  background: #22344a;
+  border-color: #34506f;
 }
 #exCount.falta {
   background: #fbf0d9;
