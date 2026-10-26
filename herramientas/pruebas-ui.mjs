@@ -294,6 +294,31 @@ prueba("Las ventanas se mueven y no salen de la pantalla", async ok => {
   ok(g3.x >= 8 && g3.y >= 8 && g3.x + g3.w <= 1366 && g3.y + g3.h <= 768, "la ventana queda dentro de la pantalla");
 });
 
+prueba("Datos del proyecto: pisos (lista) y circuitos del 1er piso en un TD-1", async ok => {
+  await ejemplo("uni");
+  await ev(
+    "pisos.push({area: 80, Ld: 9, al_n: 10, al_L: 16, tg_n: 12, tg_L: 18, tc_n: 0, tc_L: null, aE: 0}); renderList('pisos'); calcularAhora(); datosProyecto(true, 'pis')"
+  );
+  await poner('[data-dp="pisos_area_0"]', 95);
+  await poner('[data-dp="esqPisos"]', "td");
+  // La longitud TG → TD-1 aparece al aplicar la elección del TD-1
+  await clic("#dpDlg [data-dpa=apply]");
+  ok(await ev("!!document.querySelector('[data-dp=Ltd1]')"), "al aplicar aparece la longitud al TD-1");
+  await poner('[data-dp="Ltd1"]', 6);
+  await clic("#dpDlg [data-dpa=ok]");
+  ok((await ev("pisos[0].area")) === 95, "el área del 2do piso pasa a su lista (95 m²)");
+  ok(
+    (await ev("PROY.esqPisos")) === "td" && (await ev("LAST.tabs.some(t => t.tab === 'TD-1')")),
+    "aparece el tablero TD-1"
+  );
+  ok(
+    await ev(
+      "[...document.querySelectorAll('#L_cargas select')].some(s => [...s.options].some(o => /TD-1/.test(o.textContent)))"
+    ),
+    "las cargas especiales ya pueden ir al TD-1 (efecto de cambiar el dato)"
+  );
+});
+
 prueba("Lo que se escribe en el panel pasa a los datos del proyecto (PROY)", async ok => {
   await ejemplo("uni");
   await ev("selNode('vivienda')");

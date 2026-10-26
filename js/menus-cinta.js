@@ -164,11 +164,7 @@
     ]);
   }
   function elegir(k, v) {
-    const r = document.querySelector(`input[name="${MODE === "multi" ? "sistG" : "sist"}"][value="${v}"]`);
-    if (r) {
-      r.checked = true;
-      r.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    cambiarSistema(MODE === "multi" ? "sistG" : "sist", v);
     update();
     histPush();
     const o = opciones().find(x => x[2]);

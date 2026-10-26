@@ -94,17 +94,11 @@ function ppPie() {
   $("ppApply").disabled = !n;
   $("ppNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";
 }
-// Escribe los valores en los campos del formulario, como si se hubieran escrito allí, y recalcula
+// Escribe los valores en los datos del proyecto (PROY, con sus efectos) y recalcula
 function aplicarParam() {
   const ids = Object.keys(PP_PEND || {});
   if (!ids.length) return;
-  ids.forEach(id => {
-    const c = $(id);
-    if (!c) return;
-    c.value = PP_PEND[id];
-    c.dispatchEvent(new Event("input", { bubbles: true }));
-    c.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  ids.forEach(id => cambiarDato(id, PP_PEND[id]));
   PP_PEND = {};
   calcularAhora();
   histPush();

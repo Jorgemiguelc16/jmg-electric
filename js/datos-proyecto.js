@@ -221,7 +221,7 @@ function dpPie() {
   $("dpApply").disabled = !n;
   $("dpNota").textContent = n ? `${n} cambio${n > 1 ? "s" : ""} sin aplicar` : "";
 }
-// Escribe los valores en los campos del formulario, como si se hubieran escrito allí, y recalcula
+// Escribe los valores en los datos del proyecto (PROY o sus listas) y recalcula
 function aplicarDatos() {
   const ks = Object.keys(DP_PEND || {});
   if (!ks.length && !depCambios()) return;
@@ -232,28 +232,22 @@ function aplicarDatos() {
       multi = v === "multi";
     if (multi !== (MODE === "multi")) setMode(multi ? "multi" : "uni");
     if (!multi) {
-      const u = $("uso");
-      if (v === "viv" && u.value !== "viv") u.value = "viv";
-      if (v === "com" && u.value === "viv") u.value = "oficina";
-      u.dispatchEvent(new Event("change", { bubbles: true }));
+      if (v === "viv" && PROY.uso !== "viv") cambiarDato("uso", "viv");
+      if (v === "com" && PROY.uso === "viv") cambiarDato("uso", "oficina");
     }
   }
+  // Datos del proyecto con cambiarDato(); los de una lista (por ejemplo pisos_area_0) en su lista
+  const tocadas = new Set();
   ks.forEach(k => {
     if (k === "_tipo") return;
-    if (k.startsWith("radio:")) {
-      const r = document.querySelector(`input[name="${k.slice(6)}"][value="${DP_PEND[k]}"]`);
-      if (r) {
-        r.checked = true;
-        r.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      return;
-    }
-    const c = $(k);
-    if (!c) return;
-    c.value = DP_PEND[k];
-    c.dispatchEvent(new Event("input", { bubbles: true }));
-    c.dispatchEvent(new Event("change", { bubbles: true }));
+    if (k.startsWith("radio:")) return cambiarSistema(k.slice(6), DP_PEND[k]);
+    const m = k.match(/^([a-zA-Z]+)_([a-zA-Z_]+?)_(\d+)$/);
+    if (!ES_DATO.has(k) && m && LISTS[m[1]] && LISTS[m[1]].arr[+m[3]]) {
+      LISTS[m[1]].arr[+m[3]][m[2]] = valorLista(m[1], m[2], DP_PEND[k]);
+      tocadas.add(m[1]);
+    } else if (ES_DATO.has(k)) cambiarDato(k, DP_PEND[k]);
   });
+  tocadas.forEach(renderList);
   DP_PEND = {};
   calcularAhora();
   histPush();

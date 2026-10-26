@@ -53,7 +53,7 @@ function ftPonerLong(d, v) {
   if (d.lista) {
     const it = LISTS[d.lista].arr[d.i];
     if (it) it[d.id] = String(v).trim() === "" ? null : parseFloat(v) || 0;
-  } else $(d.id).value = v;
+  } else cambiarDato(d.id, v);
 }
 // Vista previa: el proyecto calculado con la longitud pendiente, sin cambiarlo (se restaura siempre)
 function ftPrevia() {
@@ -184,7 +184,6 @@ function aplicarTablero() {
     const d = ftLongitud(ftAlim());
     ftPonerLong(d, FT_LONG);
     if (d.lista) renderList(d.lista);
-    else $(d.id).dispatchEvent(new Event("input", { bubbles: true }));
   }
   FT_LONG = undefined;
   if (FT_PEND) {

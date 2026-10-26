@@ -314,11 +314,8 @@ function aplicarFicha() {
   ed.forEach(d => {
     if (!(d.id in FC_PEND) || d.id === "_fase") return;
     const v = FC_PEND[d.id];
-    if (d.campo) {
-      const el = $(d.id);
-      el.value = v;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    } else {
+    if (d.campo) cambiarDato(d.id, v);
+    else {
       LISTS[d.lista].arr[src.i][d.id] = fcConv(d, v);
       lista = d.lista;
     }

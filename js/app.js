@@ -665,16 +665,38 @@ addEventListener("keydown", e => {
   if (e.key === "Escape" && !$("wizard").hidden) asistente(false);
 });
 
-$("esqPisos").addEventListener("change", () => renderList("cargas"));
-// Al cambiar el uso: 250 VA por tomacorriente en usos comerciales (criterio de diseño) y 180 W en vivienda, salvo que el usuario haya puesto otro valor
+/* Efectos de cambiar un dato del proyecto, además de recalcular (el recálculo lo pide quien lo cambia):
+   - esqPisos (circuitos del 1er piso en el TG o en un TD-1): cambia la lista de tableros de las cargas especiales;
+   - uso: 250 VA por tomacorriente en usos comerciales (criterio de diseño) y 180 W en vivienda, salvo que el usuario
+     haya puesto otro valor, y la pantalla del uso elegido. */
+function efectosDato(k) {
+  if (k === "esqPisos") renderList("cargas");
+  else if (k === "uso") {
+    const com = usoAct() !== "viv";
+    ["tg_p", "tc_p"].forEach(c => {
+      const v = PROY[c];
+      if (com && v === "180") ponerDato(c, String(VA_TOMA_COM));
+      else if (!com && v === String(VA_TOMA_COM)) ponerDato(c, "180");
+    });
+    uiUso();
+  }
+}
+// Cambia un dato del proyecto desde el código (ventanas, cinta): PROY, el campo y sus efectos
+function cambiarDato(k, v) {
+  const a = PROY[k];
+  ponerDato(k, v);
+  if (PROY[k] !== a) efectosDato(k);
+}
+// Cambia el sistema eléctrico (sist en la vivienda, sistG en el edificio): PROY y el botón de opción
+function cambiarSistema(nm, v) {
+  const r = document.querySelector(`input[name="${nm}"][value="${v}"]`);
+  if (!r) return;
+  r.checked = true;
+  PROY[nm] = v;
+}
+$("esqPisos").addEventListener("change", () => efectosDato("esqPisos"));
 $("uso").addEventListener("change", () => {
-  const com = usoAct() !== "viv";
-  ["tg_p", "tc_p"].forEach(k => {
-    const v = $(k).value;
-    if (com && v === "180") ponerDato(k, String(VA_TOMA_COM));
-    else if (!com && v === String(VA_TOMA_COM)) ponerDato(k, "180");
-  });
-  uiUso();
+  efectosDato("uso");
   calcularAhora();
 });
 
