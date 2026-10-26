@@ -152,6 +152,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.2",
+    "Corrección: al abrir un proyecto guardado con una versión anterior, los datos que esa versión no tenía (por ejemplo, el área libre no techada) toman su valor por defecto; antes conservaban el valor del proyecto abierto previamente. Por dentro, el motor de cálculo es independiente de la pantalla y calcula los datos del proyecto, las vistas previas de las ventanas calculan una copia del proyecto sin tocarlo, y los datos del proyecto tienen una sola fuente. El cálculo no cambia."
+  ],
+  [
     "v2.9.1",
     "Editor de departamentos en Datos del proyecto: tipos de departamento con sus salidas de otra potencia y sus cargas especiales, y el resultado de cada uno con vista previa. Datos del proyecto más compacto y con el tipo de edificación editable. Vista previa del cálculo también en el cuadro de conductores, Parámetros de diseño y Datos del proyecto. En los cuadros de resultados, valores al 90 % o más de su límite en ámbar y doble clic para abrir la ficha del circuito o del tablero. Circuitos de departamentos y de pisos editables en su ficha y longitud del alimentador en la ficha del tablero. Reservas agrupadas en el explorador y panel Propiedades cerrado por defecto. El cálculo no cambia."
   ],
