@@ -60,6 +60,18 @@ function fcEditables(q) {
       },
       { id: "p", l: "Potencia", tipo: "number", v: it.p, u: "W", lista: t },
       { id: "L", l: "Longitud", tipo: "number", v: it.L, u: "m", lista: t },
+      {
+        id: "elec",
+        l: "Electrónica",
+        tipo: "select",
+        v: it.elec ?? 0,
+        o: [
+          [0, "No"],
+          [1, "Sí (inverter, variador, inducción…)"]
+        ],
+        lista: t,
+        ancho: 1
+      },
       // Las cargas de los departamentos son monofásicas; en su lugar se elige el tipo de departamento
       t === "cargasT"
         ? {
@@ -157,7 +169,7 @@ function fcConv(d, v) {
     ? String(v).trim() === ""
       ? null
       : parseFloat(v) || 0
-    : d.id === "fases" || d.id === "piso" || d.id === "dep"
+    : d.id === "fases" || d.id === "piso" || d.id === "dep" || d.id === "elec"
       ? +v
       : String(v).replace(/[<>]/g, "");
 }
@@ -251,8 +263,45 @@ function renderFicha() {
       fcGrupo(
         "Interruptor diferencial",
         fcCampo("Designación", esc(qv.idName || "—")) +
-          fcCampo("Polos × In", `${qv.f3 ? 4 : 2}×${qv.idRat ?? "—"}`, "A")
+          fcCampo("Polos × In", `${qv.f3 ? 4 : 2}×${qv.idRat ?? "—"}`, "A") +
+          fcCampo(
+            "Tipo",
+            `${qv.idTipo || "A"} · 30 mA`,
+            "",
+            qv.idTipo === "A" && c.idTipo === "AC"
+              ? "Tipo A porque protege una carga con electrónica (IEC 60364-5-53)"
+              : "Elegido en Parámetros › Protección"
+          )
       ) +
+      (qv.motor
+        ? fcGrupo(
+            "Arranque del motor",
+            fcCampo(
+              "Corriente de arranque",
+              fmt(qv.Iarr, 1),
+              "A",
+              `${fmt(c.kArr, 1)} × corriente nominal (arranque directo)`
+            ) +
+              fcCampo(
+                "Disparo magnético",
+                qv.magMin ? `≥ ${fmt(qv.magMin, 0)}` : "—",
+                "A",
+                `Curva ${qv.curva}: ${CURVA_MAG[qv.curva]} × In del ITM (IEC 60898-1)`
+              ) +
+              fcCheck(
+                qv.arrOk,
+                qv.arrOk
+                  ? "El arranque no hace disparar el interruptor"
+                  : "El arranque puede hacer disparar el interruptor"
+              ) +
+              fcCampo(
+                "ΔV en el arranque",
+                `≈ ${fmt(qv.dVarr, 1)} %`,
+                "",
+                "Estimación conservadora (sin reactancia); las normas cargadas no fijan su límite"
+              )
+          )
+        : "") +
       fcGrupo(
         "Coordinación",
         fcCheck(

@@ -55,7 +55,7 @@ function metrado(r) {
       const g = cs.filter(x => (c.idMode === "circuito" ? x.key : x.idName) === k),
         pol = g.some(x => x.f3) ? 4 : 2;
       m += pol;
-      add(ids, `${pol}|${q.idRat}`, n);
+      add(ids, `${pol}|${q.idRat}|${q.idTipo || "A"}`, n);
     });
     mods[tb.tab] = { n, m, desc: tb.desc };
     const tri = r.alims[tb.feeder].s.tri;
@@ -149,8 +149,8 @@ function metrado(r) {
   Object.keys(ids)
     .sort()
     .forEach(k => {
-      const [pp, i] = k.split("|");
-      it(`Interruptor diferencial ${pp}×${i} A, 30 mA`, "und", ids[k], "Regla 150-400");
+      const [pp, i, tp] = k.split("|");
+      it(`Interruptor diferencial ${pp}×${i} A, 30 mA, tipo ${tp}`, "und", ids[k], "Regla 150-400");
     });
   sec("PUESTA A TIERRA");
   it(

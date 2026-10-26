@@ -7230,3 +7230,6 @@ legend .dd-x {
     max-height: 120px;
   }
 }
+.dd-t th.dd-e {
+  width: 58px;
+}

@@ -37,6 +37,10 @@ function ctx(p = estado()) {
     idMode: g("idMode"),
     dvGen: parseFloat(g("dvGen")),
     iccE: n("iccE") || 10,
+    // Poder de corte mínimo comercial (0 = solo según la Icc), tipo de diferencial y arranque de motores
+    pdcMin: n("pdcMin"),
+    idTipo: g("idTipo") === "AC" ? "AC" : "A",
+    kArr: Math.min(12, Math.max(1, n("kArr") || 6)),
     proj: {
       nombre: g("p_nombre"),
       prop: g("p_prop"),
@@ -73,7 +77,14 @@ function calcular(p) {
 }
 const tierraPara = itm => (T16.find(([a]) => itm <= a) || [0, 25])[1];
 const tierraElectrodo = amp => T17.find(([a]) => amp <= a)[1];
-const pdcPara = kA => PDC.find(x => x >= kA) ?? null;
+/* Poder de corte: el menor nivel de la lista que cubre la Icc, y no menor que el mínimo comercial elegido (criterio
+   del proyectista: en el mercado peruano los ITM usuales son de 4.5, 6 o 10 kA) */
+const pdcPara = (kA, min = 0) => {
+  const p = PDC.find(x => x >= kA) ?? null;
+  return p === null ? null : Math.max(p, min || 0);
+};
+// Disparo magnético mínimo de cada curva, en veces la corriente nominal del ITM (IEC 60898-1)
+const CURVA_MAG = { B: 3, C: 5, D: 10 };
 function tuboPara(S, St, ncond) {
   const a = ((ncond * OD[S] ** 2 + OD[St] ** 2) * Math.PI) / 4;
   for (const [mm, pul, di] of TUBOS) if (a <= (0.4 * Math.PI * di * di) / 4) return { mm, pul };
@@ -183,14 +194,36 @@ function circuito({ tab, id, desc, tipo, n, P, L, fases, skTri }, c, dvUp, feede
   });
   r.St = tierraPara(r.itm || 400);
   r.tubo = tuboPara(r.S, r.St, f3 ? 3 : 2);
-  r.ok = !r.fail && r.itm !== null && r.Izc >= r.itm && r.dVp <= DV_DER + 1e-9 && r.dVt <= DV_TOT + 1e-9;
+  /* Arranque de motores: la corriente de arranque (kArr veces la nominal, arranque directo) no debe alcanzar el
+     disparo magnético mínimo de la curva del ITM (IEC 60898-1). La caída de tensión en el arranque se estima con
+     la misma fórmula y kArr veces la corriente (estimación conservadora, sin reactancia); se informa sin límite,
+     porque las normas cargadas no lo fijan. */
+  if (motor) {
+    r.Iarr = c.kArr * I;
+    r.magMin = r.itm === null ? null : CURVA_MAG[r.curva] * r.itm;
+    r.arrOk = r.magMin !== null && r.Iarr < r.magMin;
+    r.dVarr = r.dVp * c.kArr;
+  }
+  r.ok =
+    !r.fail &&
+    r.itm !== null &&
+    r.Izc >= r.itm &&
+    r.dVp <= DV_DER + 1e-9 &&
+    r.dVt <= DV_TOT + 1e-9 &&
+    (!motor || r.arrOk);
   return r;
 }
+/* Interruptores diferenciales (Regla 150-400): uno por cada grupo de tres circuitos o uno por circuito. Tipo A en
+   todos o, con el parámetro «AC», tipo A solo si el diferencial protege alguna carga marcada «con electrónica»
+   (inverter, variador, inducción, cargador): criterio de ingeniería según IEC 60364-5-53 e IEC 62423, porque esas
+   cargas producen corrientes de fuga con componente continua que un tipo AC puede no detectar. */
+const tipoID = (grp, c) => (c.idTipo === "A" || grp.some(q => q.elec) ? "A" : "AC");
 function asignarID(cs, c) {
   if (c.idMode === "circuito") {
     cs.forEach(q => {
       q.idName = "ID";
       q.idRat = ID_RAT.find(x => x >= (q.itm || 0)) ?? 100;
+      q.idTipo = tipoID([q], c);
     });
     return;
   }
@@ -203,9 +236,11 @@ function asignarID(cs, c) {
         grp.reduce((s, q) => s + q.I, 0)
       ),
       rat = ID_RAT.find(x => x >= need) ?? 100;
+    const tp = tipoID(grp, c);
     grp.forEach(q => {
       q.idName = "ID-" + g;
       q.idRat = rat;
+      q.idTipo = tp;
     });
   }
 }
@@ -617,7 +652,7 @@ function calcUni(c) {
     viv
   });
   al.iccO = c.iccE;
-  al.pdc = pdcPara(c.iccE);
+  al.pdc = pdcPara(c.iccE, c.pdcMin);
   const iccTG = iccAbajo(c.iccE, al.s, al.L, al.S);
   // Tablero de cada piso: TG si el piso se conecta al tablero general, TD-n si tiene tablero propio
   const tabDe = n => (!varios || (n === 1 && esq === "tg") ? "TG" : tabPiso(n));
@@ -636,7 +671,7 @@ function calcUni(c) {
         desc: viv ? "Tablero general de la vivienda" : "Tablero general",
         feeder: 0,
         icc: iccTG,
-        pdc: pdcPara(iccTG)
+        pdc: pdcPara(iccTG, c.pdcMin)
       }
     ];
   // Alimentadores TG → TD de cada piso: máxima demanda por la Regla 050-200 con el área del piso (el sótano, al 75 %, en el 1er piso)
@@ -659,7 +694,7 @@ function calcUni(c) {
       viv
     });
     f.iccO = iccTG;
-    f.pdc = pdcPara(iccTG);
+    f.pdc = pdcPara(iccTG, c.pdcMin);
     alims.push(f);
     p.tab = tab;
     p.feeder = alims.length - 1;
@@ -671,7 +706,7 @@ function calcUni(c) {
       desc: `Tablero de distribución del ${ORD(p.n)} piso`,
       feeder: p.feeder,
       icc,
-      pdc: pdcPara(icc),
+      pdc: pdcPara(icc, c.pdcMin),
       piso: p.n
     });
   });
@@ -711,6 +746,7 @@ function calcUni(c) {
         tb.feeder
       );
       q.src = { t: "cargas", i: ix };
+      q.elec = !!+x.elec;
       list.push(q);
     });
     asignarID(list, c);
@@ -833,7 +869,7 @@ function calcMulti(c) {
     viv: true
   });
   gen.iccO = c.iccE;
-  gen.pdc = pdcPara(c.iccE);
+  gen.pdc = pdcPara(c.iccE, c.pdcMin);
   const iccTG = iccAbajo(c.iccE, gen.s, gen.L, gen.S);
   const alims = [gen],
     tabs = [];
@@ -849,10 +885,10 @@ function calcMulti(c) {
       { pKey: "servP" }
     );
     f.iccO = iccTG;
-    f.pdc = pdcPara(iccTG);
+    f.pdc = pdcPara(iccTG, c.pdcMin);
     alims.push(f);
     const icc = iccAbajo(iccTG, f.s, f.L, f.S);
-    tabs.push({ tab: "TSG", desc: "Tablero de servicios generales", feeder: 1, icc, pdc: pdcPara(icc) });
+    tabs.push({ tab: "TSG", desc: "Tablero de servicios generales", feeder: 1, icc, pdc: pdcPara(icc, c.pdcMin) });
   }
   T.forEach((t, ti) => {
     const tab = "TD-" + t.nombre.replace(/^Tipo\s*/i, "");
@@ -868,7 +904,7 @@ function calcMulti(c) {
       { pKey: "tipo", ti, cant: t.cant, Imin: IMIN_DPTO, fd: c.fdA, viv: true }
     );
     f.iccO = iccTG;
-    f.pdc = pdcPara(iccTG);
+    f.pdc = pdcPara(iccTG, c.pdcMin);
     alims.push(f);
     const icc = iccAbajo(iccTG, f.s, f.L, f.S);
     tabs.push({
@@ -876,7 +912,7 @@ function calcMulti(c) {
       desc: `Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,
       feeder: alims.length - 1,
       icc,
-      pdc: pdcPara(icc)
+      pdc: pdcPara(icc, c.pdcMin)
     });
   });
   const circ = [];
@@ -900,6 +936,7 @@ function calcMulti(c) {
         1
       );
       q.src = { t: "serv", i: x._i };
+      q.elec = !!+x.elec;
       return q;
     });
     asignarID(l, c);
@@ -939,6 +976,7 @@ function calcMulti(c) {
         fi
       );
       q.src = { t: "cargasT", i: ix };
+      q.elec = !!+x.elec;
       list.push(q);
     });
     asignarID(list, c);

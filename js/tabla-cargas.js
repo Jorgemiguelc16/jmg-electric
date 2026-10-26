@@ -113,6 +113,7 @@ function tcCampos(nm, x) {
     C.push({ k: "_fase", l: "Fase", t: "sel", o: [["", auto], ...s.fases.map(f => [f, f])] });
   }
   if (nm === "cargas" && pisos.length) C.push({ k: "piso", l: "Tablero", t: "sel", o: opcPiso(), n: 1 });
+  C.push({ k: "elec", l: "Electrónica", t: "sel", o: ELEC, n: 1, ancho: 1 });
   return C;
 }
 const tcCampo = (x, d) => {

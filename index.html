@@ -451,7 +451,12 @@
           <label>Esquema de interruptores diferenciales
             <select id="idMode"><option value="grupo" selected>Un diferencial por cada grupo de 3 circuitos (150-400(8))</option><option value="circuito">Un diferencial por circuito (150-400(9))</option></select></label>
           <label>Corriente de cortocircuito en el punto de entrega (kA)<input type="number" id="iccE" step="0.5" min="0.5" value="10"></label>
-          <p class="hint">Valor que proporciona la concesionaria (Norma DGE, 110.F). Si no se conoce, se adopta un valor conservador. Los circuitos de motores se protegen con interruptores de curva D (Regla 160-200).</p>
+          <label>Poder de corte mínimo de los interruptores
+            <select id="pdcMin"><option value="0">Según la Icc calculada</option><option value="4.5" selected>4.5 kA · mínimo comercial usual</option><option value="6">6 kA</option><option value="10">10 kA</option></select></label>
+          <label>Tipo de interruptor diferencial
+            <select id="idTipo"><option value="A" selected>Tipo A en todos los circuitos</option><option value="AC">Tipo AC; tipo A donde haya cargas con electrónica</option></select></label>
+          <label>Corriente de arranque de motores (veces la nominal)<input type="number" id="kArr" step="0.5" min="1" max="12" value="6"></label>
+          <p class="hint">Icc: valor que proporciona la concesionaria (Norma DGE, 110.F); si no se conoce, se adopta un valor conservador. El poder de corte de cada tablero es el mayor entre el que exige su Icc y el mínimo elegido. Los circuitos de motores se protegen con interruptores de curva D (Regla 160-200); se verifica que su corriente de arranque (arranque directo: 5 a 8 veces la nominal) no alcance el disparo magnético de la curva.</p>
         </div></fieldset>
 <fieldset id="fs-p-dv"><legend>Caída de tensión <small>050-102</small></legend><div class="fs">
           <label>ΔV asignada al alimentador general (multifamiliar)

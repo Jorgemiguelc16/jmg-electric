@@ -139,7 +139,7 @@ function unifilar(r) {
       L(xc, yb + 54, xc, yb + 66);
       T(xc + 12, yb + 30, q0.idName, { s: 8, b: 1 });
       T(xc + 12, yb + 40, `${pol}×${q0.idRat} A`, { s: 7.5 });
-      T(xc + 12, yb + 50, "30 mA", { s: 7.5, f: GR });
+      T(xc + 12, yb + 50, `30 mA · tipo ${q0.idTipo || "A"}`, { s: 7.5, f: GR });
       if (xs.length > 1) {
         L(xs[0], yb + 66, xs[xs.length - 1], yb + 66, 2);
         xs.forEach(x => dot(x, yb + 66));
@@ -256,7 +256,7 @@ function unifilar(r) {
       feeders = r.alims.slice(1),
       CF = 200;
     T(x + 20, 214, "BANCO DE MEDIDORES · BARRA GENERAL", { s: 11.5, b: 1, f: NAVY });
-    T(x + 20, 228, `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG)} kA`, { s: 8.5, f: GR });
+    T(x + 20, 228, `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG, r.c.pdcMin)} kA`, { s: 8.5, f: GR });
     const xe = X + 170 + (feeders.length - 1) * CF + 40;
     L(X + 14, yb, xe, yb, 4, CU);
     L(X + 14, yb, X + 14, yb + 180, 1.2, "#2f7a4b", "5 3");

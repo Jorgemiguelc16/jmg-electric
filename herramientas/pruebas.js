@@ -78,9 +78,15 @@ const resumen = r =>
     })`,
     ctx
   )(r);
-// Diferencias con la misma tolerancia que pruebas/index.html
+/* Diferencias con la misma tolerancia que pruebas/index.html. Con --ignorar=campo1,campo2 no se cuentan esos
+   campos (por ejemplo, datos nuevos agregados a propósito), para ver si cambió algún valor del cálculo. */
+const IGN = new Set(
+    ((process.argv.find(a => a.startsWith("--ignorar=")) || "").slice(10) || "").split(",").filter(Boolean)
+  ),
+  TODO = process.argv.includes("--todo");
 function diferencias(a, b, ruta = "", out = []) {
-  if (out.length >= 10) return out;
+  if (!TODO && out.length >= 10) return out;
+  if (IGN.has(ruta.split(/[.[]/).pop().replace("]", ""))) return out;
   if (typeof a === "number" && typeof b === "number") {
     if (Math.abs(a - b) > 1e-6 * Math.max(1, Math.abs(a))) out.push([ruta, a, b]);
     return out;

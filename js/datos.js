@@ -36,6 +36,11 @@ const lums = [],
   lumsT = [],
   toms = [],
   tomsT = [];
+// Carga con electrónica (inverter, variador, inducción, cargador): su diferencial se sugiere tipo A
+const ELEC = [
+  ["0", "No"],
+  ["1", "Sí (inverter, variador, inducción…)"]
+];
 const FASES = [
   ["1", "Monofásica"],
   ["3", "Trifásica"]
@@ -60,9 +65,10 @@ const LISTS = {
       { k: "fases", l: "Fases", t: "select", o: FASES },
       { k: "p", l: "Potencia (W)", t: "number" },
       { k: "L", l: "Longitud (m)", t: "number" },
-      { k: "piso", l: "Tablero", t: "select", o: opcPiso, full: 1, n: 1, show: () => pisos.length > 0 }
+      { k: "piso", l: "Tablero", t: "select", o: opcPiso, full: 1, n: 1, show: () => pisos.length > 0 },
+      { k: "elec", l: "Con electrónica", t: "select", o: ELEC, n: 1 }
     ],
-    nuevo: () => ({ nombre: "", tipo: "otra", fases: 1, p: null, L: null, piso: 0 })
+    nuevo: () => ({ nombre: "", tipo: "otra", fases: 1, p: null, L: null, piso: 0, elec: 0 })
   },
   pisos: {
     arr: pisos,
@@ -157,9 +163,10 @@ const LISTS = {
         n: 1
       },
       { k: "p", l: "Potencia (W)", t: "number" },
-      { k: "L", l: "Longitud (m)", t: "number" }
+      { k: "L", l: "Longitud (m)", t: "number" },
+      { k: "elec", l: "Con electrónica", t: "select", o: ELEC, n: 1 }
     ],
-    nuevo: () => ({ nombre: "", tipo: "otra", p: null, L: null, dep: 0 })
+    nuevo: () => ({ nombre: "", tipo: "otra", p: null, L: null, dep: 0, elec: 0 })
   },
   serv: {
     arr: serv,
@@ -169,9 +176,10 @@ const LISTS = {
       { k: "tipo", l: "Tipo", t: "select", o: Object.entries(TSERV) },
       { k: "fases", l: "Fases", t: "select", o: FASES },
       { k: "p", l: "Potencia (W)", t: "number" },
-      { k: "L", l: "Longitud (m)", t: "number" }
+      { k: "L", l: "Longitud (m)", t: "number" },
+      { k: "elec", l: "Con electrónica", t: "select", o: ELEC, n: 1 }
     ],
-    nuevo: () => ({ nombre: "", tipo: "otra", fases: 1, p: null, L: null })
+    nuevo: () => ({ nombre: "", tipo: "otra", fases: 1, p: null, L: null, elec: 0 })
   },
   lums: {
     arr: lums,

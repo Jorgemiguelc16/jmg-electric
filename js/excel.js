@@ -989,7 +989,7 @@ async function exportar() {
         { ...val, bold: 1, size: 8 }
       );
       cell(wsC, k, 17, q.St, { ...val, fmt: "0.0" });
-      cell(wsC, k, 18, `${q.idName} · ${q.f3 ? 4 : 2}×${q.idRat} A`, { ...val, size: 8 });
+      cell(wsC, k, 18, `${q.idName} · ${q.f3 ? 4 : 2}×${q.idRat} A · tipo ${q.idTipo || "A"}`, { ...val, size: 8 });
       cell(wsC, k, 19, tb.pdc, { ...val, fmt: "0.0" });
       cell(wsC, k, 20, q.tubo.mm ? `${q.tubo.mm} mm` : q.tubo.pul, { ...val, size: 8 });
       k++;

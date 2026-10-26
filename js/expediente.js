@@ -312,7 +312,7 @@ function expediente(r, estilo = "formal") {
     ]);
     if (ids.length)
       B += et("Interruptores diferenciales", [
-        "Norma IEC 61008-1, sensibilidad de 30 mA (Regla 150-400).",
+        `Norma IEC 61008-1, sensibilidad de 30 mA (Regla 150-400), ${r.circ.every(q => q.idTipo === "A") ? "tipo A" : r.circ.some(q => q.idTipo === "A") ? "tipo AC y tipo A en los circuitos con cargas electrónicas" : "tipo AC"} (IEC 60364-5-53).`,
         `Capacidades utilizadas: ${ids.join(", ")}.`
       ]);
     B += sub("Aparatos y puesta a tierra");

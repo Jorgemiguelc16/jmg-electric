@@ -84,10 +84,10 @@ function depHTML() {
           .map(([k, l]) => `<option value="${k}"${k === v ? " selected" : ""}>${esc(l)}</option>`)
           .join("")}</select>`;
     const tCargas = cs.length
-      ? `<table class="dd-t"><thead><tr><th class="t">Descripción</th><th class="t dd-tipo">Tipo</th><th class="dd-n">Potencia</th><th class="dd-n">Longitud</th><th></th></tr></thead><tbody>${cs
+      ? `<table class="dd-t"><thead><tr><th class="t">Descripción</th><th class="t dd-tipo">Tipo</th><th class="dd-n">Potencia</th><th class="dd-n">Longitud</th><th class="dd-e" title="Con electrónica (inverter, variador, inducción): su diferencial se sugiere tipo A">Electr.</th><th></th></tr></thead><tbody>${cs
           .map(
             ([x, i]) =>
-              `<tr><td class="t"><input data-dd="cargasT|${i}|nombre" type="text" value="${esc(x.nombre ?? "")}" placeholder="ej. Terma eléctrica" aria-label="Descripción"></td><td class="t">${tipoSel(i, x.tipo)}</td><td${x.p > 0 ? "" : ' class="tc-falta"'}>${dpdNum("cargasT", i, "p", x.p, "W")}</td><td${x.L > 0 ? "" : ' class="tc-falta"'}>${dpdNum("cargasT", i, "L", x.L, "m")}</td><td><button type="button" class="dd-x" data-ddquitar="cargasT|${i}" title="Quitar" aria-label="Quitar">✕</button></td></tr>`
+              `<tr><td class="t"><input data-dd="cargasT|${i}|nombre" type="text" value="${esc(x.nombre ?? "")}" placeholder="ej. Terma eléctrica" aria-label="Descripción"></td><td class="t">${tipoSel(i, x.tipo)}</td><td${x.p > 0 ? "" : ' class="tc-falta"'}>${dpdNum("cargasT", i, "p", x.p, "W")}</td><td${x.L > 0 ? "" : ' class="tc-falta"'}>${dpdNum("cargasT", i, "L", x.L, "m")}</td><td><select data-dd="cargasT|${i}|elec" aria-label="Con electrónica">${ELEC.map(([v]) => `<option value="${v}"${String(+x.elec || 0) === v ? " selected" : ""}>${v === "1" ? "Sí" : "No"}</option>`).join("")}</select></td><td><button type="button" class="dd-x" data-ddquitar="cargasT|${i}" title="Quitar" aria-label="Quitar">✕</button></td></tr>`
           )
           .join("")}</tbody></table>`
       : `<p class="fc-nota">Sin cargas especiales: agregue una con los botones de abajo.</p>`;
