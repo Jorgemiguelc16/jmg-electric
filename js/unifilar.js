@@ -25,16 +25,17 @@ function unifilar(r) {
     L(x - 3.5, y - 3.5, x + 3.5, y + 3.5);
     L(x + 3.5, y - 3.5, x - 3.5, y + 3.5);
     L(x, y + 24, x - 10, y + 3, 1.6);
-    o.push(`<rect x="${x + 3}" y="${y + 9}" width="5" height="7" fill="none" stroke="${INK}" stroke-width="1"/>`);
   };
   const dif = (x, y) => {
     itm(x, y);
     L(x, y + 24, x, y + 40);
     o.push(`<ellipse cx="${x}" cy="${y + 32}" rx="9" ry="3.8" fill="none" stroke="${INK}" stroke-width="1.2"/>`);
   };
+  // Contador de energía (Norma DGE 08-80-22): rectángulo dividido, con «Wh» en la parte inferior
   const kwh = (x, y) => {
-    o.push(`<circle cx="${x}" cy="${y + 14}" r="14" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`);
-    T(x, y + 17.5, "kWh", { s: 8.5, b: 1, a: "middle" });
+    o.push(`<rect x="${x - 12}" y="${y}" width="24" height="28" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`);
+    L(x - 12, y + 8, x + 12, y + 8, 1.2);
+    T(x, y + 22.5, "Wh", { s: 8.5, b: 1, a: "middle" });
   };
   const tierra = (x, y) => {
     L(x - 11, y, x + 11, y, 1.6);
@@ -111,9 +112,9 @@ function unifilar(r) {
         o.push(
           `<rect x="${xd - 9}" y="${yb + 18}" width="18" height="26" fill="#fff" stroke="${INK}" stroke-width="1.2"/>`
         );
-        L(xd - 3, yb + 24, xd + 1, yb + 30, 1);
-        L(xd + 1, yb + 30, xd - 4, yb + 30, 1);
-        L(xd - 4, yb + 30, xd, yb + 37, 1);
+        // Pararrayos (Norma DGE 07-75-23): rectángulo con flecha
+        L(xd, yb + 18, xd, yb + 34, 1.2);
+        o.push(`<path d="M${xd - 4} ${yb + 33}L${xd + 4} ${yb + 33}L${xd} ${yb + 40}Z" fill="${INK}"/>`);
         L(xd, yb + 44, xd, yb + 58, 1.2, "#2f7a4b", "5 3");
         tierra(xd, yb + 58);
         T(xd + 12, yb + 34, "DPS", { s: 7.5, b: 1, f: INK });
@@ -364,8 +365,7 @@ function unifilar(r) {
 /* Rótulo de las láminas (unifilar y alturas): logo, datos del proyecto, plano y número de lámina, dentro del
    recuadro x, y, w, h. El logo vectorial (oculto en pantalla) es el que usa el DXF. */
 function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
-  const INK = "#14212e",
-    GR = "#5a6775";
+  const INK = "#14212e";
   const L = (x1, y1, x2, y2, w = 1.3, col = INK) =>
     o.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}"/>`);
   const T = (x, y, t, { s = 9, b = 0, a = "start", f = INK } = {}) =>
@@ -373,7 +373,10 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
       `<text x="${x}" y="${y}" font-size="${s}"${b ? ' font-weight="700"' : ""} text-anchor="${a}" fill="${f}">${esc(t)}</text>`
     );
   const LY = "#ffd200",
-    LB = "#1f2328";
+    LB = "#1f2328",
+    CU = "#9a5a23",
+    NAVY = "#14304f";
+  o.push(`<g data-capa="E-ROTULO">`);
   o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${LB}"/>`);
   if (typeof LOGO_JPG === "string")
     o.push(
@@ -400,12 +403,14 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
   rot.forEach(([k, v], i) => {
     const yy = yr + (i * hr) / 6;
     if (i) L(rx + 110, yy, rx + rw, yy, 0.8, "#bfc8d2");
-    T(rx + 118, yy + 12.5, k, { s: 7, b: 1, f: GR });
+    T(rx + 118, yy + 12.5, k, { s: 7, b: 1, f: CU });
     T(rx + 205, yy + 12.5, String(v).slice(0, Math.max(20, Math.floor((rw - 215) / 4.6))), {
       s: 8.5,
-      b: i === 0 || i === 4
+      b: i === 0 || i === 4,
+      f: i === 0 || i === 4 ? NAVY : INK
     });
   });
+  o.push(`</g>`);
 }
 /* SVG del unifilar → DXF para AutoCAD (formato R12, en mm sobre la lámina elegida) */
 const LAMINAS = { A4: [297, 210], A3: [420, 297], A2: [594, 420], A1: [841, 594] };
@@ -428,21 +433,28 @@ function svgDxf(svgTxt, op = {}) {
     return c === "#fff" ? "#ffffff" : c;
   };
   // Colores: JMG (azul y cobre) · monocromo (impresión) · por capa (estilo AutoCAD)
+  // Esquema JMG en colores vivos: azul, naranja cobre, cian, verde, rojo y amarillo
   const ACI = {
-    "#14304f": 162,
-    "#9a5a23": 32,
-    "#5a6775": 252,
-    "#2f7a4b": 105,
-    "#bfc8d2": 253,
+    "#14212e": 7,
+    "#14304f": 150,
+    "#9a5a23": 30,
+    "#5a6775": 8,
+    "#2f7a4b": 3,
+    "#bfc8d2": 8,
     "#ffffff": 255,
     "#ffd200": 2,
-    "#1f2328": 250
+    "#1f2328": 250,
+    "#b42318": 1
   };
   const OSCURO = ["#14304f", "#9a5a23", "#1f2328"];
   const col = (c, esTexto) => {
     c = hex(c);
     if (esq === "capas") return 256;
     if (esq === "mono") return 7;
+    // Los textos secundarios (gris en pantalla) van en cian para que se lean bien
+    if (esTexto && c === "#5a6775") return 4;
+    // El azul de los textos, más claro para que se lea sobre el fondo oscuro de AutoCAD
+    if (esTexto && c === "#14304f") return 140;
     return ACI[c] ?? 7;
   };
   const E = [],
@@ -488,6 +500,11 @@ function svgDxf(svgTxt, op = {}) {
       })
       .join("");
   const fondos = [];
+  // Capa: la del propio elemento o la de su grupo (data-capa), o la que corresponde a su tipo
+  const capaDe = (el, d) => {
+    const g = el.closest ? el.closest("[data-capa]") : null;
+    return (g && g.getAttribute("data-capa")) || d;
+  };
   root.querySelectorAll("*").forEach(el => {
     const t = el.tagName.toLowerCase(),
       st = hex(el.getAttribute("stroke")),
@@ -499,8 +516,17 @@ function svgDxf(svgTxt, op = {}) {
         y1 = n(el.getAttribute("y1")),
         x2 = n(el.getAttribute("x2")),
         y2 = n(el.getAttribute("y2"));
-      const capa = el.getAttribute("data-capa");
-      if (dash) return linea(x1, y1, x2, y2, capa || "E-RESERVA", esq === "capas" ? 256 : esq === "mono" ? 7 : 252);
+      const capa = capaDe(el, "");
+      // Punteadas: la de tierra (verde) en E-TIERRA; las demás (reservas, niveles) en su capa
+      if (dash)
+        return linea(
+          x1,
+          y1,
+          x2,
+          y2,
+          capa || (st === "#2f7a4b" ? "E-TIERRA" : "E-RESERVA"),
+          esq === "capas" ? 256 : esq === "mono" ? 7 : col(st)
+        );
       if (sw >= 3)
         return pline(
           [
@@ -508,7 +534,7 @@ function svgDxf(svgTxt, op = {}) {
             [x2, y2]
           ],
           "E-BARRAS",
-          esq === "capas" ? 256 : esq === "mono" ? 7 : 32,
+          esq === "capas" ? 256 : esq === "mono" ? 7 : 30,
           sw * k
         );
       const ly = capa || (st === "#2f7a4b" ? "E-TIERRA" : "E-UNIFILAR");
@@ -531,7 +557,7 @@ function svgDxf(svgTxt, op = {}) {
         h = n(el.getAttribute("height"));
       if (!st && x === 0 && y === 0) return;
       if (fi && OSCURO.includes(fi)) {
-        solido(x, y, w, h, "E-RELLENOS", esq === "capas" ? 256 : esq === "mono" ? 9 : col(fi));
+        solido(x, y, w, h, capaDe(el, "E-RELLENOS"), esq === "capas" ? 256 : esq === "mono" ? 9 : col(fi));
         fondos.push([x, y, w, h]);
       }
       if (st) {
@@ -543,7 +569,7 @@ function svgDxf(svgTxt, op = {}) {
             [x + w, y + h],
             [x, y + h]
           ],
-          marco ? "E-MARCO" : "E-CUADROS",
+          marco ? "E-MARCO" : capaDe(el, "E-CUADROS"),
           col(st),
           marco ? 0.5 : sw >= 1.2 ? 0.25 : 0,
           true
@@ -556,7 +582,7 @@ function svgDxf(svgTxt, op = {}) {
         0,
         "CIRCLE",
         8,
-        "E-SIMBOLOS",
+        capaDe(el, "E-SIMBOLOS"),
         62,
         col(st || fi),
         10,
@@ -575,7 +601,7 @@ function svgDxf(svgTxt, op = {}) {
             [cx - r / 2, cy],
             [cx + r / 2, cy]
           ],
-          "E-SIMBOLOS",
+          capaDe(el, "E-SIMBOLOS"),
           col(fi),
           r * k * 1.6
         );
@@ -592,7 +618,7 @@ function svgDxf(svgTxt, op = {}) {
         const a = (i / 36) * 2 * Math.PI;
         P.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
       }
-      return pline(P, "E-SIMBOLOS", col(st), 0, true);
+      return pline(P, capaDe(el, "E-SIMBOLOS"), col(st), 0, true);
     }
     if (t === "path") {
       const P = [];
@@ -606,7 +632,7 @@ function svgDxf(svgTxt, op = {}) {
           0,
           "SOLID",
           8,
-          "E-SIMBOLOS",
+          capaDe(el, "E-SIMBOLOS"),
           62,
           c,
           10,
@@ -645,7 +671,7 @@ function svgDxf(svgTxt, op = {}) {
         0,
         "TEXT",
         8,
-        "E-TEXTOS",
+        capaDe(el, "E-TEXTOS"),
         62,
         c,
         7,
@@ -672,18 +698,32 @@ function svgDxf(svgTxt, op = {}) {
     [0, lam[1]]
   ].forEach(([x, y]) => add(0, "VERTEX", 8, "Defpoints", 10, f(x), 20, f(y)));
   add(0, "SEQEND", 8, "Defpoints");
-  const capas = [
-    ["E-UNIFILAR", 7, "CONTINUOUS"],
-    ["E-BARRAS", 30, "CONTINUOUS"],
-    ["E-RESERVA", 8, "DASHED"],
-    ["E-TIERRA", 3, "CONTINUOUS"],
-    ["E-SIMBOLOS", 4, "CONTINUOUS"],
-    ["E-CUADROS", 5, "CONTINUOUS"],
-    ["E-MARCO", 5, "CONTINUOUS"],
-    ["E-RELLENOS", 9, "CONTINUOUS"],
-    ["E-TEXTOS", 7, "CONTINUOUS"],
-    ["Defpoints", 8, "CONTINUOUS"]
-  ];
+  const CAPAS = {
+    "E-UNIFILAR": [7, "CONTINUOUS"],
+    "E-BARRAS": [30, "CONTINUOUS"],
+    "E-RESERVA": [8, "DASHED"],
+    "E-TIERRA": [3, "CONTINUOUS"],
+    "E-SIMBOLOS": [4, "CONTINUOUS"],
+    "E-CUADROS": [5, "CONTINUOUS"],
+    "E-MARCO": [5, "CONTINUOUS"],
+    "E-RELLENOS": [9, "CONTINUOUS"],
+    "E-TEXTOS": [7, "CONTINUOUS"],
+    "E-ROTULO": [5, "CONTINUOUS"],
+    "E-LEYENDA": [4, "CONTINUOUS"],
+    "E-ELEVACION": [7, "CONTINUOUS"],
+    "E-NIVELES": [8, "DASHED"],
+    "E-TUBERIA": [30, "CONTINUOUS"],
+    "E-DETALLE": [7, "CONTINUOUS"],
+    "E-NOTAS": [7, "CONTINUOUS"],
+    Defpoints: [8, "CONTINUOUS"]
+  };
+  // Solo las capas que el dibujo usa (código 8 de cada entidad), en el orden de la lista
+  const usadas = new Set();
+  for (let i = 0; i < E.length; i += 2) if (E[i] === 8) usadas.add(E[i + 1]);
+  const capas = Object.keys(CAPAS)
+    .filter(k => usadas.has(k))
+    .concat([...usadas].filter(k => !CAPAS[k]))
+    .map(k => [k, ...(CAPAS[k] || [7, "CONTINUOUS"])]);
   const head = [
     0,
     "SECTION",

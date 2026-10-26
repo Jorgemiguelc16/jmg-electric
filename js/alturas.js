@@ -146,6 +146,7 @@ function alturas(r) {
     k = Math.min(128, 360 / Math.max(a.techo, 1)),
     yP = yT + a.techo * k,
     Y = h => yP - h * k;
+  o.push(`<g data-capa="E-ELEVACION">`);
   if (rige !== "no") {
     R(x0, Y(1.2), xm - 8 - x0, 0.8 * k, { st: "", fi: "#eaf2fb" });
     T(x0 - 7, Y(0.8), "Alcance A.120", { s: 6.5, a: "middle", f: GR, rot: -90 });
@@ -344,6 +345,7 @@ function alturas(r) {
     L(xf, yz - 4, xf, yz, 0.8, NAVY);
     T((xi + xf) / 2, yz + 11, z, { s: 7.2, b: 1, a: "middle", f: NAVY });
   });
+  o.push(`</g><g data-capa="E-LEYENDA">`);
   /* Leyenda y cuadro de alturas, agrupados por zona como el dibujo */
   const bx = 716,
     bw = W - 20 - bx,
@@ -388,6 +390,7 @@ function alturas(r) {
       yy += 24;
     });
   });
+  o.push(`</g><g data-capa="E-NOTAS">`);
   // Notas y rótulo
   const yr = Math.max(yP + 74, yy + 16),
     hr = 124,
@@ -416,6 +419,7 @@ function alturas(r) {
     });
     ny += 1.5;
   });
+  o.push(`</g>`);
   R(rx, yr, rw, hr, { st: NAVY, sw: 1 });
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Diagrama de alturas de montaje · Escala S/E", "IE-02");
   const H = yr + hr + 16;

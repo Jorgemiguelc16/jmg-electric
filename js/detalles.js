@@ -98,6 +98,7 @@ function detalles(r) {
   const lx = 20,
     lw = 540,
     y0 = 58;
+  o.push(`<g data-capa="E-LEYENDA">`);
   titulo(lx, y0, lw, "LEYENDA DE SÍMBOLOS · NORMA DGE (R.M. N.° 091-2002-EM/VME)");
   let ly = y0 + 18;
   R(lx, ly, lw, 16, { st: LN, fi: "#f3f6f9", sw: 0.8 });
@@ -130,6 +131,7 @@ function detalles(r) {
     yH = yG + 42,
     yB = yH + hp,
     trat = p.fr < 1 && (pz.sal > 0 || pz.carb > 0);
+  o.push(`</g><g data-capa="E-DETALLE">`);
   titulo(px, y0, pw, "DETALLE DEL POZO DE PUESTA A TIERRA · ESCALA S/E");
   // Escala vertical: el hoyo (su profundidad, si se indicó) y la varilla deben caber en el dibujo
   const Htot = pz.h || p.Lv + 0.6,
@@ -256,6 +258,7 @@ function detalles(r) {
     hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
+  o.push(`</g><g data-capa="E-NOTAS">`);
   R(20, yr, rx - 40, hr, { st: NAVY, sw: 1 });
   T(30, yr + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
@@ -285,6 +288,7 @@ function detalles(r) {
     });
     ny += 1.5;
   });
+  o.push(`</g>`);
   R(rx, yr, rw, hr, { st: NAVY, sw: 1 });
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Leyenda y detalle del pozo de tierra · Escala S/E", "IE-03");
   const H = yr + hr + 16;
