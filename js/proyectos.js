@@ -174,26 +174,20 @@ function migrarCargasT(o) {
   });
   return { ...o, cargasT: L };
 }
-function aplicar(o) {
+/* Preparación de un proyecto al abrirlo (o al cargar un caso de prueba), sin tocar la pantalla: convierte los
+   proyectos anteriores, limpia las listas y los datos con las mismas reglas de siempre y completa valores por
+   defecto. Devuelve los datos en campos, listas (null = dejar la actual) y
+   el estado de las elecciones del usuario (FIX, ACEP, TEQ, SECF), el sistema y el modo. */
+const LISTAS_PROY = ["cargas", "tipos", "cargasT", "serv", "pisos", "lums", "lumsT", "toms", "tomsT"];
+function normalizar(o) {
   o = migrarCargasT(o);
-  PID = typeof o.id === "string" && /^[\w-]{1,40}$/.test(o.id) ? o.id : null;
-  KEYS.forEach(k => {
-    if (o[k] != null && $(k)) $(k).value = String(o[k]).replace(/[<>]/g, "");
-    else if (k === "esqPisos" || k === "Ltd1" || k === "p_cip" || k === "resAl" || k === "uso" || k === "aE")
-      $(k).value = DEFV[k];
-  });
-  [
-    ["cargas", cargas],
-    ["tipos", tipos],
-    ["cargasT", cargasT],
-    ["serv", serv],
-    ["pisos", pisos],
-    ["lums", lums],
-    ["lumsT", lumsT],
-    ["toms", toms],
-    ["tomsT", tomsT]
-  ].forEach(([k, a]) => {
-    const L =
+  const campos = {};
+  // Un dato que el proyecto no trae (por ejemplo, de una versión anterior) toma su valor por defecto, nunca el del
+  // proyecto que estaba abierto antes (corrección de la v2.9.2: así ningún proyecto hereda datos de otro)
+  KEYS.forEach(k => (campos[k] = o[k] != null ? String(o[k]).replace(/[<>]/g, "") : DEFV[k]));
+  const listas = Object.fromEntries(
+    LISTAS_PROY.map(k => [
+      k,
       limpiarLista(
         o[k],
         LISTS[k].nuevo(),
@@ -201,18 +195,13 @@ function aplicar(o) {
           .filter(f => f.t === "number" || f.k === "fases")
           .map(f => f.k)
           .filter(x => x !== "fases")
-      ) || (["pisos", "lums", "lumsT", "toms", "tomsT", "cargasT"].includes(k) ? [] : null);
-    if (L) {
-      a.length = 0;
-      a.push(...L);
-    }
-  });
+      ) || (["pisos", "lums", "lumsT", "toms", "tomsT", "cargasT"].includes(k) ? [] : null)
+    ])
+  );
+  const ok = v =>
+    v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([, x]) => typeof x === "string")) : {};
   const fx = o.FIX && typeof o.FIX === "object" ? o.FIX : {},
-    ok = v =>
-      v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([, x]) => typeof x === "string")) : {};
-  FIX = { uni: ok(fx.uni), multi: ok(fx.multi) };
-  const ac = o.ACEP && typeof o.ACEP === "object" ? o.ACEP : {};
-  ACEP = { uni: ok(ac.uni), multi: ok(ac.multi) };
+    ac = o.ACEP && typeof o.ACEP === "object" ? o.ACEP : {};
   // Equipos adicionales por tablero: solo claves conocidas y valores verdaderos
   const te = o.TEQ && typeof o.TEQ === "object" ? o.TEQ : {},
     okq = v =>
@@ -230,20 +219,59 @@ function aplicar(o) {
               ])
           )
         : {};
-  TEQ = { uni: okq(te.uni), multi: okq(te.multi) };
   // Secciones elegidas en el cuadro de conductores: solo secciones normalizadas (el cálculo verifica que cumplan)
   const sf = o.SECF && typeof o.SECF === "object" ? o.SECF : {},
     oks = v =>
       v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([, S]) => SECC.includes(S))) : {};
-  SECF = { uni: oks(sf.uni), multi: oks(sf.multi) };
   const sv = v => (["mono220", "tri220", "tri380"].includes(v) ? v : null);
-  renderSys("sys_uni", "sist", sv(o.sist) || "mono220");
-  renderSys("sys_multi", "sistG", sv(o.sistG) || "tri380");
+  return {
+    id: typeof o.id === "string" && /^[\w-]{1,40}$/.test(o.id) ? o.id : null,
+    campos,
+    listas,
+    FIX: { uni: ok(fx.uni), multi: ok(fx.multi) },
+    ACEP: { uni: ok(ac.uni), multi: ok(ac.multi) },
+    TEQ: { uni: okq(te.uni), multi: okq(te.multi) },
+    SECF: { uni: oks(sf.uni), multi: oks(sf.multi) },
+    sist: sv(o.sist) || "mono220",
+    sistG: sv(o.sistG) || "tri380",
+    MODE: o.MODE === "multi" ? "multi" : "uni"
+  };
+}
+/* Proyecto listo para calcular(), con el mismo formato que estado(), a partir de un proyecto guardado o de un
+   caso de prueba (lo usan las pruebas sin navegador, herramientas/pruebas.js). Los datos que falten toman el
+   valor por defecto. */
+// eslint-disable-next-line no-unused-vars -- la usa herramientas/pruebas.js (pruebas sin navegador)
+function proyectoDe(o) {
+  const n = normalizar(o),
+    p = { MODE: n.MODE, sist: n.sist, sistG: n.sistG, FIX: n.FIX, ACEP: n.ACEP, TEQ: n.TEQ, SECF: n.SECF };
+  KEYS.forEach(k => (p[k] = n.campos[k] !== undefined ? n.campos[k] : String(DEFV[k] ?? "")));
+  LISTAS_PROY.forEach(k => (p[k] = n.listas[k] || []));
+  return p;
+}
+function aplicar(o) {
+  const n = normalizar(o);
+  PID = n.id;
+  KEYS.forEach(k => {
+    if (n.campos[k] !== undefined && $(k)) $(k).value = n.campos[k];
+  });
+  LISTAS_PROY.forEach(k => {
+    const a = LISTS[k].arr;
+    if (n.listas[k]) {
+      a.length = 0;
+      a.push(...n.listas[k]);
+    }
+  });
+  FIX = n.FIX;
+  ACEP = n.ACEP;
+  TEQ = n.TEQ;
+  SECF = n.SECF;
+  renderSys("sys_uni", "sist", n.sist);
+  renderSys("sys_multi", "sistG", n.sistG);
   Object.keys(LISTS).forEach(renderList);
   const f0 = FORZAR;
   FORZAR = true;
   try {
-    setMode(o.MODE === "multi" ? "multi" : "uni");
+    setMode(n.MODE);
   } finally {
     FORZAR = f0;
   }
