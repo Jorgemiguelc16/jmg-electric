@@ -55,6 +55,7 @@ function render(r) {
   if (r.bal) S.balance = () => cardBalance(r, "");
   S.unifilar = () => cardUnifilar(r, "");
   S.alturas = () => cardAlturas(r, "");
+  S.detalles = () => cardDetalles(r, "");
   S.metrado = () => cardMetrado(r);
   S.verif = () => cardAlertas(r, "") + cardRecom(r);
   const st = {

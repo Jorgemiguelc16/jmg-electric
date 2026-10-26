@@ -23,7 +23,18 @@ let MODE = "uni",
 try {
   VIEW = localStorage.getItem("jmg-electric-view") || "resumen";
 } catch (e) {}
-const VORDEN = ["resumen", "demanda", "alims", "cuadro", "balance", "unifilar", "alturas", "metrado", "verif"];
+const VORDEN = [
+  "resumen",
+  "demanda",
+  "alims",
+  "cuadro",
+  "balance",
+  "unifilar",
+  "alturas",
+  "detalles",
+  "metrado",
+  "verif"
+];
 const VLBL = {
   resumen: "Resumen",
   demanda: "Máxima demanda",
@@ -32,6 +43,7 @@ const VLBL = {
   balance: "Balance de fases",
   unifilar: "Diagrama unifilar",
   alturas: "Diagrama de alturas",
+  detalles: "Leyenda y detalles",
   metrado: "Metrado",
   verif: "Verificaciones"
 };

@@ -214,11 +214,20 @@ function metrado(r) {
       it(`Dispositivos ${POLOS[pp]}: ${dsc}`, "Und.", n, obs, `OE.5.2.8.${pp}.${nPol[pp]}`);
     });
   sec("OE.5.4", "INSTALACIÓN DEL SISTEMA DE PUESTA A TIERRA");
+  // Materiales del pozo (Parámetros › Tierra y metrado); el tratamiento solo si el factor es menor que 1
+  const pz = c.pozo,
+    tq = [
+      pz.sal ? `${fmt(pz.sal, 0)} kg de sal industrial` : "",
+      pz.carb ? `${fmt(pz.carb, 0)} kg de carbón vegetal` : ""
+    ]
+      .filter(Boolean)
+      .join(" y "),
+    trat = p.fr < 1 ? (tq ? ` tratada con ${tq}` : ", tratamiento del suelo (bentonita o gel)") : "";
   it(
-    `Pozo de puesta a tierra con varilla de cobre de ${fmt(p.Lv, 2)} m × ${PULG[p.dv] || fmt(p.dv * 1000, 1) + " mm"}, conector de bronce, caja de registro de concreto con tapa${p.fr < 1 ? ", tratamiento del suelo (bentonita o gel)" : ""} y conductor de cobre de ${r.Selec} mm² al tablero`,
+    `Pozo de puesta a tierra con varilla de cobre de ${fmt(p.Lv, 2)} m × ${PULG[p.dv] || fmt(p.dv * 1000, 1) + " mm"}, conector de bronce tipo Anderson, caja de registro de concreto${pz.tapa ? ` con tapa de ${fmt(pz.tapa, 2)} × ${fmt(pz.tapa, 2)} × ${fmt(pz.tapaE, 2)} m` : " con tapa"}${pz.tierra ? `, relleno de ${fmt(pz.tierra, 1)} m³ de tierra negra cernida` : ""}${trat} y conductor desnudo de cobre de ${r.Selec} mm² al tablero`,
     "Und.",
     p.nVar,
-    `Regla 060-702. Conductor estimado: ${Math.ceil(3 * p.nVar + 5)} m en total (3 m por pozo + 5 m al tablero)`
+    `Regla 060-702. Conductor: ${Math.ceil(pz.cond + 3 * (p.nVar - 1))} m en total (${fmt(pz.cond, 0)} m al tablero${p.nVar > 1 ? ` + 3 m por cada varilla adicional` : ""})${pz.pvc ? `; tubo PVC de protección: ${fmt(pz.pvc, 0)} m` : ""}. Materiales por pozo, criterio de diseño`
   );
   sec("C", "COMPLEMENTOS (NO CODIFICADOS EN LA NORMA)");
   it("Tomacorriente doble con toma de tierra, 16 A, 250 V", "Und.", to);

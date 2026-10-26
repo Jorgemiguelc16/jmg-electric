@@ -218,9 +218,10 @@ document.addEventListener("click", async e => {
 
 const PLANOS = {
   unifilar: () => ({ ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" }),
-  alturas: () => ({ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" })
+  alturas: () => ({ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }),
+  detalles: () => ({ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" })
 };
-const planoActual = () => PLANOS[VIEW === "alturas" ? "alturas" : "unifilar"]();
+const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();
 /* Diálogo de descarga DXF */
 function dxfDialogo(abrir) {
   const d = $("dxfDlg");
@@ -228,7 +229,7 @@ function dxfDialogo(abrir) {
   document.body.classList.toggle("wl-open", abrir);
   if (abrir) {
     // Por defecto, el plano que está abierto
-    $("dx_plano").value = VIEW === "alturas" ? "alturas" : "unifilar";
+    $("dx_plano").value = PLANOS[VIEW] ? VIEW : "unifilar";
     try {
       const o = JSON.parse(localStorage.getItem("jmg-electric-dxf") || "{}");
       if (LAMINAS[o.lamina]) $("dx_lam").value = o.lamina;
@@ -253,7 +254,7 @@ $("dxfDlg").addEventListener("click", async e => {
       .slice(0, 60) || "proyecto";
   const pl = $("dx_plano").value;
   dxfDialogo(false);
-  for (const k of pl === "ambos" ? ["unifilar", "alturas"] : [pl]) {
+  for (const k of pl === "todos" ? Object.keys(PLANOS) : [pl]) {
     const u = PLANOS[k](),
       blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
       nombre = `JMG-ELECTRIC - ${u.corto} ${op.lamina} - ${nm}.dxf`;

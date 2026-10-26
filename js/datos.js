@@ -298,6 +298,17 @@ const HLP = {
   dv: "Diámetro de la varilla; mínimo 13 mm en cobre.",
   pDesp:
     "Desperdicio de conductores y tubos. No se suma al metrado, que es neto (Norma Técnica de Metrados, R.D. N.° 073-2010-VIVIENDA): se informa para el análisis de precios.",
+  pzD: "Diámetro del hoyo del pozo. Opcional: vacío, el detalle no lo acota. El CNE no lo fija; use el de su proyecto o el de la concesionaria.",
+  pzH: "Profundidad del hoyo del pozo. Opcional: vacío, el detalle no la acota. La varilla debe tener al menos 2 m (Regla 060-702).",
+  pzTapa: "Lado de la tapa de concreto de la caja de registro.",
+  pzTapaE: "Espesor de la tapa de concreto de la caja de registro.",
+  pzSal:
+    "Sal industrial del tratamiento del suelo, por pozo. Se incluye solo si hay tratamiento (factor menor que 1). Con 0 no se incluye.",
+  pzCarb:
+    "Carbón vegetal del tratamiento del suelo, por pozo. Se incluye solo si hay tratamiento (factor menor que 1). Con 0 no se incluye.",
+  pzTierra: "Tierra negra cernida para el relleno compactado, por pozo.",
+  pzCond: "Conductor desnudo de cobre del primer pozo al tablero; cada varilla adicional suma 3 m para unirla.",
+  pzPvc: "Tubo PVC que protege el conductor de puesta a tierra entre el pozo y el tablero.",
   hTecho: "Altura del piso terminado (NPT) al fondo de la losa, según la arquitectura. Ahí va el centro de luz.",
   hBraq: "Criterio del proyectista (valor usual 2.00 m). También se usa para la luminaria de emergencia.",
   hTab: "Hasta el borde superior del tablero. Criterio del proyectista (valor usual 1.80 m): que se opere de pie sin obstáculos.",

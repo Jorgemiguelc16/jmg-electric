@@ -4,9 +4,7 @@
    DGE, la altura y la verificación con la A.120; abajo, notas y rótulo. Símbolos de la Norma DGE «Símbolos gráficos
    en electricidad» (R.M. N.° 091-2002-EM/VME, sección 093), redibujados conservando sus proporciones. Las alturas
    son parámetros del proyecto (Parámetros › Alturas). Usa solo líneas, rectángulos, círculos, triángulos y textos,
-   para que svgDxf() lo pase a AutoCAD igual que el unifilar. */
-// Coordenadas con 2 decimales
-const px2 = v => +(+v).toFixed(2);
+   para que svgDxf() lo pase a AutoCAD igual que el unifilar. Los símbolos de la leyenda están en js/simbolos.js. */
 // Límites de la A.120: interruptores y timbres hasta 1.35 m (Art. 11 d); alcance frontal de 0.40 a 1.20 m (Art. 10)
 const A120 = { int: [0, 1.35, "Art. 11 d"], toma: [0.4, 1.2, "Art. 10"] };
 // Zona de cada salida, en el orden en que se dibujan
@@ -132,61 +130,6 @@ function alturas(r) {
         xb = x1;
       }
       if (xb > xa) L(xa, ya1, xb, yb1, 0.5, GR);
-    }
-  };
-  /* Símbolos de la Norma DGE, de tamaño z, centrados en x, y (el tablero: y es su borde superior y ht su alto) */
-  const luzX = (x, y, z) => {
-    C(x, y, 7 * z);
-    L(x - 4.9 * z, y - 4.9 * z, x + 4.9 * z, y + 4.9 * z, 1.1);
-    L(x + 4.9 * z, y - 4.9 * z, x - 4.9 * z, y + 4.9 * z, 1.1);
-  };
-  const toma = (x, y, z, letra) => {
-    R(x - 8 * z, y - 7 * z, 16 * z, 15 * z, { st: "", fi: "#fff" });
-    arco(x, y - 2 * z, 7 * z, 0, 180);
-    L(x - 7 * z, y - 2 * z, x + 7 * z, y - 2 * z, 1.2);
-    L(x - 7 * z, y - 6 * z, x + 7 * z, y - 6 * z, 1.2);
-    L(x, y + 5 * z, x, y + 9 * z, 1.2);
-    T(x + 10 * z, y + 3 * z, letra, { s: 8 * z, b: 1 });
-  };
-  const SIM = {
-    med: (x, y, z) => {
-      R(x - 12 * z, y - 15 * z, 24 * z, 30 * z, { fi: "#fff" });
-      C(x, y, 8.5 * z);
-      T(x, y + 2.3 * z, "kWh", { s: 5.4 * z, b: 1, a: "middle" });
-    },
-    tab: (x, y, z, ht) => {
-      R(x - 12 * z, y, 24 * z, ht, { fi: "#fff" });
-      TRI(x - 12 * z, y, x + 12 * z, y, x - 12 * z, y + ht);
-    },
-    int: (x, y, z) => {
-      C(x, y, 3 * z, { fi: INK, st: "" });
-      L(x + 2 * z, y - 2 * z, x + 10 * z, y - 10 * z, 1.3);
-      L(x + 10 * z, y - 10 * z, x + 13.5 * z, y - 6.5 * z, 1.3);
-      T(x - 6 * z, y + 3 * z, "S", { s: 8 * z, b: 1, a: "end" });
-    },
-    braq: (x, y, z) => {
-      luzX(x, y, z);
-      L(x - 9 * z, y + 9.5 * z, x + 9 * z, y + 9.5 * z, 1.4);
-    },
-    luz: (x, y, z) => luzX(x, y, z),
-    emer: (x, y, z) => {
-      R(x - 11 * z, y - 9 * z, 22 * z, 18 * z, { fi: "#fff" });
-      luzX(x, y, z);
-    },
-    toma: (x, y, z) => toma(x, y, z, "T"),
-    tomaC: (x, y, z) => toma(x, y, z, "T"),
-    terma: (x, y, z) => {
-      R(x - 9 * z, y - 12 * z, 18 * z, 24 * z, { fi: "#fff" });
-      [-6, -2, 2, 6].forEach((d, i) =>
-        L(x + (i % 2 ? 5 : -5) * z, y + d * z, x + (i % 2 ? -5 : 5) * z, y + (d + 4) * z, 1)
-      );
-    },
-    coc: (x, y, z) => toma(x, y, z, "C"),
-    aire: (x, y, z) => toma(x, y, z, "A"),
-    fza: (x, y, z) => toma(x, y, z, "F"),
-    itc: (x, y, z) => {
-      R(x - 9 * z, y - 9 * z, 18 * z, 18 * z, { fi: "#fff" });
-      T(x, y + 3 * z, "IT", { s: 7.5 * z, b: 1, a: "middle" });
     }
   };
   // Título
@@ -430,8 +373,14 @@ function alturas(r) {
       const [et, ec, eb] = estado(s);
       R(bx, yy, bw, 24, { st: LN, fi: "#fff", sw: 0.8 });
       L(bx + 44, yy, bx + 44, yy + 24, 0.8, LN);
-      if (s.k === "tab") SIM.tab(bx + 22, yy + 5, 0.6, 14);
-      else SIM[s.k](bx + 21, yy + 12.5, 0.68);
+      // Símbolo DGE de la salida (las de fuerza y aire, trifásicas si su código es el de 09-93-15)
+      simboloDGE(
+        o,
+        (s.k === "fza" || s.k === "aire") && s.cod === "09-93-15" ? s.k + "3" : s.k,
+        bx + 22,
+        yy + 12,
+        0.85
+      );
       T(bx + 50, yy + 15.5, s.nom, { s: 7.5 });
       T(bx + 232, yy + 15.5, s.cod, { s: 7.3, f: GR });
       T(bx + 306, yy + 15.5, `${fmt(s.h, 2)} m`, { s: 7.8, b: 1, a: "end" });

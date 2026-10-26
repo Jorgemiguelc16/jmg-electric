@@ -58,6 +58,18 @@ function ctx(p = estado()) {
           : "Cobre a 90 °C · ρ20 (1 + 0,00393·70)",
     desig: g("desig").replace(/[<>]/g, "").trim(),
     pDesp: Math.max(0, n("pDesp")),
+    // Detalle del pozo de tierra (js/detalles.js) y metrado: medidas en m, materiales por pozo
+    pozo: {
+      d: Math.max(0, n("pzD")),
+      h: Math.max(0, n("pzH")),
+      tapa: Math.max(0, n("pzTapa")),
+      tapaE: Math.max(0, n("pzTapaE")),
+      sal: Math.max(0, n("pzSal")),
+      carb: Math.max(0, n("pzCarb")),
+      tierra: Math.max(0, n("pzTierra")),
+      cond: Math.max(0, n("pzCond")),
+      pvc: Math.max(0, n("pzPvc"))
+    },
     // Alturas de montaje desde el NPT (m), para el diagrama de alturas (js/alturas.js)
     alt: {
       techo: n("hTecho") || 2.9,
