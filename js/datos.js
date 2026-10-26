@@ -298,7 +298,6 @@ const HLP = {
   dv: "Diámetro de la varilla; mínimo 13 mm en cobre.",
   pDesp:
     "Desperdicio de conductores y tubos. No se suma al metrado, que es neto (Norma Técnica de Metrados, R.D. N.° 073-2010-VIVIENDA): se informa para el análisis de precios.",
-  bajada: "Metros adicionales por salida para la bajada a la caja.",
   hTecho: "Altura del piso terminado (NPT) al fondo de la losa, según la arquitectura. Ahí va el centro de luz.",
   hBraq: "Criterio del proyectista (valor usual 2.00 m). También se usa para la luminaria de emergencia.",
   hTab: "Hasta el borde superior del tablero. Criterio del proyectista (valor usual 1.80 m): que se opere de pie sin obstáculos.",

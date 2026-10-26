@@ -476,11 +476,8 @@
           <p class="hint">Varilla de longitud no menor de 2 m (060-702). Factor 1 sin tratamiento; 0.3–0.6 con bentonita o gel.</p>
         </div></fieldset>
 <fieldset id="fs-p-met"><legend>Metrado</legend><div class="fs">
-          <div class="row">
-            <label>Desperdicio de conductores y tubos para el análisis de precios (%)<input type="number" id="pDesp" min="0" max="30" step="1" value="5"></label>
-            <label>Bajada por salida (m)<input type="number" id="bajada" min="0" max="5" step="0.1" value="1"></label>
-          </div>
-          <p class="hint">El metrado de conductores y tubos es referencial: usa la longitud hasta la salida más alejada más una bajada por cada salida.</p>
+          <label>Desperdicio de conductores y tubos para el análisis de precios (%)<input type="number" id="pDesp" min="0" max="30" step="1" value="5"></label>
+          <p class="hint">El metrado de conductores y tubos es referencial: usa la longitud hasta la salida más alejada más los tramos verticales según las alturas de montaje (pestaña Alturas).</p>
         </div></fieldset>
 <fieldset id="fs-p-alt"><legend>Alturas de montaje <small>A.120 · Norma DGE</small></legend><div class="fs">
           <div class="row">
@@ -503,7 +500,7 @@
             <label>Fuerza: cocina, motores y otras (m)<input type="number" id="hFza" min="0" max="6" step="0.05" value="0.4"></label>
             <label>Aire acondicionado (m)<input type="number" id="hAire" min="0" max="6" step="0.05" value="2"></label>
           </div>
-          <p class="hint">Alturas desde el nivel de piso terminado (NPT) hasta el eje de la caja; el tablero, hasta su borde superior. La Norma A.120 del RNE (accesibilidad) limita los interruptores a 1.35 m (Art. 11 d) y el alcance frontal a 0.40–1.20 m (Art. 10). Las demás son criterio del proyectista. Se dibujan en el diagrama de alturas (cinta: Planos).</p>
+          <p class="hint">Alturas desde el nivel de piso terminado (NPT) hasta el eje de la caja; el tablero, hasta su borde superior. La Norma A.120 del RNE (accesibilidad) limita los interruptores a 1.35 m (Art. 11 d) y el alcance frontal a 0.40–1.20 m (Art. 10). Las demás son criterio del proyectista. Se dibujan en el diagrama de alturas (cinta: Planos) y dan los tramos verticales del metrado.</p>
         </div></fieldset>
 <fieldset id="fs-p-dat"><legend>Datos guardados</legend><div class="fs">
           <p class="hint">Los datos se guardan automáticamente en este navegador. Restablecer no borra los proyectos de la pestaña Proyectos.</p>
@@ -601,10 +598,11 @@
 <div class="welcome" id="dxfDlg" hidden>
   <div class="wl-box" role="dialog" aria-modal="true" aria-labelledby="dxfT">
     <button class="wl-x" type="button" data-dx="close" aria-label="Cerrar">×</button>
-    <p class="wl-eyebrow" id="dxfQue">Diagrama unifilar · AutoCAD</p>
+    <p class="wl-eyebrow">Planos · AutoCAD</p>
     <h2 id="dxfT" class="dx-t">Descargar para AutoCAD</h2>
     <p class="wl-lead">El dibujo se entrega en milímetros, centrado en la lámina, con capas, colores y textos editables.</p>
     <div class="dx-grid">
+      <label>Plano<select id="dx_plano"><option value="unifilar">Diagrama unifilar · IE-01</option><option value="alturas">Diagrama de alturas de montaje · IE-02</option><option value="ambos">Los dos planos (un archivo por plano)</option></select></label>
       <label>Tamaño de lámina<select id="dx_lam"><option value="A4">A4 · 297 × 210 mm</option><option value="A3" selected>A3 · 420 × 297 mm</option><option value="A2">A2 · 594 × 420 mm</option><option value="A1">A1 · 841 × 594 mm</option></select></label>
       <fieldset class="dx-opts"><legend>Estilo de colores</legend>
         <label class="dx-opt"><input type="radio" name="dx_col" value="jmg" checked><span><b>JMG</b><small>Azul y cobre, como en la plataforma</small></span><i class="sw sw-jmg"></i></label>
@@ -613,7 +611,7 @@
       </fieldset>
     </div>
     <div class="wl-acts"><button class="btn" type="button" data-dx="ok">Descargar DXF</button><button class="btn sec" type="button" data-dx="close">Cancelar</button></div>
-    <p class="wl-note">¿Necesita DWG? Abra el DXF en AutoCAD y use <b>Guardar como → Dibujo (*.dwg)</b>. Capas: E-UNIFILAR, E-BARRAS, E-RESERVA, E-TIERRA, E-SIMBOLOS, E-CUADROS, E-MARCO, E-RELLENOS y E-TEXTOS.</p>
+    <p class="wl-note">¿Necesita DWG? Abra el DXF en AutoCAD y use <b>Guardar como → Dibujo (*.dwg)</b>. Capas: E-UNIFILAR, E-BARRAS, E-RESERVA, E-TIERRA, E-SIMBOLOS, E-CUADROS, E-MARCO, E-RELLENOS y E-TEXTOS; en el de alturas, además, E-NIVELES y E-TUBERIA.</p>
   </div>
 </div>
 <div class="welcome" id="pdfDlg" hidden>

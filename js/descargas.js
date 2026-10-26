@@ -216,17 +216,19 @@ document.addEventListener("click", async e => {
   }
 });
 
-const planoActual = () =>
-  VIEW === "alturas"
-    ? { ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }
-    : { ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" };
+const PLANOS = {
+  unifilar: () => ({ ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" }),
+  alturas: () => ({ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" })
+};
+const planoActual = () => PLANOS[VIEW === "alturas" ? "alturas" : "unifilar"]();
 /* Diálogo de descarga DXF */
 function dxfDialogo(abrir) {
   const d = $("dxfDlg");
   d.hidden = !abrir;
   document.body.classList.toggle("wl-open", abrir);
   if (abrir) {
-    $("dxfQue").textContent = `${VIEW === "alturas" ? "Diagrama de alturas" : "Diagrama unifilar"} · AutoCAD`;
+    // Por defecto, el plano que está abierto
+    $("dx_plano").value = VIEW === "alturas" ? "alturas" : "unifilar";
     try {
       const o = JSON.parse(localStorage.getItem("jmg-electric-dxf") || "{}");
       if (LAMINAS[o.lamina]) $("dx_lam").value = o.lamina;
@@ -249,15 +251,19 @@ $("dxfDlg").addEventListener("click", async e => {
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
       .trim()
       .slice(0, 60) || "proyecto";
-  const u = planoActual(),
-    blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
-    nombre = `JMG-ELECTRIC - ${u.corto} ${op.lamina} - ${nm}.dxf`;
+  const pl = $("dx_plano").value;
   dxfDialogo(false);
-  try {
-    if (downloads) await downloads.save({ filename: nombre, data: blob });
-    else descargarLocal(blob, nombre);
-  } catch (err) {
-    if (!(err && err.code === "declined")) console.warn(err);
+  for (const k of pl === "ambos" ? ["unifilar", "alturas"] : [pl]) {
+    const u = PLANOS[k](),
+      blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
+      nombre = `JMG-ELECTRIC - ${u.corto} ${op.lamina} - ${nm}.dxf`;
+    try {
+      if (downloads) await downloads.save({ filename: nombre, data: blob });
+      else descargarLocal(blob, nombre);
+    } catch (err) {
+      if (!(err && err.code === "declined")) console.warn(err);
+      if (err && err.code === "declined") break;
+    }
   }
 });
 addEventListener("keydown", e => {

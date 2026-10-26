@@ -58,7 +58,6 @@ function ctx(p = estado()) {
           : "Cobre a 90 °C · ρ20 (1 + 0,00393·70)",
     desig: g("desig").replace(/[<>]/g, "").trim(),
     pDesp: Math.max(0, n("pDesp")),
-    bajada: Math.max(0, n("bajada")),
     // Alturas de montaje desde el NPT (m), para el diagrama de alturas (js/alturas.js)
     alt: {
       techo: n("hTecho") || 2.9,

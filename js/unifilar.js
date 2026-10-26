@@ -499,7 +499,8 @@ function svgDxf(svgTxt, op = {}) {
         y1 = n(el.getAttribute("y1")),
         x2 = n(el.getAttribute("x2")),
         y2 = n(el.getAttribute("y2"));
-      if (dash) return linea(x1, y1, x2, y2, "E-RESERVA", esq === "capas" ? 256 : esq === "mono" ? 7 : 252);
+      const capa = el.getAttribute("data-capa");
+      if (dash) return linea(x1, y1, x2, y2, capa || "E-RESERVA", esq === "capas" ? 256 : esq === "mono" ? 7 : 252);
       if (sw >= 3)
         return pline(
           [
@@ -510,7 +511,7 @@ function svgDxf(svgTxt, op = {}) {
           esq === "capas" ? 256 : esq === "mono" ? 7 : 32,
           sw * k
         );
-      const ly = st === "#2f7a4b" ? "E-TIERRA" : "E-UNIFILAR";
+      const ly = capa || (st === "#2f7a4b" ? "E-TIERRA" : "E-UNIFILAR");
       if (sw >= 1.5)
         return pline(
           [

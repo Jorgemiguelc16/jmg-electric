@@ -1,9 +1,29 @@
 /* METRADO
    Cantidades de materiales (conductores, tubos, cajas, interruptores, tableros) a partir del resultado. */
 const PULG = { 0.0127: '1/2"', 0.0159: '5/8"', 0.0191: '3/4"' };
+/* Tramos verticales de un circuito (m), con las alturas de montaje (Parámetros › Alturas; mismas salidas que el
+   diagrama de alturas, js/alturas.js): la salida del tablero (desde su borde superior) al techo o al piso, y
+   - por el techo (alumbrado, emergencia, aire, interfono): una bajada por salida, techo − altura; en el alumbrado,
+     una por interruptor (uno por cada 2 salidas, como en las cajas), porque el centro de luz está en la losa;
+   - por el piso (tomacorrientes, terma y fuerza): en cada salida el tubo sube y vuelve a bajar, y en la última
+     solo sube: (2n − 1) × altura. */
+function tramoVertical(q, c) {
+  const A = c.alt,
+    T = A.techo,
+    t = `${q.tipo} ${q.desc}`.toLowerCase(),
+    n = Math.max(1, q.n || 0);
+  const techo = (k, h) => Math.max(0, T - A.tab) + k * Math.max(0, T - h),
+    piso = h => A.tab + (2 * n - 1) * h;
+  if (/emergencia/.test(t)) return techo(n, A.braq);
+  if (/alumbrado|iluminaci/.test(t)) return techo(Math.ceil(n / 2), A.int);
+  if (/tomacorriente/.test(t)) return piso(/cocina|lavander/.test(t) ? A.tomaC : A.toma);
+  if (/calentador|ducha|terma/.test(t)) return piso(A.terma);
+  if (/aire acondicionado/.test(t)) return techo(n, A.aire);
+  if (/intercomunicador|portero/.test(t)) return techo(n, A.int);
+  return piso(A.fza);
+}
 function metrado(r) {
   const c = r.c,
-    baj = c.bajada,
     D = c.desig ? ` ${c.desig}` : "";
   const cond = {},
     tubo = {},
@@ -27,7 +47,7 @@ function metrado(r) {
   });
   r.circ.forEach(q => {
     const n = r.alims[q.feeder].cant || 1,
-      Lr = q.L + baj * q.n;
+      Lr = q.L + tramoVertical(q, c);
     add(cond, q.S, (q.f3 ? 3 : 2) * Lr * n);
     add(cond, q.St, Lr * n);
     add(tubo, tk(q.tubo), Lr * n);
@@ -210,5 +230,5 @@ function cardMetrado(r) {
   return `<section class="card"><h2><span>Metrado de instalaciones eléctricas</span><span class="ref">Referencial</span></h2>
   <div class="tbl-wrap"><table><thead><tr><th class="t">Ítem</th><th class="t">Descripción</th><th>Und.</th><th>Cantidad</th><th class="t">Observación</th></tr></thead><tbody>
   ${M.map(x => (x.sec ? `<tr class="grp"><td colspan="5">${x.cod}  ${x.sec}</td></tr>` : `<tr><td class="t">${x.cod}</td><td class="t" style="white-space:normal">${esc(x.desc)}</td><td>${x.und}</td><td><strong>${fmt(x.cant, 0)}</strong></td><td class="t" style="white-space:normal;color:var(--muted)">${esc(x.obs)}</td></tr>`)).join("")}
-  </tbody></table></div><div class="body"><p class="hint">Metrado referencial ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5). Las protecciones, tableros y salidas salen del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(r.c.bajada, 1)} m de bajada por salida. Las cantidades son netas: el desperdicio (${fmt(r.c.pDesp, 0)} %) se aplica en el análisis de precios. Verifique con los planos de distribución. Se incluye en la hoja «Metrado» del Excel.</p></div></section>`;
+  </tbody></table></div><div class="body"><p class="hint">Metrado referencial ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5). Las protecciones, tableros y salidas salen del cálculo; las longitudes de conductores y tubos suman la distancia a la salida más alejada y los tramos verticales según las alturas de montaje (Parámetros › Alturas): del tablero al techo o al piso, una bajada por interruptor o salida alta y, en las salidas por el piso, una subida y una bajada por salida. Las cantidades son netas: el desperdicio (${fmt(r.c.pDesp, 0)} %) se aplica en el análisis de precios. Verifique con los planos de distribución. Se incluye en la hoja «Metrado» del Excel.</p></div></section>`;
 }

@@ -30,7 +30,6 @@ const KEYS = [
   "kArr",
   "dvGen",
   "pDesp",
-  "bajada",
   "hTecho",
   "hBraq",
   "hTab",

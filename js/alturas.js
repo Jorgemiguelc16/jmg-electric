@@ -88,9 +88,10 @@ function alturas(r) {
     GR = "#5a6775",
     LN = "#bfc8d2",
     W = 1123;
+  // Línea; en el DXF, los niveles (punteados) y la tubería (cobre) van en sus propias capas
   const L = (x1, y1, x2, y2, w = 1.3, col = INK, dash) =>
     o.push(
-      `<line x1="${px2(x1)}" y1="${px2(y1)}" x2="${px2(x2)}" y2="${px2(y2)}" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`
+      `<line x1="${px2(x1)}" y1="${px2(y1)}" x2="${px2(x2)}" y2="${px2(y2)}" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}" data-capa="E-NIVELES"` : col === CU ? ' data-capa="E-TUBERIA"' : ""}/>`
     );
   const T = (x, y, t, { s = 9, b = 0, a = "start", f = INK, rot = 0 } = {}) =>
     o.push(
