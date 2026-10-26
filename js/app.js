@@ -318,7 +318,7 @@ $("propBody").addEventListener("input", e => {
     renderList(nm);
   }
   if (t.dataset.mirror) {
-    $(t.dataset.mirror).value = t.value;
+    ponerDato(t.dataset.mirror, t.value);
   }
 });
 $("propBody").addEventListener("change", e => {
@@ -671,8 +671,8 @@ $("uso").addEventListener("change", () => {
   const com = usoAct() !== "viv";
   ["tg_p", "tc_p"].forEach(k => {
     const v = $(k).value;
-    if (com && v === "180") $(k).value = String(VA_TOMA_COM);
-    else if (!com && v === String(VA_TOMA_COM)) $(k).value = "180";
+    if (com && v === "180") ponerDato(k, String(VA_TOMA_COM));
+    else if (!com && v === String(VA_TOMA_COM)) ponerDato(k, "180");
   });
   uiUso();
   calcularAhora();

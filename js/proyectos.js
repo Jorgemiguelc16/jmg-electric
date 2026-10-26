@@ -54,6 +54,32 @@ const KEYS = [
 const SKEY = "jmg-electric-v1",
   DEFV = {};
 KEYS.forEach(k => (DEFV[k] = $(k).value));
+/* DATOS DEL PROYECTO: fuente única desde la etapa 1 (paso 3). PROY guarda los datos del proyecto (los de KEYS y
+   el sistema eléctrico); los campos de la pantalla solo los muestran. Lo que el usuario escribe pasa a PROY al
+   instante (escucha en fase de captura, antes que cualquier otro manejador); el código cambia un dato con
+   ponerDato(), que actualiza PROY y el campo a la vez. estado() lee de PROY. */
+const PROY = { ...DEFV, sist: null, sistG: null };
+const ES_DATO = new Set(KEYS);
+// Pone un dato del proyecto; guarda el valor que el campo acepta (una lista no admite un valor que no tiene)
+function ponerDato(k, v) {
+  const el = $(k);
+  if (el) {
+    el.value = v;
+    PROY[k] = el.value;
+  } else PROY[k] = String(v ?? "");
+}
+["input", "change"].forEach(t =>
+  document.addEventListener(
+    t,
+    e => {
+      const el = e.target;
+      if (el.type === "radio" && (el.name === "sist" || el.name === "sistG")) {
+        if (el.checked) PROY[el.name] = el.value;
+      } else if (el.id && ES_DATO.has(el.id)) PROY[el.id] = el.value;
+    },
+    true
+  )
+);
 ["area", "Lalim", "al_n", "al_p", "al_L", "tg_n", "tg_p", "tg_L", "tc_n", "tc_p", "tc_L", "Lgen", "Lms"].forEach(k => {
   if ($(k) && !$(k).placeholder) $(k).placeholder = "ej. " + DEFV[k];
 });
@@ -101,10 +127,10 @@ function estado() {
     TEQ,
     SECF,
     res: RESUMEN,
-    sist: radio("sist"),
-    sistG: radio("sistG")
+    sist: PROY.sist || radio("sist"),
+    sistG: PROY.sistG || radio("sistG")
   };
-  KEYS.forEach(k => (o[k] = $(k).value));
+  KEYS.forEach(k => (o[k] = PROY[k]));
   return o;
 }
 const esEjemplo = () => /^EJEMPLO\b/.test($("p_nombre").value.trim());
@@ -252,7 +278,7 @@ function aplicar(o) {
   const n = normalizar(o);
   PID = n.id;
   KEYS.forEach(k => {
-    if (n.campos[k] !== undefined && $(k)) $(k).value = n.campos[k];
+    if (n.campos[k] !== undefined) ponerDato(k, n.campos[k]);
   });
   LISTAS_PROY.forEach(k => {
     const a = LISTS[k].arr;
@@ -267,6 +293,8 @@ function aplicar(o) {
   SECF = n.SECF;
   renderSys("sys_uni", "sist", n.sist);
   renderSys("sys_multi", "sistG", n.sistG);
+  PROY.sist = n.sist;
+  PROY.sistG = n.sistG;
   Object.keys(LISTS).forEach(renderList);
   const f0 = FORZAR;
   FORZAR = true;
@@ -377,7 +405,7 @@ function cargarEjemplo(m) {
     p_ubic: "Arequipa, Perú",
     p_proy: "Ing. responsable"
   };
-  Object.entries(v).forEach(([k, x]) => ($(k).value = x));
+  Object.entries(v).forEach(([k, x]) => ponerDato(k, x));
   VIEW = "unifilar";
   calcularAhora();
   irSec("resultados");

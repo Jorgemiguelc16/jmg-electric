@@ -294,6 +294,26 @@ prueba("Las ventanas se mueven y no salen de la pantalla", async ok => {
   ok(g3.x >= 8 && g3.y >= 8 && g3.x + g3.w <= 1366 && g3.y + g3.h <= 768, "la ventana queda dentro de la pantalla");
 });
 
+prueba("Lo que se escribe en el panel pasa a los datos del proyecto (PROY)", async ok => {
+  await ejemplo("uni");
+  await ev("selNode('vivienda')");
+  await poner("#area", 200);
+  ok(
+    (await ev("PROY.area")) === "200" && (await ev("estado().area")) === "200",
+    "área escrita en el panel → PROY y estado()"
+  );
+  ok((await ev("LAST.md.MD")) === 10000, "el cálculo usa el área nueva: 200 m² → 10 kW (Regla 050-200)");
+  await ev(
+    "(r => { r.checked = true; r.dispatchEvent(new Event('change', {bubbles:true})); })(document.querySelector('input[name=sist][value=tri380]'))"
+  );
+  ok(
+    (await ev("PROY.sist")) === "tri380" && (await ev("LAST.alims[0].s.tri")),
+    "sistema elegido → PROY y cálculo trifásico"
+  );
+  await poner("#uso", "oficina");
+  ok((await ev("PROY.tg_p")) === "250", "al pasar a oficina, 250 VA por tomacorriente también en PROY");
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();
@@ -309,6 +329,15 @@ for (const [nombre, fn] of PRUEBAS) {
   await ev(
     "['cerrarFicha','cerrarTablero','cerrarTabla'].forEach(f => { try { window[f] && window[f](); } catch (e) {} }); try { cuadroCond(false); parametros(false); datosProyecto(false); } catch (e) {}"
   ).catch(() => {});
+  // En todas las pruebas: los datos del proyecto (PROY) y los campos de la pantalla deben coincidir
+  try {
+    const dif = await J(
+      "KEYS.filter(k => PROY[k] !== $(k).value).concat(['sist', 'sistG'].filter(n => PROY[n] !== radio(n)))"
+    );
+    if (dif.length) fallas.push("PROY y la pantalla no coinciden en: " + dif.join(", "));
+  } catch (e) {
+    fallas.push(e.message);
+  }
   if (fallas.length) mal++;
   console.log(`${fallas.length ? "✘" : "✔"} ${nombre}`);
   fallas.forEach(f => console.log(`    ✘ ${f}`));
