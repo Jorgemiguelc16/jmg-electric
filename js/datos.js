@@ -296,7 +296,8 @@ const HLP = {
   fr: "Reducción por tratamiento: 1 sin tratamiento; 0.3 a 0.6 con bentonita o gel.",
   Lv: "Longitud de la varilla de puesta a tierra; mínimo 2 m (Regla 060-702).",
   dv: "Diámetro de la varilla; mínimo 13 mm en cobre.",
-  pDesp: "Porcentaje adicional de conductores y tubos por desperdicio.",
+  pDesp:
+    "Desperdicio de conductores y tubos. No se suma al metrado, que es neto (Norma Técnica de Metrados, R.D. N.° 073-2010-VIVIENDA): se informa para el análisis de precios.",
   bajada: "Metros adicionales por salida para la bajada a la caja.",
   esqPisos:
     "Dónde se conectan los circuitos del 1er piso: en el mismo tablero general o en un tablero propio TD-1; en ese caso el TG solo alimenta los tableros de piso y las cargas asignadas a él.",

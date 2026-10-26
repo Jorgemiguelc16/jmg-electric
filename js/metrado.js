@@ -3,7 +3,6 @@
 const PULG = { 0.0127: '1/2"', 0.0159: '5/8"', 0.0191: '3/4"' };
 function metrado(r) {
   const c = r.c,
-    des = 1 + c.pDesp / 100,
     baj = c.bajada,
     D = c.desig ? ` ${c.desig}` : "";
   const cond = {},
@@ -57,12 +56,12 @@ function metrado(r) {
       m += pol;
       add(ids, `${pol}|${q.idRat}|${q.idTipo || "A"}`, n);
     });
-    mods[tb.tab] = { n, m, desc: tb.desc };
     const tri = r.alims[tb.feeder].s.tri;
     equiposDe(tb.tab).forEach(([k, d]) => {
-      add(eqm, d.d(tri), n);
+      add(eqm, `${k === "ctr" ? (tri ? 3 : 2) : tri ? 4 : 2}|${d.d(tri)}`, n);
       m += k === "dps" ? (tri ? 4 : 2) : k === "med" ? (tri ? 4 : 2) : 2;
     });
+    mods[tb.tab] = { n, m, desc: tb.desc };
     nRes += c.reserva * n;
   });
   let al = 0,
@@ -90,108 +89,126 @@ function metrado(r) {
   const inter = Math.ceil(al / 2),
     p = r.pat,
     P = [];
-  const sec = t => P.push({ sec: t }),
-    it = (desc, und, cant, obs = "") => {
-      if (cant > 0) P.push({ desc, und, cant, obs });
+  /* Partidas de la Norma Técnica «Metrados para Obras de Edificación y Habilitaciones Urbanas» (R.D. N.° 073-2010-
+     VIVIENDA/VMCS-DNC), título OE.5. El metrado es neto: el desperdicio se informa para el análisis de precios. */
+  let pc = "",
+    pi = 0;
+  const sec = (cod, t) => {
+      pc = cod;
+      pi = 0;
+      P.push({ sec: t, cod });
+    },
+    it = (desc, und, cant, obs = "", cod = "") => {
+      if (cant > 0) P.push({ desc, und, cant, obs, cod: cod || `${pc}.${++pi}` });
     };
-  sec("CONDUCTORES");
+  sec("OE.5.1", "CONEXIÓN A LA RED EXTERNA DE MEDIDORES");
+  if (r.mode === "uni")
+    it(
+      `Conexión a la red externa: caja portamedidor y medidor de energía ${r.alims[0].s.txt}`,
+      "Glb.",
+      1,
+      "Por lo general la ejecuta la concesionaria"
+    );
+  else
+    it(
+      `Conexión a la red externa: banco de medidores para ${r.units.length + (r.SV.length ? 1 : 0)} suministros`,
+      "Glb.",
+      1,
+      "Norma DGE, 301.C"
+    );
+  sec("OE.5.2.1", "SALIDAS");
+  it("Salida para alumbrado: caja octogonal de fierro galvanizado 100 × 40 mm", "Und.", al);
+  it("Salida para tomacorrientes: caja rectangular de fierro galvanizado 100 × 55 × 50 mm", "Und.", to);
+  it(
+    "Salida para interruptores: caja rectangular de fierro galvanizado 100 × 55 × 50 mm",
+    "Und.",
+    inter,
+    "Estimado: una por cada 2 salidas de alumbrado"
+  );
+  it(
+    "Salida de fuerza para carga especial: caja rectangular de fierro galvanizado 100 × 55 × 50 mm",
+    "Und.",
+    esp,
+    "Ducha, cocina, bomba u otra carga"
+  );
+  it("Caja de paso cuadrada de fierro galvanizado 100 × 100 × 50 mm", "Und.", nCirc, "Estimado: una por circuito");
+  sec("OE.5.2.2", "CANALIZACIONES, CONDUCTOS O TUBERÍAS");
+  Object.keys(tubo)
+    .sort((a, b) => parseFloat(a) - parseFloat(b))
+    .forEach(k => {
+      const m = Math.ceil(tubo[k]);
+      it(
+        `Tubería PVC-SAP de ${tubDesc[k]}`,
+        "m",
+        m,
+        `Incluye accesorios: ${Math.ceil(curv[k])} curvas y ${Math.ceil(m / 3)} uniones (estimado, tubos de 3 m)`
+      );
+    });
+  sec("OE.5.2.3", "CONDUCTORES Y CABLES DE ENERGÍA EN TUBERÍAS");
   Object.keys(cond)
     .map(Number)
     .sort((a, b) => a - b)
     .forEach(S =>
-      it(`Conductor de cobre${D} de ${S} mm²`, "m", Math.ceil(cond[S] * des), `Incluye ${c.pDesp} % de desperdicio`)
+      it(`Conductor de cobre${D} de ${S} mm²`, "m", Math.ceil(cond[S]), "Metros de tubería × número de conductores")
     );
-  sec("TUBERÍAS Y ACCESORIOS");
-  Object.keys(tubo)
-    .sort((a, b) => parseFloat(a) - parseFloat(b))
-    .forEach(k => {
-      const m = Math.ceil(tubo[k] * des);
-      it(`Tubería PVC-SAP de ${tubDesc[k]}`, "m", m, "Tubos de 3 m");
-      it(`Curva PVC-SAP de ${tubDesc[k]}`, "und", Math.ceil(curv[k]), "Estimado");
-      it(`Unión PVC-SAP de ${tubDesc[k]}`, "und", Math.ceil(m / 3), "Una por tubo");
-    });
-  sec("CAJAS");
-  it("Caja octogonal de fierro galvanizado 100 × 40 mm", "und", al, "Salidas de alumbrado");
-  it(
-    "Caja rectangular de fierro galvanizado 100 × 55 × 50 mm",
-    "und",
-    to + inter + esp,
-    "Tomacorrientes, interruptores y salidas de fuerza"
-  );
-  it("Caja de pase cuadrada de fierro galvanizado 100 × 100 × 50 mm", "und", nCirc, "Estimado: una por circuito");
-  sec("APARATOS");
-  it("Tomacorriente doble con toma de tierra, 16 A, 250 V", "und", to);
-  it("Interruptor unipolar simple, 10 A, 250 V", "und", inter, "Estimado: uno por cada 2 salidas de alumbrado");
-  it("Salida de fuerza para carga especial", "und", esp, "Ducha, cocina, bomba u otra carga");
-  sec("TABLEROS Y PROTECCIONES");
-  Object.entries(eqm).forEach(([dsc, k]) =>
-    it(dsc, "und", k, "Equipo adicional del tablero · criterio del proyectista")
-  );
-  Object.entries(mods).forEach(([t, v]) =>
-    it(`Tablero ${t} de distribución, empotrado, para ${v.m} polos`, "und", v.n, v.desc)
-  );
-  Object.keys(itm)
-    .sort((a, b) => {
-      const x = a.split("|").map(parseFloat),
-        y = b.split("|").map(parseFloat);
-      return x[1] - y[1] || x[0] - y[0];
-    })
-    .forEach(k => {
-      const [pp, i, cv, pd] = k.split("|");
-      it(
-        `Interruptor termomagnético ${pp}×${i} A, curva ${cv}, poder de corte ≥ ${pd} kA`,
-        "und",
-        itm[k],
-        cv === "D" ? "Circuito de motor" : ""
-      );
-    });
-  it("Interruptor termomagnético 2×16 A, curva C (reserva equipada)", "und", nRes, "Regla 050-108");
-  Object.keys(ids)
-    .sort()
-    .forEach(k => {
-      const [pp, i, tp] = k.split("|");
-      it(`Interruptor diferencial ${pp}×${i} A, 30 mA, tipo ${tp}`, "und", ids[k], "Regla 150-400");
-    });
-  sec("PUESTA A TIERRA");
-  it(
-    `Varilla de cobre de ${fmt(p.Lv, 2)} m × ${PULG[p.dv] || fmt(p.dv * 1000, 1) + " mm"}`,
-    "und",
-    p.nVar,
-    "Regla 060-702"
-  );
-  it("Conector de bronce para varilla", "und", p.nVar);
-  it("Caja de registro de concreto con tapa", "und", p.nVar);
-  if (p.fr < 1) it("Dosis de tratamiento del suelo (bentonita o gel)", "und", p.nVar, "Una por electrodo");
-  it(
-    `Conductor de cobre para puesta a tierra de ${r.Selec} mm²`,
-    "m",
-    Math.ceil((3 * p.nVar + 5) * des),
-    "Estimado: 3 m por electrodo + 5 m al tablero"
-  );
-  sec("MEDICIÓN");
-  if (r.mode === "uni")
-    it(`Caja portamedidor y medidor de energía ${r.alims[0].s.txt}`, "und", 1, "Suministro de la concesionaria");
-  else
-    it(`Banco de medidores para ${r.units.length + (r.SV.length ? 1 : 0)} suministros`, "und", 1, "Norma DGE, 301.C");
-  const out = [];
-  let si = 0,
-    ii = 0;
-  P.forEach(x => {
-    if (x.sec) {
-      si++;
-      ii = 0;
-      out.push({ sec: x.sec, cod: String(si).padStart(2, "0") });
-    } else {
-      ii++;
-      out.push({ ...x, cod: `${String(si).padStart(2, "0")}.${String(ii).padStart(2, "0")}` });
-    }
+  // Tablero principal: el general de cada suministro (TG de la vivienda; TSG y tablero de cada departamento)
+  const tabPrin = t => r.mode !== "uni" || t === "TG";
+  [
+    ["OE.5.2.6", "TABLEROS PRINCIPALES", true],
+    ["OE.5.2.7", "TABLEROS DE DISTRIBUCIÓN", false]
+  ].forEach(([cod, tit, pr]) => {
+    sec(cod, tit);
+    Object.entries(mods)
+      .filter(([t]) => tabPrin(t) === pr)
+      .forEach(([t, v]) => it(`Tablero ${t}, empotrado, para ${v.m} polos`, "Und.", v.n, v.desc));
   });
-  return out.filter((x, i, a) => !x.sec || (a[i + 1] && !a[i + 1].sec));
+  sec("OE.5.2.8", "DISPOSITIVOS DE MANIOBRA Y PROTECCIÓN");
+  const POLOS = { 1: "unipolares", 2: "bipolares", 3: "tripolares", 4: "tetrapolares" },
+    dis = [];
+  Object.keys(itm).forEach(k => {
+    const [pp, i, cv, pd] = k.split("|");
+    dis.push([
+      +pp,
+      0,
+      +i,
+      `Interruptor termomagnético ${pp}×${i} A, curva ${cv}, poder de corte ≥ ${pd} kA`,
+      itm[k],
+      cv === "D" ? "Circuito de motor" : ""
+    ]);
+  });
+  if (nRes)
+    dis.push([2, 0, 16, "Interruptor termomagnético 2×16 A, curva C (reserva equipada)", nRes, "Regla 050-108"]);
+  Object.keys(ids).forEach(k => {
+    const [pp, i, tp] = k.split("|");
+    dis.push([+pp, 1, +i, `Interruptor diferencial ${pp}×${i} A, 30 mA, tipo ${tp}`, ids[k], "Regla 150-400"]);
+  });
+  Object.entries(eqm).forEach(([k, n]) => {
+    const [pp, dsc] = k.split("|");
+    dis.push([+pp, 2, 0, dsc, n, "Equipo adicional del tablero · criterio del proyectista"]);
+  });
+  const nPol = {};
+  dis
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3].localeCompare(b[3]))
+    .forEach(([pp, , , dsc, n, obs]) => {
+      nPol[pp] = (nPol[pp] || 0) + 1;
+      it(`Dispositivos ${POLOS[pp]}: ${dsc}`, "Und.", n, obs, `OE.5.2.8.${pp}.${nPol[pp]}`);
+    });
+  sec("OE.5.4", "INSTALACIÓN DEL SISTEMA DE PUESTA A TIERRA");
+  it(
+    `Pozo de puesta a tierra con varilla de cobre de ${fmt(p.Lv, 2)} m × ${PULG[p.dv] || fmt(p.dv * 1000, 1) + " mm"}, conector de bronce, caja de registro de concreto con tapa${p.fr < 1 ? ", tratamiento del suelo (bentonita o gel)" : ""} y conductor de cobre de ${r.Selec} mm² al tablero`,
+    "Und.",
+    p.nVar,
+    `Regla 060-702. Conductor estimado: ${Math.ceil(3 * p.nVar + 5)} m en total (3 m por pozo + 5 m al tablero)`
+  );
+  sec("C", "COMPLEMENTOS (NO CODIFICADOS EN LA NORMA)");
+  it("Tomacorriente doble con toma de tierra, 16 A, 250 V", "Und.", to);
+  it("Interruptor unipolar simple, 10 A, 250 V", "Und.", inter, "Estimado: uno por cada 2 salidas de alumbrado");
+  return P.filter((x, i, a) => !x.sec || (a[i + 1] && !a[i + 1].sec));
 }
 function cardMetrado(r) {
   const M = metrado(r);
   return `<section class="card"><h2><span>Metrado de instalaciones eléctricas</span><span class="ref">Referencial</span></h2>
   <div class="tbl-wrap"><table><thead><tr><th class="t">Ítem</th><th class="t">Descripción</th><th>Und.</th><th>Cantidad</th><th class="t">Observación</th></tr></thead><tbody>
   ${M.map(x => (x.sec ? `<tr class="grp"><td colspan="5">${x.cod}  ${x.sec}</td></tr>` : `<tr><td class="t">${x.cod}</td><td class="t" style="white-space:normal">${esc(x.desc)}</td><td>${x.und}</td><td><strong>${fmt(x.cant, 0)}</strong></td><td class="t" style="white-space:normal;color:var(--muted)">${esc(x.obs)}</td></tr>`)).join("")}
-  </tbody></table></div><div class="body"><p class="hint">Metrado referencial: las protecciones, tableros, cajas y aparatos salen del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(r.c.bajada, 1)} m de bajada por salida y ${fmt(r.c.pDesp, 0)} % de desperdicio. Verifique con los planos de distribución. Se incluye en la hoja «Metrado» del Excel.</p></div></section>`;
+  </tbody></table></div><div class="body"><p class="hint">Metrado referencial ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5). Las protecciones, tableros y salidas salen del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(r.c.bajada, 1)} m de bajada por salida. Las cantidades son netas: el desperdicio (${fmt(r.c.pDesp, 0)} %) se aplica en el análisis de precios. Verifique con los planos de distribución. Se incluye en la hoja «Metrado» del Excel.</p></div></section>`;
 }

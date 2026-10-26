@@ -1368,7 +1368,7 @@ async function exportar() {
         wsT,
         t + 1,
         LT,
-        `Metrado referencial generado con JMG - ELECTRIC ${VERSION}. Protecciones, tableros, cajas y aparatos resultan del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(c.bajada, 1)} m de bajada por salida y ${fmt(c.pDesp, 0)} % de desperdicio. Verificar con los planos de distribución.`
+        `Metrado referencial generado con JMG - ELECTRIC ${VERSION}, ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5). Protecciones, tableros y salidas resultan del cálculo; las longitudes de conductores y tubos se estiman con la distancia a la salida más alejada más ${fmt(c.bajada, 1)} m de bajada por salida. Cantidades netas: el desperdicio (${fmt(c.pDesp, 0)} %) se aplica en el análisis de precios. Verificar con los planos de distribución.`
       ) + 1;
     const firmaT = (c1, c2, tit, nombre, cip = "") => {
       span(wsT, t, c1, c2, tit, { bold: 1, size: 8.5, color: K.navy, fill: K.lab, box: 1, h: "center" });
