@@ -75,7 +75,6 @@ button {
 nav.tabs {
   display: flex;
   gap: 2px;
-  margin-top: 16px;
   overflow-x: auto;
   scrollbar-width: thin;
 }
@@ -126,10 +125,6 @@ nav.tabs {
 }
 .btn:hover {
   background: var(--navy2);
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 .btn.sec {
   background: #fff;
@@ -1123,7 +1118,6 @@ tr.fix td {
   vertical-align: top;
 }
 .tools {
-  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
   gap: 18px;
   align-items: start;
@@ -1137,9 +1131,6 @@ tr.fix td {
   border-top: 1px solid var(--line2);
   padding-top: 10px;
   margin-top: 4px;
-}
-.tool dl.spec dd {
-  white-space: normal;
 }
 /* Resultados fijos al desplazarse (pantallas anchas) */
 @media (min-width: 961px) {
@@ -1257,9 +1248,6 @@ dl.gloss dd {
   overflow: hidden;
 }
 .contact-logo {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3/2;
   object-fit: cover;
   object-position: center 55%;
 }
@@ -1513,7 +1501,6 @@ textarea {
 .welcome {
   position: fixed;
   inset: 0;
-  z-index: 100;
   background: rgba(14, 30, 48, 0.55);
   display: grid;
   place-items: center;
@@ -1635,13 +1622,6 @@ body.wl-open {
 }
 
 /* v1.6 · Diálogo DXF */
-.dx-t {
-  margin: 4px 0 0;
-  font-family: var(--f-head);
-  font-weight: 600;
-  font-size: 22px;
-  color: var(--navy);
-}
 .dx-grid {
   display: flex;
   flex-direction: column;
@@ -2400,7 +2380,6 @@ body.ws-on {
   padding: 12px 14px;
   background: #fbfcfd;
   max-height: 42%;
-  overflow: auto;
 }
 .pr-sum .big {
   display: flex;
@@ -2661,9 +2640,6 @@ body.ws-on {
   text-align: left;
   font-family: var(--f-body);
   font-size: 12px;
-}
-.rt td:last-child {
-  white-space: nowrap;
 }
 .col .rs {
   padding: 2px 8px;
@@ -2983,7 +2959,6 @@ body.arrastrando * {
   }
   .ex-list {
     margin: 0 0 8px;
-    padding-left: 18px;
   }
   .ex-list li {
     margin: 0 0 3px;
@@ -3800,7 +3775,6 @@ a.rb {
   }
   .tn.sel {
     background: var(--ws-sel);
-    box-shadow: inset 3px 0 0 var(--accent);
     color: var(--navy);
   }
   .tn.tabk {
@@ -3845,7 +3819,6 @@ a.rb {
   .app .vtab[aria-selected="true"] {
     background: var(--ws-doc);
     color: var(--navy);
-    box-shadow: inset 0 -3px 0 var(--accent);
     border-color: var(--ws-line);
   }
   .app .vpanel {
@@ -3900,9 +3873,6 @@ a.rb {
     border-color: var(--line);
     border-radius: 10px;
     padding: 10px 12px;
-  }
-  .pr-sum .big b {
-    color: var(--navy);
   }
   .pr-sum .big small {
     color: var(--ws-text2);
@@ -4080,9 +4050,6 @@ a.rb {
     margin: 0 8px 0 4px;
     opacity: 0.75;
     font-size: 11.5px;
-  }
-  .ap-ribbon {
-    height: 84px;
   }
   .rib {
     padding: 3px 6px 0;
@@ -4290,9 +4257,6 @@ a.rb {
 .aj-row .hint {
   display: block;
   font-size: 12px;
-}
-dl.spec.aj-about dd {
-  font-family: var(--f-body);
 }
 .nov-list li:first-child b {
   color: var(--accent);
@@ -4600,7 +4564,6 @@ span.jmg-mono.ap-logo {
   color: #9aa0a8;
 }
 .jtop-der {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -4659,7 +4622,6 @@ span.jmg-mono.ap-logo {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: 14px;
 }
 .jside nav.tabs {
   display: grid;
@@ -4672,7 +4634,6 @@ span.jmg-mono.ap-logo {
   border: 0;
   border-left: 3px solid transparent;
   border-radius: 0;
-  padding: 8px 16px;
   color: #c9cdd3;
   font-weight: 500;
   gap: 11px;
@@ -5353,23 +5314,15 @@ body.sin-acceso .welcome {
 }
 .acc-foto {
   position: relative;
-  background: #0c121c url(img/torre-noche.jpg) center 30% / cover no-repeat;
-  display: flex;
   align-items: flex-end;
-  padding: 40px;
 }
 .acc-foto::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(13, 15, 17, 0.55), rgba(13, 15, 17, 0.1) 40%, rgba(13, 15, 17, 0.85));
 }
 .acc-lema {
-  position: relative;
   color: #e6e8eb;
-  max-width: 440px;
-  display: grid;
-  gap: 14px;
 }
 .acc-lema .jmg-sello svg {
   width: 150px;
@@ -5550,7 +5503,6 @@ body.sin-acceso .welcome {
     place-items: start center;
   }
   .acc-foto {
-    min-height: 150px;
     padding: 20px;
   }
   .acc-lema p {
@@ -5647,10 +5599,6 @@ body.sin-acceso .welcome {
   display: block;
   padding: 0;
 }
-.acc-foto::before {
-  background: linear-gradient(90deg, rgba(11, 18, 32, 0) 30%, rgba(11, 18, 32, 0.55) 75%),
-    linear-gradient(0deg, rgba(11, 18, 32, 0.55), rgba(11, 18, 32, 0) 25%);
-}
 .acc-lema {
   position: absolute;
   top: 36px;
@@ -5664,21 +5612,9 @@ body.sin-acceso .welcome {
 .acc-logo {
   display: inline-block;
   line-height: 0;
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: rgba(10, 14, 22, 0.35);
-  border: 1px solid rgba(255, 200, 0, 0.35);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-    0 10px 30px rgba(0, 0, 0, 0.35),
-    0 0 24px rgba(255, 200, 0, 0.12);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 .acc-logo svg {
-  width: 190px;
   height: auto;
-  filter: drop-shadow(0 0 10px rgba(255, 200, 0, 0.25));
 }
 .acc-lema h2 {
   margin: 0;
