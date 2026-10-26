@@ -98,6 +98,8 @@ const CRITERIOS = [
   "El cortocircuito se estima desde la corriente del punto de entrega sumando la resistencia de los conductores; el poder de corte se elige igual o mayor, y no menor que el mínimo comercial elegido (4.5 kA por defecto, IEC 60898-1).",
   "Los interruptores diferenciales son de 30 mA y tipo A por defecto; si se elige el tipo AC, se usa tipo A en los diferenciales que protegen cargas con electrónica (inverter, variador, inducción, cargador), cuyas fugas con componente continua puede no detectar un tipo AC (IEC 60364-5-53, IEC 62423).",
   "En los circuitos de motores se verifica que la corriente de arranque directo (6 veces la nominal por defecto) no alcance el disparo magnético mínimo de la curva del interruptor (IEC 60898-1); la caída de tensión en el arranque se informa como referencia.",
+  "Las alturas de montaje se miden desde el piso terminado hasta el eje de la caja (el tablero, hasta su borde superior). Interruptores y timbres hasta 1.35 m (A.120, Art. 11 d) y alcance frontal de 0.40 a 1.20 m (A.120, Art. 10); las demás alturas son criterio del proyectista.",
+  "El metrado sigue las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5) con cantidades netas; la tubería de cada circuito suma la distancia a la salida más alejada y los tramos verticales según las alturas de montaje.",
   "El balance de fases busca el reparto de cargas monofásicas con el menor desbalance posible; el proyectista puede fijar la fase de cualquier carga. Se recomienda un desbalance no mayor de 10 % como criterio de diseño."
 ];
 const GLOSARIO = [
@@ -153,6 +155,10 @@ const FAQ = [
   ]
 ];
 const NOVEDADES = [
+  [
+    "v2.9.4",
+    "Diagrama de alturas de montaje (lámina IE-02): elevación con las salidas del proyecto a su altura, aparatos dibujados como se instalan, leyenda con los símbolos de la Norma DGE y verificación de interruptores y tomacorrientes con la Norma A.120 del RNE. Alturas editables en Parámetros › Alturas. Metrado ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA), con cantidades netas y tramos verticales según las alturas. La pestaña Unifilar pasa a llamarse Planos; la descarga DXF permite elegir el unifilar, el de alturas o los dos, y la memoria Excel incluye la hoja Alturas."
+  ],
   [
     "v2.9.3",
     "Protección: poder de corte mínimo comercial de 4.5 kA por defecto (elegible en Parámetros; los tableros con Icc baja pasan de 3 a 4.5 kA), interruptor diferencial tipo A o AC con tipo A donde haya cargas con electrónica, y verificación del arranque de motores frente al disparo magnético de la curva del ITM, con la caída de tensión en el arranque como dato informativo. Forma de trabajo: los datos se ingresan solo en ventanas, que se abren con doble clic en cualquier elemento del explorador o desde la cinta; el panel derecho es ahora el Panel del proyecto, de solo lectura, con Resumen, Elemento seleccionado y Por revisar, que se muestran u ocultan en Proyecto › Panel del proyecto. Las vistas de resultados se eligen solo en Resultados › Vistas, con los avisos en sus botones, y las descargas del unifilar en Unifilar › Descargar. Casillas de las ventanas más compactas."

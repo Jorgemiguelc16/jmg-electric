@@ -31,6 +31,7 @@ async function exportar() {
   const wsM = wb.addWorksheet("Memoria", { properties: { tabColor: { argb: K.navy } } });
   const wsC = wb.addWorksheet("Cálculos", { properties: { tabColor: { argb: K.copper } } });
   const wsU = wb.addWorksheet("Unifilar", { properties: { tabColor: { argb: "FF2F7A4B" } } });
+  const wsA = wb.addWorksheet("Alturas", { properties: { tabColor: { argb: "FF9A5A23" } } });
   const wsT = wb.addWorksheet("Metrado", { properties: { tabColor: { argb: "FF22507C" } } });
   const wsX = wb.addWorksheet("Anexos", { properties: { tabColor: { argb: "FF5A6775" } } });
   const setup = (ws, orient, widths) => {
@@ -183,7 +184,7 @@ async function exportar() {
 
   /* ---------- ANEXOS ---------- */
   setup(wsX, "portrait", [13, 13, 13, 13, 13, 13, 13, 13]);
-  let x = cabecera(wsX, 8, "ANEXOS · TABLAS DEL CNE-UTILIZACIÓN Y NORMATIVA APLICADA", "Hoja 5 de 5");
+  let x = cabecera(wsX, 8, "ANEXOS · TABLAS DEL CNE-UTILIZACIÓN Y NORMATIVA APLICADA", "Hoja 6 de 6");
   x = seccion(wsX, x, 8, `A.1  TABLA 2 CNE-U · CAPACIDAD DE CORRIENTE (A) · MÉTODO ${c.met}`);
   x = thead(wsX, x, [
     [1, 1, "Sección (mm²)"],
@@ -321,7 +322,7 @@ async function exportar() {
     wsM,
     LM,
     multi ? "VIVIENDA MULTIFAMILIAR · EDIFICIO DE DEPARTAMENTOS" : "VIVIENDA UNIFAMILIAR",
-    "Hoja 1 de 5"
+    "Hoja 1 de 6"
   );
   m = seccion(wsM, m, LM, "1.  PARÁMETROS DE DISEÑO");
   m = thead(wsM, m, [
@@ -865,7 +866,7 @@ async function exportar() {
     wsC,
     LC,
     "CÁLCULO DE ALIMENTADORES, CIRCUITOS DERIVADOS, BALANCE DE FASES Y CORTOCIRCUITO",
-    "Hoja 2 de 5"
+    "Hoja 2 de 6"
   );
   const HDR = first => [
     [1, first ? 3 : 1, first ? "Alimentador" : "Tablero"],
@@ -1293,29 +1294,43 @@ async function exportar() {
     `La presente memoria ha sido elaborada con JMG - ELECTRIC ${VERSION}, aplicando los criterios del Código Nacional de Electricidad – Utilización, el RNE EM.010 y las Normas DGE. Los valores obtenidos constituyen una herramienta de apoyo al diseño; su validación, adecuación a las condiciones reales de obra y firma corresponden al ingeniero proyectista responsable.`
   );
 
-  /* ---------- UNIFILAR ---------- */
-  {
-    const LU = 20,
-      u = unifilar(r);
-    setup(wsU, "landscape", [12, 12, ...Array(LU - 2).fill(6.5)]);
-    let q = cabecera(wsU, LU, "DIAGRAMA UNIFILAR · ESQUEMA DE DISTRIBUCIÓN Y PROTECCIÓN", "Hoja 3 de 5");
+  /* ---------- UNIFILAR Y DIAGRAMA DE ALTURAS (una lámina por hoja) ---------- */
+  for (const [ws, u, tit, hoja, txt] of [
+    [
+      wsU,
+      unifilar(r),
+      "DIAGRAMA UNIFILAR · ESQUEMA DE DISTRIBUCIÓN Y PROTECCIÓN",
+      "Hoja 3 de 6",
+      "Diagrama generado a partir de los resultados del cálculo. Incluye potencia instalada, máxima demanda, potencia a contratar, tensión, número de fases y capacidad de ruptura (RNE EM.010, Art. 8)."
+    ],
+    [
+      wsA,
+      alturas(r),
+      "DIAGRAMA DE ALTURAS DE MONTAJE",
+      "Hoja 4 de 6",
+      "Alturas desde el nivel de piso terminado según Parámetros › Alturas; interruptores y tomacorrientes verificados con la Norma A.120 del RNE. Símbolos de la Norma DGE (R.M. N.° 091-2002-EM/VME)."
+    ]
+  ]) {
+    const LU = 20;
+    setup(ws, "landscape", [12, 12, ...Array(LU - 2).fill(6.5)]);
+    let q = cabecera(ws, LU, tit, hoja);
     try {
       const png = await svgPng(u.svg, 2),
         wpx = 1040,
         hpx = Math.round((wpx * u.H) / u.W);
-      wsU.addImage(wb.addImage({ base64: png, extension: "png" }), {
+      ws.addImage(wb.addImage({ base64: png, extension: "png" }), {
         tl: { col: 0, row: q },
         ext: { width: wpx, height: hpx }
       });
       const nr = Math.ceil(hpx / 20) + 1;
-      for (let i = 0; i < nr; i++) wsU.getRow(q + 1 + i).height = 15;
+      for (let i = 0; i < nr; i++) ws.getRow(q + 1 + i).height = 15;
       q += nr + 1;
-      wsU.pageSetup.orientation = u.H / u.W > 0.9 ? "portrait" : "landscape";
-      wsU.pageSetup.fitToHeight = 1;
-      if (multi) wsU.pageSetup.paperSize = 8;
+      ws.pageSetup.orientation = u.H / u.W > 0.9 ? "portrait" : "landscape";
+      ws.pageSetup.fitToHeight = 1;
+      if (multi) ws.pageSetup.paperSize = 8;
     } catch (e) {
       span(
-        wsU,
+        ws,
         q + 1,
         1,
         LU,
@@ -1324,20 +1339,15 @@ async function exportar() {
       );
       q += 3;
     }
-    nota(
-      wsU,
-      q,
-      LU,
-      "Diagrama generado a partir de los resultados del cálculo. Incluye potencia instalada, máxima demanda, potencia a contratar, tensión, número de fases y capacidad de ruptura (RNE EM.010, Art. 8)."
-    );
-    wsU.pageSetup.printArea = `A1:T${q}`;
+    nota(ws, q, LU, txt);
+    ws.pageSetup.printArea = `A1:T${q}`;
   }
 
   /* ---------- METRADO ---------- */
   {
     const LT = 8;
     setup(wsT, "portrait", [9, 13, 13, 13, 13, 7, 10, 22]);
-    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", "Hoja 4 de 5");
+    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", "Hoja 5 de 6");
     t = thead(wsT, t, [
       [1, 1, "Ítem"],
       [2, 5, "Descripción"],
