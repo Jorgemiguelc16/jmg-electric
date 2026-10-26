@@ -95,7 +95,9 @@ const CRITERIOS = [
   "Los circuitos de motores tienen conductores de capacidad no menor al 125 % de la corriente a plena carga (Regla 160-106) y se protegen con interruptores de curva D por la corriente de arranque (Regla 160-200, Tabla 29).",
   "En edificios, las unidades se ordenan de mayor a menor carga para aplicar los factores 100 / 65 / 40 / 30 / 25 %; el aire acondicionado se suma al 100 % y las cargas comunes al 75 %.",
   "En «otras cargas mayores de 1 500 W» de la Regla 050-202, sin cocina, se adopta el mismo criterio de la Regla 050-200: 100 % hasta 6 kW y 25 % del exceso.",
-  "El cortocircuito se estima desde la corriente del punto de entrega sumando la resistencia de los conductores; el poder de corte se elige igual o mayor.",
+  "El cortocircuito se estima desde la corriente del punto de entrega sumando la resistencia de los conductores; el poder de corte se elige igual o mayor, y no menor que el mínimo comercial elegido (4.5 kA por defecto, IEC 60898-1).",
+  "Los interruptores diferenciales son de 30 mA y tipo A por defecto; si se elige el tipo AC, se usa tipo A en los diferenciales que protegen cargas con electrónica (inverter, variador, inducción, cargador), cuyas fugas con componente continua puede no detectar un tipo AC (IEC 60364-5-53, IEC 62423).",
+  "En los circuitos de motores se verifica que la corriente de arranque directo (6 veces la nominal por defecto) no alcance el disparo magnético mínimo de la curva del interruptor (IEC 60898-1); la caída de tensión en el arranque se informa como referencia.",
   "El balance de fases busca el reparto de cargas monofásicas con el menor desbalance posible; el proyectista puede fijar la fase de cualquier carga. Se recomienda un desbalance no mayor de 10 % como criterio de diseño."
 ];
 const GLOSARIO = [
@@ -151,6 +153,10 @@ const FAQ = [
   ]
 ];
 const NOVEDADES = [
+  [
+    "v2.9.3",
+    "Protección: poder de corte mínimo comercial de 4.5 kA por defecto (elegible en Parámetros; los tableros con Icc baja pasan de 3 a 4.5 kA), interruptor diferencial tipo A o AC con tipo A donde haya cargas con electrónica, y verificación del arranque de motores frente al disparo magnético de la curva del ITM, con la caída de tensión en el arranque como dato informativo. Forma de trabajo: los datos se ingresan solo en ventanas, que se abren con doble clic en cualquier elemento del explorador o desde la cinta; el panel derecho es ahora el Panel del proyecto, de solo lectura, con Resumen, Elemento seleccionado y Por revisar, que se muestran u ocultan en Proyecto › Panel del proyecto. Las vistas de resultados se eligen solo en Resultados › Vistas, con los avisos en sus botones, y las descargas del unifilar en Unifilar › Descargar. Casillas de las ventanas más compactas."
+  ],
   [
     "v2.9.2",
     "Corrección: al abrir un proyecto guardado con una versión anterior, los datos que esa versión no tenía (por ejemplo, el área libre no techada) toman su valor por defecto; antes conservaban el valor del proyecto abierto previamente. Por dentro, el motor de cálculo es independiente de la pantalla y calcula los datos del proyecto, las vistas previas de las ventanas calculan una copia del proyecto sin tocarlo, y los datos del proyecto tienen una sola fuente. El cálculo no cambia."
