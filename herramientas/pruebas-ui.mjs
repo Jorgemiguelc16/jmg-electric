@@ -296,6 +296,17 @@ prueba("Panel del proyecto: resumen, elemento elegido y por revisar", async ok =
     !(await ev("$('dpDlg').hidden")) && (await ev("document.activeElement.dataset.dp")) === "Lalim",
     "abre Datos del proyecto con la longitud enfocada"
   );
+  // Las secciones se ocultan y muestran desde la cinta; al activar una con el panel cerrado, el panel se abre
+  await ev(
+    "document.querySelectorAll('.vw-ov').forEach(x => x.hidden = true); cambiarDato('Lalim', '15'); calcularAhora(); PANE.right.on = false; panes(false)"
+  );
+  await clic("[data-ppv=sel]");
+  await clic("[data-ppv=rev]");
+  ok((await ev("document.querySelectorAll('#propBody .pp-sec').length")) === 1, "solo queda el resumen");
+  await clic("[data-ppv=sel]");
+  ok(await ev("PANE.right.on"), "al activar una sección se abre el panel");
+  await clic("[data-ppv=rev]");
+  ok((await ev("document.querySelectorAll('#propBody .pp-sec').length")) === 3, "vuelven las tres secciones");
 });
 
 prueba("La cinta y los «Ir a…» abren la ventana del dato", async ok => {

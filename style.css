@@ -6766,9 +6766,13 @@ body.sin-acceso .welcome {
 .pp-tabs {
   margin-top: 10px;
 }
+/* Casilla de ancho fijo a la derecha, como en las ventanas de propiedades de escritorio; los números, más angostos */
 .fc-f.pp-f {
-  grid-template-columns: minmax(150px, 44%) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 1fr) 300px;
   min-height: 26px;
+}
+.fc-f.pp-f input[type="number"] {
+  width: 110px;
 }
 .fc-f.pp-f > span:first-child {
   white-space: normal;
@@ -6915,7 +6919,8 @@ body.sin-acceso .welcome {
 /* Datos del proyecto: grilla de campos (textos y listas a todo lo ancho, números de a dos o tres por fila) */
 .dp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 180px));
+  align-items: end;
   gap: 6px 12px;
 }
 .dp-c {
@@ -7106,48 +7111,21 @@ legend .dd-x {
   width: 58px;
 }
 
-/* v2.9.3 · Paneles laterales con la identidad JMG: encabezado azul marino con línea dorada (como las ventanas) y
-   elemento elegido del explorador con la barra dorada. Panel del proyecto de solo lectura (js/panel.js). */
-#ws .ap-pane > .ph {
-  position: relative;
-  height: 30px;
-  background: var(--ws-title, #14304f);
-  border-bottom: 0;
-  color: #fff;
-  letter-spacing: 0.08em;
-}
-#ws .ap-pane > .ph:after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--brand-line, #d9a23a);
-}
-#ws .ap-pane > .ph span {
-  color: #c9d3de;
-}
-#ws .ap-pane > .ph #exCount {
+/* v2.9.3 · Paneles laterales: elemento elegido del explorador con la barra dorada y contador en pastilla. Panel
+   del proyecto de solo lectura (js/panel.js), con secciones que se muestran u ocultan desde la cinta. */
+#exCount {
   min-width: 18px;
-  padding: 1px 6px;
+  padding: 0 6px;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 10px;
+  background: #e6ebf1;
+  color: #14304f;
+  font: 600 10px var(--f-mono);
   letter-spacing: 0;
   text-align: center;
 }
-#ws .ap-pane > .ph #exCount.falta {
-  background: var(--brand-line, #d9a23a);
-  color: #14304f;
-}
-#ws .ap-pane > .ph .ph-x {
-  color: #dfe7ef;
-}
-#ws .ap-pane > .ph .ph-x:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+#exCount.falta {
+  background: #fbf0d9;
+  color: #8a5a00;
 }
 #ws .tn.sel {
   background: var(--ws-sel, #dde9f6);
@@ -7247,6 +7225,9 @@ legend .dd-x {
   color: var(--ws-text2, #66737f);
   font-size: 11.5px;
   line-height: 1.45;
+}
+.pp-nota.pp-vacio {
+  margin: 12px;
 }
 .pp-nota.pp-ok {
   color: var(--ok);

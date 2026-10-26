@@ -4,7 +4,8 @@
    ventana del dato, con el dato enfocado (abrirCampo). Los formularios de index.html siguen existiendo, ocultos:
    las ventanas Datos del proyecto y Parámetros de diseño se arman con ellos.
    El panel derecho es de revisión, de solo lectura (panelProyecto): el resumen del proyecto, el elemento
-   elegido en el explorador y lo que hay por revisar, cada cosa con un clic que abre la ventana donde se corrige. */
+   elegido en el explorador y lo que hay por revisar, cada cosa con un clic que abre la ventana donde se corrige.
+   Cada sección se muestra u oculta desde la cinta (PP_VER). */
 
 // Ventana de cada elemento del explorador (o de un botón de la cinta con data-node)
 function abrirNodo(n, fs) {
@@ -231,11 +232,34 @@ function ppRevisar(r) {
     it.length || ""
   );
 }
+// Secciones visibles del panel; se eligen en la cinta (Proyecto › Panel del proyecto) y se recuerdan
+const PP_VER = { res: true, sel: true, rev: true };
+try {
+  Object.assign(PP_VER, JSON.parse(localStorage.getItem("jmg-electric-panel-secc") || "{}"));
+} catch (e) {}
+document.querySelectorAll("[data-ppv]").forEach(c => (c.checked = PP_VER[c.dataset.ppv] !== false));
+document.addEventListener("change", e => {
+  const c = e.target.closest("[data-ppv]");
+  if (!c) return;
+  PP_VER[c.dataset.ppv] = c.checked;
+  try {
+    localStorage.setItem("jmg-electric-panel-secc", JSON.stringify(PP_VER));
+  } catch (e) {}
+  // Al activar una sección con el panel cerrado, el panel se abre para mostrarla
+  if (c.checked && !PANE.right.on) {
+    PANE.right.on = true;
+    panes(true);
+  }
+  panelProyecto();
+});
 function panelProyecto() {
   const pb = $("propBody");
   if (!pb) return;
   const r = LAST,
-    top = pb.scrollTop;
-  pb.innerHTML = ppResumen(r) + ppSeleccion(r, NODE) + ppRevisar(r);
+    top = pb.scrollTop,
+    h = (PP_VER.res ? ppResumen(r) : "") + (PP_VER.sel ? ppSeleccion(r, NODE) : "") + (PP_VER.rev ? ppRevisar(r) : "");
+  pb.innerHTML =
+    h ||
+    `<p class="pp-nota pp-vacio">Todas las secciones están ocultas. Actívelas en la cinta: Proyecto › Panel del proyecto.</p>`;
   pb.scrollTop = top;
 }
