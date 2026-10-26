@@ -299,6 +299,17 @@ const HLP = {
   pDesp:
     "Desperdicio de conductores y tubos. No se suma al metrado, que es neto (Norma Técnica de Metrados, R.D. N.° 073-2010-VIVIENDA): se informa para el análisis de precios.",
   bajada: "Metros adicionales por salida para la bajada a la caja.",
+  hTecho: "Altura del piso terminado (NPT) al fondo de la losa, según la arquitectura. Ahí va el centro de luz.",
+  hBraq: "Criterio del proyectista (valor usual 2.00 m). También se usa para la luminaria de emergencia.",
+  hTab: "Hasta el borde superior del tablero. Criterio del proyectista (valor usual 1.80 m): que se opere de pie sin obstáculos.",
+  hTerma: "Salida para terma o ducha eléctrica. Criterio del proyectista (valor usual 1.50 m), según el equipo.",
+  hInt: "Interruptores, pulsadores e intercomunicador. La Norma A.120 del RNE fija un máximo de 1.35 m (Art. 11 d) y un alcance frontal de 0.40 a 1.20 m (Art. 10); rige en edificaciones con atención al público y en áreas comunes de edificios con ascensor.",
+  hTomaC:
+    "Tomacorrientes sobre el tablero de cocina y lavandería. Dentro del alcance frontal de la Norma A.120 (0.40 a 1.20 m, Art. 10).",
+  hMed: "Eje de la caja del medidor. Criterio del proyectista: confirme la altura que pide la concesionaria.",
+  hToma: "Tomacorrientes de uso general. La Norma A.120 pide el alcance frontal de 0.40 a 1.20 m (Art. 10).",
+  hFza: "Salidas de fuerza: cocina eléctrica, motores y otras cargas. Criterio del proyectista, según el equipo.",
+  hAire: "Salida para aire acondicionado. Criterio del proyectista, según la ubicación del equipo.",
   esqPisos:
     "Dónde se conectan los circuitos del 1er piso: en el mismo tablero general o en un tablero propio TD-1; en ese caso el TG solo alimenta los tableros de piso y las cargas asignadas a él.",
   Ltd1: "Recorrido del alimentador desde el tablero general TG hasta el tablero del 1er piso."

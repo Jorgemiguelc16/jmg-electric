@@ -18,7 +18,8 @@ const PP_TABS = {
   car: ["fs-p-car"],
   cond: ["fs-p-cond"],
   prot: ["fs-p-prot", "fs-p-dv"],
-  pat: ["fs-p-pat", "fs-p-met"]
+  pat: ["fs-p-pat", "fs-p-met"],
+  alt: ["fs-p-alt"]
 };
 function parametros(abrir) {
   if (abrir) {

@@ -195,11 +195,12 @@ document.addEventListener("click", async e => {
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
       .trim()
       .slice(0, 60) || "proyecto";
-  const u = unifilar(LAST);
+  // Se descarga el diagrama abierto: el de alturas o, en cualquier otra vista, el unifilar
+  const u = planoActual();
   b.disabled = true;
   try {
     let blob,
-      nombre = `JMG-ELECTRIC - Diagrama unifilar - ${nm}.${b.dataset.dl}`;
+      nombre = `JMG-ELECTRIC - ${u.nom} - ${nm}.${b.dataset.dl}`;
     if (b.dataset.dl === "svg") blob = new Blob([u.svg], { type: "image/svg+xml" });
     else if (b.dataset.dl === "dxf") {
       b.disabled = false;
@@ -215,12 +216,17 @@ document.addEventListener("click", async e => {
   }
 });
 
+const planoActual = () =>
+  VIEW === "alturas"
+    ? { ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }
+    : { ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" };
 /* Diálogo de descarga DXF */
 function dxfDialogo(abrir) {
   const d = $("dxfDlg");
   d.hidden = !abrir;
   document.body.classList.toggle("wl-open", abrir);
   if (abrir) {
+    $("dxfQue").textContent = `${VIEW === "alturas" ? "Diagrama de alturas" : "Diagrama unifilar"} · AutoCAD`;
     try {
       const o = JSON.parse(localStorage.getItem("jmg-electric-dxf") || "{}");
       if (LAMINAS[o.lamina]) $("dx_lam").value = o.lamina;
@@ -243,8 +249,9 @@ $("dxfDlg").addEventListener("click", async e => {
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
       .trim()
       .slice(0, 60) || "proyecto";
-  const blob = new Blob([svgDxf(unifilar(LAST).svg, op)], { type: "application/dxf" }),
-    nombre = `JMG-ELECTRIC - Unifilar ${op.lamina} - ${nm}.dxf`;
+  const u = planoActual(),
+    blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
+    nombre = `JMG-ELECTRIC - ${u.corto} ${op.lamina} - ${nm}.dxf`;
   dxfDialogo(false);
   try {
     if (downloads) await downloads.save({ filename: nombre, data: blob });

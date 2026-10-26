@@ -9,7 +9,7 @@ const NODEFS = {
   salidas: ["fs-sal"],
   cargas: ["fs-cargas"],
   servicios: ["fs-serv"],
-  param: ["fs-p-car", "fs-p-cond", "fs-p-prot", "fs-p-dv", "fs-p-pat", "fs-p-met", "fs-p-dat"],
+  param: ["fs-p-car", "fs-p-cond", "fs-p-prot", "fs-p-dv", "fs-p-pat", "fs-p-met", "fs-p-alt", "fs-p-dat"],
   pat: ["fs-p-pat"],
   metrado: ["fs-p-met"]
 };

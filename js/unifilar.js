@@ -345,10 +345,33 @@ function unifilar(r) {
     T(lx2 + 22, ly + 37, "Circuito de reserva", { s: 8 });
   }
   const rx = Math.max(X + 350, W - 480),
-    rw = W - 20 - rx,
-    P = c.proj;
+    rw = W - 20 - rx;
   o.push(`<rect x="${rx}" y="${yr}" width="${rw}" height="${hr}" fill="none" stroke="${NAVY}" stroke-width="1"/>`);
-  // Logo: imagen en la web, el PNG y el Excel; versión vectorial (oculta en pantalla) que usa el DXF
+  rotuloSvg(
+    o,
+    rx,
+    yr,
+    rw,
+    hr,
+    c.proj,
+    `Diagrama unifilar · ${multi ? "Multifamiliar" : "Unifamiliar"} · Escala S/E`,
+    "IE-01"
+  );
+  const H = yr + hr + 16;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
+  return { svg, W, H };
+}
+/* Rótulo de las láminas (unifilar y alturas): logo, datos del proyecto, plano y número de lámina, dentro del
+   recuadro x, y, w, h. El logo vectorial (oculto en pantalla) es el que usa el DXF. */
+function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
+  const INK = "#14212e",
+    GR = "#5a6775";
+  const L = (x1, y1, x2, y2, w = 1.3, col = INK) =>
+    o.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}"/>`);
+  const T = (x, y, t, { s = 9, b = 0, a = "start", f = INK } = {}) =>
+    o.push(
+      `<text x="${x}" y="${y}" font-size="${s}"${b ? ' font-weight="700"' : ""} text-anchor="${a}" fill="${f}">${esc(t)}</text>`
+    );
   const LY = "#ffd200",
     LB = "#1f2328";
   o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${LB}"/>`);
@@ -368,10 +391,10 @@ function unifilar(r) {
     ["PROPIETARIO", P.prop || "—"],
     ["UBICACIÓN", P.ubic || "—"],
     ["PROYECTISTA", (P.proy || "—") + (P.cip ? ` · CIP ${P.cip}` : "")],
-    ["PLANO", `Diagrama unifilar · ${multi ? "Multifamiliar" : "Unifamiliar"} · Escala S/E`],
+    ["PLANO", plano],
     [
       "FECHA · LÁMINA",
-      `${new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" })} · IE-01`
+      `${new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" })} · ${lamina}`
     ]
   ];
   rot.forEach(([k, v], i) => {
@@ -383,9 +406,6 @@ function unifilar(r) {
       b: i === 0 || i === 4
     });
   });
-  const H = yr + hr + 16;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
-  return { svg, W, H };
 }
 /* SVG del unifilar → DXF para AutoCAD (formato R12, en mm sobre la lámina elegida) */
 const LAMINAS = { A4: [297, 210], A3: [420, 297], A2: [594, 420], A1: [841, 594] };

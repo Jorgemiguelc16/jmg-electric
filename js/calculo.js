@@ -58,7 +58,20 @@ function ctx(p = estado()) {
           : "Cobre a 90 °C · ρ20 (1 + 0,00393·70)",
     desig: g("desig").replace(/[<>]/g, "").trim(),
     pDesp: Math.max(0, n("pDesp")),
-    bajada: Math.max(0, n("bajada"))
+    bajada: Math.max(0, n("bajada")),
+    // Alturas de montaje desde el NPT (m), para el diagrama de alturas (js/alturas.js)
+    alt: {
+      techo: n("hTecho") || 2.9,
+      braq: Math.max(0, n("hBraq")),
+      tab: Math.max(0, n("hTab")),
+      terma: Math.max(0, n("hTerma")),
+      int: Math.max(0, n("hInt")),
+      tomaC: Math.max(0, n("hTomaC")),
+      med: Math.max(0, n("hMed")),
+      toma: Math.max(0, n("hToma")),
+      fza: Math.max(0, n("hFza")),
+      aire: Math.max(0, n("hAire"))
+    }
   };
 }
 /* Proyecto en cálculo: calcular() lo fija mientras calcula; calcUni, calcMulti y sus auxiliares leen de él */
