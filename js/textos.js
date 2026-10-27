@@ -158,6 +158,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.7",
+    "Expediente técnico con diseño profesional: portada con firma y sello y número de revisión, control del documento con tabla de revisiones, índice general, índice de tablas y lista de láminas en páginas propias, tablas técnicas numeradas con su fuente (líneas horizontales finas y encabezado gris suave), ecuaciones numeradas, tablas anchas en página horizontal y margen para encuadernar. El expediente incluye ahora todos los planos (IE-01 a IE-04), reducidos a A4. El detalle de tableros se divide en láminas IE-04A… cuando no entra a lo ancho de la lámina."
+  ],
+  [
     "v2.9.6",
     "Planos en AutoCAD: en el detalle de tableros, los equipos, el riel, las canaletas y la puerta llevan rellenos grises y la barra de tierra va en verde, como en pantalla. El logo del rótulo se dibuja con figuras, así se ve igual en cualquier AutoCAD, y el rótulo tiene siempre la misma altura, con el logo llenando su caja y el borde del mismo grosor en todo el contorno."
   ],
