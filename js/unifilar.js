@@ -501,7 +501,10 @@ function svgDxf(svgTxt, op = {}) {
     "#ffffff": 255,
     "#ffd200": 2,
     "#1f2328": 250,
-    "#b42318": 1
+    "#b42318": 1,
+    "#c62828": 1,
+    "#1565c0": 150,
+    "#8a9199": 8
   };
   const OSCURO = ["#14304f", "#9a5a23", "#1f2328"];
   const col = (c, esTexto) => {
@@ -772,6 +775,7 @@ function svgDxf(svgTxt, op = {}) {
     "E-TUBERIA": [30, "CONTINUOUS"],
     "E-DETALLE": [7, "CONTINUOUS"],
     "E-TABLEROS": [7, "CONTINUOUS"],
+    "E-CABLEADO": [7, "CONTINUOUS"],
     "E-NOTAS": [7, "CONTINUOUS"],
     Defpoints: [8, "CONTINUOUS"]
   };
