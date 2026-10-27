@@ -1,5 +1,11 @@
 /* DIAGRAMA UNIFILAR
-   Dibuja el unifilar en SVG con el cuadro de cargas y el rótulo, y lo convierte a PNG y DXF (AutoCAD). */
+   Dibuja el unifilar en SVG con el cuadro de cargas y el rótulo, y lo convierte a PNG y DXF (AutoCAD). Dos formas:
+   horizontal (por defecto: barra horizontal y circuitos hacia abajo) y vertical (opción de la cinta Planos: cada
+   tablero es una columna con su barra vertical y un circuito por fila, con sus datos en texto horizontal). */
+let UNIF_VERTICAL = false;
+try {
+  UNIF_VERTICAL = localStorage.getItem("jmg-electric-unif-vertical") === "1";
+} catch (e) {}
 function unifilar(r) {
   const c = r.c,
     o = [],
@@ -261,6 +267,279 @@ function unifilar(r) {
     });
     y += rowH + 8;
   }
+  /* ---------- Unifilar vertical ---------- */
+  const CWV = 460,
+    RHV = 30;
+  // Interruptor automático y diferencial en horizontal (la corriente va de izquierda a derecha): contacto fijo con
+  // aspa en x, pivote de la cuchilla en x + 24
+  const itmH = (x, y) => {
+    L(x - 3.5, y - 3.5, x + 3.5, y + 3.5);
+    L(x + 3.5, y - 3.5, x - 3.5, y + 3.5);
+    L(x + 24, y, x + 3, y - 10, 1.6);
+  };
+  const difH = (x, y) => {
+    itmH(x, y);
+    L(x + 24, y, x + 40, y);
+    o.push(`<ellipse cx="${x + 32}" cy="${y}" rx="3.8" ry="9" fill="none" stroke="${INK}" stroke-width="1.2"/>`);
+  };
+  const flecha = (x, y) => o.push(`<path d="M${x - 9} ${y - 4}L${x - 9} ${y + 4}L${x} ${y}Z" fill="${INK}"/>`);
+  // Alto de una columna (para ordenarlas antes de dibujar)
+  const altoCol = tb => {
+    const cs = r.circ.filter(q => q.tab === tb.tab),
+      eqs = equiposDe(tb.tab),
+      fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [];
+    return (
+      60 +
+      (eqs.some(([k]) => k !== "dps") ? 54 : 0) +
+      (eqs.some(([k]) => k === "dps") ? 52 : 0) +
+      (fd.length + cs.length + c.reserva) * RHV +
+      new Set(cs.map(q => (c.idMode === "circuito" ? q.key : q.idName))).size * 10 +
+      70
+    );
+  };
+  // Columna de un tablero: barra vertical en X0 + 40; diferenciales con su barra secundaria; un circuito por fila
+  function columna(X0, Y0, tb, { entrada = true, pat = false } = {}) {
+    const f = r.alims[tb.feeder],
+      gk = q => (c.idMode === "circuito" ? q.key : q.idName),
+      cs0 = r.circ.filter(q => q.tab === tb.tab),
+      pos = {};
+    cs0.forEach((q, i) => {
+      if (!(gk(q) in pos)) pos[gk(q)] = i;
+    });
+    const cs = cs0.slice().sort((p, q) => pos[gk(p)] - pos[gk(q)]),
+      eqs = equiposDe(tb.tab),
+      eqx = eqs.filter(([k]) => k !== "dps"),
+      fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [],
+      xb = X0 + 40;
+    T(X0 + 56, Y0 + 14, `TABLERO ${tb.tab}`, { s: 11.5, b: 1, f: NAVY });
+    T(X0 + 56, Y0 + 27, `${tb.desc} · Icc ≈ ${fmt(tb.icc, 2)} kA · PdC mín. ${tb.pdc} kA`, { s: 7.8, f: GR });
+    if (entrada)
+      T(
+        X0 + 56,
+        Y0 + 39,
+        `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
+        { s: 7.2, f: GR }
+      );
+    let y = Y0 + 48;
+    // Equipos del tablero con su símbolo de la Norma DGE
+    if (eqx.length) {
+      const wE = 140;
+      o.push(
+        `<rect x="${X0 + 56}" y="${y}" width="${Math.min(eqx.length * wE + 8, CWV - 70)}" height="46" fill="none" stroke="${GR}" stroke-width="0.8" stroke-dasharray="4 3"/>`
+      );
+      T(X0 + 62, y + 10, "EQUIPOS DEL TABLERO", { s: 6.8, b: 1, f: GR });
+      const EQS = {
+        rel: ["Relé de tensión", "07-73-01"],
+        med: ["Medidor de energía", "08-80-22"],
+        ctr: ["Contactor con reloj", "07-72-18 · 08-80-40"]
+      };
+      eqx.forEach(([k], i) => {
+        const sx = X0 + 76 + i * wE,
+          sy = y + 29,
+          [nom, cd] = EQS[k] || [k, ""];
+        if (k === "ctr") {
+          simboloDGE(o, "ctr", sx, sy, 1);
+          simboloDGE(o, "reloj", sx + 16, sy, 0.85);
+        } else simboloDGE(o, k, sx, sy, 1.1);
+        const tx = sx + (k === "ctr" ? 30 : 18);
+        T(tx, sy - 1, nom, { s: 7.4, b: 1 });
+        T(tx, sy + 9, cd, { s: 6.6, f: GR });
+      });
+      y += 54;
+    }
+    const yb0 = y;
+    y += 16;
+    // DPS: entre la barra y tierra
+    if (eqs.some(([k]) => k === "dps")) {
+      dot(xb, y);
+      L(xb, y, xb + 50, y);
+      L(xb + 50, y, xb + 50, y + 6);
+      simboloDGE(o, "dps", xb + 50, y + 16, 1);
+      L(xb + 50, y + 26, xb + 50, y + 32, 1.2, "#2f7a4b", "5 3");
+      tierra(xb + 50, y + 32);
+      T(xb + 64, y + 19, "DPS · protector contra sobretensiones", { s: 7.5, b: 1 });
+      y += 52;
+    }
+    // Alimentadores de los demás tableros (TG de una vivienda)
+    fd.forEach(a => {
+      const td = r.tabs.find(t => t.feeder === r.alims.indexOf(a));
+      dot(xb, y);
+      L(xb, y, xb + 60, y);
+      itmH(xb + 60, y);
+      L(xb + 84, y, xb + 118, y);
+      flecha(xb + 126, y);
+      T(xb + 134, y - 2, `${td.tab} · alimentador del ${ORD(td.piso)} piso · ${a.s.tri ? 3 : 2}×${a.itm} A`, {
+        s: 8,
+        b: 1,
+        f: CU
+      });
+      T(
+        xb + 134,
+        y + 9,
+        `${cond(a.s.n, a.S, a.St)} · ${tub(a.tubo)} · I ${fmt(a.I, 1)} A · ΔV ${fmt(a.dVp, 2)} % · L ${fmt(a.L, 0)} m`,
+        { s: 7, f: GR }
+      );
+      y += RHV;
+    });
+    // Diferenciales con sus circuitos
+    const grupos = [];
+    cs.forEach(q => {
+      const g = grupos[grupos.length - 1];
+      if (g && g.k === gk(q)) g.qs.push(q);
+      else grupos.push({ k: gk(q), qs: [q] });
+    });
+    grupos.forEach(g => {
+      const q0 = g.qs[0],
+        pol = g.qs.some(q => q.f3) ? 4 : 2,
+        xs = xb + 66;
+      y += 10;
+      T(xb + 8, y - 12, `${q0.idName} · ${pol}×${q0.idRat} A · 30 mA · tipo ${q0.idTipo || "A"}`, {
+        s: 7,
+        b: 1,
+        f: NAVY
+      });
+      dot(xb, y);
+      L(xb, y, xb + 12, y);
+      difH(xb + 12, y);
+      L(xb + 52, y, xs, y);
+      if (g.qs.length > 1) L(xs, y, xs, y + (g.qs.length - 1) * RHV, 1.3);
+      g.qs.forEach((q, i) => {
+        const yq = y + i * RHV;
+        if (i) dot(xs, yq);
+        L(xs, yq, xs + 10, yq);
+        itmH(xs + 10, yq);
+        L(xs + 34, yq, xs + 58, yq);
+        flecha(xs + 66, yq);
+        T(xs + 74, yq - 2, `${q.id}  ${q.desc} · ${q.f3 ? 3 : 2}×${q.itm ?? "—"} A ${q.curva}`, {
+          s: 8,
+          b: 1,
+          f: NAVY
+        });
+        T(
+          xs + 74,
+          yq + 9,
+          `${cond(q.f3 ? 3 : 2, q.S, q.St)} · ${tub(q.tubo)} · I ${fmt(q.I, 1)} A · ΔV ${fmt(q.dVp, 2)} % · ${fmt(q.P, 0)} W${r.bal && q.fase && q.fase !== "—" && q.fase !== "3φ" ? " · " + q.fase : ""}`,
+          { s: 7, f: GR }
+        );
+      });
+      y += g.qs.length * RHV;
+    });
+    // Reservas equipadas
+    for (let j = 0; j < c.reserva; j++) {
+      dot(xb, y);
+      L(xb, y, xb + 76, y, 1.3, GR, "4 3");
+      itmH(xb + 76, y);
+      L(xb + 100, y, xb + 124, y, 1.3, GR, "4 3");
+      T(xb + 140, y + 3, `${tb.tab === "TSG" ? "S-" : "C-"}${cs.length + j + 1} · Reserva equipada · ITM 2×16 A C`, {
+        s: 7.8,
+        f: GR
+      });
+      y += RHV;
+    }
+    // Barra vertical del tablero y su puesta a tierra
+    L(xb, yb0, xb, y, 4, CU);
+    if (!entrada) L(xb, Y0 - 6, xb, yb0);
+    L(xb, y, xb, y + 26, 1.2, "#2f7a4b", "5 3");
+    tierra(xb, y + 26);
+    T(xb + 16, y + 30, pat ? `PAT · 1×${r.Selec} mm² Cu · R ≤ 25 Ω` : `Barra de tierra · 1×${f.St} mm² Cu`, {
+      s: 7.5,
+      f: "#2f7a4b"
+    });
+    return { w: CWV, h: y + 44 - Y0 };
+  }
+  // Ordena bloques (ancho, alto) en filas: prueba de 1 a n bloques por fila y elige la proporción más cercana a la
+  // de una lámina apaisada (1.41 : 1), contando el espacio del cuadro de cargas, la leyenda y el rótulo
+  function ordenar(bloques, x0, y0) {
+    const pone = n => {
+      let px = x0,
+        py = y0,
+        fila = 0;
+      bloques.forEach((b, i) => {
+        if (i && i % n === 0) {
+          py += fila + 16;
+          px = x0;
+          fila = 0;
+        }
+        b.x = px;
+        b.y = py;
+        px += b.w + 16;
+        fila = Math.max(fila, b.h);
+      });
+      return { w: Math.max(780, ...bloques.map(b => b.x + b.w)), h: py + fila };
+    };
+    let mejor = 1,
+      dif = Infinity;
+    for (let n = 1; n <= bloques.length; n++) {
+      const d = pone(n),
+        e = Math.abs(Math.log((d.w + 20) / (d.h + 170) / 1.41));
+      if (e < dif) {
+        dif = e;
+        mejor = n;
+      }
+    }
+    return pone(mejor);
+  }
+  function cuerpoVertical() {
+    if (!multi) {
+      // La primera columna (TG) sigue a la acometida; las demás se ordenan a su lado
+      const bl = r.tabs.map((tb, i) => ({ tb, w: CWV, h: altoCol(tb) + 10, i }));
+      const dim = ordenar(bl, X, 200);
+      bl.forEach(b => columna(b.x, b.y, b.tb, b.i === 0 ? { entrada: false, pat: true } : {}));
+      W = dim.w + 20;
+      y = dim.h + 8;
+      return;
+    }
+    // Edificio: banco de medidores vertical (una fila por suministro) y luego las columnas de los tableros
+    const feeders = r.alims.slice(1),
+      RB = 46,
+      hb = 70 + feeders.length * RB;
+    const bl = [{ banco: 1, w: CWV, h: hb + 10 }, ...r.tabs.map(tb => ({ tb, w: CWV, h: altoCol(tb) + 10 }))];
+    const dim = ordenar(bl, X, 200);
+    const b0 = bl[0],
+      xb = x;
+    T(xb + 20, b0.y + 14, "BANCO DE MEDIDORES · BARRA GENERAL", { s: 11.5, b: 1, f: NAVY });
+    T(xb + 20, b0.y + 28, `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG, r.c.pdcMin)} kA`, {
+      s: 8.5,
+      f: GR
+    });
+    const yb = b0.y + 46;
+    L(xb, 246, xb, yb, 1.3);
+    L(xb, yb, xb, yb + feeders.length * RB, 4, CU);
+    feeders.forEach((f, i) => {
+      const yf = yb + 22 + i * RB,
+        tb = r.tabs.find(t => t.feeder === i + 1),
+        cant = f.cant || 1;
+      dot(xb, yf);
+      L(xb, yf, xb + 28, yf);
+      o.push(
+        `<rect x="${xb + 28}" y="${yf - 12}" width="28" height="24" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`
+      );
+      L(xb + 34, yf - 12, xb + 34, yf + 12, 1.2);
+      T(xb + 45, yf + 3.5, "Wh", { s: 7.5, b: 1, a: "middle" });
+      L(xb + 56, yf, xb + 70, yf);
+      itmH(xb + 70, yf);
+      L(xb + 94, yf, xb + 126, yf);
+      flecha(xb + 134, yf);
+      T(
+        xb + 142,
+        yf - 2,
+        `${tb ? tb.tab : ""} · ${f.pKey === "servP" ? "Servicios generales" : `${r.T[f.ti].nombre} · ${cant} unidad${cant > 1 ? "es" : ""}`}`,
+        { s: 8.5, b: 1, f: NAVY }
+      );
+      T(
+        xb + 142,
+        yf + 10,
+        `${cant > 1 ? `Wh × ${cant} · ` : ""}${f.s.tri ? 3 : 2}×${f.itm} A · ${cond(f.s.n, f.S, f.St)} · L ${fmt(f.L, 0)} m · ΔV ${fmt(f.dVp, 2)} %`,
+        { s: 7.2, f: GR }
+      );
+    });
+    L(xb, yb + feeders.length * RB, xb, yb + feeders.length * RB + 22, 1.2, "#2f7a4b", "5 3");
+    tierra(xb, yb + feeders.length * RB + 22);
+    T(xb + 16, yb + feeders.length * RB + 26, `PAT · 1×${r.Selec} mm² Cu · R ≤ 25 Ω`, { s: 7.5, f: "#2f7a4b" });
+    bl.slice(1).forEach(b => columna(b.x, b.y, b.tb));
+    W = dim.w + 20;
+    y = dim.h + 8;
+  }
   // Acometida y alimentador principal
   L(x - 12, 14, x + 12, 14, 3);
   L(x, 14, x, 64);
@@ -281,7 +560,8 @@ function unifilar(r) {
   });
   T(x + 16, 175, `L = ${fmt(a0.L, 1)} m · I = ${fmt(a0.I, 2)} A · ΔV = ${fmt(a0.dVp, 2)} %`, { s: 8.5, f: GR });
 
-  if (!multi) {
+  if (UNIF_VERTICAL) cuerpoVertical();
+  else if (!multi) {
     const p = panel(X, 200, r.tabs[0], { entrada: false, pat: true });
     W = p.w + X;
     y = 200 + p.h;
@@ -1078,4 +1358,19 @@ function cardUnifilar(r, nro) {
   const u = unifilar(r);
   return `<section class="card"><h2><span><span class="num">${nro}</span>Diagrama unifilar</span></h2>
   <div class="unif">${u.svg}</div><div class="body"><p class="hint">Generado automáticamente a partir del cálculo: protecciones, conductores, diferenciales, puesta a tierra y cuadro de cargas exigido por la EM.010 (Art. 8). Se incluye también en la memoria de Excel.</p></div></section>`;
+}
+
+// Casilla de la cinta (Planos › Unifilar vertical): cambia el dibujo en pantalla y en las descargas
+{
+  const ck = typeof document !== "undefined" && document.getElementById("optUnifV");
+  if (ck && ck.addEventListener) {
+    ck.checked = UNIF_VERTICAL;
+    ck.addEventListener("change", () => {
+      UNIF_VERTICAL = ck.checked;
+      try {
+        localStorage.setItem("jmg-electric-unif-vertical", UNIF_VERTICAL ? "1" : "0");
+      } catch (e) {}
+      if (LAST) render(LAST);
+    });
+  }
 }
