@@ -188,7 +188,8 @@ function tableros(r) {
     T(110, yc + 155, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
     T(110, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
     // Vista interior
-    R(x0, yc, gw, bh, { fi: "#fff", sw: 1.4 });
+    // Fondo del gabinete sin relleno: en el DXF solo van en gris los equipos, el riel y las canaletas
+    R(x0, yc, gw, bh, { sw: 1.4 });
     R(x0 + 6, yc + 6, gw - 12, bh - 12, { st: LN, sw: 0.7 });
     T(x0 + gw / 2, yc + bh + 14, "VISTA INTERIOR (SIN PUERTA NI CUBIERTA)", { s: 7, b: 1, a: "middle", f: GR });
     filas.forEach((fila, fi) => {

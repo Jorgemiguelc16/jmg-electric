@@ -917,7 +917,9 @@ function svgDxf(svgTxt, op = {}) {
     "#d9eedf": 254,
     "#e6e9ed": 253,
     "#d5dae0": 253,
-    "#c9ced5": 252
+    "#c9ced5": 252,
+    // Barra de tierra, en verde como en pantalla
+    "#2f7a4b": 3
   };
   const SOBRE_CLARO = { "#14212e": 250, "#000000": 250, "#1f2328": 250, "#5a6775": 8, "#bfc8d2": 8, "#8a9199": 8 };
   const claros = [],
