@@ -778,18 +778,71 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
       `<image x="${rx + 1}" y="${yr + (hr - 108) / 2}" width="108" height="108" href="${LOGO_JPG}" preserveAspectRatio="xMidYMid slice"/>`
     );
   o.push(`<g display="none" data-dxf="logo">`);
-  T(rx + 55, yr + 62, "JMG", { s: 30, b: 1, a: "middle", f: LY });
-  // Rayo dentro de la M, en el color del fondo, como en el logo. En Arial negrita de 30, «JMG» centrado en rx + 55
-  // deja la M entre rx + 39.2 y rx + 64.2 (anchos J 0.556, M 0.833 y G 0.778 em) y entre yr + 40.5 y yr + 62.
+  // Logo dibujado con figuras rellenas, medido sobre la imagen del logo (200 × 200): así se ve igual en cualquier
+  // AutoCAD, sin depender de la fuente. Letras «JMG» de bloques y el rayo amarillo dentro de la M
   {
-    const mx = rx + 51.7,
-      top = yr + 41,
-      bot = yr + 61.5;
-    o.push(
-      `<path d="M${px2(mx + 3.6)} ${top}L${px2(mx - 3.4)} ${top + 12}L${px2(mx + 0.9)} ${top + 10.4}Z" fill="${LB}"/><path d="M${px2(mx - 0.9)} ${top + 8.6}L${px2(mx + 3.4)} ${top + 8}L${px2(mx - 3)} ${bot}Z" fill="${LB}"/>`
-    );
+    const e = 0.54,
+      x0 = rx + 1,
+      y0 = yr + (hr - 108) / 2,
+      fig = pts =>
+        o.push(
+          `<path d="${pts.map(([u, v], n) => `${n ? "L" : "M"}${px2(x0 + u * e)} ${px2(y0 + v * e)}`).join("")}Z" fill="${LY}"/>`
+        ),
+      caja = (u1, v1, u2, v2) =>
+        fig([
+          [u1, v1],
+          [u2, v1],
+          [u2, v2],
+          [u1, v2]
+        ]);
+    // J
+    caja(46.9, 61, 62.3, 121.3);
+    caja(17.8, 106.6, 46.9, 121.3);
+    caja(17.8, 96, 32.9, 106.6);
+    // M: trazos verticales, brazo izquierdo y arranque del derecho
+    caja(68.1, 61, 83.1, 121.3);
+    fig([
+      [68.1, 61],
+      [86.3, 61],
+      [95, 77.5],
+      [83.1, 90]
+    ]);
+    caja(111.9, 61, 126.9, 121.3);
+    fig([
+      [109.4, 61],
+      [111.9, 61],
+      [111.9, 85.6]
+    ]);
+    // Rayo
+    fig([
+      [98.1, 61.5],
+      [108.8, 61.3],
+      [104.6, 85]
+    ]);
+    fig([
+      [98.1, 61.5],
+      [104.6, 85],
+      [96, 96.3],
+      [86.9, 96.3]
+    ]);
+    fig([
+      [104.6, 85],
+      [110, 88.1],
+      [96, 96.3]
+    ]);
+    fig([
+      [96, 96.3],
+      [110, 88.1],
+      [90.3, 120]
+    ]);
+    // G
+    caja(133.1, 61, 148.1, 121.3);
+    caja(148.1, 61, 182.5, 75);
+    caja(156.3, 85, 182.5, 99.4);
+    caja(166.9, 99.4, 182.5, 106.6);
+    caja(148.1, 106.6, 182.5, 121.3);
+    T(x0 + 100 * e, y0 + 140 * e, "PROJECTS & ENERGY", { s: 8, b: 1, a: "middle", f: LY });
   }
-  T(rx + 55, yr + 100, "PROJECTS & ENERGY", { s: 7, b: 1, a: "middle", f: LY });
   o.push(`</g>`);
   const rot = [
     ["PROYECTO", P.nombre || "—"],
@@ -853,10 +906,26 @@ function svgDxf(svgTxt, op = {}) {
     "#8a9199": 8
   };
   const OSCURO = ["#14304f", "#9a5a23", "#1f2328"];
-  const col = (c, esTexto) => {
+  // Rellenos claros del dibujo de los tableros (gabinete, módulos, riel, canaletas), en grises de AutoCAD para que se
+  // vean con volumen como en pantalla; lo que va encima se dibuja en tonos oscuros (esquema JMG)
+  const CLARO = {
+    "#ffffff": 254,
+    "#f3f6f9": 255,
+    "#eaf2fb": 255,
+    "#e3e9f0": 254,
+    "#d9eedf": 254,
+    "#e6e9ed": 253,
+    "#d5dae0": 253,
+    "#c9ced5": 252
+  };
+  const SOBRE_CLARO = { "#14212e": 250, "#000000": 250, "#1f2328": 250, "#5a6775": 8, "#bfc8d2": 8, "#8a9199": 8 };
+  const claros = [],
+    sobreClaro = (x, y) => claros.some(([a, b, w, h]) => x >= a && x <= a + w && y >= b && y <= b + h);
+  const col = (c, esTexto, claro) => {
     c = hex(c);
     if (esq === "capas") return 256;
     if (esq === "mono") return 7;
+    if (claro && SOBRE_CLARO[c] !== undefined) return SOBRE_CLARO[c];
     // Los textos secundarios (gris en pantalla) van en cian para que se lean bien
     if (esTexto && c === "#5a6775") return 4;
     // El azul de los textos, más claro para que se lea sobre el fondo oscuro de AutoCAD
@@ -922,7 +991,8 @@ function svgDxf(svgTxt, op = {}) {
         y1 = n(el.getAttribute("y1")),
         x2 = n(el.getAttribute("x2")),
         y2 = n(el.getAttribute("y2"));
-      const capa = capaDe(el, "");
+      const capa = capaDe(el, ""),
+        cl = sobreClaro((x1 + x2) / 2, (y1 + y2) / 2);
       // Punteadas: la de tierra (verde) en E-TIERRA; las demás (reservas, niveles) en su capa
       if (dash)
         return linea(
@@ -931,7 +1001,7 @@ function svgDxf(svgTxt, op = {}) {
           x2,
           y2,
           capa || (st === "#2f7a4b" ? "E-TIERRA" : "E-RESERVA"),
-          esq === "capas" ? 256 : esq === "mono" ? 7 : col(st)
+          esq === "capas" ? 256 : esq === "mono" ? 7 : col(st, false, cl)
         );
       if (sw >= 3)
         return pline(
@@ -951,10 +1021,10 @@ function svgDxf(svgTxt, op = {}) {
             [x2, y2]
           ],
           ly,
-          col(st),
+          col(st, false, cl),
           0.35
         );
-      return linea(x1, y1, x2, y2, ly, col(st));
+      return linea(x1, y1, x2, y2, ly, col(st, false, cl));
     }
     if (t === "rect") {
       const x = n(el.getAttribute("x")),
@@ -962,7 +1032,11 @@ function svgDxf(svgTxt, op = {}) {
         w = n(el.getAttribute("width")),
         h = n(el.getAttribute("height"));
       if (!st && x === 0 && y === 0) return;
-      if (fi && OSCURO.includes(fi)) {
+      const cl = sobreClaro(x + w / 2, y + h / 2);
+      if (esq === "jmg" && CLARO[fi] && capaDe(el, "") === "E-TABLEROS") {
+        solido(x, y, w, h, "E-RELLENOS", CLARO[fi]);
+        claros.push([x, y, w, h]);
+      } else if (fi && OSCURO.includes(fi)) {
         solido(x, y, w, h, capaDe(el, "E-RELLENOS"), esq === "capas" ? 256 : esq === "mono" ? 9 : col(fi));
         fondos.push([x, y, w, h]);
       }
@@ -976,7 +1050,7 @@ function svgDxf(svgTxt, op = {}) {
             [x, y + h]
           ],
           marco ? "E-MARCO" : capaDe(el, "E-CUADROS"),
-          col(st),
+          col(st, false, cl),
           marco ? 0.5 : sw >= 1.2 ? 0.25 : 0,
           true
         );
@@ -990,7 +1064,7 @@ function svgDxf(svgTxt, op = {}) {
         8,
         capaDe(el, "E-SIMBOLOS"),
         62,
-        col(st || fi),
+        col(st || fi, false, sobreClaro(n(el.getAttribute("cx")), n(el.getAttribute("cy")))),
         10,
         X(n(el.getAttribute("cx"))),
         20,
@@ -1033,7 +1107,8 @@ function svgDxf(svgTxt, op = {}) {
         return m;
       });
       if (P.length >= 3) {
-        const c = col(fi || st);
+        const c = col(fi || st, false, sobreClaro(P[0][0], P[0][1])),
+          q = P.length === 4 ? P[3] : P[2];
         add(
           0,
           "SOLID",
@@ -1050,9 +1125,9 @@ function svgDxf(svgTxt, op = {}) {
           21,
           Y(P[1][1]),
           12,
-          X(P[2][0]),
+          X(q[0]),
           22,
-          Y(P[2][1]),
+          Y(q[1]),
           13,
           X(P[2][0]),
           23,
@@ -1070,7 +1145,7 @@ function svgDxf(svgTxt, op = {}) {
       const tr = (el.getAttribute("transform") || "").match(/rotate\(([-\d.]+)/),
         rot = tr ? -n(tr[1]) : 0,
         j = an === "middle" ? 1 : an === "end" ? 2 : 0;
-      let c = col(fi, true);
+      let c = col(fi, true, sobreClaro(x, y));
       if (esq === "mono" && fi === "#ffffff") c = 7;
       if (esq === "capas") c = 256;
       add(

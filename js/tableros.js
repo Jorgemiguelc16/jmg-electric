@@ -336,6 +336,7 @@ function tableros(r) {
     // Datos del tablero, en la misma columna para todos los tableros
     const dw = 250,
       dx = x1 - dw;
+    o.push(`<g data-capa="E-CUADROS">`);
     {
       R(dx, yc, dw, 18, { st: "", fi: NAVY });
       T(dx + dw / 2, yc + 12.5, `DATOS DEL TABLERO ${tb.tab}`, { s: 7.8, b: 1, a: "middle", f: "#fff" });
@@ -372,7 +373,7 @@ function tableros(r) {
         yy += 13;
       });
     }
-    o.push(`</g>`);
+    o.push(`</g></g>`);
     yb = yc + bh + 28;
   });
 
