@@ -4,8 +4,14 @@
    cuadro de cargas: equipos adicionales, interruptores de los alimentadores (TG de una vivienda), cada diferencial
    con sus circuitos y las reservas; abajo, las barras de neutro y de tierra. La capacidad en polos es la del metrado
    (polosTablero, js/metrado.js). Al final, el detalle de la señal con las proporciones de la norma. */
+// Vista interior «peinada» (con todo el cableado): opción de la cinta Planos, guardada en este navegador
+let TAB_PEINADO = false;
+try {
+  TAB_PEINADO = localStorage.getItem("jmg-electric-peinado") === "1";
+} catch (e) {}
 function tableros(r) {
-  const c = r.c,
+  const PEIN = TAB_PEINADO,
+    c = r.c,
     o = [],
     { L, T, R, C } = trazos(o);
   const INK = "#14212e",
@@ -132,8 +138,9 @@ function tableros(r) {
         fw = fila.length ? fila[fila.length - 1].x + fila[fila.length - 1].pol * MW : 0;
       // Canaletas ranuradas arriba y abajo de la fila
       const canaleta = yk => {
-        R(xs - 12, yk, fw + 24, 12, { st: GR, fi: "#e6e9ed", sw: 0.7 });
-        for (let xk = xs - 6; xk < xs + fw + 10; xk += 8) L(xk, yk + 3, xk, yk + 9, 0.5, LN);
+        // Del ancho del gabinete, para que todas las filas (y las barras) lleguen a ellas
+        R(xs - 12, yk, uw + 24, 12, { st: GR, fi: "#e6e9ed", sw: 0.7 });
+        for (let xk = xs - 6; xk < xs + uw + 10; xk += 8) L(xk, yk + 3, xk, yk + 9, 0.5, LN);
       };
       canaleta(yf - 30);
       canaleta(yf + MH + 38);
@@ -159,7 +166,19 @@ function tableros(r) {
           R(x + 1, yt, w - 2, 9, { st: "", fi: "#d5dae0" });
           for (let p = 0; p < m.pol; p++) C(x + MW * (p + 0.5), yt + 4.5, 2.2, { fi: "#fff", st: GR, sw: 0.7 });
         });
-        if (m.t1) T(cx, yf + 20, m.t1, { s: 7.2, b: 1, a: "middle" });
+        // Sin peinar: capacidad arriba, curva abajo y el circuito en la etiqueta; peinado: todo en el frente,
+        // porque bajo el módulo van los conductores
+        const arriba = PEIN ? m.t2 || m.t1 : m.t1,
+          abajo = !PEIN
+            ? m.t3
+            : m.id
+              ? `${m.t1.replace(" A", "")} · 30 mA`
+              : m.eq
+                ? m.t3 || m.t1
+                : m.res
+                  ? m.t1
+                  : `${m.t1} ${(m.t3 || "").replace("curva ", "")}`.trim();
+        if (arriba) T(cx, yf + 20, arriba, { s: 7.2, b: 1, a: "middle", f: PEIN && m.t2 ? (m.res ? GR : NAVY) : INK });
         if (m.eq === "med") {
           // Medidor: pantalla con la lectura
           R(x + 4, yf + 23, w - 8, 13, { fi: "#d9eedf", st: GR, sw: 0.7 });
@@ -178,24 +197,40 @@ function tableros(r) {
           C(x + 6, yf + 28, 1.6, { fi: VE, st: "" });
           C(x + 6, yf + 34, 1.6, { fi: "#b42318", st: "" });
         }
-        if (m.t3) T(cx, yf + MH - 13, m.t3, { s: 5.8, a: "middle", f: GR });
+        if (abajo) T(cx, yf + MH - 13, abajo, { s: 5.8, a: "middle", f: GR });
         // Etiqueta con el circuito
-        if (m.t2) {
+        if (m.t2 && !PEIN) {
           R(x + 1, yf + MH + 2, w - 2, 13, { fi: "#fff", st: LN, sw: 0.6 });
           T(cx, yf + MH + 11.5, m.t2, { s: 7, b: 1, a: "middle", f: m.res ? GR : NAVY });
         }
       });
-      // Llave de cada diferencial bajo sus circuitos
-      [...new Set(fila.filter(m => m.idn).map(m => m.g))].forEach(g => {
-        const gm = fila.filter(m => m.g === g),
-          xa = xs + gm[0].x,
-          xb = xs + gm[gm.length - 1].x + gm[gm.length - 1].pol * MW,
-          yl = yf + MH + 22;
-        L(xa, yl - 3, xa, yl, 0.7, NAVY);
-        L(xa, yl, xb, yl, 0.7, NAVY);
-        L(xb, yl - 3, xb, yl, 0.7, NAVY);
-        T((xa + xb) / 2, yl + 9, `Protegidos por ${gm.find(m => m.idn).idn}`, { s: 6, a: "middle", f: GR });
-      });
+      // Cableado peinado: alimentación desde la canaleta superior a los diferenciales, equipos y alimentadores;
+      // salidas de los circuitos a la canaleta inferior; llegada del alimentador por arriba
+      if (PEIN) {
+        fila.forEach(m => {
+          for (let p = 0; p < m.pol; p++) {
+            const px = xs + m.x + MW * (p + 0.5);
+            if (m.id || m.eq || m.g === "fd") L(px, yf - 18, px, yf, 1.1, CU);
+            if (m.idn || m.g === "fd") L(px, yf + MH, px, yf + MH + 38, 1.1, INK);
+          }
+        });
+        if (fi === 0) {
+          for (let k = 0; k < pa; k++) L(xs + fw - 4 - k * 6, yc + 6, xs + fw - 4 - k * 6, yf - 30, 2, CU);
+          T(xs + fw - 4 - pa * 6, yc + 18, "Llegada del alimentador", { s: 6.4, a: "end", f: GR });
+        }
+      }
+      // Llave de cada diferencial bajo sus circuitos (sin peinar: bajo el módulo van los conductores)
+      if (!PEIN)
+        [...new Set(fila.filter(m => m.idn).map(m => m.g))].forEach(g => {
+          const gm = fila.filter(m => m.g === g),
+            xa = xs + gm[0].x,
+            xb = xs + gm[gm.length - 1].x + gm[gm.length - 1].pol * MW,
+            yl = yf + MH + 22;
+          L(xa, yl - 3, xa, yl, 0.7, NAVY);
+          L(xa, yl, xb, yl, 0.7, NAVY);
+          L(xb, yl - 3, xb, yl, 0.7, NAVY);
+          T((xa + xb) / 2, yl + 9, `Protegidos por ${gm.find(m => m.idn).idn}`, { s: 6, a: "middle", f: GR });
+        });
     });
     // Barras de neutro y de tierra, una al lado de la otra bajo los módulos
     const ybar = yc + bh - 30,
@@ -206,6 +241,15 @@ function tableros(r) {
       `<rect x="${px2(x0 + 52 + bw)}" y="${ybar}" width="${px2(bw)}" height="7" fill="${VE}" stroke="${VE}" stroke-width="1"/>`
     );
     T(x0 + 52 + bw, ybar + 18, "Barra de tierra (PE)", { s: 7.2, f: VE });
+    // Peinado: un conductor de neutro y uno de protección por salida, de las barras a la última canaleta
+    if (PEIN) {
+      const nS = M.filter(m => m.idn || m.g === "fd").length,
+        yk = yc + 48 + (filas.length - 1) * PASO + MH + 50;
+      for (let i = 0; i < nS; i++) {
+        L(x0 + 28 + ((i + 0.5) * bw) / nS, ybar, x0 + 28 + ((i + 0.5) * bw) / nS, yk, 0.9, GR);
+        L(x0 + 52 + bw + ((i + 0.5) * bw) / nS, ybar, x0 + 52 + bw + ((i + 0.5) * bw) / nS, yk, 0.9, VE);
+      }
+    }
     // Datos del tablero, en la misma columna para todos los tableros
     const dw = 250,
       dx = x1 - dw;
@@ -287,8 +331,11 @@ function tableros(r) {
     "Vistas esquemáticas generadas del cálculo: dispositivos y orden según el cuadro de cargas, cada diferencial con sus circuitos. Dimensiones del gabinete según el fabricante.",
     "Capacidad mínima de cada tablero en polos: circuitos, diferenciales, reservas y equipos, la misma del metrado (partidas OE.5.2.6 y OE.5.2.7).",
     `El interruptor del alimentador de cada tablero está aguas arriba (lámina IE-01). Reservas equipadas: ITM 2×16 A, curva C${c.reserva ? "" : " (este proyecto no tiene reservas)"}.`,
-    "Los equipos adicionales (DPS, relé de tensión, medidor, contactor) son criterio del proyectista y no cambian el cálculo."
-  ];
+    "Los equipos adicionales (DPS, relé de tensión, medidor, contactor) son criterio del proyectista y no cambian el cálculo.",
+    PEIN
+      ? "Cableado esquemático (peinado): alimentación por la canaleta superior y salidas por la inferior. Colores ilustrativos: la identificación de los conductores es la del CNE-Utilización."
+      : ""
+  ].filter(Boolean);
   let ny = yb + 32;
   notas.forEach((t, i) => {
     const ln = [];
@@ -318,4 +365,19 @@ function cardTableros(r, nro) {
   const u = tableros(r);
   return `<section class="card"><h2><span><span class="num">${nro}</span>Detalle de tableros</span></h2>
   <div class="unif">${u.svg}</div><div class="body"><p class="hint">Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo. Se descarga en DXF, PNG y SVG desde la cinta (Planos).</p></div></section>`;
+}
+
+// Casilla de la cinta (Planos › Tableros peinados): cambia la vista interior y las descargas
+{
+  const ck = typeof document !== "undefined" && document.getElementById("optPeinado");
+  if (ck && ck.addEventListener) {
+    ck.checked = TAB_PEINADO;
+    ck.addEventListener("change", () => {
+      TAB_PEINADO = ck.checked;
+      try {
+        localStorage.setItem("jmg-electric-peinado", TAB_PEINADO ? "1" : "0");
+      } catch (e) {}
+      if (LAST) render(LAST);
+    });
+  }
 }

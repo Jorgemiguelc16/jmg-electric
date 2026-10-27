@@ -282,14 +282,15 @@ function senalRiesgoElectrico(o, cx, cy, d, borde = "") {
     TRI(a[0], a[1], b[0], b[1], c[0], c[1], "#000000");
   });
 }
-// Versión con texto (señal de símbolo con texto): fondo gris oscuro, señal arriba y texto blanco abajo
+// Versión con texto (señal de símbolo con texto): fondo gris oscuro, señal arriba y texto blanco abajo, centrado
+// (la norma pide la señal arriba y el texto abajo; no fija su alineación)
 function senalRiesgoTexto(o, x, y, w) {
   const { R, T } = trazos(o),
     h = w * 1.45;
   R(x, y, w, h, { st: "", fi: "#1f2328" });
   senalRiesgoElectrico(o, x + w / 2, y + w * 0.47, w * 0.74, "#ffffff");
   ["¡Peligro!", "Riesgo", "eléctrico"].forEach((t, i) =>
-    T(x + w * 0.14, y + w * (0.98 + i * 0.15), t, { s: w * 0.13, f: "#ffffff" })
+    T(x + w / 2, y + w * (0.98 + i * 0.15), t, { s: w * 0.13, a: "middle", f: "#ffffff" })
   );
   return h;
 }
