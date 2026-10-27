@@ -22,6 +22,35 @@ function tramoVertical(q, c) {
   if (/intercomunicador|portero/.test(t)) return techo(n, A.int);
   return piso(A.fza);
 }
+/* Contenido de un tablero (también lo dibuja el detalle de tableros, js/tableros.js): sus circuitos, los
+   diferenciales (uno por grupo o por circuito, de 4 polos si el grupo tiene uno trifásico), las reservas de 2 polos,
+   en el TG de una vivienda los interruptores de los alimentadores de los demás tableros, y los equipos adicionales.
+   m es el total de polos: la capacidad mínima del tablero. */
+function polosTablero(r, tb) {
+  const c = r.c,
+    cs = r.circ.filter(q => q.tab === tb.tab),
+    fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [],
+    tri = r.alims[tb.feeder].s.tri,
+    ids = [],
+    vistos = {};
+  let m = cs.reduce((s, q) => s + (q.f3 ? 3 : 2), 0) + c.reserva * 2 + fd.reduce((s, a) => s + (a.s.tri ? 3 : 2), 0);
+  cs.forEach(q => {
+    const k = c.idMode === "circuito" ? q.key : q.idName;
+    if (vistos[k]) return;
+    vistos[k] = 1;
+    const g = cs.filter(x => (c.idMode === "circuito" ? x.key : x.idName) === k),
+      pol = g.some(x => x.f3) ? 4 : 2;
+    m += pol;
+    ids.push({ nom: q.idName, pol, rat: q.idRat, tipo: q.idTipo || "A", circ: g });
+  });
+  const eqs = equiposDe(tb.tab).map(([k, d]) => ({
+    k,
+    d,
+    pol: k === "dps" ? (tri ? 4 : 2) : k === "med" ? (tri ? 4 : 2) : 2
+  }));
+  eqs.forEach(e => (m += e.pol));
+  return { m, ids, eqs, fd, cs, tri };
+}
 function metrado(r) {
   const c = r.c,
     D = c.desig ? ` ${c.desig}` : "";
@@ -61,27 +90,10 @@ function metrado(r) {
     nRes = 0;
   r.tabs.forEach(tb => {
     const n = r.alims[tb.feeder].cant || 1,
-      cs = r.circ.filter(q => q.tab === tb.tab),
-      vistos = {};
-    let m =
-      cs.reduce((s, q) => s + (q.f3 ? 3 : 2), 0) +
-      c.reserva * 2 +
-      (r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1).reduce((s, a) => s + (a.s.tri ? 3 : 2), 0) : 0);
-    cs.forEach(q => {
-      const k = c.idMode === "circuito" ? q.key : q.idName;
-      if (vistos[k]) return;
-      vistos[k] = 1;
-      const g = cs.filter(x => (c.idMode === "circuito" ? x.key : x.idName) === k),
-        pol = g.some(x => x.f3) ? 4 : 2;
-      m += pol;
-      add(ids, `${pol}|${q.idRat}|${q.idTipo || "A"}`, n);
-    });
-    const tri = r.alims[tb.feeder].s.tri;
-    equiposDe(tb.tab).forEach(([k, d]) => {
-      add(eqm, `${k === "ctr" ? (tri ? 3 : 2) : tri ? 4 : 2}|${d.d(tri)}`, n);
-      m += k === "dps" ? (tri ? 4 : 2) : k === "med" ? (tri ? 4 : 2) : 2;
-    });
-    mods[tb.tab] = { n, m, desc: tb.desc };
+      pt = polosTablero(r, tb);
+    pt.ids.forEach(d => add(ids, `${d.pol}|${d.rat}|${d.tipo}`, n));
+    pt.eqs.forEach(e => add(eqm, `${e.k === "ctr" ? (pt.tri ? 3 : 2) : pt.tri ? 4 : 2}|${e.d.d(pt.tri)}`, n));
+    mods[tb.tab] = { n, m: pt.m, desc: tb.desc };
     nRes += c.reserva * n;
   });
   let al = 0,

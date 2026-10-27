@@ -32,6 +32,7 @@ const VORDEN = [
   "unifilar",
   "alturas",
   "detalles",
+  "tableros",
   "metrado",
   "verif"
 ];
@@ -44,6 +45,7 @@ const VLBL = {
   unifilar: "Diagrama unifilar",
   alturas: "Diagrama de alturas",
   detalles: "Leyenda y detalles",
+  tableros: "Detalle de tableros",
   metrado: "Metrado",
   verif: "Verificaciones"
 };

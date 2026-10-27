@@ -56,6 +56,7 @@ function render(r) {
   S.unifilar = () => cardUnifilar(r, "");
   S.alturas = () => cardAlturas(r, "");
   S.detalles = () => cardDetalles(r, "");
+  S.tableros = () => cardTableros(r, "");
   S.metrado = () => cardMetrado(r);
   S.verif = () => cardAlertas(r, "") + cardRecom(r);
   const st = {

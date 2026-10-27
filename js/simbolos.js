@@ -209,3 +209,74 @@ function simboloDGE(o, k, x, y, z = 1) {
   S[k]();
   return true;
 }
+/* Señal de advertencia «¡Peligro! Riesgo eléctrico» (Norma DGE, Parte III, 141-02-02): triángulo equilátero de
+   lado d con fondo amarillo, banda negra de 0.10 d y el rayo negro (Figura 134-03). Centrada en el baricentro del
+   triángulo (cx, cy). Solo triángulos, para que el DXF la rellene (SOLID). */
+function senalRiesgoElectrico(o, cx, cy, d, borde = "") {
+  const { TRI } = trazos(o),
+    tri = (s, fi) => {
+      const h = s * 0.866;
+      TRI(cx, cy - (2 * h) / 3, cx + s / 2, cy + h / 3, cx - s / 2, cy + h / 3, fi);
+    };
+  // Margen blanco de la versión con texto (3 unidades de 100, sección 133)
+  if (borde) tri(d * 1.1, borde);
+  // Negro de la norma (en AutoCAD, color 7: se imprime negro)
+  tri(d, "#000000");
+  // El fondo amarillo queda a 0.10 d de cada lado: su lado es d (r − 0.10 d) / r, con r = d / (2√3)
+  tri(d * (1 - 0.1 * 2 * Math.sqrt(3)), "#ffd200");
+  // Rayo: barra superior, escalón, barra inferior y punta de flecha (coordenadas en unidades de d)
+  const P = [
+    [
+      [0.03, -0.34],
+      [0.1, -0.34],
+      [0.01, -0.06]
+    ],
+    [
+      [0.03, -0.34],
+      [0.01, -0.06],
+      [-0.06, -0.06]
+    ],
+    [
+      [-0.06, -0.08],
+      [0.07, -0.08],
+      [0.07, -0.02]
+    ],
+    [
+      [-0.06, -0.08],
+      [0.07, -0.02],
+      [-0.06, -0.02]
+    ],
+    [
+      [0.0, -0.06],
+      [0.07, -0.06],
+      [0.01, 0.15]
+    ],
+    [
+      [0.0, -0.06],
+      [0.01, 0.15],
+      [-0.06, 0.15]
+    ],
+    [
+      [-0.11, 0.12],
+      [0.05, 0.15],
+      [-0.06, 0.27]
+    ]
+  ];
+  const e = 0.72,
+    tx = ([x, y]) => [cx + (x - 0.02) * e * d, cy + (y * e - 0.02) * d];
+  P.forEach(t => {
+    const [a, b, c] = t.map(tx);
+    TRI(a[0], a[1], b[0], b[1], c[0], c[1], "#000000");
+  });
+}
+// Versión con texto (señal de símbolo con texto): fondo gris oscuro, señal arriba y texto blanco abajo
+function senalRiesgoTexto(o, x, y, w) {
+  const { R, T } = trazos(o),
+    h = w * 1.45;
+  R(x, y, w, h, { st: "", fi: "#1f2328" });
+  senalRiesgoElectrico(o, x + w / 2, y + w * 0.47, w * 0.74, "#ffffff");
+  ["¡Peligro!", "Riesgo", "eléctrico"].forEach((t, i) =>
+    T(x + w * 0.14, y + w * (0.98 + i * 0.15), t, { s: w * 0.13, f: "#ffffff" })
+  );
+  return h;
+}

@@ -436,6 +436,7 @@ function svgDxf(svgTxt, op = {}) {
   // Esquema JMG en colores vivos: azul, naranja cobre, cian, verde, rojo y amarillo
   const ACI = {
     "#14212e": 7,
+    "#000000": 7,
     "#14304f": 150,
     "#9a5a23": 30,
     "#5a6775": 8,
@@ -714,6 +715,7 @@ function svgDxf(svgTxt, op = {}) {
     "E-NIVELES": [8, "DASHED"],
     "E-TUBERIA": [30, "CONTINUOUS"],
     "E-DETALLE": [7, "CONTINUOUS"],
+    "E-TABLEROS": [7, "CONTINUOUS"],
     "E-NOTAS": [7, "CONTINUOUS"],
     Defpoints: [8, "CONTINUOUS"]
   };

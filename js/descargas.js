@@ -219,7 +219,8 @@ document.addEventListener("click", async e => {
 const PLANOS = {
   unifilar: () => ({ ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" }),
   alturas: () => ({ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }),
-  detalles: () => ({ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" })
+  detalles: () => ({ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" }),
+  tableros: () => ({ ...tableros(LAST), nom: "Detalle de tableros", corto: "Tableros" })
 };
 const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();
 /* Diálogo de descarga DXF */
