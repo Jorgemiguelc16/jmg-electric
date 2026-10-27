@@ -69,12 +69,14 @@ function unifilar(r) {
       cs = r.circ.filter(q => q.tab === tb.tab),
       nres = c.reserva,
       col0 = X + 96,
-      yb = Y + 46;
+      eqs = equiposDe(tb.tab),
+      // Equipos que no van entre la barra y tierra (el DPS sí): franja propia sobre la barra
+      eqx = eqs.filter(([k]) => k !== "dps"),
+      yb = Y + 46 + (eqx.length ? 54 : 0);
     const fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [];
     const ncol = cs.length + fd.length + nres,
       xe = col0 + (ncol - 1) * CW + 26;
     T(X + 60, Y + 14, `TABLERO ${tb.tab}`, { s: 11.5, b: 1, f: NAVY });
-    const eqs = equiposDe(tb.tab);
     T(
       X + 60,
       Y + 28,
@@ -94,6 +96,33 @@ function unifilar(r) {
         `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
         { s: 7.5, f: GR }
       );
+    }
+    // Equipos del tablero con su símbolo de la Norma DGE
+    if (eqx.length) {
+      const ye = Y + 50,
+        ex = X + 76,
+        wE = 158;
+      o.push(
+        `<rect x="${ex}" y="${ye}" width="${eqx.length * wE + 8}" height="46" fill="none" stroke="${GR}" stroke-width="0.8" stroke-dasharray="4 3"/>`
+      );
+      T(ex + 6, ye + 10, "EQUIPOS DEL TABLERO", { s: 6.8, b: 1, f: GR });
+      const EQS = {
+        rel: ["Relé de tensión", "07-73-01"],
+        med: ["Medidor de energía", "08-80-22"],
+        ctr: ["Contactor con reloj", "07-72-18 · 08-80-40"]
+      };
+      eqx.forEach(([k], i) => {
+        const sx = ex + 22 + i * wE,
+          sy = ye + 29,
+          [nom, cod] = EQS[k] || [k, ""];
+        if (k === "ctr") {
+          simboloDGE(o, "ctr", sx, sy, 1);
+          simboloDGE(o, "reloj", sx + 16, sy, 0.85);
+        } else simboloDGE(o, k, sx, sy, 1.1);
+        const tx = sx + (k === "ctr" ? 30 : 18);
+        T(tx, sy - 1, nom, { s: 7.6, b: 1 });
+        T(tx, sy + 9, cod, { s: 6.8, f: GR });
+      });
     }
     L(X + 14, yb, xe, yb, 4, CU);
     // Barra / puesta a tierra
@@ -320,8 +349,16 @@ function unifilar(r) {
     T(bx + bw - 8, yy + 12, v, { s: 8.5, b: 1, a: "end" });
   });
   // Leyenda y rótulo
+  // Equipos marcados en algún tablero: se agregan a la leyenda con su símbolo y código DGE
+  const conEq = new Set(r.tabs.flatMap(t => equiposDe(t.tab).map(([k]) => k))),
+    ext = [
+      conEq.has("dps") && ["dps", "Protector contra sobretensiones (DPS)", "07-75-23"],
+      conEq.has("rel") && ["rel", "Relé de tensión (U> U<)", "07-73-01"],
+      conEq.has("ctr") && ["ctr", "Contactor", "07-72-18"],
+      conEq.has("ctr") && ["reloj", "Reloj horario", "08-80-40"]
+    ].filter(Boolean);
   const yr = y + 10,
-    hr = 124;
+    hr = 124 + Math.ceil(ext.length / 2) * 32;
   o.push(`<rect x="${X}" y="${yr}" width="330" height="${hr}" fill="none" stroke="${NAVY}" stroke-width="1"/>`);
   T(X + 10, yr + 16, "LEYENDA", { s: 9, b: 1, f: NAVY });
   {
@@ -330,20 +367,32 @@ function unifilar(r) {
     L(lx, ly - 4, lx, ly);
     itm(lx, ly);
     L(lx, ly + 24, lx, ly + 28);
-    T(lx + 22, ly + 16, "Interruptor termomagnético (ITM)", { s: 8 });
+    T(lx + 22, ly + 13, "Interruptor termomagnético (ITM)", { s: 8 });
+    T(lx + 22, ly + 23, "07-72-21", { s: 6.8, f: GR });
     const lx2 = X + 180;
     L(lx2, ly - 4, lx2, ly);
     dif(lx2, ly);
-    T(lx2 + 22, ly + 16, "Interruptor diferencial 30 mA", { s: 8 });
+    T(lx2 + 22, ly + 13, "Interruptor diferencial 30 mA", { s: 8 });
+    T(lx2 + 22, ly + 23, "07-72-17", { s: 6.8, f: GR });
     ly += 46;
     kwh(lx, ly - 4);
-    T(lx + 22, ly + 12, "Medidor de energía", { s: 8 });
+    T(lx + 22, ly + 9, "Medidor de energía", { s: 8 });
+    T(lx + 22, ly + 19, "08-80-22", { s: 6.8, f: GR });
     tierra(lx2, ly + 4);
-    T(lx2 + 22, ly + 12, "Puesta a tierra", { s: 8 });
+    T(lx2 + 22, ly + 9, "Puesta a tierra", { s: 8 });
+    T(lx2 + 22, ly + 19, "03-31-44", { s: 6.8, f: GR });
     L(lx - 12, ly + 34, lx + 12, ly + 34, 4, CU);
     T(lx + 22, ly + 37, "Barra de tablero", { s: 8 });
     L(lx2 - 12, ly + 34, lx2 + 12, ly + 34, 1.3, GR, "4 3");
     T(lx2 + 22, ly + 37, "Circuito de reserva", { s: 8 });
+    // Equipos del tablero, en dos columnas
+    ext.forEach(([k, d, cd], i) => {
+      const ex = i % 2 ? lx2 : lx,
+        ey = yr + 140 + Math.floor(i / 2) * 32;
+      simboloDGE(o, k, ex, ey, k === "rel" || k === "reloj" ? 1 : 1.1);
+      T(ex + 22, ey - 1, d.length > 30 ? d.slice(0, d.indexOf(" (")) || d : d, { s: 8 });
+      T(ex + 22, ey + 9, cd, { s: 6.8, f: GR });
+    });
   }
   const rx = Math.max(X + 350, W - 480),
     rw = W - 20 - rx;

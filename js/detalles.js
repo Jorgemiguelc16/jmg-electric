@@ -87,7 +87,10 @@ function detalles(r) {
       [
         ["itm", "Interruptor termomagnético", "07-72-21"],
         ["dif", "Interruptor diferencial", "07-72-17"],
+        eq("rel") && ["rel", "Relé de sobretensión y subtensión", "07-73-01"],
+        eq("med") && ["med", "Medidor de energía del tablero", "08-80-22"],
         eq("ctr") && ["ctr", "Contactor", "07-72-18"],
+        eq("ctr") && ["reloj", "Reloj horario", "08-80-40"],
         eq("dps") && ["dps", "Protector contra sobretensiones (pararrayos)", "07-75-23"],
         ["pat", "Puesta a tierra de protección", "03-31-46"]
       ]
@@ -111,7 +114,7 @@ function detalles(r) {
     T(lx + 8, ly + 10.5, g.toUpperCase(), { s: 6.8, b: 1, f: NAVY });
     ly += 15;
     it.forEach(([k, d, cd]) => {
-      const vertical = ["itm", "dif", "ctr", "dps", "pat"].includes(k),
+      const vertical = ["itm", "dif", "ctr", "dps", "pat", "rel"].includes(k),
         h = vertical ? 30 : 22;
       R(lx, ly, lw, h, { st: LN, fi: "#fff", sw: 0.8 });
       L(lx + 60, ly, lx + 60, ly + h, 0.8, LN);

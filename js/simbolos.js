@@ -32,7 +32,8 @@ function trazos(o) {
    tomacorrientes 09-93-13/15/17/18, interruptor 09-93-30, salidas de alumbrado 09-93-51/52, emergencia 09-93-67,
    calentador de agua 09-93-69, interfono 09-93-73, caja 09-93-08, canalizaciones 09-93-05/06, conductores
    09-93-01/02, tablero 09-91-17, contador de energía 08-80-22, interruptor automático 07-72-21, diferencial
-   07-72-17, contactor 07-72-18, pararrayos 07-75-23 y tierra 03-31-44/46. */
+   07-72-17, contactor 07-72-18, pararrayos 07-75-23, relé de tensión 07-73-01, reloj 08-80-40 y tierra
+   03-31-44/46. */
 function simboloDGE(o, k, x, y, z = 1) {
   const { L, T, R, C, TRI } = trazos(o);
   // Tomacorriente: círculo atravesado por n líneas que llegan desde la izquierda; letra abajo a la derecha
@@ -189,6 +190,18 @@ function simboloDGE(o, k, x, y, z = 1) {
       L(x, y - 6 * z, x, y + 2 * z, 1);
       TRI(x - 1.8 * z, y + 1 * z, x + 1.8 * z, y + 1 * z, x, y + 4 * z);
       L(x, y + 6 * z, x, y + 10 * z);
+    },
+    // Relé de medición (07-73-01) de tensión: sobretensión y subtensión (U> y U<, como en 07-73-19)
+    rel: () => {
+      R(x - 9 * z, y - 10 * z, 18 * z, 20 * z, { fi: "#fff" });
+      T(x, y - 1.5 * z, "U>", { s: 6.5 * z, b: 1, it: 1, a: "middle" });
+      T(x, y + 7 * z, "U<", { s: 6.5 * z, b: 1, it: 1, a: "middle" });
+    },
+    // Reloj (08-80-40): círculo con las agujas
+    reloj: () => {
+      C(x, y, 7 * z);
+      L(x, y, x, y - 5 * z, 1.1);
+      L(x, y, x + 4 * z, y, 1.1);
     },
     // Tierra (03-31-44) y protección a tierra (03-31-46)
     tierra: () => {

@@ -7,7 +7,7 @@
 function tableros(r) {
   const c = r.c,
     o = [],
-    { L, T, R } = trazos(o);
+    { L, T, R, C } = trazos(o);
   const INK = "#14212e",
     NAVY = "#14304f",
     CU = "#9a5a23",
@@ -39,7 +39,16 @@ function tableros(r) {
     o.push(`<g data-capa="E-TABLEROS">`);
     // Lista de módulos en el orden del cuadro de cargas
     const M = [];
-    pt.eqs.forEach(e => M.push({ pol: e.pol, t1: e.d.c, fi: "#f3f6f9", g: "eq" }));
+    const EQC = {
+      dps: ["DPS", "20 kA", "DPS"],
+      rel: ["U> U<", "", "Relé U"],
+      med: ["", "", "Medidor"],
+      ctr: ["KM", "reloj", "Contactor"]
+    };
+    pt.eqs.forEach(e => {
+      const [t1, t3, t2] = EQC[e.k] || [e.d.c, "", ""];
+      M.push({ pol: e.pol, t1, t3, t2, fi: "#f3f6f9", g: "eq", eq: e.k });
+    });
     pt.fd.forEach((f, i) => {
       const p = f.s.tri ? 3 : 2,
         dest = r.tabs.find(t => t.feeder === i + 1);
@@ -48,9 +57,9 @@ function tableros(r) {
     pt.ids.forEach((d, gi) => {
       M.push({
         pol: d.pol,
-        t1: "ID",
-        t3: `${d.pol}×${d.rat} A`,
-        t4: `30 mA · ${d.tipo}`,
+        t1: `${d.pol}×${d.rat} A`,
+        t3: `30 mA · ${d.tipo}`,
+        t2: d.nom,
         fi: "#eaf2fb",
         g: "id" + gi,
         id: 1
@@ -73,10 +82,15 @@ function tableros(r) {
     const filas = [[]];
     let ux = 0,
       gAnt = null;
+    // Ancho de cada grupo (un diferencial con sus circuitos): si no cabe en la fila, pasa entero a la siguiente
+    const anchoG = {};
+    M.forEach(m => (anchoG[m.g] = (anchoG[m.g] || 0) + m.pol * MW));
     M.forEach(m => {
-      const gap = gAnt !== null && gAnt !== m.g ? 6 : 0,
-        w = m.pol * MW;
-      if (ux + gap + w > ancho && filas[filas.length - 1].length) {
+      const nuevo = gAnt !== m.g,
+        gap = gAnt !== null && nuevo ? 6 : 0,
+        w = m.pol * MW,
+        need = nuevo && anchoG[m.g] <= ancho ? anchoG[m.g] : w;
+      if (ux + gap + need > ancho && filas[filas.length - 1].length) {
         filas.push([]);
         ux = 0;
       } else ux += gap;
@@ -85,7 +99,8 @@ function tableros(r) {
       gAnt = m.g;
       filas[filas.length - 1].push(m);
     });
-    const ih = 40 + filas.length * (MH + 52) + 40,
+    const PASO = MH + 84,
+      ih = 48 + (filas.length - 1) * PASO + MH + 50 + 44,
       bh = Math.max(ih, 190),
       // Ancho del gabinete según su fila más larga
       uw = Math.max(...filas.map(f => (f.length ? f[f.length - 1].x + f[f.length - 1].pol * MW : 0)), 300),
@@ -112,38 +127,76 @@ function tableros(r) {
     R(x0 + 6, yc + 6, gw - 12, bh - 12, { st: LN, sw: 0.7 });
     T(x0 + gw / 2, yc + bh + 14, "VISTA INTERIOR (SIN PUERTA NI CUBIERTA)", { s: 7, b: 1, a: "middle", f: GR });
     filas.forEach((fila, fi) => {
-      const yf = yc + 28 + fi * (MH + 52),
+      const yf = yc + 48 + fi * PASO,
         xs = x0 + 28,
         fw = fila.length ? fila[fila.length - 1].x + fila[fila.length - 1].pol * MW : 0;
-      // Riel DIN
-      R(xs - 10, yf + MH / 2 - 6, fw + 20, 12, { st: GR, fi: "#e6e9ed", sw: 0.7 });
+      // Canaletas ranuradas arriba y abajo de la fila
+      const canaleta = yk => {
+        R(xs - 12, yk, fw + 24, 12, { st: GR, fi: "#e6e9ed", sw: 0.7 });
+        for (let xk = xs - 6; xk < xs + fw + 10; xk += 8) L(xk, yk + 3, xk, yk + 9, 0.5, LN);
+      };
+      canaleta(yf - 30);
+      canaleta(yf + MH + 38);
+      // Riel DIN detrás de los módulos
+      R(xs - 10, yf + MH / 2 - 7, fw + 20, 14, { st: GR, fi: "#c9ced5", sw: 0.7 });
+      // Peine de cobre sobre los interruptores de cada diferencial
+      [...new Set(fila.filter(m => m.idn).map(m => m.g))].forEach(g => {
+        const gm = fila.filter(m => m.g === g && m.idn),
+          xa = xs + gm[0].x + MW / 2,
+          xb = xs + gm[gm.length - 1].x + gm[gm.length - 1].pol * MW - MW / 2;
+        L(xa, yf - 8, xb, yf - 8, 2, CU);
+        gm.forEach(m => L(xs + m.x + MW / 2, yf - 8, xs + m.x + MW / 2, yf, 1, CU));
+      });
       fila.forEach(m => {
         const x = xs + m.x,
-          w = m.pol * MW;
+          w = m.pol * MW,
+          cx = x + w / 2;
+        // Cuerpo del módulo con sus bornes y tornillos arriba y abajo
         o.push(
           `<rect x="${px2(x)}" y="${px2(yf)}" width="${px2(w)}" height="${MH}" fill="${m.fi}" stroke="${INK}" stroke-width="1.1"${m.res ? ' stroke-dasharray="3 2"' : ""}/>`
         );
-        for (let p = 1; p < m.pol; p++) L(x + p * MW, yf + 14, x + p * MW, yf + MH - 12, 0.5, LN);
-        // Palanca de maniobra y textos: capacidad arriba, curva abajo, circuito debajo del módulo
-        R(x + w / 2 - 4, yf + MH / 2 - 9, 8, 18, { fi: m.id ? NAVY : INK, st: "" });
-        T(x + w / 2, yf + 12, m.t1, { s: 7.6, b: 1, a: "middle" });
-        if (m.t3) T(x + w / 2, yf + MH - 6, m.t3, { s: 6.2, a: "middle", f: GR });
-        if (m.t4) T(x + w / 2, yf + MH + 11, m.t4, { s: 6.6, a: "middle", f: NAVY });
-        if (m.t2) T(x + w / 2, yf + MH + 12, m.t2, { s: 7.8, b: 1, a: "middle", f: m.res ? GR : NAVY });
+        [yf + 1, yf + MH - 10].forEach(yt => {
+          R(x + 1, yt, w - 2, 9, { st: "", fi: "#d5dae0" });
+          for (let p = 0; p < m.pol; p++) C(x + MW * (p + 0.5), yt + 4.5, 2.2, { fi: "#fff", st: GR, sw: 0.7 });
+        });
+        if (m.t1) T(cx, yf + 20, m.t1, { s: 7.2, b: 1, a: "middle" });
+        if (m.eq === "med") {
+          // Medidor: pantalla con la lectura
+          R(x + 4, yf + 23, w - 8, 13, { fi: "#d9eedf", st: GR, sw: 0.7 });
+          T(cx, yf + 32.5, "kWh", { s: 6.4, b: 1, a: "middle" });
+        } else {
+          // Visor y palanca de maniobra (arriba: cerrado)
+          R(cx - 5, yf + 23, 10, 17, { fi: "#e6e9ed", st: GR, sw: 0.6 });
+          R(cx - 3.5, yf + 24.5, 7, 7, { fi: m.id ? NAVY : INK, st: "" });
+        }
+        if (m.id) {
+          // Botón de prueba del diferencial
+          C(x + w - 7, yf + 31, 2.8, { fi: "#ffd200", st: INK, sw: 0.7 });
+        }
+        if (m.eq === "dps") R(x + 5, yf + 26, 6, 10, { fi: VE, st: "" });
+        if (m.eq === "rel") {
+          C(x + 6, yf + 28, 1.6, { fi: VE, st: "" });
+          C(x + 6, yf + 34, 1.6, { fi: "#b42318", st: "" });
+        }
+        if (m.t3) T(cx, yf + MH - 13, m.t3, { s: 5.8, a: "middle", f: GR });
+        // Etiqueta con el circuito
+        if (m.t2) {
+          R(x + 1, yf + MH + 2, w - 2, 13, { fi: "#fff", st: LN, sw: 0.6 });
+          T(cx, yf + MH + 11.5, m.t2, { s: 7, b: 1, a: "middle", f: m.res ? GR : NAVY });
+        }
       });
       // Llave de cada diferencial bajo sus circuitos
       [...new Set(fila.filter(m => m.idn).map(m => m.g))].forEach(g => {
         const gm = fila.filter(m => m.g === g),
           xa = xs + gm[0].x,
           xb = xs + gm[gm.length - 1].x + gm[gm.length - 1].pol * MW,
-          yl = yf + MH + 20;
+          yl = yf + MH + 22;
         L(xa, yl - 3, xa, yl, 0.7, NAVY);
         L(xa, yl, xb, yl, 0.7, NAVY);
         L(xb, yl - 3, xb, yl, 0.7, NAVY);
         T((xa + xb) / 2, yl + 9, `Protegidos por ${gm.find(m => m.idn).idn}`, { s: 6, a: "middle", f: GR });
       });
     });
-    // Barras de neutro y de tierra
     // Barras de neutro y de tierra, una al lado de la otra bajo los módulos
     const ybar = yc + bh - 30,
       bw = (gw - 80) / 2;
@@ -153,7 +206,6 @@ function tableros(r) {
       `<rect x="${px2(x0 + 52 + bw)}" y="${ybar}" width="${px2(bw)}" height="7" fill="${VE}" stroke="${VE}" stroke-width="1"/>`
     );
     T(x0 + 52 + bw, ybar + 18, "Barra de tierra (PE)", { s: 7.2, f: VE });
-    // Datos del tablero
     // Datos del tablero, en la misma columna para todos los tableros
     const dw = 250,
       dx = x1 - dw;
