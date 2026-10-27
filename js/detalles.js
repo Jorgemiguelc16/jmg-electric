@@ -292,7 +292,6 @@ function detalles(r) {
     ny += 1.5;
   });
   o.push(`</g>`);
-  R(rx, yr, rw, hr, { st: NAVY, sw: 1 });
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Leyenda y detalle del pozo de tierra · Escala S/E", "IE-03");
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;

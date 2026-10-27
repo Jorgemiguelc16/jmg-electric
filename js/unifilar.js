@@ -697,13 +697,12 @@ function unifilar(r, op = {}) {
   }
   const rx = Math.max(X + 350, W - 480),
     rw = W - 20 - rx;
-  o.push(`<rect x="${rx}" y="${yr}" width="${rw}" height="${hr}" fill="none" stroke="${NAVY}" stroke-width="1"/>`);
   rotuloSvg(
     o,
     rx,
-    yr,
+    yr + hr - 124,
     rw,
-    hr,
+    124,
     c.proj,
     `Unifilar ${multi ? "multifamiliar" : "unifamiliar"} · Escala S/E`,
     HOJA + (op.parte ? " · " + op.parte : "")
@@ -775,15 +774,16 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
   o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${LB}"/>`);
   if (typeof LOGO_JPG === "string")
     o.push(
-      `<image x="${rx + 1}" y="${yr + (hr - 108) / 2}" width="108" height="108" href="${LOGO_JPG}" preserveAspectRatio="xMidYMid slice"/>`
+      `<image x="${rx}" y="${yr}" width="110" height="${hr}" href="${LOGO_JPG}" preserveAspectRatio="xMidYMid slice"/>`
     );
   o.push(`<g display="none" data-dxf="logo">`);
   // Logo dibujado con figuras rellenas, medido sobre la imagen del logo (200 × 200): así se ve igual en cualquier
   // AutoCAD, sin depender de la fuente. Letras «JMG» de bloques y el rayo amarillo dentro de la M
   {
-    const e = 0.54,
-      x0 = rx + 1,
-      y0 = yr + (hr - 108) / 2,
+    // Misma escala que la imagen en pantalla: cubre la caja de 110 de ancho por el alto del rótulo
+    const e = Math.max(110, hr) / 200,
+      x0 = rx + 55 - 100 * e,
+      y0 = yr + hr / 2 - 100 * e,
       fig = pts =>
         o.push(
           `<path d="${pts.map(([u, v], n) => `${n ? "L" : "M"}${px2(x0 + u * e)} ${px2(y0 + v * e)}`).join("")}Z" fill="${LY}"/>`
@@ -865,6 +865,7 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
       f: i === 0 || i === 4 ? NAVY : INK
     });
   });
+  o.push(`<rect x="${rx}" y="${yr}" width="${rw}" height="${hr}" fill="none" stroke="${NAVY}" stroke-width="1"/>`);
   o.push(`</g>`);
 }
 /* SVG del unifilar → DXF para AutoCAD (formato R12, en mm sobre la lámina elegida) */
