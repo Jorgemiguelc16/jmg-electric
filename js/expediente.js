@@ -9,7 +9,6 @@ function expediente(r, estilo = "formal") {
     a0 = r.alims[0],
     s0 = a0.s,
     md = multi ? r.MD : r.md.MD;
-  const proyCip = esc(P.proy || "—") + (P.cip ? ` · CIP N.° ${esc(P.cip)}` : "");
   // Notación matemática: variables en cursiva, subíndices, fracciones y raíces
   const mi = s => `<i>${s}</i>`,
     sb = (v, s) => `<i>${v}</i><sub>${s}</sub>`,
@@ -23,10 +22,59 @@ function expediente(r, estilo = "formal") {
     maxDV = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
   const tub = t => (t.mm ? `${t.mm} mm (${t.pul})` : t.pul),
     cond = (n, S, St) => `${n}-1×${S} mm² + 1×${St} mm² (T)${c.desig ? " " + esc(c.desig) : ""}`;
-  const tbl = (head, rows, cls = "") =>
-    `<table class="ex-tbl ${cls}"><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(rw => `<tr>${rw.map(x => `<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-  const kv = rows =>
-    `<table class="ex-tbl ex-kv"><tbody>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>`;
+  // Tablas numeradas por capítulo («Tabla 2.3») con su título y su fuente debajo; el índice de tablas las lista
+  const TABLAS = [];
+  let nt = 0,
+    ne = 0;
+  const tabla = (tit, html, fuente = "") => {
+    const n = `${n1}.${++nt}`,
+      id = "ex-t" + n.replace(".", "-"),
+      // Las tablas cortas no se parten entre páginas; las largas sí, repitiendo su encabezado
+      corta = (html.match(/<tr/g) || []).length <= 16;
+    TABLAS.push([n, tit, id]);
+    return `<figure class="ex-fig${corta ? " ex-corta" : ""}" id="${id}"><figcaption><b>Tabla ${n}.</b> ${tit}</figcaption>${html}${fuente ? `<p class="ex-fuente">${fuente}</p>` : ""}</figure>`;
+  };
+  // Columnas numéricas (números con o sin unidad): alineadas a la derecha
+  const esNum = x =>
+    /^[−+-]?\d[\d\s.,×]*\s?(%|W|kW|A|kA|V|m|m²|mm²|Ω|°C)?$/.test(
+      String(x)
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim()
+    );
+  const tbl = (head, rows, cls = "", tit = "", fuente = "") => {
+    const der = head.map(
+      (_, i) => rows.some(rw => esNum(rw[i])) && rows.every(rw => rw[i] === "—" || rw[i] === "" || esNum(rw[i]))
+    );
+    const t = `<table class="ex-tbl ${cls}"><thead><tr>${head.map((h, i) => `<th${der[i] ? ' class="r"' : ""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(rw => `<tr>${rw.map((x, i) => `<td${der[i] ? ' class="r"' : ""}>${x}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    return tit ? tabla(tit, t, fuente) : t;
+  };
+  const kv = (rows, tit = "", fuente = "") => {
+    const t = `<table class="ex-tbl ex-kv"><tbody>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>`;
+    return tit ? tabla(tit, t, fuente) : t;
+  };
+  // Los cuadros de resultados de la plataforma pasan al formato del expediente: su título como «Tabla n.m», la
+  // referencia normativa debajo de la tabla y sus notas a continuación
+  const deCard = html =>
+    html.replace(/<section class="card([^"]*)">([\s\S]*?)<\/section>/g, (m, cl, t) => {
+      const h2 = (t.match(/<h2>([\s\S]*?)<\/h2>/) || [])[1] || "",
+        ref = ((h2.match(/<span class="ref">([\s\S]*?)<\/span>/) || [])[1] || "").replace(/<[^>]+>/g, "").trim(),
+        tit = h2
+          .replace(/<span class="ref">[\s\S]*?<\/span>/, "")
+          .replace(/<[^>]+>/g, "")
+          .trim(),
+        cuerpo = t.replace(/<h2>[\s\S]*?<\/h2>/, "");
+      if (!/<table/.test(cuerpo)) return `<div class="ex-bloque${cl}">${cuerpo}</div>`;
+      const k = cuerpo.indexOf('<div class="body">'),
+        tabl = k < 0 ? cuerpo : cuerpo.slice(0, k),
+        nota = k < 0 ? "" : cuerpo.slice(k),
+        reglas = (ref.match(/\d{3}-\d{3}/g) || []).length,
+        norma = reglas > 0 || /Tabla \d/.test(ref);
+      const fuente = norma
+        ? `Referencia: CNE-Utilización, ${/^(Regla|Tabla)/.test(ref) ? "" : reglas > 1 ? "Reglas " : "Regla "}${ref}.`
+        : "";
+      return tabla(tit + (ref && !norma ? ` · ${ref}` : ""), `<div class="ex-card${cl}">${tabl}</div>`, fuente) + nota;
+    });
   // Numeración de capítulos y subcapítulos con índice automático
   const TOC = [];
   let n1 = 0,
@@ -36,6 +84,8 @@ function expediente(r, estilo = "formal") {
   const cap = (t, cls = "") => {
     n1++;
     n2 = 0;
+    nt = 0;
+    ne = 0;
     TOC.push([`${n1}`, t, 0]);
     return `<section class="ex-sec ${cls}"><h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>${t}</h1>`;
   };
@@ -59,21 +109,25 @@ function expediente(r, estilo = "formal") {
   B += `<ul class="ex-list">${[...ALCANCE, "Especificaciones técnicas de materiales y equipos", "Metrado referencial de materiales", "Diagrama unifilar con cuadro de cargas (EM.010, Art. 8)"].map(t => `<li>${t}</li>`).join("")}</ul>`;
   B += sub(multi ? "Descripción del edificio" : "Descripción de la vivienda");
   if (!multi) {
-    B += kv([
-      ["Área techada" + (r.varios ? " (suma de pisos)" : ""), `${fmt(r.areaT, 1)} m²`],
-      ["Área de sótano", `${fmt(r.sot, 1)} m²`],
-      ["Área de vivienda computable (050-110)", `${fmt(r.area, 1)} m² · 100 % de pisos más 75 % del sótano`],
-      ["Número de pisos", r.PS.length],
+    B += kv(
       [
-        "Cargas especiales",
-        r.cs.filter(x => x.p > 0).length
-          ? r.cs
-              .filter(x => x.p > 0)
-              .map(x => `${esc(x.nombre || "Carga especial")} (${fmt(x.p, 0)} W)`)
-              .join(", ")
-          : "Ninguna"
-      ]
-    ]);
+        ["Área techada" + (r.varios ? " (suma de pisos)" : ""), `${fmt(r.areaT, 1)} m²`],
+        ["Área de sótano", `${fmt(r.sot, 1)} m²`],
+        ["Área de vivienda computable (050-110)", `${fmt(r.area, 1)} m² · 100 % de pisos más 75 % del sótano`],
+        ["Número de pisos", r.PS.length],
+        [
+          "Cargas especiales",
+          r.cs.filter(x => x.p > 0).length
+            ? r.cs
+                .filter(x => x.p > 0)
+                .map(x => `${esc(x.nombre || "Carga especial")} (${fmt(x.p, 0)} W)`)
+                .join(", ")
+            : "Ninguna"
+        ]
+      ],
+      "Datos de la vivienda",
+      "Fuente: datos del proyecto; área computable según la Regla 050-110 del CNE-Utilización."
+    );
     const pw = { al: num("al_p"), tg: num("tg_p"), tc: num("tc_p") };
     B += tbl(
       ["Piso", "Tablero", "Área (m²)", "Alumbrado", "Tomacorrientes", "Tomac. cocina / lavandería"],
@@ -84,7 +138,10 @@ function expediente(r, estilo = "formal") {
         `${p.al.n} × ${fmt(pw.al, 0)} W`,
         `${p.tg.n} × ${fmt(pw.tg, 0)} W`,
         `${p.tc.n} × ${fmt(pw.tc, 0)} W`
-      ])
+      ]),
+      "",
+      "Salidas por piso",
+      "Fuente: datos del proyecto."
     );
   } else {
     B += tbl(
@@ -109,29 +166,37 @@ function expediente(r, estilo = "formal") {
         fmt(t.cal, 0),
         fmt(t.aire, 0),
         fmt(t.otras, 0)
-      ])
+      ]),
+      "",
+      "Departamentos del edificio",
+      "Fuente: datos del proyecto."
     );
     if (r.SV.length)
-      B +=
-        `<p class="ex-cap">Servicios generales (tablero TSG)</p>` +
-        tbl(
-          ["Carga común", "Tipo", "Fases", "Potencia (W)"],
-          r.SV.map(s => [esc(s.nombre), TSERV[s.tipo], s.fases === 3 && SIST[r.sk].tri ? "3φ" : "1φ", fmt(s.p, 0)])
-        );
+      B += tbl(
+        ["Carga común", "Tipo", "Fases", "Potencia (W)"],
+        r.SV.map(s => [esc(s.nombre), TSERV[s.tipo], s.fases === 3 && SIST[r.sk].tri ? "3φ" : "1φ", fmt(s.p, 0)]),
+        "",
+        "Cargas de servicios generales (tablero TSG)",
+        "Fuente: datos del proyecto."
+      );
   }
   B += sub("Suministro de energía");
-  B += kv([
-    ["Sistema", `${s0.nom} · 60 Hz`],
-    ["Número de fases", s0.tri ? (s0.n === 4 ? "3 (3F + N + PE)" : "3 (3F + PE)") : "1 (F + N + PE)"],
-    ["Tipo de conexión", r.conexion],
-    ["Potencia instalada", `${fmt(r.CI / 1000, 2)} kW`],
-    ["Máxima demanda", `${fmt(md / 1000, 2)} kW`],
-    ["Potencia a contratar sugerida", `${fmt(r.contratada, 1)} kW`],
+  B += kv(
     [
-      "Corriente de cortocircuito en el punto de entrega",
-      `${fmt(c.iccE, 1)} kA (dato de la concesionaria, Norma DGE 110.F)`
-    ]
-  ]);
+      ["Sistema", `${s0.nom} · 60 Hz`],
+      ["Número de fases", s0.tri ? (s0.n === 4 ? "3 (3F + N + PE)" : "3 (3F + PE)") : "1 (F + N + PE)"],
+      ["Tipo de conexión", r.conexion],
+      ["Potencia instalada", `${fmt(r.CI / 1000, 2)} kW`],
+      ["Máxima demanda", `${fmt(md / 1000, 2)} kW`],
+      ["Potencia a contratar sugerida", `${fmt(r.contratada, 1)} kW`],
+      [
+        "Corriente de cortocircuito en el punto de entrega",
+        `${fmt(c.iccE, 1)} kA (dato de la concesionaria, Norma DGE 110.F)`
+      ]
+    ],
+    "Datos del suministro",
+    "Fuente: datos del proyecto y cálculo de la máxima demanda."
+  );
   B += sub("Descripción de la instalación");
   B += `<p>Desde el ${multi ? "banco de medidores" : "medidor de energía"} parte el alimentador ${multi ? "general" : "principal"} <b>${cond(s0.n, a0.S, a0.St)}</b> de cobre, en tubería ${tub(a0.tubo)}, protegido con un interruptor termomagnético de <b>${s0.tri ? 3 : 2}×${a0.itm} A</b> y ${a0.pdc} kA de poder de corte, hasta el ${multi ? "tablero general (barra general)" : "tablero general TG"}.</p>`;
   B += tbl(
@@ -147,14 +212,19 @@ function expediente(r, estilo = "formal") {
         `${r.circ.filter(q => q.tab === tb.tab).length} + ${c.reserva} reserva`,
         fmt(tb.icc, 2)
       ];
-    })
+    }),
+    "",
+    "Tableros y sus alimentadores",
+    "Fuente: cálculo del proyecto."
   );
   B += `<p>Los circuitos derivados de alumbrado y tomacorrientes se agrupan con un máximo de ${c.maxSal} salidas por circuito (Regla 070-3000). Las cargas especiales tienen circuito independiente. Los circuitos se protegen con interruptores termomagnéticos de curva C${r.circ.some(q => q.motor) ? " (curva D en circuitos de motores)" : ""} y con interruptores diferenciales de 30 mA ${c.idMode === "grupo" ? "agrupados cada tres circuitos (Regla 150-400(8))" : "en cada circuito (Regla 150-400(9))"}. Cada tablero cuenta con ${c.reserva} espacio(s) de reserva equipados (Regla 050-108).</p>
     <p>El sistema de puesta a tierra está formado por ${r.pat.nVar > 1 ? `${r.pat.nVar} electrodos (varillas) de cobre en paralelo` : "un electrodo (varilla) de cobre"} de ${fmt(c.pat.Lv, 2)} m, conectados a la barra de tierra del tablero general con conductor de cobre de ${r.Selec} mm² (Tabla 17). Todos los circuitos llevan conductor de protección.</p>`;
   B += sub("Normas aplicables");
   B += tbl(
     ["Norma", "Título", "Aplicación en el proyecto"],
-    NORMAS.map(([cod, tit, , uso]) => [`<b>${cod}</b>`, tit, uso])
+    NORMAS.map(([cod, tit, , uso]) => [`<b>${cod}</b>`, tit, uso]),
+    "",
+    "Normas aplicables"
   );
   // Reserva en alimentadores de vivienda: la norma admite 0 % (carga no continua); 25 % es la reserva usual para ampliaciones
   const resTxt =
@@ -162,26 +232,30 @@ function expediente(r, estilo = "formal") {
       ? `reserva del ${c.resAl} % para ampliaciones; la norma no la exige porque su carga calculada no es continua, Reglas 050-200(3) y 050-202(2)`
       : "carga no continua, Reglas 050-200(3) y 050-202(2)";
   B += sub("Parámetros de diseño");
-  B += kv([
-    ["Factor de potencia", fmt(c.fp, 2)],
-    ["Método de instalación", MET[c.met]],
-    ["Aislamiento del conductor", c.aisl === "pvc" ? "PVC 70 °C" : "XLPE / EPR 90 °C"],
-    ["Temperatura ambiente · factor (Tabla 5A)", `${c.temp} °C · ${fmt(c.ft, 2)}`],
-    ["Circuitos por tubería · factor (Tabla 5C)", `${c.nag} · ${fmt(c.fa, 2)}`],
-    ["Factor total en circuitos derivados", fmt(c.fc, 2)],
-    ["Resistividad del cobre (caída de tensión)", `${c.rho} Ω·mm²/m · ${c.rhoRef}`],
+  B += kv(
     [
-      "Corriente de diseño",
-      `${FD} × I en circuitos derivados y servicios generales (Regla 050-104) · ${fmt(c.fdA, 2)} × I en alimentadores de vivienda (${resTxt})`
+      ["Factor de potencia", fmt(c.fp, 2)],
+      ["Método de instalación", MET[c.met]],
+      ["Aislamiento del conductor", c.aisl === "pvc" ? "PVC 70 °C" : "XLPE / EPR 90 °C"],
+      ["Temperatura ambiente · factor (Tabla 5A)", `${c.temp} °C · ${fmt(c.ft, 2)}`],
+      ["Circuitos por tubería · factor (Tabla 5C)", `${c.nag} · ${fmt(c.fa, 2)}`],
+      ["Factor total en circuitos derivados", fmt(c.fc, 2)],
+      ["Resistividad del cobre (caída de tensión)", `${c.rho} Ω·mm²/m · ${c.rhoRef}`],
+      [
+        "Corriente de diseño",
+        `${FD} × I en circuitos derivados y servicios generales (Regla 050-104) · ${fmt(c.fdA, 2)} × I en alimentadores de vivienda (${resTxt})`
+      ],
+      [
+        "Caída de tensión máxima",
+        `${DV_ALIM} % alimentadores · ${DV_DER} % derivados · ${DV_TOT} % total (Regla 050-102)`
+      ],
+      ["Sección mínima", `${c.sminA} mm² alimentadores · ${c.sminD} mm² derivados`],
+      ["Salidas máximas por circuito", c.maxSal],
+      ["Espacios de reserva por tablero", c.reserva]
     ],
-    [
-      "Caída de tensión máxima",
-      `${DV_ALIM} % alimentadores · ${DV_DER} % derivados · ${DV_TOT} % total (Regla 050-102)`
-    ],
-    ["Sección mínima", `${c.sminA} mm² alimentadores · ${c.sminD} mm² derivados`],
-    ["Salidas máximas por circuito", c.maxSal],
-    ["Espacios de reserva por tablero", c.reserva]
-  ]);
+    "Parámetros de diseño",
+    "Fuente: parámetros elegidos por el proyectista, con las reglas del CNE-Utilización indicadas."
+  );
   B += fin;
 
   /* ---------- 2. MEMORIA DE CÁLCULO ---------- */
@@ -194,16 +268,20 @@ function expediente(r, estilo = "formal") {
       <dt>Selección</dt><dd>${mx(`${sb("I", "d")} ≤ ${sb("I", "n")} ≤ ${sb("I", "z")} · ${sb("F", "t")} · ${sb("F", "a")}`)}<span class="ex-dn">${sb("I", "n")}: interruptor · ${sb("I", "z")}: Tabla 2 · ${sb("F", "t")}, ${sb("F", "a")}: Tablas 5A y 5C</span></dd>
       <dt>Caída de tensión</dt><dd>${mx(`Δ${mi("V")} = ${fr(`${mi("K")} · ${mi("ρ")} · ${mi("L")} · ${mi("I")}`, mi("S"))}`)} &nbsp; ${mx(`Δ${mi("V")}% = ${fr(`Δ${mi("V")}`, mi("V"))} · 100`)}<span class="ex-dn">${mi("K")} = 2 en monofásico; ${mi("K")} = √3 en trifásico</span></dd>
       <dt>Cortocircuito</dt><dd>${mx(`${sb("I", "cc")} = ${fr(mi("V"), `${mi("k")} · ${sq(`${sb("Z", "f")}² + ${sb("R", "c")}²`)}`)}`)} &nbsp; ${mx(`${sb("Z", "f")} = ${fr(mi("V"), `${mi("k")} · ${sb("I", "cc,e")}`)}`)} &nbsp; ${mx(`${sb("R", "c")} = ${fr(`${mi("n")} · ${sb("ρ", "20")} · ${mi("L")}`, mi("S"))}`)}</dd>
-      <dt>Puesta a tierra</dt><dd>${mx(`${mi("R")} = ${fr(mi("ρ"), `2π · ${mi("L")}`)} · (ln ${fr(`4 ${mi("L")}`, mi("a"))} − 1)`)}<span class="ex-dn">${mi("a")}: radio de la varilla (fórmula de Dwight)</span></dd></dl></div>`;
+      <dt>Puesta a tierra</dt><dd>${mx(`${mi("R")} = ${fr(mi("ρ"), `2π · ${mi("L")}`)} · (ln ${fr(`4 ${mi("L")}`, mi("a"))} − 1)`)}<span class="ex-dn">${mi("a")}: radio de la varilla (fórmula de Dwight)</span></dd></dl></div>`.replace(
+    /<[/]dd>/g,
+    () => `<em class="ex-eq">(${n1}.${++ne})</em></dd>`
+  );
   B += sub("Cálculo de la máxima demanda");
-  B += cardDemanda(r);
+  B += deCard(cardDemanda(r));
   B += sub("Alimentadores");
-  B += tablaAlims(r, "");
+  B += deCard(tablaAlims(r, ""));
   B +=
     `<p class="ex-cap">Desarrollo del cálculo de cada alimentador</p>` +
     r.alims.map(a => detalleCalc(a, true)).join("");
   B += fin;
-  B += `<section class="ex-sec ex-ancho">` + sub("Circuitos derivados · cuadro de cargas") + tablaCircuitos(r, "");
+  B +=
+    `<section class="ex-sec ex-ancho">` + sub("Circuitos derivados · cuadro de cargas") + deCard(tablaCircuitos(r, ""));
   const peor = r.circ.reduce((m, q) => (!m || q.dVt > m.dVt ? q : m), null);
   if (peor)
     B +=
@@ -212,7 +290,7 @@ function expediente(r, estilo = "formal") {
   B += fin + `<section class="ex-sec ex-cont">`;
   if (r.bal) {
     B += sub("Balance de cargas por fase");
-    B += cardBalance(r, "");
+    B += deCard(cardBalance(r, ""));
   }
   B += sub("Corriente de cortocircuito y poder de corte");
   B += tbl(
@@ -230,7 +308,10 @@ function expediente(r, estilo = "formal") {
           `<b>${tb.pdc}</b>`
         ];
       })
-    ]
+    ],
+    "",
+    "Corriente de cortocircuito y poder de corte",
+    "Fuente: cálculo del proyecto (estimación conservadora, ver nota)."
   );
   B += `<p class="ex-nota">Estimación conservadora: impedancia de la fuente a partir de la corriente de cortocircuito del punto de entrega, más la resistencia de los conductores con ρ a 20 °C (${RHO_CU} Ω·mm²/m). El poder de corte de cada interruptor se elige igual o mayor que la corriente calculada en su tablero.</p>`;
   B += sub("Sistema de puesta a tierra");
@@ -238,7 +319,7 @@ function expediente(r, estilo = "formal") {
     const p = r.pat,
       a = p.dv / 2;
     B +=
-      cardPozo(r, "") +
+      deCard(cardPozo(r, "")) +
       `<div class="ex-calc"><h4>Resistencia del electrodo vertical (fórmula de Dwight)</h4><dl>
       <dt>Electrodo</dt><dd>L = ${fmt(p.Lv, 2)} m · d = ${fmt(p.dv * 1000, 1)} mm · a = ${fmt(a, 5)} m · ρ = ${fmt(p.rho, 0)} Ω·m</dd>
       <dt>Sin tratamiento</dt><dd>${mx(`${mi("R")} = ${fr(fmt(p.rho, 0), `2π × ${fmt(p.Lv, 2)}`)} × (ln ${fr(`4 × ${fmt(p.Lv, 2)}`, fmt(a, 5))} − 1) = <b>${fmt(p.Rv, 2)} Ω</b>`)}</dd>
@@ -247,7 +328,7 @@ function expediente(r, estilo = "formal") {
       <dt>Verificación</dt><dd>${fmt(p.nVar > 1 ? p.Rn : p.Rt, 2)} Ω ${(p.nVar > 1 ? p.Rn : p.Rt) <= 25 ? "≤" : ">"} 25 Ω (Regla 060-712) ${pill((p.nVar > 1 ? p.Rn : p.Rt) <= 25)}</dd></dl></div>`;
   }
   B += sub("Verificaciones normativas");
-  B += cardAlertas(r, "");
+  B += deCard(cardAlertas(r, ""));
   // Recomendaciones de diseño que el proyectista revisó y aceptó (las pendientes no se imprimen)
   const ac = ACEP[r.mode] || {},
     RA = recomendaciones(r).filter(x => ac[x.id]);
@@ -332,7 +413,7 @@ function expediente(r, estilo = "formal") {
   B += fin;
 
   /* ---------- 4. METRADO ---------- */
-  B += cap("Metrado de materiales") + cardMetrado(r) + fin;
+  B += cap("Metrado de materiales") + deCard(cardMetrado(r)) + fin;
 
   /* ---------- 5. PLANOS ---------- */
   // Las mismas láminas que se descargan en DXF (la lámina elegida en Planos), cada una reducida a una página A4;
@@ -353,7 +434,9 @@ function expediente(r, estilo = "formal") {
     [
       ...LAMS.map(h => [`<b>${h.hoja}</b>`, h.tit + (h.cont ? " (continuación)" : ""), lam]),
       ["—", "Planos de planta: distribución de alumbrado, tomacorrientes y fuerza", "Los adjunta el proyectista"]
-    ]
+    ],
+    "",
+    "Lista de láminas"
   );
   B += `<p>Las láminas se generan a partir de los resultados del cálculo, con los símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME). En este expediente se presentan reducidas a A4; los planos se imprimen en ${lam} desde los archivos DXF. Los planos de planta, con la distribución de las salidas sobre la arquitectura, no los genera la plataforma y los adjunta el proyectista.</p>`;
   B += fin;
@@ -409,24 +492,57 @@ function expediente(r, estilo = "formal") {
       .join("")}</div>`;
   B += fin;
 
-  /* ---------- PORTADA E ÍNDICE ---------- */
-  const portada = `<section class="ex-cover">
-    <div class="ex-cv-top"><span class="jmg-sello"><svg viewBox="140 265 1640 795" role="img" aria-label="JMG Projects &amp; Energy"><use href="#jmg-logo"/></svg></span>${estilo === "formal" ? `<div><b>JMG Projects &amp; Energy</b><span>${proyCip}</span></div>` : `<div><b>JMG - ELECTRIC</b><span>JMG Projects &amp; Energy</span></div>`}</div>
-    <div class="ex-cv-mid"><p class="ex-cv-eye">Expediente técnico</p><h1>Instalaciones eléctricas interiores</h1><p class="ex-cv-sub">${tipoEd}</p><h2>${esc(nom)}</h2></div>
-    <dl class="ex-cv-dl"><dt>Propietario</dt><dd>${esc(P.prop || "—")}</dd><dt>Ubicación</dt><dd>${esc(P.ubic || "—")}</dd><dt>Proyectista</dt><dd>${proyCip}</dd>
-      <dt>Máxima demanda</dt><dd>${fmt(md / 1000, 2)} kW · ${s0.nom}</dd><dt>Potencia a contratar</dt><dd>${fmt(r.contratada, 1)} kW</dd><dt>Fecha</dt><dd>${fecha}</dd></dl>
-    <div class="ex-cv-foot"><span>CNE-Utilización · RNE EM.010 · Norma DGE</span><span>Contenido según RNE EM.010, Artículo 8</span></div></section>`;
-  const indice = `<section class="ex-sec ex-toc"><h1 class="ex-h1">Índice</h1><ol>${TOC.map(([n, t, l]) => `<li class="l${l}"><a href="#${tid(n)}"><span>${n}</span>${t}</a></li>`).join("")}</ol>
-    <h2 class="ex-h2">Datos del proyecto</h2>${kv([
+  /* ---------- PORTADA, CONTROL DEL DOCUMENTO E ÍNDICES ---------- */
+  const mes = new Date().toLocaleDateString("es-PE", { month: "long", year: "numeric" }),
+    hoy = new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }),
+    cip = P.cip ? `CIP N.° ${esc(P.cip)}` : "CIP N.° ______";
+  const portada = `<section class="ex-portada">
+    <div class="pt-cab"><span class="jmg-sello"><svg viewBox="140 265 1640 795" role="img" aria-label="JMG Projects &amp; Energy"><use href="#jmg-logo"/></svg></span><div><b>Expediente técnico</b><span>Instalaciones eléctricas interiores</span></div></div>
+    <div class="pt-tit"><p class="pt-eye">Proyecto</p><h1>${esc(nom)}</h1><p class="pt-sub">${tipoEd} · suministro ${s0.nom[0].toLowerCase() + s0.nom.slice(1)}</p></div>
+    <table class="pt-datos"><tbody>${[
+      ["Propietario", esc(P.prop || "—")],
+      ["Ubicación", esc(P.ubic || "—")],
+      ["Proyectista", `${esc(P.proy || "—")} · ${cip}`],
+      ["Máxima demanda", `${fmt(md / 1000, 2)} kW`],
+      ["Potencia a contratar", `${fmt(r.contratada, 1)} kW`],
+      ["Normas", "CNE-Utilización · RNE EM.010 · Normas DGE"]
+    ]
+      .map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`)
+      .join("")}</tbody></table>
+    <div class="pt-pie"><div class="pt-firma"><div class="ln"></div><b>${esc(P.proy || "")}</b><span>Ingeniero proyectista · ${cip}</span><span>Firma y sello</span></div>
+      <div class="pt-rev"><span>Revisión</span><b>0</b><span>${mes[0].toUpperCase() + mes.slice(1)}</span></div></div></section>`;
+  // Control del documento: sus datos y las revisiones (tablas 0.1 y 0.2, al inicio del índice de tablas)
+  TABLAS.unshift(["0.1", "Datos del documento", "ex-t0-1"], ["0.2", "Control de revisiones", "ex-t0-2"]);
+  const control = `<section class="ex-sec"><h1 class="ex-h1">Control del documento</h1>
+    <figure class="ex-fig ex-corta" id="ex-t0-1"><figcaption><b>Tabla 0.1.</b> Datos del documento</figcaption>${kv([
+      ["Documento", "Expediente técnico de instalaciones eléctricas interiores"],
       ["Proyecto", esc(nom)],
       ["Tipo de edificación", tipoEd],
       ["Propietario", esc(P.prop || "—")],
       ["Ubicación", esc(P.ubic || "—")],
-      ["Proyectista", proyCip],
-      ["Normativa", "CNE-Utilización · RNE EM.010 · Norma DGE"],
+      ["Proyectista", `${esc(P.proy || "—")} · ${cip}`],
+      ["Normativa", "CNE-Utilización · RNE EM.010 · Normas DGE"],
+      ["Contenido", "Según la Norma EM.010 del RNE, artículo 8"],
       ["Fecha", fecha]
-    ])}</section>`;
-  return `<div class="ex ex-${estilo === "formal" ? "formal" : "jmg"}">${portada}${indice}${B}</div>`;
+    ])}</figure>
+    <figure class="ex-fig ex-corta" id="ex-t0-2"><figcaption><b>Tabla 0.2.</b> Control de revisiones</figcaption>${tbl(
+      ["Rev.", "Fecha", "Descripción", "Elaboró", "Revisó"],
+      [
+        ["0", hoy, "Emisión para revisión", esc(P.proy || "—"), "—"],
+        ["&nbsp;", "", "", "", ""],
+        ["&nbsp;", "", "", "", ""]
+      ],
+      "ex-rev"
+    )}</figure>
+    <p class="ex-nota">Cada revisión reemplaza a la anterior. Las láminas llevan el mismo número de revisión que este documento.</p></section>`;
+  // Índice general; debajo, en dos columnas, el índice de tablas y la lista de láminas
+  const li = (href, n, t, l = "") => `<li class="${l}"><a href="#${href}"><span>${n}</span>${t}</a></li>`;
+  const indice = `<section class="ex-sec ex-toc"><h1 class="ex-h1">Índice</h1><ol>${TOC.map(([n, t, l]) =>
+    li(tid(n), n, t, `l${l}`)
+  ).join("")}</ol>
+    <div class="ex-toc2"><div><h2 class="ex-toc-t">Índice de tablas</h2><ol class="chico">${TABLAS.map(([n, t, id]) => li(id, `Tabla ${n}`, t)).join("")}</ol></div>
+      <div><h2 class="ex-toc-t">Lista de láminas</h2><ol class="chico">${LAMS.map(h => `<li><span>${h.hoja}</span>${h.tit}${h.cont ? " (continuación)" : ""}</li>`).join("")}</ol></div></div></section>`;
+  return `<div class="ex ex-${estilo === "formal" ? "formal" : "jmg"}">${portada}${control}${indice}${B}</div>`;
 
   // Desarrollo paso a paso del cálculo de un alimentador o circuito
   function detalleCalc(x, alim) {

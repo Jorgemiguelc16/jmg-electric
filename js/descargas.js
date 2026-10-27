@@ -143,10 +143,10 @@ async function imprimirExpediente(estilo) {
     ing = (P.proy || "") + (P.cip ? ` · CIP N.° ${P.cip}` : "");
   const mb = (pos, txt) => `@${pos}{content:${txt};font:7.5pt Arial,sans-serif;color:${formal ? "#000" : "#5a6775"}}`;
   const cab = formal
-    ? [`"${cs(nom.slice(0, 80))}"`, `"Instalaciones eléctricas interiores"`, `"${cs(ing || f)}"`]
-    : [`"JMG - ELECTRIC · Expediente técnico"`, `"${cs(nom.slice(0, 70))}"`, `"${cs(f)}"`];
+    ? [`"${cs(nom.slice(0, 80))}"`, `"Expediente técnico · Rev. 0"`, `"${cs(ing || f)}"`]
+    : [`"JMG - ELECTRIC · Expediente técnico · Rev. 0"`, `"${cs(nom.slice(0, 70))}"`, `"${cs(f)}"`];
   pa.innerHTML =
-    `<style>@page{margin:17mm 14mm 15mm;${mb("top-left", cab[0])}${mb("top-right", cab[1])}${mb("bottom-left", cab[2])}${mb("bottom-right", `"Página " counter(page) " de " counter(pages)`)}}
+    `<style>@page{margin:20mm 16mm 17mm 22mm;${mb("top-left", cab[0])}${mb("top-right", cab[1])}${mb("bottom-left", cab[2])}${mb("bottom-right", `"Página " counter(page) " de " counter(pages)`)}}
     @page:first{@top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-right{content:none}} @page ancho{size:A4 landscape;page-orientation:rotate-left}</style>` +
     expediente(LAST, estilo);
   pa.querySelectorAll("button,select").forEach(x => {
