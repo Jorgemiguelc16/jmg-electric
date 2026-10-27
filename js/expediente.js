@@ -426,7 +426,8 @@ function expediente(r, estilo = "formal") {
       ...unifilarHojas(r, lam).map(h => ({ ...h, tit: "Diagrama unifilar" })),
       { ...alturas(r), hoja: "IE-02", tit: "Diagrama de alturas de montaje" },
       { ...detalles(r), hoja: "IE-03", tit: "Leyenda de símbolos y detalle del pozo de puesta a tierra" },
-      ...tablerosHojas(r, lam).map(h => ({ ...h, tit: "Detalle de tableros y señal de seguridad" }))
+      ...tablerosHojas(r, lam).map(h => ({ ...h, tit: "Detalle de tableros y señal de seguridad" })),
+      ...(b => (b ? [{ ...b, hoja: "IE-05", tit: "Banco de medidores y balance de fases" }] : []))(bancoMedidores(r))
     ];
   // Continuaciones: «(continuación)» en el título cuando el plano sigue de la lámina anterior
   LAMS.forEach((h, k) => (h.cont = k > 0 && LAMS[k - 1].tit === h.tit));

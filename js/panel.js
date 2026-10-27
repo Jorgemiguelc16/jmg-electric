@@ -73,7 +73,8 @@ const FS_PARAM = {
   "fs-p-pat": "pat",
   "fs-p-met": "pat",
   "fs-p-pozo": "pat",
-  "fs-p-alt": "alt"
+  "fs-p-alt": "alt",
+  "fs-p-bm": "bm"
 };
 /* Abre la ventana de un dato del proyecto y lo enfoca. id es el del campo del formulario (por ejemplo «met» o
    «area») o, en una lista, «lista_campo_i» (por ejemplo «cargas_p_0» o «tipos_cant_1»). */

@@ -19,7 +19,8 @@ const PP_TABS = {
   cond: ["fs-p-cond"],
   prot: ["fs-p-prot", "fs-p-dv"],
   pat: ["fs-p-pat", "fs-p-pozo", "fs-p-met"],
-  alt: ["fs-p-alt"]
+  alt: ["fs-p-alt"],
+  bm: ["fs-p-bm"]
 };
 function parametros(abrir) {
   if (abrir) {

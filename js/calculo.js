@@ -70,6 +70,24 @@ function ctx(p = estado()) {
       cond: Math.max(0, n("pzCond")),
       pvc: Math.max(0, n("pzPvc"))
     },
+    // Banco de medidores (js/medidores.js): medidas de la concesionaria en m (Luz del Sur por defecto)
+    bm: {
+      conc: g("bmConc").replace(/[<>]/g, "").trim() || "Luz del Sur",
+      lrmA: n("bmLrmA") || 0.2,
+      lrmH: n("bmLrmH") || 0.4,
+      ltrA: n("bmLtrA") || 0.26,
+      ltrH: n("bmLtrH") || 0.47,
+      tomaA: n("bmTomaA") || 0.34,
+      tomaH: n("bmTomaH") || 0.69,
+      tomaF: n("bmTomaF") || 0.21,
+      tomaS: g("bmTomaS") === "" ? 0.5 : n("bmTomaS"),
+      sepT: g("bmSepT") === "" ? 0.2 : n("bmSepT"),
+      sepF: g("bmSepF") === "" ? 0.2 : n("bmSepF"),
+      base: g("bmBase") === "" ? 0.05 : n("bmBase"),
+      hMax: n("bmHmax") || 1.8,
+      filas: Math.max(1, Math.round(n("bmFilas") || 2)),
+      dist: g("bmDist") === "" ? 1 : n("bmDist")
+    },
     // Alturas de montaje desde el NPT (m), para el diagrama de alturas (js/alturas.js)
     alt: {
       techo: n("hTecho") || 2.9,

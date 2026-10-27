@@ -57,6 +57,7 @@ function render(r) {
   S.alturas = () => cardAlturas(r, "");
   S.detalles = () => cardDetalles(r, "");
   S.tableros = () => cardTableros(r, "");
+  if (r.mode === "multi") S.medidores = () => cardMedidores(r, "");
   S.metrado = () => cardMetrado(r);
   S.verif = () => cardAlertas(r, "") + cardRecom(r);
   const st = {

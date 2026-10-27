@@ -232,6 +232,9 @@ const PLANOS = {
       corto: "Tableros" + (a.length > 1 ? " " + h.hoja : "")
     }))
 };
+// El banco de medidores solo existe en edificios
+PLANOS.medidores = () =>
+  (b => (b ? [{ ...b, nom: "Banco de medidores", corto: "Medidores" }] : []))(bancoMedidores(LAST));
 const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();
 /* Diálogo de descarga DXF */
 function dxfDialogo(abrir) {

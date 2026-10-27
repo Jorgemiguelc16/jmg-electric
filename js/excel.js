@@ -34,6 +34,9 @@ async function exportar() {
   const wsA = wb.addWorksheet("Alturas", { properties: { tabColor: { argb: "FF9A5A23" } } });
   const wsD = wb.addWorksheet("Detalles", { properties: { tabColor: { argb: "FF14304F" } } });
   const wsB = wb.addWorksheet("Tableros", { properties: { tabColor: { argb: "FFFFD200" } } });
+  // Banco de medidores: solo en edificios (una hoja más)
+  const wsBM = multi ? wb.addWorksheet("Medidores", { properties: { tabColor: { argb: "FF2F7A4B" } } }) : null,
+    NH = multi ? 9 : 8;
   const wsT = wb.addWorksheet("Metrado", { properties: { tabColor: { argb: "FF22507C" } } });
   const wsX = wb.addWorksheet("Anexos", { properties: { tabColor: { argb: "FF5A6775" } } });
   const setup = (ws, orient, widths) => {
@@ -186,7 +189,7 @@ async function exportar() {
 
   /* ---------- ANEXOS ---------- */
   setup(wsX, "portrait", [13, 13, 13, 13, 13, 13, 13, 13]);
-  let x = cabecera(wsX, 8, "ANEXOS · TABLAS DEL CNE-UTILIZACIÓN Y NORMATIVA APLICADA", "Hoja 8 de 8");
+  let x = cabecera(wsX, 8, "ANEXOS · TABLAS DEL CNE-UTILIZACIÓN Y NORMATIVA APLICADA", `Hoja ${NH} de ${NH}`);
   x = seccion(wsX, x, 8, `A.1  TABLA 2 CNE-U · CAPACIDAD DE CORRIENTE (A) · MÉTODO ${c.met}`);
   x = thead(wsX, x, [
     [1, 1, "Sección (mm²)"],
@@ -324,7 +327,7 @@ async function exportar() {
     wsM,
     LM,
     multi ? "VIVIENDA MULTIFAMILIAR · EDIFICIO DE DEPARTAMENTOS" : "VIVIENDA UNIFAMILIAR",
-    "Hoja 1 de 8"
+    `Hoja 1 de ${NH}`
   );
   m = seccion(wsM, m, LM, "1.  PARÁMETROS DE DISEÑO");
   m = thead(wsM, m, [
@@ -868,7 +871,7 @@ async function exportar() {
     wsC,
     LC,
     "CÁLCULO DE ALIMENTADORES, CIRCUITOS DERIVADOS, BALANCE DE FASES Y CORTOCIRCUITO",
-    "Hoja 2 de 8"
+    `Hoja 2 de ${NH}`
   );
   const HDR = first => [
     [1, first ? 3 : 1, first ? "Alimentador" : "Tablero"],
@@ -1302,30 +1305,41 @@ async function exportar() {
       wsU,
       unifilarHojas(r),
       "DIAGRAMA UNIFILAR · ESQUEMA DE DISTRIBUCIÓN Y PROTECCIÓN",
-      "Hoja 3 de 8",
+      `Hoja 3 de ${NH}`,
       "Diagrama generado a partir de los resultados del cálculo. Incluye potencia instalada, máxima demanda, potencia a contratar, tensión, número de fases y capacidad de ruptura (RNE EM.010, Art. 8)."
     ],
     [
       wsA,
       [alturas(r)],
       "DIAGRAMA DE ALTURAS DE MONTAJE",
-      "Hoja 4 de 8",
+      `Hoja 4 de ${NH}`,
       "Alturas desde el nivel de piso terminado según Parámetros › Alturas; interruptores y tomacorrientes verificados con la Norma A.120 del RNE. Símbolos de la Norma DGE (R.M. N.° 091-2002-EM/VME)."
     ],
     [
       wsD,
       [detalles(r)],
       "LEYENDA DE SÍMBOLOS Y DETALLE DEL POZO DE PUESTA A TIERRA",
-      "Hoja 5 de 8",
+      `Hoja 5 de ${NH}`,
       "Símbolos de la Norma DGE (R.M. N.° 091-2002-EM/VME) usados en los planos. Varilla, conductor y resistencia del pozo según el cálculo (Reglas 060-702 y 060-712, Tabla 17); medidas y materiales: criterio de diseño."
     ],
     [
       wsB,
       tablerosHojas(r),
       "DETALLE DE TABLEROS Y SEÑAL DE SEGURIDAD",
-      "Hoja 6 de 8",
+      `Hoja 6 de ${NH}`,
       "Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo; capacidad mínima en polos igual a la del metrado."
-    ]
+    ],
+    ...(multi
+      ? [
+          [
+            wsBM,
+            [bancoMedidores(r)],
+            "BANCO DE MEDIDORES Y BALANCE DE FASES",
+            `Hoja 7 de ${NH}`,
+            `Vista frontal con las medidas de la concesionaria (${c.bm.conc}), conexión de cada suministro a su fase según el balance y verificación del calibre de la instalación interna con la tabla de la concesionaria.`
+          ]
+        ]
+      : [])
   ]) {
     const LU = 20;
     setup(ws, "landscape", [12, 12, ...Array(LU - 2).fill(6.5)]);
@@ -1371,7 +1385,7 @@ async function exportar() {
   {
     const LT = 8;
     setup(wsT, "portrait", [9, 13, 13, 13, 13, 7, 10, 22]);
-    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", "Hoja 7 de 8");
+    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", `Hoja ${NH - 1} de ${NH}`);
     t = thead(wsT, t, [
       [1, 1, "Ítem"],
       [2, 5, "Descripción"],
