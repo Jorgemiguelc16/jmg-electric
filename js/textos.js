@@ -158,6 +158,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.6",
+    "Planos en AutoCAD: en el detalle de tableros, los equipos, el riel, las canaletas y la puerta llevan rellenos grises y la barra de tierra va en verde, como en pantalla. El logo del rótulo se dibuja con figuras, así se ve igual en cualquier AutoCAD, y el rótulo tiene siempre la misma altura, con el logo llenando su caja y el borde del mismo grosor en todo el contorno."
+  ],
+  [
     "v2.9.5",
     "Planos nuevos: Leyenda y detalles (lámina IE-03), con los símbolos de la Norma DGE que usa el proyecto y el detalle del pozo de puesta a tierra, cuyas medidas y materiales se editan en Parámetros › Tierra y metrado; y Detalle de tableros (IE-04), con la vista de la puerta y su señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02), la vista interior con sus dispositivos y, como opción, el tablero peinado con los conductores en colores y el cuadro de conexiones. El unifilar usa los símbolos de la Norma DGE, muestra los equipos del tablero (DPS, relé, medidor y contactor) en su leyenda, puede dibujarse en vertical y se divide en varias láminas (IE-01, IE-01A…) cuando el texto impreso quedaría menor de 1.8 mm en la lámina elegida en Planos. Con suministro trifásico, cada diferencial agrupa circuitos de una sola fase. DXF en colores vivos, con capas por parte y vista inicial de toda la lámina; la memoria Excel tiene ocho hojas."
   ],
