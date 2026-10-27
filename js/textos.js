@@ -100,6 +100,8 @@ const CRITERIOS = [
   "En los circuitos de motores se verifica que la corriente de arranque directo (6 veces la nominal por defecto) no alcance el disparo magnético mínimo de la curva del interruptor (IEC 60898-1); la caída de tensión en el arranque se informa como referencia.",
   "Las alturas de montaje se miden desde el piso terminado hasta el eje de la caja (el tablero, hasta su borde superior). Interruptores y timbres hasta 1.35 m (A.120, Art. 11 d) y alcance frontal de 0.40 a 1.20 m (A.120, Art. 10); las demás alturas son criterio del proyectista.",
   "El metrado sigue las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA, título OE.5) con cantidades netas; la tubería de cada circuito suma la distancia a la salida más alejada y los tramos verticales según las alturas de montaje.",
+  "Los diferenciales protegen grupos de hasta tres circuitos (Regla 150-400(8)). Con suministro trifásico, los grupos se forman después del balance de fases y con circuitos de una misma fase, para que cada diferencial bipolar quede en una sola fase; los circuitos trifásicos se agrupan aparte.",
+  "Los planos usan los símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME) y la señal de riesgo eléctrico 141-02-02 de la Norma DGE de señalización. Son criterio de diseño las medidas y los materiales del pozo de tierra, el orden de los colores de las fases en los tableros peinados (R negro, S rojo, T azul; neutro gris y protección verde-amarillo) y la altura mínima del texto impreso, 1.8 mm (ISO 3098), con la que el unifilar se divide en varias láminas.",
   "El balance de fases busca el reparto de cargas monofásicas con el menor desbalance posible; el proyectista puede fijar la fase de cualquier carga. Se recomienda un desbalance no mayor de 10 % como criterio de diseño."
 ];
 const GLOSARIO = [
@@ -155,6 +157,10 @@ const FAQ = [
   ]
 ];
 const NOVEDADES = [
+  [
+    "v2.9.5",
+    "Planos nuevos: Leyenda y detalles (lámina IE-03), con los símbolos de la Norma DGE que usa el proyecto y el detalle del pozo de puesta a tierra, cuyas medidas y materiales se editan en Parámetros › Tierra y metrado; y Detalle de tableros (IE-04), con la vista de la puerta y su señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02), la vista interior con sus dispositivos y, como opción, el tablero peinado con los conductores en colores y el cuadro de conexiones. El unifilar usa los símbolos de la Norma DGE, muestra los equipos del tablero (DPS, relé, medidor y contactor) en su leyenda, puede dibujarse en vertical y se divide en varias láminas (IE-01, IE-01A…) cuando el texto impreso quedaría menor de 1.8 mm en la lámina elegida en Planos. Con suministro trifásico, cada diferencial agrupa circuitos de una sola fase. DXF en colores vivos, con capas por parte y vista inicial de toda la lámina; la memoria Excel tiene ocho hojas."
+  ],
   [
     "v2.9.4",
     "Diagrama de alturas de montaje (lámina IE-02): elevación con las salidas del proyecto a su altura, aparatos dibujados como se instalan, leyenda con los símbolos de la Norma DGE y verificación de interruptores y tomacorrientes con la Norma A.120 del RNE. Alturas editables en Parámetros › Alturas. Metrado ordenado por las partidas de la Norma Técnica de Metrados (R.D. N.° 073-2010-VIVIENDA), con cantidades netas y tramos verticales según las alturas. La pestaña Unifilar pasa a llamarse Planos; la descarga DXF permite elegir el unifilar, el de alturas o los dos, y la memoria Excel incluye la hoja Alturas."
