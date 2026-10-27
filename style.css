@@ -2008,6 +2008,15 @@ body.ws-on {
   accent-color: #14304f;
   cursor: pointer;
 }
+.chk select {
+  font: inherit;
+  padding: 0 2px;
+  border: 1px solid #c5ced8;
+  border-radius: 3px;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
 .chk b {
   display: grid;
   place-items: center;

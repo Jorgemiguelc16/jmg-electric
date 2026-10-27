@@ -336,15 +336,20 @@ function expediente(r, estilo = "formal") {
 
   /* ---------- 5. PLANOS ---------- */
   // Lámina horizontal o vertical: la que imprime el diagrama más grande (área útil A4 ≈ 269 × 163 mm o 182 × 245 mm)
-  const U = unifilar(r),
-    horiz = Math.min(269 / U.W, 163 / U.H) >= Math.min(182 / U.W, 245 / U.H);
-  B += `<section class="ex-sec ex-plano ${horiz ? "ex-ancho" : "ex-alto"}">`;
+  // El expediente se imprime en A4: el unifilar se divide en las láminas que hagan falta (IE-01, IE-01A…)
   n1++;
   n2 = 0;
   TOC.push([`${n1}`, "Planos · diagrama unifilar", 0]);
-  B +=
-    `<h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>Planos · diagrama unifilar <small>Lámina IE-01 · Escala S/E</small></h1><div class="ex-unif">${U.svg}</div>` +
-    fin;
+  unifilarHojas(r, "A4").forEach((U, i) => {
+    const horiz = Math.min(269 / U.W, 163 / U.H) >= Math.min(182 / U.W, 245 / U.H);
+    B +=
+      `<section class="ex-sec ex-plano ${horiz ? "ex-ancho" : "ex-alto"}">` +
+      (i
+        ? `<h1 class="ex-h1"><span>${n1}.</span>Planos · diagrama unifilar (continuación) <small>Lámina ${U.hoja} · Escala S/E</small></h1>`
+        : `<h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>Planos · diagrama unifilar <small>Lámina ${U.hoja} · Escala S/E</small></h1>`) +
+      `<div class="ex-unif">${U.svg}</div>` +
+      fin;
+  });
 
   /* ---------- 6. PRUEBAS ---------- */
   B += cap("Pruebas técnicas y puesta en servicio");

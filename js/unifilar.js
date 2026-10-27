@@ -6,7 +6,12 @@ let UNIF_VERTICAL = false;
 try {
   UNIF_VERTICAL = localStorage.getItem("jmg-electric-unif-vertical") === "1";
 } catch (e) {}
-function unifilar(r) {
+function unifilar(r, op = {}) {
+  // Una lámina: sus tableros (todos, o los que le tocan cuando el plano se divide), si lleva la acometida con el
+  // cuadro de cargas (la primera) y su número
+  const TABS = op.tabs || r.tabs,
+    CAB = op.cab !== false,
+    HOJA = op.hoja || "IE-01";
   const c = r.c,
     o = [],
     a0 = r.alims[0],
@@ -246,6 +251,7 @@ function unifilar(r) {
     x = X + 40;
   // Detalle de tableros en filas (tableros de departamento o de piso)
   function detalle(tabs) {
+    if (!tabs.length) return;
     L(X, y, X + 10, y, 1, GR);
     T(X + 16, y + 4, "DETALLE DE TABLEROS", { s: 9, b: 1, f: GR });
     y += 24;
@@ -480,11 +486,11 @@ function unifilar(r) {
     return pone(mejor);
   }
   function cuerpoVertical() {
-    if (!multi) {
-      // La primera columna (TG) sigue a la acometida; las demás se ordenan a su lado
-      const bl = r.tabs.map((tb, i) => ({ tb, w: CWV, h: altoCol(tb) + 10, i }));
-      const dim = ordenar(bl, X, 200);
-      bl.forEach(b => columna(b.x, b.y, b.tb, b.i === 0 ? { entrada: false, pat: true } : {}));
+    if (!multi || !CAB) {
+      // En la primera lámina de una vivienda, la columna del TG sigue a la acometida; las demás se ordenan a su lado
+      const bl = TABS.map(tb => ({ tb, w: CWV, h: altoCol(tb) + 10, tg: CAB && !multi && tb === r.tabs[0] }));
+      const dim = ordenar(bl, X, CAB ? 200 : 46);
+      bl.forEach(b => columna(b.x, b.y, b.tb, b.tg ? { entrada: false, pat: true } : {}));
       W = dim.w + 20;
       y = dim.h + 8;
       return;
@@ -493,7 +499,7 @@ function unifilar(r) {
     const feeders = r.alims.slice(1),
       RB = 46,
       hb = 70 + feeders.length * RB;
-    const bl = [{ banco: 1, w: CWV, h: hb + 10 }, ...r.tabs.map(tb => ({ tb, w: CWV, h: altoCol(tb) + 10 }))];
+    const bl = [{ banco: 1, w: CWV, h: hb + 10 }, ...TABS.map(tb => ({ tb, w: CWV, h: altoCol(tb) + 10 }))];
     const dim = ordenar(bl, X, 200);
     const b0 = bl[0],
       xb = x;
@@ -540,34 +546,41 @@ function unifilar(r) {
     W = dim.w + 20;
     y = dim.h + 8;
   }
-  // Acometida y alimentador principal
-  L(x - 12, 14, x + 12, 14, 3);
-  L(x, 14, x, 64);
-  T(x + 16, 22, "RED DE DISTRIBUCIÓN SECUNDARIA", { s: 10, b: 1, f: NAVY });
-  T(x + 16, 35, `${s0.nom} · 60 Hz · Icc en el punto de entrega ${fmt(c.iccE, 1)} kA`, { s: 8.5, f: GR });
-  T(x + 16, 56, `Acometida · ${r.conexion}`, { s: 8.5 });
-  if (!multi) {
-    kwh(x, 64);
-    T(x + 20, 82, "Medidor de energía activa", { s: 8.5 });
-    L(x, 92, x, 110);
-  } else L(x, 64, x, 110);
-  itm(x, 110);
-  L(x, 134, x, 246);
-  T(x + 20, 126, `Interruptor general ${s0.tri ? 3 : 2}×${a0.itm} A · PdC ${a0.pdc} kA`, { s: 9, b: 1 });
-  T(x + 16, 162, `Alimentador ${multi ? "general" : "principal"}: ${cond(s0.n, a0.S, a0.St)} Cu · ${tub(a0.tubo)}`, {
-    s: 8.5,
-    b: 1
-  });
-  T(x + 16, 175, `L = ${fmt(a0.L, 1)} m · I = ${fmt(a0.I, 2)} A · ΔV = ${fmt(a0.dVp, 2)} %`, { s: 8.5, f: GR });
+  // Acometida y alimentador principal (primera lámina); en las demás, el título de continuación
+  if (!CAB) {
+    T(X, 26, `DIAGRAMA UNIFILAR · DETALLE DE TABLEROS (continuación de la lámina IE-01)`, { s: 11, b: 1, f: NAVY });
+  } else {
+    L(x - 12, 14, x + 12, 14, 3);
+    L(x, 14, x, 64);
+    T(x + 16, 22, "RED DE DISTRIBUCIÓN SECUNDARIA", { s: 10, b: 1, f: NAVY });
+    T(x + 16, 35, `${s0.nom} · 60 Hz · Icc en el punto de entrega ${fmt(c.iccE, 1)} kA`, { s: 8.5, f: GR });
+    T(x + 16, 56, `Acometida · ${r.conexion}`, { s: 8.5 });
+    if (!multi) {
+      kwh(x, 64);
+      T(x + 20, 82, "Medidor de energía activa", { s: 8.5 });
+      L(x, 92, x, 110);
+    } else L(x, 64, x, 110);
+    itm(x, 110);
+    L(x, 134, x, 246);
+    T(x + 20, 126, `Interruptor general ${s0.tri ? 3 : 2}×${a0.itm} A · PdC ${a0.pdc} kA`, { s: 9, b: 1 });
+    T(x + 16, 162, `Alimentador ${multi ? "general" : "principal"}: ${cond(s0.n, a0.S, a0.St)} Cu · ${tub(a0.tubo)}`, {
+      s: 8.5,
+      b: 1
+    });
+    T(x + 16, 175, `L = ${fmt(a0.L, 1)} m · I = ${fmt(a0.I, 2)} A · ΔV = ${fmt(a0.dVp, 2)} %`, { s: 8.5, f: GR });
+  }
 
   if (UNIF_VERTICAL) cuerpoVertical();
-  else if (!multi) {
+  else if (!CAB) {
+    y = 46;
+    detalle(TABS);
+  } else if (!multi) {
     const p = panel(X, 200, r.tabs[0], { entrada: false, pat: true });
     W = p.w + X;
     y = 200 + p.h;
-    if (r.tabs.length > 1) {
+    if (TABS.length > 1) {
       y += 8;
-      detalle(r.tabs.slice(1));
+      detalle(TABS.slice(1));
     }
   } else {
     const yb = 246,
@@ -609,7 +622,7 @@ function unifilar(r) {
     });
     W = xe + 40;
     y = yb + 270;
-    detalle(r.tabs);
+    detalle(TABS);
   }
   W = Math.max(W, 780);
   // Cuadro de datos (EM.010, Art. 8)
@@ -626,9 +639,9 @@ function unifilar(r) {
   const bx = W - 300,
     bw = 280,
     rh = 17;
-  o.push(`<rect x="${bx}" y="10" width="${bw}" height="${rh}" fill="${NAVY}"/>`);
-  T(bx + bw / 2, 22, "CUADRO DE CARGAS · EM.010, ART. 8", { s: 8.5, b: 1, a: "middle", f: "#fff" });
-  datos.forEach(([k, v], i) => {
+  if (CAB) o.push(`<rect x="${bx}" y="10" width="${bw}" height="${rh}" fill="${NAVY}"/>`);
+  if (CAB) T(bx + bw / 2, 22, "CUADRO DE CARGAS · EM.010, ART. 8", { s: 8.5, b: 1, a: "middle", f: "#fff" });
+  (CAB ? datos : []).forEach(([k, v], i) => {
     const yy = 10 + rh * (i + 1);
     o.push(
       `<rect x="${bx}" y="${yy}" width="${bw}" height="${rh}" fill="${i % 2 ? "#fff" : "#f3f6f9"}" stroke="#bfc8d2" stroke-width=".8"/>`
@@ -638,7 +651,7 @@ function unifilar(r) {
   });
   // Leyenda y rótulo
   // Equipos marcados en algún tablero: se agregan a la leyenda con su símbolo y código DGE
-  const conEq = new Set(r.tabs.flatMap(t => equiposDe(t.tab).map(([k]) => k))),
+  const conEq = new Set(TABS.flatMap(t => equiposDe(t.tab).map(([k]) => k))),
     ext = [
       conEq.has("dps") && ["dps", "Protector contra sobretensiones (DPS)", "07-75-23"],
       conEq.has("rel") && ["rel", "Relé de tensión (U> U<)", "07-73-01"],
@@ -692,12 +705,57 @@ function unifilar(r) {
     rw,
     hr,
     c.proj,
-    `Diagrama unifilar · ${multi ? "Multifamiliar" : "Unifamiliar"} · Escala S/E`,
-    "IE-01"
+    `Unifilar ${multi ? "multifamiliar" : "unifamiliar"} · Escala S/E`,
+    HOJA + (op.parte ? " · " + op.parte : "")
   );
+  if (op.sigue) T(X, yr - 6, `Continúa en la lámina ${op.sigue}`, { s: 8, b: 1, f: CU });
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
   return { svg, W, H };
+}
+/* Láminas del unifilar: la primera (IE-01) lleva la acometida, el medidor o el banco de medidores, el alimentador
+   general y, en una vivienda, el tablero general; los demás tableros entran mientras el texto más pequeño del dibujo
+   (7 px) siga midiendo al menos 1.8 mm impreso en la lámina elegida (la menor altura de la norma ISO 3098 de
+   rotulado técnico, adoptada como criterio); los que no caben pasan a IE-01A, IE-01B… */
+const TXT_MIN_MM = 1.8;
+const laminaPlano = () => {
+  try {
+    const l = JSON.parse(localStorage.getItem("jmg-electric-dxf") || "{}").lamina;
+    if (LAMINAS[l]) return l;
+  } catch (e) {}
+  return "A3";
+};
+function unifilarHojas(r, lam = laminaPlano()) {
+  const [lw, lh] = LAMINAS[lam] || LAMINAS.A3,
+    cabe = u => Math.min((lw - 20) / u.W, (lh - 20) / u.H) * 7 * 0.72 >= TXT_MIN_MM - 1e-9,
+    hojas = [];
+  let act = r.mode === "uni" ? [r.tabs[0]] : [],
+    cab = true;
+  (r.mode === "uni" ? r.tabs.slice(1) : r.tabs).forEach(tb => {
+    const prueba = [...act, tb];
+    if (cabe(unifilar(r, { tabs: prueba, cab })) || (!act.length && !cab)) act = prueba;
+    else {
+      hojas.push({ tabs: act, cab });
+      act = [tb];
+      cab = false;
+    }
+  });
+  hojas.push({ tabs: act, cab });
+  const n = hojas.length,
+    nom = i => (i ? "IE-01" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i - 1] : "IE-01");
+  return hojas
+    .map((h, i) => ({
+      ...unifilar(r, {
+        tabs: h.tabs,
+        cab: h.cab,
+        hoja: nom(i),
+        parte: n > 1 ? `${i + 1}/${n}` : "",
+        sigue: i < n - 1 ? nom(i + 1) : ""
+      }),
+      hoja: nom(i),
+      lam
+    }))
+    .map(h => ({ ...h, mm: Math.min((lw - 20) / h.W, (lh - 20) / h.H) * 7 * 0.72 }));
 }
 /* Rótulo de las láminas (unifilar y alturas): logo, datos del proyecto, plano y número de lámina, dentro del
    recuadro x, y, w, h. El logo vectorial (oculto en pantalla) es el que usa el DXF. */
@@ -1355,9 +1413,11 @@ function svgPng(svg, scale = 2) {
   });
 }
 function cardUnifilar(r, nro) {
-  const u = unifilar(r);
+  const hs = unifilarHojas(r),
+    chicas = hs.filter(h => h.mm < TXT_MIN_MM - 1e-9),
+    u = { svg: hs.map(h => h.svg).join('</div><div class="unif">') };
   return `<section class="card"><h2><span><span class="num">${nro}</span>Diagrama unifilar</span></h2>
-  <div class="unif">${u.svg}</div><div class="body"><p class="hint">Generado automáticamente a partir del cálculo: protecciones, conductores, diferenciales, puesta a tierra y cuadro de cargas exigido por la EM.010 (Art. 8). Se incluye también en la memoria de Excel.</p></div></section>`;
+  <div class="unif">${u.svg}</div><div class="body"><p class="hint">Generado automáticamente a partir del cálculo: protecciones, conductores, diferenciales, puesta a tierra y cuadro de cargas exigido por la EM.010 (Art. 8). Se incluye también en la memoria de Excel.${hs.length > 1 ? ` Dividido en ${hs.length} láminas (${hs.map(h => h.hoja).join(", ")})${chicas.length ? "." : " "}${chicas.length ? "" : `para que, impreso en ${hs[0].lam}, ningún texto quede menor de 1.8 mm; la lámina se elige en Planos.`}` : ""}${chicas.length ? ` <strong>Impreso en ${hs[0].lam}, el texto quedaría menor de 1.8 mm (${chicas.map(h => `${h.hoja}: ${fmt(h.mm, 1)} mm`).join(", ")}): elija una lámina más grande en Planos.</strong>` : ""}</p></div></section>`;
 }
 
 // Casilla de la cinta (Planos › Unifilar vertical): cambia el dibujo en pantalla y en las descargas
@@ -1369,6 +1429,22 @@ function cardUnifilar(r, nro) {
       UNIF_VERTICAL = ck.checked;
       try {
         localStorage.setItem("jmg-electric-unif-vertical", UNIF_VERTICAL ? "1" : "0");
+      } catch (e) {}
+      if (LAST) render(LAST);
+    });
+  }
+}
+
+// Lámina del plano (Planos › Lámina): divide el unifilar en pantalla y en las descargas; es la misma de la ventana DXF
+{
+  const sl = typeof document !== "undefined" && document.getElementById("optLamina");
+  if (sl && sl.addEventListener) {
+    sl.value = laminaPlano();
+    sl.addEventListener("change", () => {
+      try {
+        const o = JSON.parse(localStorage.getItem("jmg-electric-dxf") || "{}");
+        o.lamina = sl.value;
+        localStorage.setItem("jmg-electric-dxf", JSON.stringify(o));
       } catch (e) {}
       if (LAST) render(LAST);
     });

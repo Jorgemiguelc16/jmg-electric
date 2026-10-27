@@ -195,20 +195,19 @@ document.addEventListener("click", async e => {
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
       .trim()
       .slice(0, 60) || "proyecto";
-  // Se descarga el diagrama abierto: el de alturas o, en cualquier otra vista, el unifilar
-  const u = planoActual();
+  if (b.dataset.dl === "dxf") return dxfDialogo(true);
+  // Se descarga el plano abierto (o, en cualquier otra vista, el unifilar): un archivo por lámina
   b.disabled = true;
   try {
-    let blob,
-      nombre = `JMG-ELECTRIC - ${u.nom} - ${nm}.${b.dataset.dl}`;
-    if (b.dataset.dl === "svg") blob = new Blob([u.svg], { type: "image/svg+xml" });
-    else if (b.dataset.dl === "dxf") {
-      b.disabled = false;
-      dxfDialogo(true);
-      return;
-    } else blob = await (await fetch(await svgPng(u.svg, 2))).blob();
-    if (downloads) await downloads.save({ filename: nombre, data: blob });
-    else descargarLocal(blob, nombre);
+    for (const u of planoActual()) {
+      const nombre = `JMG-ELECTRIC - ${u.nom} - ${nm}.${b.dataset.dl}`,
+        blob =
+          b.dataset.dl === "svg"
+            ? new Blob([u.svg], { type: "image/svg+xml" })
+            : await (await fetch(await svgPng(u.svg, 2))).blob();
+      if (downloads) await downloads.save({ filename: nombre, data: blob });
+      else descargarLocal(blob, nombre);
+    }
   } catch (err) {
     if (!(err && err.code === "declined")) console.warn(err);
   } finally {
@@ -217,10 +216,16 @@ document.addEventListener("click", async e => {
 });
 
 const PLANOS = {
-  unifilar: () => ({ ...unifilar(LAST), nom: "Diagrama unifilar", corto: "Unifilar" }),
-  alturas: () => ({ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }),
-  detalles: () => ({ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" }),
-  tableros: () => ({ ...tableros(LAST), nom: "Detalle de tableros", corto: "Tableros" })
+  // El unifilar puede ocupar varias láminas (IE-01, IE-01A…) según el tamaño de lámina
+  unifilar: lam =>
+    unifilarHojas(LAST, lam).map((h, i, a) => ({
+      ...h,
+      nom: "Diagrama unifilar" + (a.length > 1 ? " " + h.hoja : ""),
+      corto: "Unifilar" + (a.length > 1 ? " " + h.hoja : "")
+    })),
+  alturas: () => [{ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }],
+  detalles: () => [{ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" }],
+  tableros: () => [{ ...tableros(LAST), nom: "Detalle de tableros", corto: "Tableros" }]
 };
 const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();
 /* Diálogo de descarga DXF */
@@ -248,6 +253,12 @@ $("dxfDlg").addEventListener("click", async e => {
   try {
     localStorage.setItem("jmg-electric-dxf", JSON.stringify(op));
   } catch (err) {}
+  // La lámina es la misma de Planos › Lámina: si cambió, el unifilar en pantalla se vuelve a dividir
+  const sl = $("optLamina");
+  if (sl && sl.value !== op.lamina) {
+    sl.value = op.lamina;
+    render(LAST);
+  }
   const nm =
     (LAST.c.proj.nombre || "proyecto")
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
@@ -255,9 +266,8 @@ $("dxfDlg").addEventListener("click", async e => {
       .slice(0, 60) || "proyecto";
   const pl = $("dx_plano").value;
   dxfDialogo(false);
-  for (const k of pl === "todos" ? Object.keys(PLANOS) : [pl]) {
-    const u = PLANOS[k](),
-      blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
+  for (const u of (pl === "todos" ? Object.keys(PLANOS) : [pl]).flatMap(k => PLANOS[k](op.lamina))) {
+    const blob = new Blob([svgDxf(u.svg, op)], { type: "application/dxf" }),
       nombre = `JMG-ELECTRIC - ${u.corto} ${op.lamina} - ${nm}.dxf`;
     try {
       if (downloads) await downloads.save({ filename: nombre, data: blob });

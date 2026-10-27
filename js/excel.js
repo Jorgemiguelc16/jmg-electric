@@ -1296,32 +1296,32 @@ async function exportar() {
     `La presente memoria ha sido elaborada con JMG - ELECTRIC ${VERSION}, aplicando los criterios del Código Nacional de Electricidad – Utilización, el RNE EM.010 y las Normas DGE. Los valores obtenidos constituyen una herramienta de apoyo al diseño; su validación, adecuación a las condiciones reales de obra y firma corresponden al ingeniero proyectista responsable.`
   );
 
-  /* ---------- UNIFILAR Y DIAGRAMA DE ALTURAS (una lámina por hoja) ---------- */
-  for (const [ws, u, tit, hoja, txt] of [
+  /* ---------- PLANOS (un plano por hoja; el unifilar, con todas sus láminas, una por página) ---------- */
+  for (const [ws, us, tit, hoja, txt] of [
     [
       wsU,
-      unifilar(r),
+      unifilarHojas(r),
       "DIAGRAMA UNIFILAR · ESQUEMA DE DISTRIBUCIÓN Y PROTECCIÓN",
       "Hoja 3 de 8",
       "Diagrama generado a partir de los resultados del cálculo. Incluye potencia instalada, máxima demanda, potencia a contratar, tensión, número de fases y capacidad de ruptura (RNE EM.010, Art. 8)."
     ],
     [
       wsA,
-      alturas(r),
+      [alturas(r)],
       "DIAGRAMA DE ALTURAS DE MONTAJE",
       "Hoja 4 de 8",
       "Alturas desde el nivel de piso terminado según Parámetros › Alturas; interruptores y tomacorrientes verificados con la Norma A.120 del RNE. Símbolos de la Norma DGE (R.M. N.° 091-2002-EM/VME)."
     ],
     [
       wsD,
-      detalles(r),
+      [detalles(r)],
       "LEYENDA DE SÍMBOLOS Y DETALLE DEL POZO DE PUESTA A TIERRA",
       "Hoja 5 de 8",
       "Símbolos de la Norma DGE (R.M. N.° 091-2002-EM/VME) usados en los planos. Varilla, conductor y resistencia del pozo según el cálculo (Reglas 060-702 y 060-712, Tabla 17); medidas y materiales: criterio de diseño."
     ],
     [
       wsB,
-      tableros(r),
+      [tableros(r)],
       "DETALLE DE TABLEROS Y SEÑAL DE SEGURIDAD",
       "Hoja 6 de 8",
       "Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo; capacidad mínima en polos igual a la del metrado."
@@ -1331,18 +1331,26 @@ async function exportar() {
     setup(ws, "landscape", [12, 12, ...Array(LU - 2).fill(6.5)]);
     let q = cabecera(ws, LU, tit, hoja);
     try {
-      const png = await svgPng(u.svg, 2),
-        wpx = 1040,
-        hpx = Math.round((wpx * u.H) / u.W);
-      ws.addImage(wb.addImage({ base64: png, extension: "png" }), {
-        tl: { col: 0, row: q },
-        ext: { width: wpx, height: hpx }
-      });
-      const nr = Math.ceil(hpx / 20) + 1;
-      for (let i = 0; i < nr; i++) ws.getRow(q + 1 + i).height = 15;
-      q += nr + 1;
-      ws.pageSetup.orientation = u.H / u.W > 0.9 ? "portrait" : "landscape";
-      ws.pageSetup.fitToHeight = 1;
+      for (const [i, u] of us.entries()) {
+        if (i) {
+          // Cada lámina siguiente empieza en página nueva, con su número
+          ws.getRow(q - 1).addPageBreak();
+          span(ws, q, 1, LU, `Lámina ${u.hoja}`, { bold: 1, color: K.navy });
+          q += 2;
+        }
+        const png = await svgPng(u.svg, 2),
+          wpx = 1040,
+          hpx = Math.round((wpx * u.H) / u.W);
+        ws.addImage(wb.addImage({ base64: png, extension: "png" }), {
+          tl: { col: 0, row: q },
+          ext: { width: wpx, height: hpx }
+        });
+        const nr = Math.ceil(hpx / 20) + 1;
+        for (let k = 0; k < nr; k++) ws.getRow(q + 1 + k).height = 15;
+        q += nr + 1;
+      }
+      ws.pageSetup.orientation = us[0].H / us[0].W > 0.9 ? "portrait" : "landscape";
+      ws.pageSetup.fitToHeight = us.length;
       if (multi) ws.pageSetup.paperSize = 8;
     } catch (e) {
       span(
