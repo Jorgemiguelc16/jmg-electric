@@ -65,8 +65,16 @@ function unifilar(r) {
 
   // Tablero con sus circuitos derivados
   function panel(X, Y, tb, { entrada = true, pat = false } = {}) {
+    // Circuitos en el orden de sus diferenciales: cada grupo junto, aunque su numeración no sea seguida (los
+    // diferenciales se agrupan por fase)
+    const gk = q => (c.idMode === "circuito" ? q.key : q.idName),
+      cs0 = r.circ.filter(q => q.tab === tb.tab),
+      pos = {};
+    cs0.forEach((q, i) => {
+      if (!(gk(q) in pos)) pos[gk(q)] = i;
+    });
     const f = r.alims[tb.feeder],
-      cs = r.circ.filter(q => q.tab === tb.tab),
+      cs = cs0.slice().sort((p, q) => pos[gk(p)] - pos[gk(q)]),
       nres = c.reserva,
       col0 = X + 96,
       eqs = equiposDe(tb.tab),

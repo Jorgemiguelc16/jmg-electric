@@ -251,9 +251,28 @@ function asignarID(cs, c) {
     });
     return;
   }
+  /* Grupos por fase: un diferencial de 2 polos solo protege circuitos de una misma fase con su neutro (o del mismo
+     par de fases, sin neutro), y los circuitos trifásicos van en diferenciales propios de 4 polos. Por eso se asigna
+     después del balance de fases; en sistemas monofásicos todos los circuitos forman un solo grupo. */
+  const fk = q => (q.f3 ? "3φ" : q.fase && q.fase !== "—" ? q.fase : ""),
+    orden = [],
+    por = {};
+  cs.forEach(q => {
+    const k = fk(q);
+    if (!por[k]) {
+      por[k] = [];
+      orden.push(k);
+    }
+    por[k].push(q);
+  });
+  const grupos = [];
+  orden.forEach(k => {
+    for (let i = 0; i < por[k].length; i += 3) grupos.push(por[k].slice(i, i + 3));
+  });
+  // Numerados en el orden de su primer circuito, para que se lean ID-1, ID-2… de izquierda a derecha
+  grupos.sort((p, q) => cs.indexOf(p[0]) - cs.indexOf(q[0]));
   let g = 0;
-  for (let i = 0; i < cs.length; i += 3) {
-    const grp = cs.slice(i, i + 3);
+  for (const grp of grupos) {
     g++;
     const need = Math.max(
         ...grp.map(q => q.itm || 0),
@@ -773,10 +792,16 @@ function calcUni(c) {
       q.elec = !!+x.elec;
       list.push(q);
     });
-    asignarID(list, c);
     circ.push(...list);
   });
   const bal = balancear(circ, sk, (P.FIX || {}).uni);
+  // Diferenciales de cada tablero, ya con la fase de cada circuito
+  tabs.forEach(tb =>
+    asignarID(
+      circ.filter(q => q.tab === tb.tab),
+      c
+    )
+  );
   return {
     mode: "uni",
     uso: viv ? "viv" : c.uso,
@@ -963,7 +988,6 @@ function calcMulti(c) {
       q.elec = !!+x.elec;
       return q;
     });
-    asignarID(l, c);
     circ.push(...l);
   }
   T.forEach((t, ti) => {
@@ -1013,6 +1037,11 @@ function calcMulti(c) {
     });
   const balItems = [...units.map(u => ({ ...u, key: u.ref })), ...circ.filter(q => q.tab === "TSG")];
   const bal = balancear(balItems, sk, (P.FIX || {}).multi);
+  // Diferenciales del tablero de servicios generales, ya con la fase de cada circuito
+  asignarID(
+    circ.filter(q => q.tab === "TSG"),
+    c
+  );
   const emerg = SV.some(s => /emergencia/i.test(s.nombre));
   const CI =
     T.reduce(
