@@ -2746,7 +2746,8 @@ body.arrastrando * {
   .ex-h1 span {
     color: #9a5a23;
   }
-  .ex-h1 small {
+  .ex-h1 small,
+  .ex-h2 small {
     margin-left: auto;
     font:
       500 8.5pt "IBM Plex Mono",
@@ -3249,7 +3250,8 @@ body.arrastrando * {
   }
   .ex-formal .card h2 .ref,
   .ex-formal .ex-toc li span,
-  .ex-formal .ex-h1 small {
+  .ex-formal .ex-h1 small,
+  .ex-formal .ex-h2 small {
     font-family: Arial, Helvetica, sans-serif !important;
   }
 }

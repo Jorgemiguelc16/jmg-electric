@@ -9,7 +9,12 @@ let TAB_PEINADO = false;
 try {
   TAB_PEINADO = localStorage.getItem("jmg-electric-peinado") === "1";
 } catch (e) {}
-function tableros(r) {
+function tableros(r, op = {}) {
+  // Una lámina: sus tableros (todos, o los que le tocan si el plano se divide), si lleva el detalle de la señal (la
+  // última) y su número
+  const TABS = op.tabs || r.tabs,
+    SENAL = op.senal !== false,
+    HOJA = op.hoja || "IE-04";
   const PEIN = TAB_PEINADO,
     c = r.c,
     o = [],
@@ -34,7 +39,11 @@ function tableros(r) {
       ln("#ffd200", w * 0.6, "3 3");
     } else ln(COLC[b] || INK, w);
   };
-  T(20, 28, "DETALLE DE TABLEROS", { s: 13, b: 1, f: NAVY });
+  T(20, 28, op.cont ? `DETALLE DE TABLEROS (continuación de la lámina ${op.cont})` : "DETALLE DE TABLEROS", {
+    s: 13,
+    b: 1,
+    f: NAVY
+  });
   T(
     20,
     43,
@@ -51,7 +60,7 @@ function tableros(r) {
     x1 = W - 20,
     ancho = 28 * MW;
   let yb = 58;
-  r.tabs.forEach(tb => {
+  TABS.forEach(tb => {
     const pt = polosTablero(r, tb),
       a = r.alims[tb.feeder],
       pa = a.s.tri ? 3 : 2,
@@ -378,45 +387,51 @@ function tableros(r) {
     yb = yc + bh + 28;
   });
 
-  /* ---------- Señal de seguridad 141-02-02 ---------- */
-  o.push(`<g data-capa="E-DETALLE">`);
-  R(20, yb, W - 40, 18, { st: "", fi: NAVY });
-  T(W / 2, yb + 12.5, "SEÑAL DE SEGURIDAD EN LA PUERTA DE CADA TABLERO · NORMA DGE 141-02-02", {
-    s: 8.5,
-    b: 1,
-    a: "middle",
-    f: "#fff"
-  });
-  const ys = yb + 26,
-    d = 150,
-    sx = 120,
-    sy = ys + 18 + d * 0.577;
-  senalRiesgoElectrico(o, sx, sy, d);
-  // Cotas: lado d y banda 0.10 d
-  const yd = sy + d * 0.289 + 14;
-  L(sx - d / 2, yd, sx + d / 2, yd, 0.7, GR);
-  L(sx - d / 2 - 3, yd + 3, sx - d / 2 + 3, yd - 3, 0.9, GR);
-  L(sx + d / 2 - 3, yd + 3, sx + d / 2 + 3, yd - 3, 0.9, GR);
-  T(sx, yd - 3, "d", { s: 8, b: 1, a: "middle" });
-  L(sx + d / 2 - 4, sy + d * 0.289 - 8, sx + d / 2 + 30, sy + d * 0.289 - 40, 0.6, GR);
-  T(sx + d / 2 + 32, sy + d * 0.289 - 42, "Banda 0.10 d", { s: 7.2, f: GR });
-  T(sx, yd + 16, "Señal de símbolo", { s: 7.2, b: 1, a: "middle", f: GR });
-  const hT = senalRiesgoTexto(o, 300, ys + 10, 120);
-  T(360, ys + 10 + hT + 14, "Señal de símbolo con texto", { s: 7.2, b: 1, a: "middle", f: GR });
-  const esp = [
-    "Señal de advertencia de peligro «Riesgo eléctrico» (Norma DGE, Parte III, Sección 14, código 141-02-02).",
-    "Triángulo equilátero de lado d: fondo amarillo, banda triangular negra de 0.10 d y símbolo negro (Figura 134-03).",
-    "Con texto: fondo gris oscuro, señal arriba y texto blanco «¡Peligro! Riesgo eléctrico» en letra sanserif.",
-    "Tamaño según la distancia de observación l: A ≥ l² / 2000 (A en m², l en m, para l menor de 50 m).",
-    "Iluminación de al menos 50 lux sobre la señal; detalles del símbolo de al menos 3 % de la dimensión mayor.",
-    "Se coloca en la puerta de cada tablero para indicar la presencia de riesgo eléctrico."
-  ];
-  esp.forEach((t, i) => {
-    T(470, ys + 26 + i * 22, `${i + 1}.`, { s: 7.8, b: 1, f: NAVY });
-    T(484, ys + 26 + i * 22, t, { s: 7.8 });
-  });
-  o.push(`</g>`);
-  yb = Math.max(yd + 24, ys + 10 + hT + 24, ys + 26 + esp.length * 22) + 8;
+  /* ---------- Señal de seguridad 141-02-02 (en la última lámina) ---------- */
+  if (SENAL) {
+    o.push(`<g data-capa="E-DETALLE">`);
+    R(20, yb, W - 40, 18, { st: "", fi: NAVY });
+    T(W / 2, yb + 12.5, "SEÑAL DE SEGURIDAD EN LA PUERTA DE CADA TABLERO · NORMA DGE 141-02-02", {
+      s: 8.5,
+      b: 1,
+      a: "middle",
+      f: "#fff"
+    });
+    const ys = yb + 26,
+      d = 150,
+      sx = 120,
+      sy = ys + 18 + d * 0.577;
+    senalRiesgoElectrico(o, sx, sy, d);
+    // Cotas: lado d y banda 0.10 d
+    const yd = sy + d * 0.289 + 14;
+    L(sx - d / 2, yd, sx + d / 2, yd, 0.7, GR);
+    L(sx - d / 2 - 3, yd + 3, sx - d / 2 + 3, yd - 3, 0.9, GR);
+    L(sx + d / 2 - 3, yd + 3, sx + d / 2 + 3, yd - 3, 0.9, GR);
+    T(sx, yd - 3, "d", { s: 8, b: 1, a: "middle" });
+    L(sx + d / 2 - 4, sy + d * 0.289 - 8, sx + d / 2 + 30, sy + d * 0.289 - 40, 0.6, GR);
+    T(sx + d / 2 + 32, sy + d * 0.289 - 42, "Banda 0.10 d", { s: 7.2, f: GR });
+    T(sx, yd + 16, "Señal de símbolo", { s: 7.2, b: 1, a: "middle", f: GR });
+    const hT = senalRiesgoTexto(o, 300, ys + 10, 120);
+    T(360, ys + 10 + hT + 14, "Señal de símbolo con texto", { s: 7.2, b: 1, a: "middle", f: GR });
+    const esp = [
+      "Señal de advertencia de peligro «Riesgo eléctrico» (Norma DGE, Parte III, Sección 14, código 141-02-02).",
+      "Triángulo equilátero de lado d: fondo amarillo, banda triangular negra de 0.10 d y símbolo negro (Figura 134-03).",
+      "Con texto: fondo gris oscuro, señal arriba y texto blanco «¡Peligro! Riesgo eléctrico» en letra sanserif.",
+      "Tamaño según la distancia de observación l: A ≥ l² / 2000 (A en m², l en m, para l menor de 50 m).",
+      "Iluminación de al menos 50 lux sobre la señal; detalles del símbolo de al menos 3 % de la dimensión mayor.",
+      "Se coloca en la puerta de cada tablero para indicar la presencia de riesgo eléctrico."
+    ];
+    esp.forEach((t, i) => {
+      T(470, ys + 26 + i * 22, `${i + 1}.`, { s: 7.8, b: 1, f: NAVY });
+      T(484, ys + 26 + i * 22, t, { s: 7.8 });
+    });
+    o.push(`</g>`);
+    yb = Math.max(yd + 24, ys + 10 + hT + 24, ys + 26 + esp.length * 22) + 8;
+  }
+  if (op.sigue) {
+    T(20, yb + 4, `Continúa en la lámina ${op.sigue}`, { s: 8, b: 1, f: CU });
+    yb += 14;
+  }
 
   /* ---------- Notas y rótulo ---------- */
   const hr = 124,
@@ -453,15 +468,62 @@ function tableros(r) {
     ny += 1.5;
   });
   o.push(`</g>`);
-  rotuloSvg(o, rx, yb, rw, hr, c.proj, "Detalle de tableros y señal de seguridad · Escala S/E", "IE-04");
+  rotuloSvg(
+    o,
+    rx,
+    yb,
+    rw,
+    hr,
+    c.proj,
+    "Detalle de tableros y señal de seguridad · Escala S/E",
+    HOJA + (op.parte ? " · " + op.parte : "")
+  );
   const H = yb + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
   return { svg, W, H };
 }
+/* Láminas del detalle de tableros: el dibujo tiene un ancho fijo, así que cada lámina lleva los tableros que entran
+   sin que el alto obligue a reducirlo (el dibujo ocupa todo el ancho de la lámina elegida); los demás pasan a IE-04A,
+   IE-04B… El detalle de la señal va en la última. */
+function tablerosHojas(r, lam = laminaPlano()) {
+  const [lw, lh] = LAMINAS[lam] || LAMINAS.A3,
+    cabe = u => (lh - 20) / u.H >= (lw - 20) / u.W - 1e-9,
+    hojas = [];
+  let act = [];
+  r.tabs.forEach(tb => {
+    const prueba = [...act, tb];
+    if (!act.length || cabe(tableros(r, { tabs: prueba, senal: false }))) act = prueba;
+    else {
+      hojas.push(act);
+      act = [tb];
+    }
+  });
+  // La señal va con los últimos tableros si entra; si no, en una lámina propia
+  const conSenal = cabe(tableros(r, { tabs: act }));
+  hojas.push(act);
+  if (!conSenal && act.length) hojas.push([]);
+  const n = hojas.length,
+    nom = i => (i ? "IE-04" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i - 1] : "IE-04");
+  return hojas
+    .map((tabs, i) => ({
+      ...tableros(r, {
+        tabs,
+        senal: i === n - 1,
+        hoja: nom(i),
+        cont: i ? "IE-04" : "",
+        parte: n > 1 ? `${i + 1}/${n}` : "",
+        sigue: i < n - 1 ? nom(i + 1) : ""
+      }),
+      hoja: nom(i),
+      lam
+    }))
+    .map(h => ({ ...h, mm: Math.min((lw - 20) / h.W, (lh - 20) / h.H) * 7 * 0.72 }));
+}
 function cardTableros(r, nro) {
-  const u = tableros(r);
+  const hs = tablerosHojas(r),
+    u = { svg: hs.map(h => h.svg).join('</div><div class="unif">') };
   return `<section class="card"><h2><span><span class="num">${nro}</span>Detalle de tableros</span></h2>
-  <div class="unif">${u.svg}</div><div class="body"><p class="hint">Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo. Se descarga en DXF, PNG y SVG desde la cinta (Planos).</p></div></section>`;
+  <div class="unif">${u.svg}</div><div class="body"><p class="hint">Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo. Se descarga en DXF, PNG y SVG desde la cinta (Planos).${hs.length > 1 ? ` Dividido en ${hs.length} láminas (${hs.map(h => h.hoja).join(", ")}) para que, impreso en ${hs[0].lam}, el dibujo ocupe todo el ancho de la lámina.` : ""}</p></div></section>`;
 }
 
 // Casilla de la cinta (Planos › Tableros peinados): cambia la vista interior y las descargas

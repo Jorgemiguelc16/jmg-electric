@@ -225,7 +225,12 @@ const PLANOS = {
     })),
   alturas: () => [{ ...alturas(LAST), nom: "Diagrama de alturas", corto: "Alturas" }],
   detalles: () => [{ ...detalles(LAST), nom: "Leyenda y detalles", corto: "Detalles" }],
-  tableros: () => [{ ...tableros(LAST), nom: "Detalle de tableros", corto: "Tableros" }]
+  tableros: lam =>
+    tablerosHojas(LAST, lam).map((h, i, a) => ({
+      ...h,
+      nom: "Detalle de tableros" + (a.length > 1 ? " " + h.hoja : ""),
+      corto: "Tableros" + (a.length > 1 ? " " + h.hoja : "")
+    }))
 };
 const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();
 /* Diálogo de descarga DXF */

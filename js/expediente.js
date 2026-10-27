@@ -335,19 +335,36 @@ function expediente(r, estilo = "formal") {
   B += cap("Metrado de materiales") + cardMetrado(r) + fin;
 
   /* ---------- 5. PLANOS ---------- */
-  // Lámina horizontal o vertical: la que imprime el diagrama más grande (área útil A4 ≈ 269 × 163 mm o 182 × 245 mm)
-  // El expediente se imprime en A4: el unifilar se divide en las láminas que hagan falta (IE-01, IE-01A…)
-  n1++;
-  n2 = 0;
-  TOC.push([`${n1}`, "Planos · diagrama unifilar", 0]);
-  unifilarHojas(r, "A4").forEach((U, i) => {
-    const horiz = Math.min(269 / U.W, 163 / U.H) >= Math.min(182 / U.W, 245 / U.H);
+  // Las mismas láminas que se descargan en DXF (la lámina elegida en Planos), cada una reducida a una página A4;
+  // horizontal o vertical: la que imprime el dibujo más grande (área útil A4 ≈ 269 × 163 mm o 182 × 245 mm)
+  const lam = laminaPlano(),
+    LAMS = [
+      ...unifilarHojas(r, lam).map(h => ({ ...h, tit: "Diagrama unifilar" })),
+      { ...alturas(r), hoja: "IE-02", tit: "Diagrama de alturas de montaje" },
+      { ...detalles(r), hoja: "IE-03", tit: "Leyenda de símbolos y detalle del pozo de puesta a tierra" },
+      ...tablerosHojas(r, lam).map(h => ({ ...h, tit: "Detalle de tableros y señal de seguridad" }))
+    ];
+  // Continuaciones: «(continuación)» en el título cuando el plano sigue de la lámina anterior
+  LAMS.forEach((h, k) => (h.cont = k > 0 && LAMS[k - 1].tit === h.tit));
+  B += cap("Planos");
+  B += sub("Lista de láminas");
+  B += tbl(
+    ["Lámina", "Contenido", "Formato"],
+    [
+      ...LAMS.map(h => [`<b>${h.hoja}</b>`, h.tit + (h.cont ? " (continuación)" : ""), lam]),
+      ["—", "Planos de planta: distribución de alumbrado, tomacorrientes y fuerza", "Los adjunta el proyectista"]
+    ]
+  );
+  B += `<p>Las láminas se generan a partir de los resultados del cálculo, con los símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME). En este expediente se presentan reducidas a A4; los planos se imprimen en ${lam} desde los archivos DXF. Los planos de planta, con la distribución de las salidas sobre la arquitectura, no los genera la plataforma y los adjunta el proyectista.</p>`;
+  B += fin;
+  LAMS.forEach(h => {
+    const horiz = Math.min(269 / h.W, 163 / h.H) >= Math.min(182 / h.W, 245 / h.H);
+    n2++;
+    TOC.push([`${n1}.${n2}`, `Lámina ${h.hoja} · ${h.tit}${h.cont ? " (continuación)" : ""}`, 1]);
     B +=
       `<section class="ex-sec ex-plano ${horiz ? "ex-ancho" : "ex-alto"}">` +
-      (i
-        ? `<h1 class="ex-h1"><span>${n1}.</span>Planos · diagrama unifilar (continuación) <small>Lámina ${U.hoja} · Escala S/E</small></h1>`
-        : `<h1 class="ex-h1" id="${tid(`${n1}`)}"><span>${n1}.</span>Planos · diagrama unifilar <small>Lámina ${U.hoja} · Escala S/E</small></h1>`) +
-      `<div class="ex-unif">${U.svg}</div>` +
+      `<h2 class="ex-h2" id="${tid(`${n1}.${n2}`)}"><span>${n1}.${n2}</span>${h.tit}${h.cont ? " (continuación)" : ""} <small>Lámina ${h.hoja} · Escala S/E · reducida de ${lam} a A4</small></h2>` +
+      `<div class="ex-unif">${h.svg}</div>` +
       fin;
   });
 

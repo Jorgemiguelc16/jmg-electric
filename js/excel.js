@@ -1321,7 +1321,7 @@ async function exportar() {
     ],
     [
       wsB,
-      [tableros(r)],
+      tablerosHojas(r),
       "DETALLE DE TABLEROS Y SEÑAL DE SEGURIDAD",
       "Hoja 6 de 8",
       "Vista de la puerta con la señal «¡Peligro! Riesgo eléctrico» (Norma DGE 141-02-02) y vista interior de cada tablero con sus dispositivos según el cálculo; capacidad mínima en polos igual a la del metrado."
