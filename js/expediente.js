@@ -67,7 +67,10 @@ function expediente(r, estilo = "formal") {
       if (!/<table/.test(cuerpo)) return `<div class="ex-bloque${cl}">${cuerpo}</div>`;
       const k = cuerpo.indexOf('<div class="body">'),
         tabl = k < 0 ? cuerpo : cuerpo.slice(0, k),
-        nota = k < 0 ? "" : cuerpo.slice(k),
+        // Sin las indicaciones propias de la pantalla (doble clic, colores ámbar)
+        nota = (k < 0 ? "" : cuerpo.slice(k))
+          .replace(/\s*Doble clic[^.<]*\./g, "")
+          .replace(/\s*En ámbar: valores al 90 % o más de su límite( \([^)]*\))?\./g, ""),
         reglas = (ref.match(/\d{3}-\d{3}/g) || []).length,
         norma = reglas > 0 || /Tabla \d/.test(ref);
       const fuente = norma
@@ -274,8 +277,8 @@ function expediente(r, estilo = "formal") {
   );
   B += sub("Cálculo de la máxima demanda");
   B += deCard(cardDemanda(r));
-  B += sub("Alimentadores");
-  B += deCard(tablaAlims(r, ""));
+  B += fin + `<section class="ex-sec ex-ancho">` + sub("Alimentadores");
+  B += deCard(tablaAlims(r, "")) + fin + `<section class="ex-sec ex-cont">`;
   B +=
     `<p class="ex-cap">Desarrollo del cálculo de cada alimentador</p>` +
     r.alims.map(a => detalleCalc(a, true)).join("");
@@ -540,8 +543,17 @@ function expediente(r, estilo = "formal") {
   const indice = `<section class="ex-sec ex-toc"><h1 class="ex-h1">Índice</h1><ol>${TOC.map(([n, t, l]) =>
     li(tid(n), n, t, `l${l}`)
   ).join("")}</ol>
-    <div class="ex-toc2"><div><h2 class="ex-toc-t">Índice de tablas</h2><ol class="chico">${TABLAS.map(([n, t, id]) => li(id, `Tabla ${n}`, t)).join("")}</ol></div>
-      <div><h2 class="ex-toc-t">Lista de láminas</h2><ol class="chico">${LAMS.map(h => `<li><span>${h.hoja}</span>${h.tit}${h.cont ? " (continuación)" : ""}</li>`).join("")}</ol></div></div></section>`;
+    </section>
+    <section class="ex-sec ex-toc"><h1 class="ex-h1">Índice de tablas</h1><ol class="chico">${TABLAS.map(([n, t, id]) =>
+      li(id, `Tabla ${n}`, t)
+    ).join("")}</ol></section>
+    <section class="ex-sec ex-toc"><h1 class="ex-h1">Lista de láminas</h1><ol class="chico">${LAMS.map(h => {
+      // Cada lámina enlaza a su página en el capítulo de planos
+      const e = TOC.find(x => x[1].startsWith(`Lámina ${h.hoja} ·`));
+      return li(e ? tid(e[0]) : "", h.hoja, h.tit + (h.cont ? " (continuación)" : ""));
+    }).join(
+      ""
+    )}</ol><p class="ex-nota">Los planos de planta (distribución de alumbrado, tomacorrientes y fuerza) los adjunta el proyectista.</p></section>`;
   return `<div class="ex ex-${estilo === "formal" ? "formal" : "jmg"}">${portada}${control}${indice}${B}</div>`;
 
   // Desarrollo paso a paso del cálculo de un alimentador o circuito

@@ -2886,12 +2886,12 @@ body.arrastrando * {
   .ex-plano .ex-unif svg {
     width: 100%;
     height: auto;
-    max-height: 165mm;
+    max-height: 150mm;
     display: block;
     margin: 0 auto;
   }
   .ex-alto .ex-unif svg {
-    max-height: 238mm;
+    max-height: 232mm;
   }
   .ex-toc ol {
     list-style: none;
@@ -3376,6 +3376,32 @@ body.arrastrando * {
   #printArea .ex .pt-datos th {
     font-size: 9.5pt !important;
   }
+  /* Celdas centradas en el alto de la fila, con la letra del documento; «Cumple» como texto, sin recuadro */
+  #printArea .ex table td,
+  #printArea .ex table th {
+    font-family: inherit !important;
+  }
+  #printArea .ex table td {
+    vertical-align: middle;
+  }
+  /* Valores cortos (3×63 A, 10 kA) en una sola línea: solo el texto descriptivo puede partirse */
+  #printArea .ex .ex-card td:not(.t) {
+    white-space: nowrap;
+  }
+  #printArea .ex .pill {
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    font: inherit !important;
+    font-weight: 700 !important;
+    color: inherit !important;
+  }
+  #printArea .ex-jmg .pill.ok {
+    color: #2f7a4b !important;
+  }
+  #printArea .ex-jmg .pill.bad {
+    color: #b42318 !important;
+  }
   /* Tablas de dos columnas (dato · valor): el dato en gris, sin fondo */
   #printArea .ex .ex-kv th {
     width: 38%;
@@ -3531,7 +3557,7 @@ body.arrastrando * {
   }
   #printArea .ex .ex-toc li {
     display: block;
-    padding: 2.5pt 0;
+    padding: 1.8pt 0;
     border-bottom: 0.3pt dotted #bbb;
   }
   #printArea .ex .ex-toc li a {
@@ -3545,24 +3571,10 @@ body.arrastrando * {
   }
   #printArea .ex .ex-toc li.l0 {
     font-weight: 700;
-    margin-top: 5pt;
+    margin-top: 4pt;
   }
   #printArea .ex .ex-toc li.l1 {
     padding-left: 34pt;
-  }
-  .ex-toc2 {
-    display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 20pt;
-    margin-top: 6pt;
-    break-before: auto;
-  }
-  #printArea .ex .ex-toc-t {
-    font-size: 9.5pt;
-    margin: 14pt 0 4pt;
-    text-transform: uppercase;
-    letter-spacing: 0.6pt;
-    color: #333;
   }
   #printArea .ex .ex-toc ol.chico li {
     font-size: 8.6pt;
