@@ -67,8 +67,8 @@ function tableroGeneral(r) {
     `Tablero general · ${sis.txt} · PdC ${gen.pdc} kA · interruptor general ${polos.length}×${gen.itm} A · ${M.length} suministros · llega de la caja toma F1`,
     { s: 8, f: GR }
   );
-  /* Gabinete: la puerta, del mismo alto que la vista interior, en la proporción de su medida de catálogo (criterio);
-     la vista interior conserva su ancho para que se lean las barras y las salidas */
+  /* Gabinete: la puerta y la vista interior del mismo tamaño, porque son el mismo tablero, en la proporción de su
+     medida de catálogo (criterio); los textos van fuera del gabinete, con su línea de referencia */
   const yc = yb + 24,
     np = polos.length,
     mh = 116,
@@ -80,12 +80,13 @@ function tableroGeneral(r) {
     yPE = yDin + 40,
     bh = yPE + 36 - yc,
     gm = medidaGabinete(0, true),
-    wG = 380,
-    xD = 20,
-    wD = Math.min(wG, Math.max(170, (bh * gm.a) / gm.h)),
-    // Vista interior junto a la puerta, como en el detalle de tableros
+    wG = Math.min(330, Math.max(230, (bh * gm.a) / gm.h)),
+    wD = wG,
+    // Puerta e interior juntos, centrados en el espacio libre a la izquierda del cuadro de datos
+    xD = 20 + Math.max(0, (W - 314 - (2 * wG + 24 + 150)) / 2),
     x0 = xD + wD + 24,
-    xc = x0 + wG / 2;
+    xc = x0 + wG / 2,
+    xF = x0 + wG + 8;
   const pp = 26,
     mw = np * pp + 18,
     mx = xc - mw / 2,
@@ -135,10 +136,13 @@ function tableroGeneral(r) {
   R(mx + mw - 26, my + 40, 16, 34, { fi: "#e6e9ed", st: "", sw: 0 });
   R(mx + mw - 22, my + 44, 8, 12, { fi: INK, st: "", sw: 0 });
   T(mx + 10, my + 82, `Icu ${gen.pdc} kA`, { s: 6.2, f: "#fff" });
-  // Datos del interruptor y de la llegada, a su derecha
-  const xt = mx + mw + 12;
+  // Datos del interruptor y de la llegada, fuera del gabinete con su línea de referencia
+  const xt = xF + 4,
+    ref = (x, y) => L(x, y, xF, y, 0.5, GR);
+  ref(bx(np - 1) + 4, yc + 17);
   T(xt, yc + 20, "Llega de la caja toma F1", { s: 6.8, b: 1, f: NAVY });
   T(xt, yc + 30, cond(tri ? sis.n : 2, gen.S, gen.St), { s: 6.6, f: GR });
+  ref(mx + mw + 2, my + 27);
   T(xt, my + 30, "INTERRUPTOR GENERAL", { s: 7.4, b: 1, f: NAVY });
   T(xt, my + 42, `${np}×${gen.itm} A · ${gen.pdc} kA`, { s: 7.2, b: 1 });
   T(xt, my + 53, "Caja moldeada", { s: 6.6, f: GR });
@@ -189,7 +193,7 @@ function tableroGeneral(r) {
     );
   /* Salidas: la pletina de cada fase sale del perno de su barra hacia la bornera de la derecha y pasa por delante de
      las otras barras, que están en otro plano sobre sus aisladores: donde cruza lleva una manga aislante. El neutro
-     de cada suministro sale de la barra N hacia la izquierda. */
+     de cada suministro sale de la barra N hacia la izquierda, en la fila de su primera fase. */
   const xS = xb0 + anchoB + 24,
     xNL = xb0 - 24;
   filas.forEach((sa, k) => {
@@ -198,30 +202,37 @@ function tableroGeneral(r) {
     barras
       .slice(barras.indexOf(sa.f) + 1)
       .forEach(b => R(xBar(b) - 2, y - 4.5, bw + 4, 9, { fi: "#5a6775", st: INK, sw: 0.5 }));
+    const conNeutro = conN && filas.findIndex(x => x.m === sa.m) === k;
     perno(cx(sa.f), y, 2.4);
     perno(xS, y, 2.4);
-    cable(xS + 3, y, xS + 22, y, sa.f, 1.4);
-    T(xS + 26, y + 3, `${sa.m.nom} · ${nomF(sa.f)} → ${sa.m.tab}`, { s: 6.2, b: 1, f: colTxt(sa.f) });
-    if (conN && filas.findIndex(x => x.m === sa.m) === k) {
+    cable(xS + 3, y, xS + 18, y, sa.f, 1.4);
+    ref(xS + 20, y);
+    T(xt, y + 3, `${sa.m.nom} · ${nomF(sa.f)}${conNeutro ? "-N" : ""} → ${sa.m.tab}`, {
+      s: 6.2,
+      b: 1,
+      f: colTxt(sa.f)
+    });
+    if (conNeutro) {
       R(xNL, y - 2.5, cx("N") - xNL, 5, { fi: "#c98a4b", st: CU, sw: 0.5 });
       perno(cx("N"), y, 2.2);
       perno(xNL, y, 2.2);
       cable(xNL - 18, y, xNL - 3, y, "N", 1.4);
-      T(xNL - 21, y + 3, `N · ${sa.m.nom}`, { s: 6, a: "end", f: GR });
     }
   });
   // Riel DIN para equipos (DPS u otros, si el proyecto los lleva)
-  R(xc - 130, yDin, 260, 14, { fi: "#c9ced5", st: GR, sw: 0.7 });
-  for (let x = xc - 124; x < xc + 126; x += 12) R(x, yDin + 5, 6, 4, { fi: "#e6e9ed", st: "", sw: 0 });
-  T(xc + 136, yDin + 10, "Riel DIN", { s: 6.6, f: GR });
+  const mr = (wG - 70) / 2;
+  R(xc - mr, yDin, 2 * mr, 14, { fi: "#c9ced5", st: GR, sw: 0.7 });
+  for (let x = xc - mr + 6; x < xc + mr - 4; x += 12) R(x, yDin + 5, 6, 4, { fi: "#e6e9ed", st: "", sw: 0 });
+  ref(xc + mr + 2, yDin + 7);
+  T(xt, yDin + 10, "Riel DIN", { s: 6.6, f: GR });
   // Barra de tierra con sus bornes y aisladores; conductor de tierra a la puerta y al pozo
-  R(xc - 150, yPE, 300, 10, { fi: CU, st: "", sw: 0 });
-  [xc - 158, xc + 148].forEach(x => R(x, yPE - 2, 10, 14, { fi: "#ffd200", st: GR, sw: 0.5 }));
-  for (let x = xc - 140; x < xc + 146; x += 18) C(x, yPE + 5, 2.4, { fi: "#fff", st: GR, sw: 0.5 });
+  R(xc - mr, yPE, 2 * mr, 10, { fi: CU, st: "", sw: 0 });
+  [xc - mr - 8, xc + mr - 2].forEach(x => R(x, yPE - 2, 10, 14, { fi: "#ffd200", st: GR, sw: 0.5 }));
+  for (let x = xc - mr + 10; x < xc + mr - 4; x += 18) C(x, yPE + 5, 2.4, { fi: "#fff", st: GR, sw: 0.5 });
   T(xc, yPE + 24, `Barra de tierra (PE) · ${r.Selec} mm² al pozo`, { s: 6.8, a: "middle", f: VE });
   tramo(
     [
-      [xc + 158, yPE + 5],
+      [xc + mr + 8, yPE + 5],
       [x0 + wG - 14, yPE + 5],
       [x0 + wG - 14, yPE - 34]
     ],
@@ -233,7 +244,7 @@ function tableroGeneral(r) {
     [
       [x0 + 10, yc + 6],
       [x0 + 10, yPE + 5],
-      [xc - 158, yPE + 5]
+      [xc - mr - 8, yPE + 5]
     ],
     "PE",
     1.6

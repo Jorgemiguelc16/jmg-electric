@@ -51,15 +51,15 @@ function polosTablero(r, tb) {
   eqs.forEach(e => (m += e.pol));
   return { m, ids, eqs, fd, cs, tri };
 }
-/* Medida referencial del gabinete (ancho × alto, mm) según su capacidad en polos: rangos de catálogo de los
-   fabricantes, no del CNE (criterio). El tablero general del edificio, con interruptor en caja moldeada, va en un
-   gabinete de adosar de 600 × 1000 mm. */
+/* Medida referencial del gabinete (ancho × alto, mm) según su capacidad en polos y polos por fila de riel DIN que
+   caben en su ancho: rangos de catálogo de los fabricantes, no del CNE (criterio). El tablero general del edificio,
+   con interruptor en caja moldeada, va en un gabinete de adosar de 600 × 1000 mm. */
 function medidaGabinete(polos, moldeada = false) {
-  if (moldeada) return { a: 600, h: 1000 };
-  if (polos <= 12) return { a: 250, h: 300 };
-  if (polos <= 24) return { a: 300, h: 400 };
-  if (polos <= 54) return { a: 500, h: 800 };
-  return { a: 600, h: 1200 };
+  if (moldeada) return { a: 600, h: 1000, pf: 28 };
+  if (polos <= 12) return { a: 250, h: 300, pf: 10 };
+  if (polos <= 24) return { a: 300, h: 400, pf: 12 };
+  if (polos <= 54) return { a: 500, h: 800, pf: 18 };
+  return { a: 600, h: 1200, pf: 24 };
 }
 function metrado(r) {
   const c = r.c,

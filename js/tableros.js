@@ -58,15 +58,16 @@ function tableros(r, op = {}) {
       f: GR
     }
   );
-  // Módulos de riel DIN: ancho por polo y alto; filas de hasta 28 polos, como en un tablero real, para que el gabinete deje lugar a sus datos
+  // Módulos de riel DIN: ancho por polo y alto
   const MW = 20,
     MH = 60,
-    x0 = 214,
-    x1 = W - 20,
-    ancho = 28 * MW;
+    x1 = W - 20;
   let yb = 58;
   TABS.forEach(tb => {
     const pt = polosTablero(r, tb),
+      // Polos por fila: los que caben en el ancho del gabinete de catálogo, como en un tablero real (criterio)
+      gm = medidaGabinete(pt.m),
+      ancho = gm.pf * MW + 18,
       a = r.alims[tb.feeder],
       pa = a.s.tri ? 3 : 2,
       sys = a.s,
@@ -179,11 +180,20 @@ function tableros(r, op = {}) {
       dH = 18 + filasD.length * 17,
       cH = PEIN ? 32 + sal.length * 13 : 0;
     const PASO = MH + 84,
-      ih = 48 + (filas.length - 1) * PASO + MH + 50 + 44,
-      bh = Math.max(ih, 190, PEIN ? dH + 12 + cH : dH),
+      ih = 58 + (filas.length - 1) * PASO + MH + 50 + 44,
+      bh0 = Math.max(ih, 190, PEIN ? dH + 12 + cH : dH),
       // Ancho del gabinete según su fila más larga
-      uw = Math.max(...filas.map(f => (f.length ? f[f.length - 1].x + f[f.length - 1].pol * MW : 0)), 300),
-      gw = uw + 56;
+      uw = Math.max(...filas.map(f => (f.length ? f[f.length - 1].x + f[f.length - 1].pol * MW : 0)), 200),
+      gw = uw + 56,
+      // Alto: al menos la proporción del gabinete de catálogo; lo que sobra queda para los conductores sobre las barras
+      bh = Math.max(bh0, (gw * gm.h) / gm.a),
+      /* La puerta es el mismo gabinete: del mismo tamaño que la vista interior (a escala menor si las dos no caben
+         juntas), y las dos centradas en el espacio a la izquierda del cuadro de datos */
+      libre = x1 - 250 - 24 - 20,
+      pw = Math.min(gw, libre - 24 - gw),
+      ph = (bh * pw) / gw,
+      px = 20 + Math.max(0, (libre - pw - 24 - gw) / 2),
+      x0 = px + pw + 24;
     // Encabezado del tablero
     T(20, yb + 14, `TABLERO ${tb.tab}`, { s: 11, b: 1, f: NAVY });
     T(
@@ -193,26 +203,24 @@ function tableros(r, op = {}) {
       { s: 8, f: GR }
     );
     const yc = yb + 24;
-    // Vista de la puerta con la señal de riesgo eléctrico, en la proporción de su medida de catálogo (criterio)
-    const gm = medidaGabinete(pt.m),
-      pw = Math.min(160, (bh * gm.a) / gm.h),
-      ph = (pw * gm.h) / gm.a,
-      px = 110 - pw / 2;
+    // Vista de la puerta con la señal de riesgo eléctrico y la placa del tablero
+    const pc = px + pw / 2,
+      sS = Math.min(70, pw * 0.45, (ph - 66) / 1.45);
     R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
     R(px + 7, yc + 7, pw - 14, ph - 14, { fi: "#f3f6f9", sw: 0.9 });
     R(px + pw - 20, yc + ph / 2 - 14, 5, 28, { fi: INK, sw: 0.8 });
-    senalRiesgoTexto(o, 75, yc + 22, 70);
-    R(70, yc + 140, 80, 22, { fi: "#fff", sw: 0.9 });
-    T(110, yc + 155, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
-    T(110, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
-    T(110, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
+    const yS = yc + 22 + senalRiesgoTexto(o, pc - sS / 2, yc + 22, sS) + 12;
+    R(pc - 40, yS, 80, 22, { fi: "#fff", sw: 0.9 });
+    T(pc, yS + 15, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
+    T(pc, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
+    T(pc, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
     // Vista interior
     // Fondo del gabinete sin relleno: en el DXF solo van en gris los equipos, el riel y las canaletas
     R(x0, yc, gw, bh, { sw: 1.4 });
     R(x0 + 6, yc + 6, gw - 12, bh - 12, { st: LN, sw: 0.7 });
     T(x0 + gw / 2, yc + bh + 14, "VISTA INTERIOR (SIN PUERTA NI CUBIERTA)", { s: 7, b: 1, a: "middle", f: GR });
     filas.forEach((fila, fi) => {
-      const yf = yc + 48 + fi * PASO,
+      const yf = yc + 58 + fi * PASO,
         xs = x0 + 28,
         fw = fila.length ? fila[fila.length - 1].x + fila[fila.length - 1].pol * MW : 0;
       // Canaletas ranuradas arriba y abajo de la fila
@@ -308,12 +316,8 @@ function tableros(r, op = {}) {
             cable(xk, yc + 6, xk, yf - 30, b, 1.8);
             T(xk + 2, yc + 26, b, { s: 5.4, b: 1, f: colTxt(b) });
           });
-          T(xs + uw - 10 - bAlim.length * 7, yc + 16, `Llega del ${origen} · ${cond(a.s.n, a.S, a.St)}`, {
-            s: 6.4,
-            b: 1,
-            a: "end",
-            f: NAVY
-          });
+          T(xs + uw - 10 - bAlim.length * 7, yc + 16, `Llega del ${origen}`, { s: 6.4, b: 1, a: "end", f: NAVY });
+          T(xs + uw - 10 - bAlim.length * 7, yc + 25, cond(a.s.n, a.S, a.St), { s: 6.2, a: "end", f: GR });
         }
       }
       // Llave de cada diferencial bajo sus circuitos (sin peinar: bajo el módulo van los conductores)
@@ -343,7 +347,7 @@ function tableros(r, op = {}) {
     // Peinado: un conductor de neutro y uno de protección por salida, de las barras a la última canaleta
     if (PEIN) {
       const nS = sal.length,
-        yk = yc + 48 + (filas.length - 1) * PASO + MH + 50;
+        yk = yc + 58 + (filas.length - 1) * PASO + MH + 50;
       for (let i = 0; i < nS; i++) {
         if (conN) cable(x0 + 28 + ((i + 0.5) * bw) / nS, ybar, x0 + 28 + ((i + 0.5) * bw) / nS, yk, "N", 0.9);
         cable(x0 + 52 + bw + ((i + 0.5) * bw) / nS, ybar, x0 + 52 + bw + ((i + 0.5) * bw) / nS, yk, "PE", 0.9);
