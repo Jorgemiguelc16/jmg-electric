@@ -932,6 +932,9 @@ function svgDxf(svgTxt, op = {}) {
     "#e6e9ed": 253,
     "#d5dae0": 253,
     "#c9ced5": 252,
+    // Tapa ahumada del tablero de PVC y su brillo
+    "#8f98a3": 8,
+    "#a9b1ba": 9,
     // Barra de tierra, en verde como en pantalla
     "#2f7a4b": 3
   };

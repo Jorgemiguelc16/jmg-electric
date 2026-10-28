@@ -175,8 +175,8 @@ function renderTablero() {
           usaPvc = pt.m <= 24 && (sel === "pvc" || (!sel && porDef)),
           defe = { ...medidaGabinete(pt.m, false, porDef), tipo: porDef ? "pvc" : "metal" },
           g = { ...medidaGabinete(pt.m, false, usaPvc), tipo: usaPvc ? "pvc" : "metal" },
-          op = (v, t, d) =>
-            `<label class="ft-eq${sel !== (act.gab || "") && sel === v ? " mod" : ""}"><input type="radio" name="ftgab" data-ftgab="${v}"${sel === v ? " checked" : ""}><span><b>${t}</b><small>${d}</small></span></label>`;
+          op = (v, t, d, dis) =>
+            `<label class="ft-eq${sel !== (act.gab || "") && sel === v ? " mod" : ""}"><input type="radio" name="ftgab" data-ftgab="${v}"${sel === v ? " checked" : ""}${dis ? " disabled" : ""}><span><b>${t}</b><small>${d}</small></span></label>`;
         return (
           `<fieldset class="fc-g"><legend>Gabinete</legend>` +
           op(
@@ -184,7 +184,14 @@ function renderTablero() {
             "Por defecto",
             `${defe.tipo === "pvc" ? "PVC empotrable con tapa transparente" : "Metálico empotrado"}, ${defe.a} × ${defe.h} mm`
           ) +
-          op("pvc", "PVC empotrable con tapa transparente", "Viviendas y departamentos; de catálogo hasta 24 polos") +
+          op(
+            "pvc",
+            "PVC empotrable con tapa transparente",
+            pt.m > 24
+              ? `Este tablero tiene ${pt.m} polos; el PVC de catálogo llega hasta 24`
+              : "Viviendas y departamentos; de catálogo hasta 24 polos",
+            pt.m > 24
+          ) +
           op("metal", "Metálico empotrado", "Tableros generales, de servicios generales o de más de 24 polos") +
           `</fieldset><p class="fc-nota">Usado: ${g.tipo === "pvc" ? "PVC empotrable" : "metálico"}, ${g.a} × ${g.h} mm (referencial, de catálogo).${pt.m > 24 && sel === "pvc" ? " Con más de 24 polos va metálico: no hay medida de catálogo de PVC." : ""}</p>`
         );

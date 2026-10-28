@@ -207,34 +207,37 @@ function tableros(r, op = {}) {
     const pc = px + pw / 2,
       nomT = tb.tab === "TSG" ? "SERVICIOS GENERALES" : tb.tab === "TG" ? "TABLERO GENERAL" : "TABLERO DE DISTRIBUCIÓN";
     if (gm.tipo === "pvc") {
-      /* Puerta del tablero de PVC: marco blanco y una tapa ahumada por fila, a través de la cual se ven los
-         interruptores, con su lengüeta abajo; señal de riesgo eléctrico y placa en la franja libre de abajo */
+      /* Puerta del tablero de PVC, como la de catálogo: marco blanco con su borde y el relieve de la marca, y una tapa
+         de policarbonato ahumado por fila, con su brillo arriba y su lengüeta abajo, a través de la cual se ven los
+         interruptores; abajo, una plaquita con el nombre del tablero (sin señal de riesgo eléctrico: criterio) */
       const sc = pw / gw,
         X = x => px + (x - x0) * sc,
         Yd = y => yc + (y - yc) * sc;
       R(px, yc, pw, ph, { fi: "#ffffff", st: GR, sw: 1.4 });
-      R(px + 6, yc + 6, pw - 12, ph - 12, { fi: "#f3f6f9", st: LN, sw: 0.7 });
+      R(px + 5, yc + 5, pw - 10, ph - 10, { fi: "#ffffff", st: LN, sw: 0.7 });
+      R(px + 14, yc + 9, 30, 8, { st: LN, sw: 0.6 });
+      let yUlt = yc;
       filas.forEach((fila, fi) => {
         const yf = yc + 58 + fi * PASO,
-          xs = x0 + 28;
-        R(X(xs - 14), Yd(yf - 34), (uw + 28) * sc, (MH + 52) * sc, { fi: "#5a6775", st: INK, sw: 0.9 });
+          xs = x0 + 28,
+          tx = X(xs - 14),
+          ty = Yd(yf - 34),
+          tw = (uw + 28) * sc,
+          th = (MH + 52) * sc;
+        R(tx, ty, tw, th, { fi: "#8f98a3", st: GR, sw: 0.9 });
+        R(tx + 3, ty + 3, tw - 6, th * 0.16, { fi: "#a9b1ba", st: "", sw: 0 });
         fila.forEach(m => {
           // Interruptores vistos a través de la tapa: su contorno y la palanca
-          R(X(xs + m.x + 1), Yd(yf + 3), (m.pol * MW - 2) * sc, (MH - 6) * sc, { st: "#bfc8d2", sw: 0.6 });
-          R(X(xs + m.x + (m.pol * MW) / 2 - 3), Yd(yf + 22), 6 * sc, 10 * sc, { fi: "#e6e9ed", st: "", sw: 0 });
+          R(X(xs + m.x + 1), Yd(yf + 3), (m.pol * MW - 2) * sc, (MH - 6) * sc, { st: "#d5dae0", sw: 0.6 });
+          R(X(xs + m.x + (m.pol * MW) / 2 - 3), Yd(yf + 22), 6 * sc, 10 * sc, { fi: "#f3f6f9", st: "", sw: 0 });
         });
-        R(X(xs + uw / 2 - 14), Yd(yf + MH + 18) - 3, 28 * sc, 5, { fi: "#ffffff", st: GR, sw: 0.6 });
+        R(X(xs + uw / 2 - 16), ty + th - 4, 32 * sc, 7, { fi: "#ffffff", st: GR, sw: 0.6 });
+        yUlt = ty + th + 3;
       });
-      const yLib = Yd(yc + 58 + (filas.length - 1) * PASO + MH + 22),
-        hLib = yc + ph - 10 - yLib,
-        sP = Math.max(22, Math.min(100, (hLib - 6) / 1.45)),
-        hP = sP * 1.45,
-        x0P = pc - (sP + 12 + 104) / 2,
-        yP = yLib + Math.max(4, (hLib - hP) / 2);
-      senalRiesgoTexto(o, x0P, yP, sP);
-      R(x0P + sP + 12, yP + hP / 2 - 18, 104, 24, { fi: "#fff", sw: 0.9 });
-      T(x0P + sP + 64, yP + hP / 2 - 1, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
-      T(x0P + sP + 64, yP + hP / 2 + 16, nomT, { s: 6.4, b: 1, a: "middle", f: GR });
+      const yP = yUlt + Math.max(6, (yc + ph - 8 - yUlt - 34) / 2);
+      R(pc - 45, yP, 90, 20, { fi: "#fff", st: GR, sw: 0.8 });
+      T(pc, yP + 14, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
+      T(pc, yP + 31, nomT, { s: 6, b: 1, a: "middle", f: GR });
     } else {
       /* Vista de la puerta metálica, como la del tablero general: bisagras a la izquierda, chapa con manija a la
        derecha, señal de riesgo eléctrico centrada, placa con el nombre del tablero y rejillas de ventilación abajo */
@@ -476,7 +479,9 @@ function tableros(r, op = {}) {
       "Con texto: fondo gris oscuro, señal arriba y texto blanco «¡Peligro! Riesgo eléctrico» en letra sanserif.",
       "Tamaño según la distancia de observación l: A ≥ l² / 2000 (A en m², l en m, para l menor de 50 m).",
       "Iluminación de al menos 50 lux sobre la señal; detalles del símbolo de al menos 3 % de la dimensión mayor.",
-      "Se coloca en la puerta de cada tablero para indicar la presencia de riesgo eléctrico."
+      r.tabs.some(t => gabineteDe(r, t, polosTablero(r, t).m).tipo === "pvc")
+        ? "Se coloca en la puerta de cada tablero metálico; en los de PVC con tapa transparente, a criterio del proyectista."
+        : "Se coloca en la puerta de cada tablero para indicar la presencia de riesgo eléctrico."
     ];
     esp.forEach((t, i) => {
       T(470, ys + 26 + i * 22, `${i + 1}.`, { s: 7.8, b: 1, f: NAVY });
