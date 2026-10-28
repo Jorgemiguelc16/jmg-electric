@@ -1,11 +1,12 @@
 {
   "name": "jmg-electric",
-  "version": "2.7.3",
+  "version": "2.9.8",
   "private": true,
   "description": "JMG - ELECTRIC: cálculo y dimensionamiento de instalaciones eléctricas interiores (CNE-Utilización, RNE EM.010, Norma DGE). Una plataforma de JMG Projects & Energy.",
   "scripts": {
     "test": "node herramientas/pruebas.js",
     "pruebas-ui": "node herramientas/pruebas-ui.mjs",
+    "pruebas-planos": "node herramientas/pruebas-planos.js",
     "formato": "prettier --write \"js/**/*.js\" style.css",
     "revisar-formato": "prettier --check \"js/**/*.js\" style.css",
     "revisar": "node herramientas/revisar.js",
