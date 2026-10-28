@@ -117,8 +117,8 @@ function bancoMedidores(r) {
   // Escala: el banco y sus cotas dentro del recuadro
   const anchoM = bm.tomaA + bm.sepT + D,
     altoM = Math.max(ytop, bm.hMax, bm.tomaS + bm.tomaH) + 0.15,
-    k = Math.min((wA - 150) / anchoM, 320 / altoM),
-    X0 = xA + 70,
+    k = Math.min((wA - 200) / anchoM, 400 / altoM),
+    X0 = xA + 70 + (wA - 200 - anchoM * k) / 2,
     Y0 = yA + 52 + altoM * k,
     X = m => X0 + m * k,
     Y = m => Y0 - m * k;
@@ -140,7 +140,14 @@ function bancoMedidores(r) {
   L(X(-0.1), Y(bm.hMax), X(anchoM + 0.05), Y(bm.hMax), 0.7, "#b42318", "5 3");
   T(X(anchoM + 0.05), Y(bm.hMax) - 3, `Altura máxima ${fmt(bm.hMax, 2)} m`, { s: 7, a: "end", f: "#b42318" });
   // Caja toma F1 y llegada de la acometida
-  R(X(0), Y(bm.tomaS + bm.tomaH), bm.tomaA * k, bm.tomaH * k, { fi: "#e6e9ed", sw: 1.2 });
+  const cTw = bm.tomaA * k,
+    cTh = bm.tomaH * k,
+    cTx = X(0),
+    cTy = Y(bm.tomaS + bm.tomaH);
+  R(cTx, cTy, cTw, cTh, { fi: "#c9ced5", sw: 1.2 });
+  R(cTx + 4, cTy + 4, cTw - 8, cTh - 8, { fi: "#e6e9ed", sw: 0.8 });
+  R(cTx + cTw - 10, cTy + cTh / 2 + 14, 3, 12, { fi: INK, st: "", sw: 0 });
+  T(cTx + cTw / 2, cTy + cTh - 8, "Concesionaria", { s: 6, a: "middle", f: GR });
   ["CAJA", "TOMA", "F1"].forEach((t, i) =>
     T(X(bm.tomaA / 2), Y(bm.tomaS + bm.tomaH / 2) - 8 + i * 9, t, { s: 7.4, b: 1, a: "middle" })
   );
@@ -156,9 +163,18 @@ function bancoMedidores(r) {
         by = Y(yb[i] + h),
         bw = a * k,
         bh = h * k;
-      R(bx, by, bw, bh, { fi: "#f3f6f9", sw: 1.1 });
-      R(bx + bw * 0.15, by + bh * 0.18, bw * 0.7, bh * 0.22, { fi: "#fff", st: GR, sw: 0.6 });
-      T(bx + bw / 2, by + bh * 0.33, "kWh", { s: 6, b: 1, a: "middle", f: GR });
+      R(bx, by, bw, bh, { fi: "#c9ced5", sw: 1.1 });
+      R(bx + 3, by + 3, bw - 6, bh - 6, { fi: "#f3f6f9", sw: 0.7 });
+      // Visor con el medidor: pantalla y placa de datos
+      const vw = bw * 0.7,
+        vx = bx + (bw - vw) / 2,
+        vy = by + bh * 0.08,
+        vh = bh * 0.38;
+      R(vx, vy, vw, vh, { fi: "#fff", st: GR, sw: 0.7 });
+      R(vx + vw * 0.15, vy + vh * 0.14, vw * 0.7, vh * 0.3, { fi: "#d9eedf", st: GR, sw: 0.5 });
+      T(bx + bw / 2, vy + vh * 0.37, "0000", { s: 5.6, b: 1, a: "middle", f: INK });
+      T(bx + bw / 2, vy + vh * 0.8, "kWh", { s: 5.6, b: 1, a: "middle", f: GR });
+      R(bx + bw - 7, by + bh * 0.62, 2.5, 9, { fi: INK, st: "", sw: 0 });
       T(bx + bw / 2, by + bh * 0.58, m.nom, { s: 7.4, b: 1, a: "middle", f: NAVY });
       const fc = m.fase.length === 1 ? COLF[m.fase] || INK : INK;
       T(bx + bw / 2, by + bh * 0.74, m.fase, { s: 7, b: 1, a: "middle", f: fc });
@@ -172,7 +188,24 @@ function bancoMedidores(r) {
   cota(X(-0.06), Y0, X(-0.06), Y(bm.tomaS), `${fmt(bm.tomaS, 2)} m`, -1);
   cota(X(-0.06), Y(bm.tomaS), X(-0.06), Y(bm.tomaS + bm.tomaH), `${fmt(bm.tomaH, 2)} m`, -1);
   const xr = X(bm.tomaA + bm.sepT + D) + 8;
+  cota(xr, Y0, xr, Y(bm.tomaS), `${fmt(bm.tomaS, 2)} m`);
   cota(xr, Y(bm.tomaS), xr, Y(bm.tomaS + bm.base), `${fmt(bm.base, 2)} m`);
+  cota(xr + 44, Y0, xr + 44, Y(ytop), `${fmt(ytop, 2)} m`);
+  T(xr + 48, Y(ytop / 2) + 13, "al borde", { s: 6.2, f: GR });
+  T(xr + 48, Y(ytop / 2) + 21, "superior", { s: 6.2, f: GR });
+  // Ancho de cada tipo de caja, debajo de la primera de su tipo
+  const vistos = {};
+  abajo.forEach((f, i) => {
+    let x = bm.tomaA + bm.sepT;
+    f.forEach(m => {
+      const [a, , tp] = caja(m);
+      if (!vistos[tp]) {
+        vistos[tp] = 1;
+        cota(X(x), Y(yb[i]) + 7, X(x + a), Y(yb[i]) + 7, `${fmt(a, 2)} m`);
+      }
+      x += a;
+    });
+  });
   abajo.forEach((f, i) => {
     cota(xr, Y(yb[i]), xr, Y(yb[i] + altoF[i]), `${fmt(altoF[i], 2)} m`);
     if (i < abajo.length - 1) cota(xr, Y(yb[i] + altoF[i]), xr, Y(yb[i + 1]), `${fmt(bm.sepF, 2)} m`);
@@ -197,6 +230,12 @@ function bancoMedidores(r) {
     { s: 7.4, b: 1, f: okH ? VE : "#b42318" }
   );
   T(xA + 14, yA + 43, "Rotular el N.° de departamento u oficina en cada caja", { s: 7, f: GR });
+  T(
+    xA + 14,
+    yA + 54,
+    `Caja LRM (monofásica) ${fmt(bm.lrmA, 2)} × ${fmt(bm.lrmH, 2)} m${M.some(m => m.tri) ? ` · caja LTR (trifásica) ${fmt(bm.ltrA, 2)} × ${fmt(bm.ltrH, 2)} m` : ""} · caja toma ${fmt(bm.tomaA, 2)} × ${fmt(bm.tomaH, 2)} m (ancho × alto)`,
+    { s: 7, f: GR }
+  );
   o.push(`</g>`);
   const yFinA = yc + 32;
 

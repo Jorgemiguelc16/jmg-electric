@@ -83,8 +83,8 @@ function tableroGeneral(r) {
     wG = 380,
     xD = 20,
     wD = Math.min(wG, Math.max(170, (bh * gm.a) / gm.h)),
-    // Vista interior centrada entre la puerta y el cuadro de datos
-    x0 = (xD + wD + W - 270) / 2 - wG / 2,
+    // Vista interior junto a la puerta, como en el detalle de tableros
+    x0 = xD + wD + 24,
     xc = x0 + wG / 2;
   const pp = 26,
     mw = np * pp + 18,
@@ -287,6 +287,12 @@ function tableroGeneral(r) {
     T(dx + 186, yy + 9.5, `${m.a.s.tri ? 3 : 2}×${m.a.itm} A`, { s: 6.4 });
     yy += 13;
   });
+  // Filas libres hasta el pie de las vistas, para que los cuadros tengan su mismo alto
+  for (let i = M.length; yy < yc + bh - 0.5; i++) {
+    const h = Math.min(13, yc + bh - yy);
+    R(dx, yy, dw, h, { st: LN, fi: i % 2 ? "#fff" : "#f3f6f9", sw: 0.8 });
+    yy += h;
+  }
   o.push(`</g>`);
 
   /* ---------- Notas y rótulo ---------- */
