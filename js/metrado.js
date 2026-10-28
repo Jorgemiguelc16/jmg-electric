@@ -53,14 +53,24 @@ function polosTablero(r, tb) {
 }
 /* Medida referencial del gabinete (ancho × alto, mm) según su capacidad en polos y polos por fila de riel DIN que
    caben en su ancho: rangos de catálogo de los fabricantes, no del CNE (criterio). El tablero general del edificio,
-   con interruptor en caja moldeada, va en un gabinete de adosar de 600 × 1000 mm. */
-function medidaGabinete(polos, moldeada = false) {
+   con interruptor en caja moldeada, va en un gabinete de adosar de 600 × 1000 mm. El de PVC empotrable con tapa
+   transparente, de catálogo: 280 × 220 mm con una fila de 12 polos y 300 × 370 mm con dos (modelo de 24 polos). */
+function medidaGabinete(polos, moldeada = false, pvc = false) {
   if (moldeada) return { a: 600, h: 1000, pf: 28 };
+  if (pvc) return polos <= 12 ? { a: 280, h: 220, pf: 12 } : { a: 300, h: 370, pf: 12 };
   if (polos <= 12) return { a: 250, h: 300, pf: 10 };
   if (polos <= 24) return { a: 300, h: 400, pf: 12 };
   if (polos <= 30) return { a: 350, h: 500, pf: 15 };
   if (polos <= 54) return { a: 500, h: 800, pf: 18 };
   return { a: 600, h: 1200, pf: 24 };
+}
+/* Gabinete de un tablero (criterio, editable en la ficha del tablero › Equipos): por defecto, de PVC empotrable con
+   tapa transparente en los tableros de vivienda y de departamento de hasta 24 polos, y metálico en el TSG y en los de
+   más polos (no hay medida de catálogo de PVC para más de 24) */
+function gabineteDe(r, tb, polos) {
+  const el = ((TEQ[r.mode] || {})[tb.tab] || {}).gab || "",
+    pvc = polos <= 24 && (el === "pvc" || (!el && tb.tab !== "TSG"));
+  return { ...medidaGabinete(polos, false, pvc), tipo: pvc ? "pvc" : "metal", elegido: el };
 }
 function metrado(r) {
   const c = r.c,
@@ -104,7 +114,7 @@ function metrado(r) {
       pt = polosTablero(r, tb);
     pt.ids.forEach(d => add(ids, `${d.pol}|${d.rat}|${d.tipo}`, n));
     pt.eqs.forEach(e => add(eqm, `${e.k === "ctr" ? (pt.tri ? 3 : 2) : pt.tri ? 4 : 2}|${e.d.d(pt.tri)}`, n));
-    mods[tb.tab] = { n, m: pt.m, desc: tb.desc };
+    mods[tb.tab] = { n, m: pt.m, desc: tb.desc, g: gabineteDe(r, tb, pt.m) };
     nRes += c.reserva * n;
   });
   let al = 0,
@@ -204,9 +214,11 @@ function metrado(r) {
     Object.entries(mods)
       .filter(([t]) => tabPrin(t) === pr)
       .forEach(([t, v]) =>
-        (g =>
-          it(`Tablero ${t}, empotrado, para ${v.m} polos, de ${g.a} × ${g.h} mm (referencial)`, "Und.", v.n, v.desc))(
-          medidaGabinete(v.m)
+        it(
+          `Tablero ${t}, empotrado, ${v.g.tipo === "pvc" ? "de PVC con tapa transparente" : "metálico"}, para ${v.m} polos, de ${v.g.a} × ${v.g.h} mm (referencial)`,
+          "Und.",
+          v.n,
+          v.desc
         )
       );
   });

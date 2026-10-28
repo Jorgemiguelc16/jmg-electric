@@ -45,7 +45,9 @@ const ftLongCambio = () => {
 };
 const ftCambios = () => {
   const a = (TEQ[MODE] || {})[FT_TAB] || {},
-    eq = FT_PEND ? Object.keys(EQT).filter(k => !!FT_PEND[k] !== !!a[k]).length : 0;
+    eq = FT_PEND
+      ? Object.keys(EQT).filter(k => !!FT_PEND[k] !== !!a[k]).length + ((FT_PEND.gab || "") !== (a.gab || "") ? 1 : 0)
+      : 0;
   return eq + (ftLongCambio() ? 1 : 0);
 };
 // Escribe la longitud en su lugar (temporalmente para la vista previa, o al aplicar)
@@ -165,7 +167,28 @@ function renderTablero() {
             `<label class="ft-eq${!!eq[k] !== !!act[k] ? " mod" : ""}" data-ayuda="${esc(d.a)}"><input type="checkbox" data-fteq="${k}"${eq[k] ? " checked" : ""}><span><b>${esc(d.n)}</b><small>${esc(d.d(a.s.tri))}</small></span></label>`
         )
         .join("")}</fieldset>` +
-      `<p class="fc-nota">Aparecen en el unifilar, el metrado y la memoria. No cambian el cálculo; su uso es criterio del proyectista.</p>`;
+      `<p class="fc-nota">Aparecen en el unifilar, el metrado y la memoria. No cambian el cálculo; su uso es criterio del proyectista.</p>` +
+      (pt => {
+        // Gabinete: por defecto según el tablero y sus polos (criterio), o el elegido
+        const sel = eq.gab || "",
+          porDef = pt.m <= 24 && tb.tab !== "TSG",
+          usaPvc = pt.m <= 24 && (sel === "pvc" || (!sel && porDef)),
+          defe = { ...medidaGabinete(pt.m, false, porDef), tipo: porDef ? "pvc" : "metal" },
+          g = { ...medidaGabinete(pt.m, false, usaPvc), tipo: usaPvc ? "pvc" : "metal" },
+          op = (v, t, d) =>
+            `<label class="ft-eq${sel !== (act.gab || "") && sel === v ? " mod" : ""}"><input type="radio" name="ftgab" data-ftgab="${v}"${sel === v ? " checked" : ""}><span><b>${t}</b><small>${d}</small></span></label>`;
+        return (
+          `<fieldset class="fc-g"><legend>Gabinete</legend>` +
+          op(
+            "",
+            "Por defecto",
+            `${defe.tipo === "pvc" ? "PVC empotrable con tapa transparente" : "Metálico empotrado"}, ${defe.a} × ${defe.h} mm`
+          ) +
+          op("pvc", "PVC empotrable con tapa transparente", "Viviendas y departamentos; de catálogo hasta 24 polos") +
+          op("metal", "Metálico empotrado", "Tableros generales, de servicios generales o de más de 24 polos") +
+          `</fieldset><p class="fc-nota">Usado: ${g.tipo === "pvc" ? "PVC empotrable" : "metálico"}, ${g.a} × ${g.h} mm (referencial, de catálogo).${pt.m > 24 && sel === "pvc" ? " Con más de 24 polos va metálico: no hay medida de catálogo de PVC." : ""}</p>`
+        );
+      })(polosTablero(LAST, tb));
   }
   $("ftBody").innerHTML =
     (rp && FT_PEST !== "eq" ? `<p class="fc-prev">Vista previa con la longitud sin aplicar</p>` : "") + h;
@@ -193,6 +216,7 @@ function aplicarTablero() {
           .filter(k => FT_PEND[k])
           .map(k => [k, true])
       );
+    if (FT_PEND.gab) t.gab = FT_PEND.gab;
     if (Object.keys(t).length) m[FT_TAB] = t;
     else delete m[FT_TAB];
   }
@@ -215,6 +239,11 @@ $("ftDlg").addEventListener("input", e => {
   }, 250);
 });
 $("ftDlg").addEventListener("change", e => {
+  const gb = e.target.closest("[data-ftgab]");
+  if (gb && FT_TAB) {
+    FT_PEND = { ...ftEquipos(FT_TAB), gab: gb.dataset.ftgab };
+    return renderTablero();
+  }
   const c = e.target.closest("[data-fteq]");
   if (!c || !FT_TAB) return;
   FT_PEND = { ...ftEquipos(FT_TAB), [c.dataset.fteq]: c.checked };

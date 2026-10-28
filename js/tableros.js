@@ -66,7 +66,7 @@ function tableros(r, op = {}) {
   TABS.forEach(tb => {
     const pt = polosTablero(r, tb),
       // Polos por fila: los que caben en el ancho del gabinete de catálogo, como en un tablero real (criterio)
-      gm = medidaGabinete(pt.m),
+      gm = gabineteDe(r, tb, pt.m),
       ancho = gm.pf * MW + 18,
       a = r.alims[tb.feeder],
       pa = a.s.tri ? 3 : 2,
@@ -173,6 +173,7 @@ function tableros(r, op = {}) {
         ["Circuitos", String(pt.cs.length)],
         ["Diferenciales", `${pt.ids.length} de 30 mA`],
         ["Reservas", c.reserva ? `${c.reserva} × ITM 2×16 A` : "—"],
+        ["Gabinete", gm.tipo === "pvc" ? "PVC empotrable, tapa transparente" : "Metálico empotrado"],
         ...(pt.eqs.length ? [["Equipos", pt.eqs.map(e => e.d.c).join(", ")]] : []),
         ...(a.cant > 1 ? [["Tableros iguales", String(a.cant)]] : [])
       ],
@@ -203,31 +204,58 @@ function tableros(r, op = {}) {
       { s: 8, f: GR }
     );
     const yc = yb + 24;
-    /* Vista de la puerta, como la del tablero general: bisagras a la izquierda, chapa con manija a la derecha, señal
-       de riesgo eléctrico centrada, placa con el nombre del tablero y rejillas de ventilación abajo */
     const pc = px + pw / 2,
-      sS = Math.min(130, pw * 0.5, (ph - 170) / 1.45),
-      // Señal, placa y descripción centradas a lo alto de la puerta, sobre las rejillas
-      yS0 = yc + 20 + Math.max(0, (ph - 100 - (sS * 1.45 + 56)) / 2);
-    R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
-    R(px + 9, yc + 9, pw - 18, ph - 18, { fi: "#f3f6f9", sw: 0.9 });
-    [0.16, 0.84].forEach(p => R(px + 2, yc + ph * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
-    R(px + pw - 30, yc + ph / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
-    R(px + pw - 27, yc + ph / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
-    C(px + pw - 24, yc + ph / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
-    const yS = yS0 + senalRiesgoTexto(o, pc - sS / 2, yS0, sS) + 12,
-      pl = Math.min(Math.max(104, sS * 1.1), pw - 70),
-      rj = Math.min(100, pw - 70);
-    R(pc - pl / 2, yS, pl, 26, { fi: "#fff", sw: 0.9 });
-    T(pc, yS + 17, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
-    T(
-      pc,
-      yS + 40,
-      tb.tab === "TSG" ? "SERVICIOS GENERALES" : tb.tab === "TG" ? "TABLERO GENERAL" : "TABLERO DE DISTRIBUCIÓN",
-      { s: 7, b: 1, a: "middle", f: GR }
-    );
-    if (yS + 50 < yc + ph - 70)
-      for (let k = 0; k < 6; k++) R(pc - rj / 2, yc + ph - 70 + k * 8, rj, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
+      nomT = tb.tab === "TSG" ? "SERVICIOS GENERALES" : tb.tab === "TG" ? "TABLERO GENERAL" : "TABLERO DE DISTRIBUCIÓN";
+    if (gm.tipo === "pvc") {
+      /* Puerta del tablero de PVC: marco blanco y una tapa ahumada por fila, a través de la cual se ven los
+         interruptores, con su lengüeta abajo; señal de riesgo eléctrico y placa en la franja libre de abajo */
+      const sc = pw / gw,
+        X = x => px + (x - x0) * sc,
+        Yd = y => yc + (y - yc) * sc;
+      R(px, yc, pw, ph, { fi: "#ffffff", st: GR, sw: 1.4 });
+      R(px + 6, yc + 6, pw - 12, ph - 12, { fi: "#f3f6f9", st: LN, sw: 0.7 });
+      filas.forEach((fila, fi) => {
+        const yf = yc + 58 + fi * PASO,
+          xs = x0 + 28;
+        R(X(xs - 14), Yd(yf - 34), (uw + 28) * sc, (MH + 52) * sc, { fi: "#5a6775", st: INK, sw: 0.9 });
+        fila.forEach(m => {
+          // Interruptores vistos a través de la tapa: su contorno y la palanca
+          R(X(xs + m.x + 1), Yd(yf + 3), (m.pol * MW - 2) * sc, (MH - 6) * sc, { st: "#bfc8d2", sw: 0.6 });
+          R(X(xs + m.x + (m.pol * MW) / 2 - 3), Yd(yf + 22), 6 * sc, 10 * sc, { fi: "#e6e9ed", st: "", sw: 0 });
+        });
+        R(X(xs + uw / 2 - 14), Yd(yf + MH + 18) - 3, 28 * sc, 5, { fi: "#ffffff", st: GR, sw: 0.6 });
+      });
+      const yLib = Yd(yc + 58 + (filas.length - 1) * PASO + MH + 22),
+        hLib = yc + ph - 10 - yLib,
+        sP = Math.max(22, Math.min(100, (hLib - 6) / 1.45)),
+        hP = sP * 1.45,
+        x0P = pc - (sP + 12 + 104) / 2,
+        yP = yLib + Math.max(4, (hLib - hP) / 2);
+      senalRiesgoTexto(o, x0P, yP, sP);
+      R(x0P + sP + 12, yP + hP / 2 - 18, 104, 24, { fi: "#fff", sw: 0.9 });
+      T(x0P + sP + 64, yP + hP / 2 - 1, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
+      T(x0P + sP + 64, yP + hP / 2 + 16, nomT, { s: 6.4, b: 1, a: "middle", f: GR });
+    } else {
+      /* Vista de la puerta metálica, como la del tablero general: bisagras a la izquierda, chapa con manija a la
+       derecha, señal de riesgo eléctrico centrada, placa con el nombre del tablero y rejillas de ventilación abajo */
+      const sS = Math.min(130, pw * 0.5, (ph - 170) / 1.45),
+        // Señal, placa y descripción centradas a lo alto de la puerta, sobre las rejillas
+        yS0 = yc + 20 + Math.max(0, (ph - 100 - (sS * 1.45 + 56)) / 2);
+      R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
+      R(px + 9, yc + 9, pw - 18, ph - 18, { fi: "#f3f6f9", sw: 0.9 });
+      [0.16, 0.84].forEach(p => R(px + 2, yc + ph * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
+      R(px + pw - 30, yc + ph / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
+      R(px + pw - 27, yc + ph / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
+      C(px + pw - 24, yc + ph / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
+      const yS = yS0 + senalRiesgoTexto(o, pc - sS / 2, yS0, sS) + 12,
+        pl = Math.min(Math.max(104, sS * 1.1), pw - 70),
+        rj = Math.min(100, pw - 70);
+      R(pc - pl / 2, yS, pl, 26, { fi: "#fff", sw: 0.9 });
+      T(pc, yS + 17, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
+      T(pc, yS + 40, nomT, { s: 7, b: 1, a: "middle", f: GR });
+      if (yS + 50 < yc + ph - 70)
+        for (let k = 0; k < 6; k++) R(pc - rj / 2, yc + ph - 70 + k * 8, rj, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
+    }
     T(pc, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
     T(pc, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
     // Vista interior

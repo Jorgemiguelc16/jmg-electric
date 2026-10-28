@@ -273,11 +273,13 @@ function normalizar(o) {
               .filter(([, x]) => x && typeof x === "object")
               .map(([t, x]) => [
                 t,
-                Object.fromEntries(
-                  Object.keys(EQT)
+                Object.fromEntries([
+                  ...Object.keys(EQT)
                     .filter(k => x[k] === true)
-                    .map(k => [k, true])
-                )
+                    .map(k => [k, true]),
+                  // Gabinete elegido en la ficha (PVC o metálico); sin él, el de por defecto
+                  ...(x.gab === "pvc" || x.gab === "metal" ? [["gab", x.gab]] : [])
+                ])
               ])
           )
         : {};
