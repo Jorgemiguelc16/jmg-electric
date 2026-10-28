@@ -83,7 +83,7 @@ function bancoMedidores(r) {
   T(
     20,
     43,
-    `Vista frontal con las medidas de la concesionaria (${bm.conc}) · conexión de cada suministro a su fase según el balance · escala S/E`,
+    `Vista exterior con las medidas de la concesionaria (${bm.conc}) · vista interior con la conexión de cada suministro a su fase según el balance · escala S/E`,
     { s: 8.5, f: GR }
   );
 
@@ -91,10 +91,12 @@ function bancoMedidores(r) {
   const xA = 20,
     wA = 560,
     yA = 58;
-  titulo(xA, yA, wA, "VISTA FRONTAL DEL BANCO DE MEDIDORES");
+  titulo(xA, yA, wA, "VISTA EXTERIOR · CAJAS DE LA CONCESIONARIA");
   o.push(`<g data-capa="E-DETALLE">`);
   const caja = m => (m.tri ? [bm.ltrA, bm.ltrH, "LTR"] : [bm.lrmA, bm.lrmH, "LRM"]);
-  const per = Math.ceil(M.length / bm.filas),
+  // Con pocos medidores, una sola fila (hasta 4 cajas por fila antes de pasar a la siguiente: criterio de dibujo)
+  const nf = Math.min(bm.filas, Math.max(1, Math.ceil(M.length / 4))),
+    per = Math.ceil(M.length / nf),
     filas = [];
   for (let i = 0; i < M.length; i += per) filas.push(M.slice(i, i + per));
   // Filas de abajo hacia arriba: la primera lista va arriba, como se lee el banco
@@ -175,12 +177,15 @@ function bancoMedidores(r) {
   const yc = Y0 + 14;
   cota(X(0), yc, X(bm.tomaA), yc, `${fmt(bm.tomaA, 2)} m`);
   cota(X(bm.tomaA), yc, X(bm.tomaA + bm.sepT), yc, `${fmt(bm.sepT, 2)} m`);
-  cota(
+  cota(X(bm.tomaA + bm.sepT), yc, X(bm.tomaA + bm.sepT + D), yc, `D = ${fmt(D, 2)} m`);
+  T(
     X(bm.tomaA + bm.sepT),
-    yc,
-    X(bm.tomaA + bm.sepT + D),
-    yc,
-    `D = ${Math.max(...abajo.map(f => f.length))} × ancho de caja = ${fmt(D, 2)} m`
+    yc + 22,
+    `D = número de conexiones (${Math.max(...abajo.map(f => f.length))}) × ancho de caja`,
+    {
+      s: 6.8,
+      f: GR
+    }
   );
   T(
     xA + 14,
@@ -190,62 +195,117 @@ function bancoMedidores(r) {
   );
   T(xA + 14, yA + 43, "Rotular el N.° de departamento u oficina en cada caja", { s: 7, f: GR });
   o.push(`</g>`);
-  const yFinA = yc + 24;
+  const yFinA = yc + 32;
 
-  /* ---------- Diagrama de conexión por fase y balance ---------- */
+  /* ---------- Vista interior: conexión de cada medidor a su fase ---------- */
   const xB = 600,
     wB = W - 20 - xB;
-  titulo(xB, yA, wB, tri ? "DIAGRAMA DE CONEXIÓN POR FASE" : "DIAGRAMA DE CONEXIÓN");
-  o.push(`<g data-capa="E-DETALLE">`);
-  const fases = tri ? (SIST[r.sk].n === 4 ? ["R", "S", "T", "N"] : ["R", "S", "T"]) : ["R", "N"];
-  // Caja toma → interruptor general → barras
-  const yT = yA + 34;
-  R(xB + 10, yT, 74, 30, { fi: "#e6e9ed", sw: 1 });
-  T(xB + 47, yT + 13, "Caja toma F1", { s: 7, b: 1, a: "middle" });
-  T(xB + 47, yT + 23, "(concesionaria)", { s: 6.2, a: "middle", f: GR });
-  L(xB + 84, yT + 15, xB + 104, yT + 15, 1.2);
-  R(xB + 104, yT + 2, 70, 26, { fi: "#fff", sw: 1.1 });
-  simboloDGE(o, "itm", xB + 116, yT + 15, 0.7);
-  T(xB + 128, yT + 13, "Interruptor", { s: 6.4, b: 1 });
-  T(xB + 128, yT + 22, "general", { s: 6.4, b: 1 });
-  T(xB + 180, yT + 12, `${tri ? 3 : 2}×${gen.itm} A · ${gen.pdc} kA`, { s: 7.4, b: 1, f: NAVY });
-  T(xB + 180, yT + 22, `Alimentador general ${tri ? 4 : 2}-1×${gen.S} + 1×${gen.St}(T) mm²`, { s: 6.6, f: GR });
-  const yBar = yT + 50,
-    dyB = 11,
-    xb1 = xB + 30,
-    xb2 = xB + wB - 14;
-  L(xB + 139, yT + 28, xB + 139, yBar - 6, 1.2);
-  L(xb1, yBar - 6, xB + 139, yBar - 6, 1.2);
-  L(xb1, yBar - 6, xb1, yBar + dyB * (fases.length - 1), 1.2);
-  fases.forEach((f, i) => {
-    L(xb1, yBar + i * dyB, xb2, yBar + i * dyB, 2.2, COLF[f] || INK);
-    T(xb1 - 5, yBar + i * dyB + 3, f === "R" && !tri ? "F" : f, { s: 7, b: 1, a: "end", f: COLF[f] || INK });
-  });
-  // Medidores: cada uno toma su fase (y el neutro) de las barras
-  const nM = M.length,
-    paso = (xb2 - xb1 - 20) / nM,
-    yMed = yBar + dyB * fases.length + 18;
-  const barra = f => yBar + fases.indexOf(f === "F" ? "R" : f) * dyB;
-  M.forEach((m, i) => {
-    const cx = xb1 + 20 + paso * (i + 0.5),
-      bw = Math.min(30, paso - 6);
-    const usa = m.tri ? fases : tri ? [m.fase, "N"] : ["R", "N"];
-    usa.forEach((f, j) => {
-      if (!fases.includes(f)) return;
-      const x = cx - (usa.length - 1) * 2 + j * 4;
-      L(x, barra(f), x, yMed, 0.9, COLF[f] || INK);
-      C(x, barra(f), 1.4, { fi: COLF[f] || INK, st: "" });
+  titulo(xB, yA, wB, "VISTA INTERIOR (SIN TAPAS) · CONEXIÓN POR FASE");
+  o.push(`<g data-capa="E-TABLEROS">`);
+  const fases = tri ? (SIST[r.sk].n === 4 ? ["R", "S", "T", "N"] : ["R", "S", "T"]) : ["R", "N"],
+    polos = fases.filter(f => f !== "N"),
+    nomF = f => (f === "R" && !tri ? "F" : f);
+  // Caja toma de la concesionaria
+  const yT = yA + 36;
+  R(xB + 8, yT, 74, 38, { fi: "#e6e9ed", sw: 1 });
+  T(xB + 45, yT + 14, "Caja toma F1", { s: 7, b: 1, a: "middle" });
+  T(xB + 45, yT + 25, "(concesionaria)", { s: 6.2, a: "middle", f: GR });
+  // Interruptor general en caja moldeada: bornes arriba y abajo, palanca y unidad de disparo
+  const gx = xB + 128,
+    gy = yT + 6,
+    gw = 66,
+    gh = 92;
+  R(gx, gy, gw, gh, { fi: "#1f2328", sw: 1.2 });
+  polos.forEach((f, p) => {
+    const bx = gx + 8 + p * ((gw - 16) / Math.max(polos.length, 1)) + (gw - 16) / Math.max(polos.length, 1) / 2;
+    [gy + 3, gy + gh - 12].forEach(yy => {
+      R(bx - 6, yy, 12, 9, { fi: "#c9ced5", st: "", sw: 0 });
+      C(bx, yy + 4.5, 2.2, { fi: "#fff", st: GR, sw: 0.6 });
     });
-    R(cx - bw / 2, yMed, bw, 22, { fi: "#f3f6f9", sw: 1 });
-    T(cx, yMed + 9, "kWh", { s: 5.8, b: 1, a: "middle", f: GR });
-    T(cx, yMed + 18, m.nom, { s: 6.6, b: 1, a: "middle", f: NAVY });
-    L(cx, yMed + 22, cx, yMed + 32, 0.9);
-    T(cx, yMed + 41, `${m.a.s.tri ? 3 : 2}×${m.a.itm} A`, { s: 6.2, a: "middle" });
-    T(cx, yMed + 50, `${fmt(m.kW, 2)} kW`, { s: 6.2, a: "middle", f: GR });
-    T(cx, yMed + 59, m.fase, { s: 6.4, b: 1, a: "middle", f: m.fase.length === 1 ? COLF[m.fase] || INK : INK });
   });
-  // Balance de cargas por fase
-  let yBal = yMed + 76;
+  R(gx + gw / 2 - 6, gy + 24, 12, 22, { fi: "#e6e9ed", st: "", sw: 0 });
+  R(gx + gw / 2 - 4, gy + 26, 8, 8, { fi: "#2f7a4b", st: "", sw: 0 });
+  R(gx + 10, gy + 54, gw - 20, 14, { fi: "#d9eedf", st: GR, sw: 0.6 });
+  T(gx + gw / 2, gy + 64, `${gen.itm} A`, { s: 7, b: 1, a: "middle" });
+  T(gx + gw + 10, gy + 16, "INTERRUPTOR GENERAL", { s: 7.4, b: 1, f: NAVY });
+  T(gx + gw + 10, gy + 28, `${polos.length}×${gen.itm} A · ${gen.pdc} kA`, { s: 7.4, b: 1 });
+  T(gx + gw + 10, gy + 40, tri ? "Trifásico, en caja moldeada" : "Bipolar", { s: 6.8, f: GR });
+  T(gx + gw + 10, gy + 52, `Llega ${tri ? 4 : 2}-1×${gen.S} + 1×${gen.St}(T) mm²`, { s: 6.8, f: GR });
+  // De la caja toma al interruptor (fases) y el neutro directo a su barra
+  const cable = (x1, y1, x2, y2, f, w = 1.2) => L(x1, y1, x2, y2, w, COLF[f] || INK);
+  const yBar = gy + gh + 26,
+    dyB = 12,
+    xb1 = xB + 26,
+    xb2 = xB + wB - 22,
+    barra = f => yBar + fases.indexOf(f) * dyB;
+  polos.forEach((f, p) => {
+    const bx = gx + 8 + p * ((gw - 16) / polos.length) + (gw - 16) / polos.length / 2,
+      yv = yT + 8 + p * 7;
+    cable(xB + 82, yv, gx - 6 - p * 4, yv, f);
+    cable(gx - 6 - p * 4, yv, gx - 6 - p * 4, gy - 6 - p * 3, f);
+    cable(gx - 6 - p * 4, gy - 6 - p * 3, bx, gy - 6 - p * 3, f);
+    cable(bx, gy - 6 - p * 3, bx, gy + 3, f);
+    // Salida del interruptor a su barra
+    cable(bx, gy + gh, bx, barra(f), f, 1.4);
+    C(bx, barra(f), 1.8, { fi: COLF[f] || INK, st: "" });
+  });
+  if (fases.includes("N")) {
+    // El neutro baja por el costado, sin cruzar las barras de fase
+    cable(xB + 11, yT + 38, xB + 11, barra("N"), "N");
+    cable(xB + 11, barra("N"), xb1, barra("N"), "N");
+  }
+  // Barras de cobre en el color de su fase
+  fases.forEach(f => {
+    L(xb1, barra(f), xb2, barra(f), 4, COLF[f] || INK);
+    // La letra de cada barra a la derecha, para que el neutro llegue por la izquierda sin cruzarlas
+    T(xb2 + 5, barra(f) + 3, nomF(f), { s: 7, b: 1, f: COLF[f] || INK });
+  });
+  T(xb2, yBar - 6, "Barras de cobre", { s: 6.6, a: "end", f: GR });
+  // Cada medidor toma su fase y el neutro con un perno; debajo, el interruptor del suministro y su salida
+  const nM = M.length,
+    paso = (xb2 - xb1 - 10) / nM,
+    mw = Math.min(36, paso - 8),
+    yMed = yBar + dyB * (fases.length - 1) + 30,
+    mh = 40;
+  const perno = (x, y) => {
+    C(x, y, 2.6, { fi: "#fff", st: INK, sw: 0.7 });
+    L(x - 1.6, y - 1.6, x + 1.6, y + 1.6, 0.6);
+    L(x - 1.6, y + 1.6, x + 1.6, y - 1.6, 0.6);
+  };
+  M.forEach((m, k2) => {
+    const cx = xb1 + 10 + paso * (k2 + 0.5),
+      usa = m.tri ? fases : tri ? [m.fase, "N"] : ["R", "N"];
+    usa.forEach((f, q) => {
+      if (!fases.includes(f)) return;
+      const x = cx - (usa.length - 1) * 2.5 + q * 5;
+      cable(x, barra(f), x, yMed, f, 1);
+      perno(x, barra(f));
+    });
+    // Medidor
+    R(cx - mw / 2, yMed, mw, mh, { fi: "#f3f6f9", sw: 1 });
+    R(cx - mw / 2 + 3, yMed + 4, mw - 6, 10, { fi: "#d9eedf", st: GR, sw: 0.5 });
+    T(cx, yMed + 11.5, "kWh", { s: 5.6, b: 1, a: "middle" });
+    T(cx, yMed + 25, m.nom, { s: 6.6, b: 1, a: "middle", f: NAVY });
+    T(cx, yMed + 35, m.fase, { s: 6.4, b: 1, a: "middle", f: m.fase.length === 1 ? COLF[m.fase] || INK : INK });
+    // Interruptor del suministro (después del medidor)
+    const pol = m.a.s.tri ? 3 : 2,
+      iw = Math.min(mw, pol * 8),
+      iy = yMed + mh + 10;
+    L(cx, yMed + mh, cx, iy, 1);
+    R(cx - iw / 2, iy, iw, 22, { fi: "#f3f6f9", sw: 0.9 });
+    R(cx - 2.5, iy + 5, 5, 8, { fi: INK, st: "", sw: 0 });
+    T(cx, iy + 32, `${pol}×${m.a.itm} A`, { s: 6.2, b: 1, a: "middle" });
+    // Salida hacia el tablero del suministro
+    L(cx, iy + 36, cx, iy + 46, 1, INK, "3 2");
+    T(cx, iy + 56, m.tab, { s: 6.4, b: 1, a: "middle", f: NAVY });
+    T(cx, iy + 65, `${fmt(m.kW, 2)} kW`, { s: 6, a: "middle", f: GR });
+  });
+  // Barra de tierra
+  const yPE = yMed + mh + 86;
+  L(xb1, yPE, xb2, yPE, 4, VE);
+  T(xb1, yPE + 12, "Barra de tierra (PE) · conductor de protección de cada alimentador", { s: 6.8, f: VE });
+  o.push(`</g><g data-capa="E-DETALLE">`);
+  let yBal = yPE + 30;
   if (r.bal) {
     T(xB + 10, yBal, "BALANCE DE CARGAS POR FASE (DEMANDA)", { s: 7.6, b: 1, f: NAVY });
     yBal += 10;
@@ -268,6 +328,18 @@ function bancoMedidores(r) {
       { s: 7.4, b: 1, f: okB ? VE : CU }
     );
     yBal += 14;
+    // Con pocos suministros grandes (los departamentos van completos a una fase) el reparto no puede equilibrarse
+    if (!okB && r.bal.desb <= r.bal.desbMin + 0.05)
+      T(
+        xB + 14,
+        yBal + 4,
+        "Con suministros monofásicos que van completos a una fase, este es el menor desbalance posible.",
+        {
+          s: 6.8,
+          f: GR
+        }
+      );
+    yBal += 12;
   }
   o.push(`</g>`);
 

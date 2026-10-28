@@ -1014,7 +1014,8 @@ function svgDxf(svgTxt, op = {}) {
             [x2, y2]
           ],
           "E-BARRAS",
-          esq === "capas" ? 256 : esq === "mono" ? 7 : 30,
+          // Cada barra en su color: cobre en el unifilar; R, S, T, N y tierra en el banco de medidores
+          esq === "capas" ? 256 : esq === "mono" ? 7 : col(st),
           sw * k
         );
       const ly = capa || (st === "#2f7a4b" ? "E-TIERRA" : "E-UNIFILAR");
