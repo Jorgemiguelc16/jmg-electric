@@ -67,41 +67,45 @@ function tableroGeneral(r) {
     `Tablero general · ${sis.txt} · PdC ${gen.pdc} kA · interruptor general ${polos.length}×${gen.itm} A · ${M.length} suministros · llega de la caja toma F1`,
     { s: 8, f: GR }
   );
-  // Gabinete: la vista de la puerta y la interior tienen el mismo tamaño, porque son el mismo tablero
+  /* Gabinete: la puerta, del mismo alto que la vista interior, en la proporción de su medida de catálogo (criterio);
+     la vista interior conserva su ancho para que se lean las barras y las salidas */
   const yc = yb + 24,
-    wG = 380,
-    xD = 20,
-    x0 = xD + wG + 24,
-    xc = x0 + wG / 2;
-  const np = polos.length,
-    pp = 26,
-    mw = np * pp + 18,
+    np = polos.length,
     mh = 116,
-    mx = xc - mw / 2,
     my = yc + 40,
-    pb = 28,
-    bw = 12,
-    anchoB = (barras.length - 1) * pb + bw,
-    xb0 = xc - anchoB / 2,
-    xBar = f => xb0 + barras.indexOf(f) * pb,
-    cx = f => xBar(f) + bw / 2,
     paso = 15,
     yB1 = my + mh + 50,
     yB2 = yB1 + 24 + filas.length * paso + 6,
     yDin = yB2 + 30,
     yPE = yDin + 40,
-    bh = yPE + 36 - yc;
+    bh = yPE + 36 - yc,
+    gm = medidaGabinete(0, true),
+    wG = 380,
+    xD = 20,
+    wD = Math.min(wG, Math.max(170, (bh * gm.a) / gm.h)),
+    // Vista interior centrada entre la puerta y el cuadro de datos
+    x0 = (xD + wD + W - 270) / 2 - wG / 2,
+    xc = x0 + wG / 2;
+  const pp = 26,
+    mw = np * pp + 18,
+    mx = xc - mw / 2,
+    pb = 28,
+    bw = 12,
+    anchoB = (barras.length - 1) * pb + bw,
+    xb0 = xc - anchoB / 2,
+    xBar = f => xb0 + barras.indexOf(f) * pb,
+    cx = f => xBar(f) + bw / 2;
   o.push(`<g data-capa="E-TABLEROS">`);
 
   /* ---------- Vista de la puerta ---------- */
-  const xdc = xD + wG / 2;
-  R(xD, yc, wG, bh, { fi: "#e6e9ed", sw: 1.4 });
-  R(xD + 9, yc + 9, wG - 18, bh - 18, { fi: "#f3f6f9", sw: 0.9 });
+  const xdc = xD + wD / 2;
+  R(xD, yc, wD, bh, { fi: "#e6e9ed", sw: 1.4 });
+  R(xD + 9, yc + 9, wD - 18, bh - 18, { fi: "#f3f6f9", sw: 0.9 });
   // Bisagras a la izquierda y chapa con manija a la derecha
   [0.16, 0.84].forEach(p => R(xD + 2, yc + bh * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
-  R(xD + wG - 30, yc + bh / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
-  R(xD + wG - 27, yc + bh / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
-  C(xD + wG - 24, yc + bh / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
+  R(xD + wD - 30, yc + bh / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
+  R(xD + wD - 27, yc + bh / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
+  C(xD + wD - 24, yc + bh / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
   const hS = senalRiesgoTexto(o, xdc - 45, yc + 44, 90);
   R(xdc - 52, yc + 56 + hS, 104, 26, { fi: "#fff", sw: 0.9 });
   T(xdc, yc + 73 + hS, "TG", { s: 10, b: 1, a: "middle", f: NAVY });
@@ -109,6 +113,7 @@ function tableroGeneral(r) {
   // Rejillas de ventilación abajo
   for (let k = 0; k < 6; k++) R(xdc - 50, yc + bh - 70 + k * 8, 100, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
   T(xdc, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
+  T(xdc, yc + bh + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
 
   /* ---------- Vista interior ---------- */
   R(x0, yc, wG, bh, { sw: 1.4 });
@@ -249,7 +254,9 @@ function tableroGeneral(r) {
     ["Alimentador", cond(tri ? sis.n : 2, gen.S, gen.St)],
     ["Barras", `Cobre · ${barras.map(nomF).join(", ")}`],
     ["Salidas", `${M.length} suministros`],
-    ["Tierra", `${r.Selec} mm² al pozo`]
+    ["Tierra", `${r.Selec} mm² al pozo`],
+    ["Gabinete (referencial)", `≈ ${gm.a} × ${gm.h} mm`],
+    ["Espacio de trabajo", "1 m al frente (020-308)"]
   ];
   datos.forEach(([k, v], i) => {
     const yy = yc + 18 + i * 17;
@@ -283,7 +290,7 @@ function tableroGeneral(r) {
   o.push(`</g>`);
 
   /* ---------- Notas y rótulo ---------- */
-  const yr = Math.max(yc + bh + 28, yy + 16),
+  const yr = Math.max(yc + bh + 38, yy + 16),
     hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
@@ -291,8 +298,9 @@ function tableroGeneral(r) {
   R(20, yr, rx - 40, hr, { st: NAVY, sw: 1 });
   T(30, yr + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
-    "Caja toma F1 (concesionaria) → tablero general → banco de medidores (lámina IE-06) → tablero de cada suministro (lámina IE-04).",
-    "Interruptor general y alimentador del cálculo (lámina IE-01). Gabinete, tipo de interruptor y sección de las barras según el fabricante.",
+    "Caja toma F1 (concesionaria) → tablero general → banco de medidores (lámina IE-06) → tablero de cada suministro (lámina IE-04). Los medidores quedan en el lado de carga del interruptor general (Regla 040-402(2)).",
+    "Interruptor general y alimentador del cálculo (lámina IE-01). Tipo de interruptor y sección de las barras según el fabricante; la medida del gabinete es referencial, de catálogo (criterio).",
+    "Espacio de trabajo libre de 1 m frente al tablero, con piso no deslizante, que permita abrir la puerta al menos 90° (Regla 020-308).",
     "Cada salida toma con perno la fase del balance y su neutro; las pletinas pasan por delante de las otras barras (en otro plano, sobre aisladores) con manga aislante. El interruptor de cada suministro va después de su medidor.",
     "Conductores: R rojo, S negro, T azul (orden de fases: criterio), N blanco, tierra verde-amarillo. Barra de tierra unida a la puerta y al pozo."
   ];

@@ -193,14 +193,19 @@ function tableros(r, op = {}) {
       { s: 8, f: GR }
     );
     const yc = yb + 24;
-    // Vista de la puerta con la señal de riesgo eléctrico
-    R(30, yc, 160, bh, { fi: "#e6e9ed", sw: 1.4 });
-    R(37, yc + 7, 146, bh - 14, { fi: "#f3f6f9", sw: 0.9 });
-    R(170, yc + bh / 2 - 14, 5, 28, { fi: INK, sw: 0.8 });
+    // Vista de la puerta con la señal de riesgo eléctrico, en la proporción de su medida de catálogo (criterio)
+    const gm = medidaGabinete(pt.m),
+      pw = Math.min(160, (bh * gm.a) / gm.h),
+      ph = (pw * gm.h) / gm.a,
+      px = 110 - pw / 2;
+    R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
+    R(px + 7, yc + 7, pw - 14, ph - 14, { fi: "#f3f6f9", sw: 0.9 });
+    R(px + pw - 20, yc + ph / 2 - 14, 5, 28, { fi: INK, sw: 0.8 });
     senalRiesgoTexto(o, 75, yc + 22, 70);
     R(70, yc + 140, 80, 22, { fi: "#fff", sw: 0.9 });
     T(110, yc + 155, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
-    T(110, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
+    T(110, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
+    T(110, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
     // Vista interior
     // Fondo del gabinete sin relleno: en el DXF solo van en gris los equipos, el riel y las canaletas
     R(x0, yc, gw, bh, { sw: 1.4 });
@@ -445,7 +450,8 @@ function tableros(r, op = {}) {
   R(20, yb, rx - 40, hr, { st: NAVY, sw: 1 });
   T(30, yb + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
-    "Vistas esquemáticas generadas del cálculo: dispositivos y orden según el cuadro de cargas, cada diferencial con sus circuitos. Dimensiones del gabinete según el fabricante.",
+    "Vistas esquemáticas generadas del cálculo: dispositivos y orden según el cuadro de cargas, cada diferencial con sus circuitos. Medida del gabinete referencial, de catálogo según sus polos (criterio): la define el fabricante.",
+    "Espacio de trabajo libre de 1 m frente al tablero, con piso no deslizante, que permita abrir la puerta al menos 90° (Regla 020-308).",
     "Capacidad mínima de cada tablero en polos: circuitos, diferenciales, reservas y equipos, la misma del metrado (partidas OE.5.2.6 y OE.5.2.7).",
     `El interruptor del alimentador de cada tablero está aguas arriba (lámina IE-01). Reservas equipadas: ITM 2×16 A, curva C${c.reserva ? "" : " (este proyecto no tiene reservas)"}.`,
     "Los equipos adicionales (DPS, relé de tensión, medidor, contactor) son criterio del proyectista y no cambian el cálculo.",
