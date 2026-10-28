@@ -33,6 +33,7 @@ const VORDEN = [
   "alturas",
   "detalles",
   "tableros",
+  "tgeneral",
   "medidores",
   "metrado",
   "verif"
@@ -47,6 +48,7 @@ const VLBL = {
   alturas: "Diagrama de alturas",
   detalles: "Leyenda y detalles",
   tableros: "Detalle de tableros",
+  tgeneral: "Tablero general",
   medidores: "Banco de medidores",
   metrado: "Metrado",
   verif: "Verificaciones"

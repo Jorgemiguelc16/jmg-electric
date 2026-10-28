@@ -904,10 +904,22 @@ function svgDxf(svgTxt, op = {}) {
     "#b42318": 1,
     "#c62828": 1,
     "#1565c0": 150,
-    "#8a9199": 8
+    "#8a9199": 8,
+    "#c98a4b": 32
   };
   // Rellenos sólidos: los oscuros de las láminas y los colores de las fases (barras del balance, LED)
-  const OSCURO = ["#14304f", "#9a5a23", "#1f2328", "#000000", "#c62828", "#1565c0", "#b42318", "#2f7a4b"];
+  const OSCURO = [
+    "#14304f",
+    "#9a5a23",
+    "#1f2328",
+    "#000000",
+    "#c62828",
+    "#1565c0",
+    "#b42318",
+    "#2f7a4b",
+    "#c98a4b",
+    "#ffd200"
+  ];
   // Rellenos claros del dibujo de los tableros (gabinete, módulos, riel, canaletas), en grises de AutoCAD para que se
   // vean con volumen como en pantalla; lo que va encima se dibuja en tonos oscuros (esquema JMG)
   const CLARO = {

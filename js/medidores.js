@@ -1,9 +1,9 @@
-/* LÁMINA DEL BANCO DE MEDIDORES Y BALANCE DE FASES (IE-05, solo edificios)
+/* LÁMINA DEL BANCO DE MEDIDORES Y BALANCE DE FASES (IE-06, solo edificios)
    A la izquierda, la vista frontal del banco con las medidas de la concesionaria (Parámetros › Banco de medidores,
    Luz del Sur por defecto, plano «Banco de medidores en 2 filas»): caja toma F1, cajas de medidor monofásico (LRM)
    o trifásico (LTR) en filas de largo D = número de conexiones × ancho de caja, y la verificación de la altura
-   máxima. A la derecha, el diagrama de conexión: caja toma, interruptor general del alimentador general, barras
-   R, S, T y N, y cada medidor en la fase que le asigna el balance, con el balance de cargas por fase. Abajo, el
+   máxima. A la derecha, los suministros de cada fase y el balance de cargas (las conexiones a las barras se ven en
+   el interior del tablero general, lámina IE-05, js/tablerogeneral.js). Abajo, el
    cuadro de suministros con la verificación del calibre de la instalación interna (tabla de la concesionaria),
    notas y rótulo. Nada de esto cambia el cálculo. */
 // Calibre de la instalación interna (del medidor al tablero) según Luz del Sur, transcrito del plano «Banco de
@@ -30,27 +30,8 @@ function calibreConc(tri, kW) {
     max = fil.find(x => x[2] === "máximo");
   return { tope, min: mins.length === 1 ? mins[0][4] : null, max: max ? max[4] : null, dudoso: mins.length !== 1 };
 }
-function bancoMedidores(r) {
-  if (r.mode !== "multi") return null;
-  const c = r.c,
-    bm = c.bm,
-    o = [],
-    { L, T, R, C } = trazos(o);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
-    VE = "#2f7a4b",
-    W = 1123;
-  const COLF = { R: "#000000", S: "#c62828", T: "#1565c0", N: "#8a9199" };
-  const titulo = (x, y, w, t) => {
-    R(x, y, w, 18, { st: "", fi: NAVY });
-    T(x + w / 2, y + 12.5, t, { s: 8.5, b: 1, a: "middle", f: "#fff" });
-  };
-  const tri = SIST[r.sk].tri,
-    gen = r.alims[0];
-  // Suministros del banco: cada departamento con la fase del balance y el servicio general
+// Suministros del banco de medidores: cada departamento con la fase que le asigna el balance y el servicio general
+function suministrosBanco(r) {
   const items = r.bal ? r.bal.items.filter(x => x.ti != null) : r.units.map(u => ({ ...u, fase: "—" }));
   const M = items.map(u => {
     const t = r.T[u.ti],
@@ -79,11 +60,33 @@ function bancoMedidores(r) {
       a
     });
   }
+  return M;
+}
+function bancoMedidores(r) {
+  if (r.mode !== "multi") return null;
+  const c = r.c,
+    bm = c.bm,
+    o = [],
+    { L, T, R } = trazos(o);
+  const INK = "#14212e",
+    NAVY = "#14304f",
+    CU = "#9a5a23",
+    GR = "#5a6775",
+    LN = "#bfc8d2",
+    VE = "#2f7a4b",
+    W = 1123;
+  const COLF = { R: "#c62828", S: "#000000", T: "#1565c0", N: "#8a9199" };
+  const titulo = (x, y, w, t) => {
+    R(x, y, w, 18, { st: "", fi: NAVY });
+    T(x + w / 2, y + 12.5, t, { s: 8.5, b: 1, a: "middle", f: "#fff" });
+  };
+  const tri = SIST[r.sk].tri;
+  const M = suministrosBanco(r);
   T(20, 28, "BANCO DE MEDIDORES Y BALANCE DE FASES", { s: 13, b: 1, f: NAVY });
   T(
     20,
     43,
-    `Vista exterior con las medidas de la concesionaria (${bm.conc}) · vista interior con la conexión de cada suministro a su fase según el balance · escala S/E`,
+    `Vista exterior con las medidas de la concesionaria (${bm.conc}) · fase de cada suministro según el balance · escala S/E`,
     { s: 8.5, f: GR }
   );
 
@@ -197,117 +200,26 @@ function bancoMedidores(r) {
   o.push(`</g>`);
   const yFinA = yc + 32;
 
-  /* ---------- Vista interior: conexión de cada medidor a su fase ---------- */
+  /* ---------- Balance de cargas por fase y asignación de cada suministro ---------- */
   const xB = 600,
     wB = W - 20 - xB;
-  titulo(xB, yA, wB, "VISTA INTERIOR (SIN TAPAS) · CONEXIÓN POR FASE");
-  o.push(`<g data-capa="E-TABLEROS">`);
-  const fases = tri ? (SIST[r.sk].n === 4 ? ["R", "S", "T", "N"] : ["R", "S", "T"]) : ["R", "N"],
-    polos = fases.filter(f => f !== "N"),
-    nomF = f => (f === "R" && !tri ? "F" : f);
-  // Caja toma de la concesionaria
-  const yT = yA + 36;
-  R(xB + 8, yT, 74, 38, { fi: "#e6e9ed", sw: 1 });
-  T(xB + 45, yT + 14, "Caja toma F1", { s: 7, b: 1, a: "middle" });
-  T(xB + 45, yT + 25, "(concesionaria)", { s: 6.2, a: "middle", f: GR });
-  // Interruptor general en caja moldeada: bornes arriba y abajo, palanca y unidad de disparo
-  const gx = xB + 128,
-    gy = yT + 6,
-    gw = 66,
-    gh = 92;
-  R(gx, gy, gw, gh, { fi: "#1f2328", sw: 1.2 });
-  polos.forEach((f, p) => {
-    const bx = gx + 8 + p * ((gw - 16) / Math.max(polos.length, 1)) + (gw - 16) / Math.max(polos.length, 1) / 2;
-    [gy + 3, gy + gh - 12].forEach(yy => {
-      R(bx - 6, yy, 12, 9, { fi: "#c9ced5", st: "", sw: 0 });
-      C(bx, yy + 4.5, 2.2, { fi: "#fff", st: GR, sw: 0.6 });
+  titulo(xB, yA, wB, "BALANCE DE CARGAS POR FASE");
+  o.push(`<g data-capa="E-DETALLE">`);
+  let yBal = yA + 40;
+  // Suministros conectados a cada fase (el interior del tablero general, lámina IE-05, muestra sus conexiones)
+  if (tri) {
+    T(xB + 10, yBal, "SUMINISTROS POR FASE", { s: 7.6, b: 1, f: NAVY });
+    yBal += 14;
+    ["R", "S", "T"].forEach(f => {
+      const de = M.filter(m => m.fase === f || m.tri).map(m => m.nom);
+      T(xB + 14, yBal, f, { s: 7.6, b: 1, f: COLF[f] });
+      T(xB + 28, yBal, de.join(" · ") || "—", { s: 7.2 });
+      yBal += 13;
     });
-  });
-  R(gx + gw / 2 - 6, gy + 24, 12, 22, { fi: "#e6e9ed", st: "", sw: 0 });
-  R(gx + gw / 2 - 4, gy + 26, 8, 8, { fi: "#2f7a4b", st: "", sw: 0 });
-  R(gx + 10, gy + 54, gw - 20, 14, { fi: "#d9eedf", st: GR, sw: 0.6 });
-  T(gx + gw / 2, gy + 64, `${gen.itm} A`, { s: 7, b: 1, a: "middle" });
-  T(gx + gw + 10, gy + 16, "INTERRUPTOR GENERAL", { s: 7.4, b: 1, f: NAVY });
-  T(gx + gw + 10, gy + 28, `${polos.length}×${gen.itm} A · ${gen.pdc} kA`, { s: 7.4, b: 1 });
-  T(gx + gw + 10, gy + 40, tri ? "Trifásico, en caja moldeada" : "Bipolar", { s: 6.8, f: GR });
-  T(gx + gw + 10, gy + 52, `Llega ${tri ? 4 : 2}-1×${gen.S} + 1×${gen.St}(T) mm²`, { s: 6.8, f: GR });
-  // De la caja toma al interruptor (fases) y el neutro directo a su barra
-  const cable = (x1, y1, x2, y2, f, w = 1.2) => L(x1, y1, x2, y2, w, COLF[f] || INK);
-  const yBar = gy + gh + 26,
-    dyB = 12,
-    xb1 = xB + 26,
-    xb2 = xB + wB - 22,
-    barra = f => yBar + fases.indexOf(f) * dyB;
-  polos.forEach((f, p) => {
-    const bx = gx + 8 + p * ((gw - 16) / polos.length) + (gw - 16) / polos.length / 2,
-      yv = yT + 8 + p * 7;
-    cable(xB + 82, yv, gx - 6 - p * 4, yv, f);
-    cable(gx - 6 - p * 4, yv, gx - 6 - p * 4, gy - 6 - p * 3, f);
-    cable(gx - 6 - p * 4, gy - 6 - p * 3, bx, gy - 6 - p * 3, f);
-    cable(bx, gy - 6 - p * 3, bx, gy + 3, f);
-    // Salida del interruptor a su barra
-    cable(bx, gy + gh, bx, barra(f), f, 1.4);
-    C(bx, barra(f), 1.8, { fi: COLF[f] || INK, st: "" });
-  });
-  if (fases.includes("N")) {
-    // El neutro baja por el costado, sin cruzar las barras de fase
-    cable(xB + 11, yT + 38, xB + 11, barra("N"), "N");
-    cable(xB + 11, barra("N"), xb1, barra("N"), "N");
+    yBal += 12;
   }
-  // Barras de cobre en el color de su fase
-  fases.forEach(f => {
-    L(xb1, barra(f), xb2, barra(f), 4, COLF[f] || INK);
-    // La letra de cada barra a la derecha, para que el neutro llegue por la izquierda sin cruzarlas
-    T(xb2 + 5, barra(f) + 3, nomF(f), { s: 7, b: 1, f: COLF[f] || INK });
-  });
-  T(xb2, yBar - 6, "Barras de cobre", { s: 6.6, a: "end", f: GR });
-  // Cada medidor toma su fase y el neutro con un perno; debajo, el interruptor del suministro y su salida
-  const nM = M.length,
-    paso = (xb2 - xb1 - 10) / nM,
-    mw = Math.min(36, paso - 8),
-    yMed = yBar + dyB * (fases.length - 1) + 30,
-    mh = 40;
-  const perno = (x, y) => {
-    C(x, y, 2.6, { fi: "#fff", st: INK, sw: 0.7 });
-    L(x - 1.6, y - 1.6, x + 1.6, y + 1.6, 0.6);
-    L(x - 1.6, y + 1.6, x + 1.6, y - 1.6, 0.6);
-  };
-  M.forEach((m, k2) => {
-    const cx = xb1 + 10 + paso * (k2 + 0.5),
-      usa = m.tri ? fases : tri ? [m.fase, "N"] : ["R", "N"];
-    usa.forEach((f, q) => {
-      if (!fases.includes(f)) return;
-      const x = cx - (usa.length - 1) * 2.5 + q * 5;
-      cable(x, barra(f), x, yMed, f, 1);
-      perno(x, barra(f));
-    });
-    // Medidor
-    R(cx - mw / 2, yMed, mw, mh, { fi: "#f3f6f9", sw: 1 });
-    R(cx - mw / 2 + 3, yMed + 4, mw - 6, 10, { fi: "#d9eedf", st: GR, sw: 0.5 });
-    T(cx, yMed + 11.5, "kWh", { s: 5.6, b: 1, a: "middle" });
-    T(cx, yMed + 25, m.nom, { s: 6.6, b: 1, a: "middle", f: NAVY });
-    T(cx, yMed + 35, m.fase, { s: 6.4, b: 1, a: "middle", f: m.fase.length === 1 ? COLF[m.fase] || INK : INK });
-    // Interruptor del suministro (después del medidor)
-    const pol = m.a.s.tri ? 3 : 2,
-      iw = Math.min(mw, pol * 8),
-      iy = yMed + mh + 10;
-    L(cx, yMed + mh, cx, iy, 1);
-    R(cx - iw / 2, iy, iw, 22, { fi: "#f3f6f9", sw: 0.9 });
-    R(cx - 2.5, iy + 5, 5, 8, { fi: INK, st: "", sw: 0 });
-    T(cx, iy + 32, `${pol}×${m.a.itm} A`, { s: 6.2, b: 1, a: "middle" });
-    // Salida hacia el tablero del suministro
-    L(cx, iy + 36, cx, iy + 46, 1, INK, "3 2");
-    T(cx, iy + 56, m.tab, { s: 6.4, b: 1, a: "middle", f: NAVY });
-    T(cx, iy + 65, `${fmt(m.kW, 2)} kW`, { s: 6, a: "middle", f: GR });
-  });
-  // Barra de tierra
-  const yPE = yMed + mh + 86;
-  L(xb1, yPE, xb2, yPE, 4, VE);
-  T(xb1, yPE + 12, "Barra de tierra (PE) · conductor de protección de cada alimentador", { s: 6.8, f: VE });
-  o.push(`</g><g data-capa="E-DETALLE">`);
-  let yBal = yPE + 30;
   if (r.bal) {
-    T(xB + 10, yBal, "BALANCE DE CARGAS POR FASE (DEMANDA)", { s: 7.6, b: 1, f: NAVY });
+    T(xB + 10, yBal, "DEMANDA POR FASE", { s: 7.6, b: 1, f: NAVY });
     yBal += 10;
     const pmax = Math.max(...r.bal.ph),
       wbar = wB - 200;
@@ -464,7 +376,7 @@ function bancoMedidores(r) {
     ny += 1.5;
   });
   o.push(`</g>`);
-  rotuloSvg(o, rx, yr, rw, hr, c.proj, "Banco de medidores y balance de fases · Escala S/E", "IE-05");
+  rotuloSvg(o, rx, yr, rw, hr, c.proj, "Banco de medidores y balance de fases · Escala S/E", "IE-06");
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
   return { svg, W, H };

@@ -26,9 +26,11 @@ function tableros(r, op = {}) {
     LN = "#bfc8d2",
     VE = "#2f7a4b",
     W = 1123;
-  /* Colores de los conductores en el tablero peinado: fases negro, rojo y azul; neutro gris (blanco o gris: el blanco
-     no se vería sobre la lámina); tierra verde con franjas amarillas. El orden de las fases es criterio de diseño. */
-  const COLC = { R: "#000000", S: "#c62828", T: "#1565c0", F: "#000000", N: "#8a9199" };
+  /* Colores de los conductores en el tablero peinado, como se ven en obra: fases rojo (R, y F en monofásico), negro (S)
+     y azul (T); neutro blanco, dibujado con borde gris para que se vea sobre la lámina; tierra verde con franjas
+     amarillas. El orden de las fases es criterio de diseño. */
+  const COLC = { R: "#c62828", S: "#000000", T: "#1565c0", F: "#c62828", N: "#ffffff" };
+  const colTxt = b => (b === "N" ? GR : COLC[b] === "#000000" ? INK : COLC[b] || INK);
   const cable = (x1, y1, x2, y2, b, w = 1.2) => {
     const ln = (col, ww, dash) =>
       o.push(
@@ -37,6 +39,9 @@ function tableros(r, op = {}) {
     if (b === "PE") {
       ln(VE, w + 0.4);
       ln("#ffd200", w * 0.6, "3 3");
+    } else if (b === "N") {
+      ln("#8a9199", w + 0.8);
+      ln("#ffffff", w * 0.55);
     } else ln(COLC[b] || INK, w);
   };
   T(20, 28, op.cont ? `DETALLE DE TABLEROS (continuación de la lámina ${op.cont})` : "DETALLE DE TABLEROS", {
@@ -280,15 +285,14 @@ function tableros(r, op = {}) {
           const bs = bornes(m.pol, m.fase);
           for (let p = 0; p < m.pol; p++) {
             const px = xs + m.x + MW * (p + 0.5),
-              b = bs[p] || "R",
-              col = COLC[b] || INK;
+              b = bs[p] || "R";
             if (m.id || m.eq || m.g === "fd") {
               cable(px, yf - 18, px, yf, b);
-              T(px + 2.5, yf - 11, b, { s: 5.2, b: 1, f: col === "#000000" ? INK : col });
+              T(px + 2.5, yf - 11, b, { s: 5.2, b: 1, f: colTxt(b) });
             }
             if (m.idn || m.g === "fd") {
               cable(px, yf + MH, px, yf + MH + 38, b);
-              T(px + 2.5, yf + MH + 9, b, { s: 5.2, b: 1, f: col === "#000000" ? INK : col });
+              T(px + 2.5, yf + MH + 9, b, { s: 5.2, b: 1, f: colTxt(b) });
             }
           }
         });
@@ -297,7 +301,7 @@ function tableros(r, op = {}) {
           bAlim.forEach((b, k) => {
             const xk = xs + uw - 4 - (bAlim.length - 1 - k) * 7;
             cable(xk, yc + 6, xk, yf - 30, b, 1.8);
-            T(xk + 2, yc + 26, b, { s: 5.4, b: 1, f: COLC[b] === "#000000" ? INK : COLC[b] });
+            T(xk + 2, yc + 26, b, { s: 5.4, b: 1, f: colTxt(b) });
           });
           T(xs + uw - 10 - bAlim.length * 7, yc + 16, `Llega del ${origen} · ${cond(a.s.n, a.S, a.St)}`, {
             s: 6.4,
@@ -446,7 +450,7 @@ function tableros(r, op = {}) {
     `El interruptor del alimentador de cada tablero está aguas arriba (lámina IE-01). Reservas equipadas: ITM 2×16 A, curva C${c.reserva ? "" : " (este proyecto no tiene reservas)"}.`,
     "Los equipos adicionales (DPS, relé de tensión, medidor, contactor) son criterio del proyectista y no cambian el cálculo.",
     PEIN
-      ? "Cableado esquemático (peinado): alimentación por la canaleta superior y salidas por la inferior. Colores: fases negro (R o F), rojo (S) y azul (T), neutro gris o blanco y tierra verde con amarillo; el orden de las fases es criterio de diseño."
+      ? "Cableado esquemático (peinado): alimentación por la canaleta superior y salidas por la inferior. Colores: fases rojo (R o F), negro (S) y azul (T), neutro blanco y tierra verde con amarillo; el orden de las fases es criterio de diseño."
       : ""
   ].filter(Boolean);
   let ny = yb + 32;

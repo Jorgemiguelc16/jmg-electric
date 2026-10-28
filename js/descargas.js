@@ -233,6 +233,7 @@ const PLANOS = {
     }))
 };
 // El banco de medidores solo existe en edificios
+PLANOS.tgeneral = () => (b => (b ? [{ ...b, nom: "Tablero general", corto: "TG" }] : []))(tableroGeneral(LAST));
 PLANOS.medidores = () =>
   (b => (b ? [{ ...b, nom: "Banco de medidores", corto: "Medidores" }] : []))(bancoMedidores(LAST));
 const planoActual = () => PLANOS[PLANOS[VIEW] ? VIEW : "unifilar"]();

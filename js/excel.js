@@ -35,8 +35,9 @@ async function exportar() {
   const wsD = wb.addWorksheet("Detalles", { properties: { tabColor: { argb: "FF14304F" } } });
   const wsB = wb.addWorksheet("Tableros", { properties: { tabColor: { argb: "FFFFD200" } } });
   // Banco de medidores: solo en edificios (una hoja más)
-  const wsBM = multi ? wb.addWorksheet("Medidores", { properties: { tabColor: { argb: "FF2F7A4B" } } }) : null,
-    NH = multi ? 9 : 8;
+  const wsTG = multi ? wb.addWorksheet("TG", { properties: { tabColor: { argb: "FFC62828" } } }) : null,
+    wsBM = multi ? wb.addWorksheet("Medidores", { properties: { tabColor: { argb: "FF2F7A4B" } } }) : null,
+    NH = multi ? 10 : 8;
   const wsT = wb.addWorksheet("Metrado", { properties: { tabColor: { argb: "FF22507C" } } });
   const wsX = wb.addWorksheet("Anexos", { properties: { tabColor: { argb: "FF5A6775" } } });
   const setup = (ws, orient, widths) => {
@@ -1332,10 +1333,17 @@ async function exportar() {
     ...(multi
       ? [
           [
+            wsTG,
+            [tableroGeneral(r)],
+            "TABLERO GENERAL DEL EDIFICIO",
+            `Hoja 7 de ${NH}`,
+            "Interruptor general del alimentador general en caja moldeada y barras de cobre N, R, S y T, de las que sale la fase de cada suministro, según el balance, hacia su medidor. Dimensiones del gabinete y de las barras según el fabricante."
+          ],
+          [
             wsBM,
             [bancoMedidores(r)],
             "BANCO DE MEDIDORES Y BALANCE DE FASES",
-            `Hoja 7 de ${NH}`,
+            `Hoja 8 de ${NH}`,
             `Vista frontal con las medidas de la concesionaria (${c.bm.conc}), conexión de cada suministro a su fase según el balance y verificación del calibre de la instalación interna con la tabla de la concesionaria.`
           ]
         ]
@@ -1385,7 +1393,7 @@ async function exportar() {
   {
     const LT = 8;
     setup(wsT, "portrait", [9, 13, 13, 13, 13, 7, 10, 22]);
-    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", `Hoja ${NH - 1} de ${NH}`);
+    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", `Hoja ${multi ? NH - 1 : 7} de ${NH}`);
     t = thead(wsT, t, [
       [1, 1, "Ítem"],
       [2, 5, "Descripción"],
