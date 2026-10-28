@@ -203,15 +203,30 @@ function tableros(r, op = {}) {
       { s: 8, f: GR }
     );
     const yc = yb + 24;
-    // Vista de la puerta con la señal de riesgo eléctrico y la placa del tablero
+    /* Vista de la puerta, como la del tablero general: bisagras a la izquierda, chapa con manija a la derecha, señal
+       de riesgo eléctrico centrada, placa con el nombre del tablero y rejillas de ventilación abajo */
     const pc = px + pw / 2,
-      sS = Math.min(70, pw * 0.45, (ph - 66) / 1.45);
+      sS = Math.min(90, pw * 0.42, (ph - 160) / 1.45),
+      yS0 = yc + 30;
     R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
-    R(px + 7, yc + 7, pw - 14, ph - 14, { fi: "#f3f6f9", sw: 0.9 });
-    R(px + pw - 20, yc + ph / 2 - 14, 5, 28, { fi: INK, sw: 0.8 });
-    const yS = yc + 22 + senalRiesgoTexto(o, pc - sS / 2, yc + 22, sS) + 12;
-    R(pc - 40, yS, 80, 22, { fi: "#fff", sw: 0.9 });
-    T(pc, yS + 15, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
+    R(px + 9, yc + 9, pw - 18, ph - 18, { fi: "#f3f6f9", sw: 0.9 });
+    [0.16, 0.84].forEach(p => R(px + 2, yc + ph * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
+    R(px + pw - 30, yc + ph / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
+    R(px + pw - 27, yc + ph / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
+    C(px + pw - 24, yc + ph / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
+    const yS = yS0 + senalRiesgoTexto(o, pc - sS / 2, yS0, sS) + 12,
+      pl = Math.min(104, pw - 70),
+      rj = Math.min(100, pw - 70);
+    R(pc - pl / 2, yS, pl, 26, { fi: "#fff", sw: 0.9 });
+    T(pc, yS + 17, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
+    T(
+      pc,
+      yS + 40,
+      tb.tab === "TSG" ? "SERVICIOS GENERALES" : tb.tab === "TG" ? "TABLERO GENERAL" : "TABLERO DE DISTRIBUCIÓN",
+      { s: 7, b: 1, a: "middle", f: GR }
+    );
+    if (yS + 50 < yc + ph - 70)
+      for (let k = 0; k < 6; k++) R(pc - rj / 2, yc + ph - 70 + k * 8, rj, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
     T(pc, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
     T(pc, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
     // Vista interior
