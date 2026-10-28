@@ -918,7 +918,8 @@ function svgDxf(svgTxt, op = {}) {
     "#b42318",
     "#2f7a4b",
     "#c98a4b",
-    "#ffd200"
+    "#ffd200",
+    "#5a6775"
   ];
   // Rellenos claros del dibujo de los tableros (gabinete, módulos, riel, canaletas), en grises de AutoCAD para que se
   // vean con volumen como en pantalla; lo que va encima se dibuja en tonos oscuros (esquema JMG)

@@ -67,186 +67,168 @@ function tableroGeneral(r) {
     `Tablero general · ${sis.txt} · PdC ${gen.pdc} kA · interruptor general ${polos.length}×${gen.itm} A · ${M.length} suministros · llega de la caja toma F1`,
     { s: 8, f: GR }
   );
+  // Gabinete: la vista de la puerta y la interior tienen el mismo tamaño, porque son el mismo tablero
   const yc = yb + 24,
-    x0 = 214,
-    gw = 560;
-  // Alturas de la vista interior
-  const my = yc + 34,
-    np = polos.length,
+    wG = 380,
+    xD = 20,
+    x0 = xD + wG + 24,
+    xc = x0 + wG / 2;
+  const np = polos.length,
     pp = 26,
     mw = np * pp + 18,
     mh = 116,
-    // Una zona por fase, cada una con su barra y las salidas que toman esa fase (sin cruzar otras barras)
-    porFase = polos.map(f => filas.filter(x => x.f === f)),
-    paso = 18,
-    yB1 = my + mh + 46,
-    yB2 = yB1 + 16 + Math.max(1, ...porFase.map(z => z.length)) * paso,
-    yN = yB2 + 24,
-    yDin = yN + 26,
-    yPE = yDin + 42,
-    bh = yPE + 40 - yc;
+    mx = xc - mw / 2,
+    my = yc + 40,
+    pb = 28,
+    bw = 12,
+    anchoB = (barras.length - 1) * pb + bw,
+    xb0 = xc - anchoB / 2,
+    xBar = f => xb0 + barras.indexOf(f) * pb,
+    cx = f => xBar(f) + bw / 2,
+    paso = 15,
+    yB1 = my + mh + 50,
+    yB2 = yB1 + 24 + filas.length * paso + 6,
+    yDin = yB2 + 30,
+    yPE = yDin + 40,
+    bh = yPE + 36 - yc;
   o.push(`<g data-capa="E-TABLEROS">`);
 
   /* ---------- Vista de la puerta ---------- */
-  R(30, yc, 160, bh, { fi: "#e6e9ed", sw: 1.4 });
-  R(37, yc + 7, 146, bh - 14, { fi: "#f3f6f9", sw: 0.9 });
-  R(170, yc + bh / 2 - 14, 5, 28, { fi: INK, sw: 0.8 });
-  senalRiesgoTexto(o, 75, yc + 22, 70);
-  R(70, yc + 140, 80, 22, { fi: "#fff", sw: 0.9 });
-  T(110, yc + 155, "TG", { s: 9, b: 1, a: "middle", f: NAVY });
-  T(110, yc + 176, "Tablero general", { s: 7, a: "middle", f: GR });
-  // Bisagras y chapas
-  [yc + 24, yc + bh - 34].forEach(y => R(31, y, 5, 10, { fi: "#c9ced5", st: GR, sw: 0.6 }));
-  T(110, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
+  const xdc = xD + wG / 2;
+  R(xD, yc, wG, bh, { fi: "#e6e9ed", sw: 1.4 });
+  R(xD + 9, yc + 9, wG - 18, bh - 18, { fi: "#f3f6f9", sw: 0.9 });
+  // Bisagras a la izquierda y chapa con manija a la derecha
+  [0.16, 0.84].forEach(p => R(xD + 2, yc + bh * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
+  R(xD + wG - 30, yc + bh / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
+  R(xD + wG - 27, yc + bh / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
+  C(xD + wG - 24, yc + bh / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
+  const hS = senalRiesgoTexto(o, xdc - 45, yc + 44, 90);
+  R(xdc - 52, yc + 56 + hS, 104, 26, { fi: "#fff", sw: 0.9 });
+  T(xdc, yc + 73 + hS, "TG", { s: 10, b: 1, a: "middle", f: NAVY });
+  T(xdc, yc + 96 + hS, "TABLERO GENERAL", { s: 7.4, b: 1, a: "middle", f: GR });
+  // Rejillas de ventilación abajo
+  for (let k = 0; k < 6; k++) R(xdc - 50, yc + bh - 70 + k * 8, 100, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
+  T(xdc, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
 
   /* ---------- Vista interior ---------- */
-  R(x0, yc, gw, bh, { sw: 1.4 });
-  R(x0 + 6, yc + 6, gw - 12, bh - 12, { st: LN, sw: 0.7 });
-  T(x0 + gw / 2, yc + bh + 14, "VISTA INTERIOR (SIN PUERTA)", { s: 7, b: 1, a: "middle", f: GR });
-  // Interruptor general en caja moldeada: bornes con tornillos arriba y abajo, etiqueta, unidad de disparo y palanca
-  const mx = x0 + 120,
-    bx = i => mx + 9 + pp * (i + 0.5);
+  R(x0, yc, wG, bh, { sw: 1.4 });
+  R(x0 + 6, yc + 6, wG - 12, bh - 12, { st: LN, sw: 0.7 });
+  T(xc, yc + bh + 14, "VISTA INTERIOR (SIN PUERTA)", { s: 7, b: 1, a: "middle", f: GR });
+  // Interruptor general en caja moldeada: bornes con tornillos arriba y abajo, placa, unidad de disparo y palanca
+  const bx = k => mx + 9 + pp * (k + 0.5);
   R(mx, my, mw, mh, { fi: "#1f2328", sw: 1.2 });
-  polos.forEach((f, i) => {
+  polos.forEach((f, k) => {
     [my + 4, my + mh - 18].forEach(y => {
-      R(bx(i) - 9, y, 18, 14, { fi: "#c9ced5", st: GR, sw: 0.5 });
-      C(bx(i), y + 7, 3.2, { fi: "#fff", st: GR, sw: 0.6 });
+      R(bx(k) - 9, y, 18, 14, { fi: "#c9ced5", st: GR, sw: 0.5 });
+      C(bx(k), y + 7, 3.2, { fi: "#fff", st: GR, sw: 0.6 });
     });
   });
   R(mx + 6, my + 24, mw - 12, 10, { fi: "#c9ced5", st: "", sw: 0 });
-  T(mx + mw / 2, my + 31.5, `${np}P · ${gen.itm} A`, { s: 6.4, b: 1, a: "middle" });
+  T(xc, my + 31.5, `${np}P · ${gen.itm} A`, { s: 6.4, b: 1, a: "middle" });
   R(mx + 8, my + 40, mw * 0.5, 24, { fi: "#d9eedf", st: GR, sw: 0.6 });
   T(mx + 8 + mw * 0.25, my + 55, `${gen.itm} A`, { s: 7, b: 1, a: "middle" });
   R(mx + mw - 26, my + 40, 16, 34, { fi: "#e6e9ed", st: "", sw: 0 });
   R(mx + mw - 22, my + 44, 8, 12, { fi: INK, st: "", sw: 0 });
-  T(mx + 10, my + 80, `Icu ${gen.pdc} kA`, { s: 6.2, f: "#fff" });
-  T(mx + mw + 12, my + 22, "INTERRUPTOR GENERAL", { s: 7.6, b: 1, f: NAVY });
-  T(mx + mw + 12, my + 35, `${np}×${gen.itm} A · ${gen.pdc} kA · caja moldeada`, { s: 7.4, b: 1 });
-  T(mx + mw + 12, my + 48, "Protege el alimentador general (lámina IE-01)", { s: 6.8, f: GR });
-  // Llegada desde la caja toma: fases al interruptor, neutro directo a su barra y tierra a la barra de tierra
-  T(mx + mw + 12, yc + 18, `Llega de la caja toma F1 · ${cond(tri ? sis.n : 2, gen.S, gen.St)}`, {
-    s: 7,
-    b: 1,
-    f: NAVY
-  });
-  polos.forEach((f, i) =>
+  T(mx + 10, my + 82, `Icu ${gen.pdc} kA`, { s: 6.2, f: "#fff" });
+  // Datos del interruptor y de la llegada, a su derecha
+  const xt = mx + mw + 12;
+  T(xt, yc + 20, "Llega de la caja toma F1", { s: 6.8, b: 1, f: NAVY });
+  T(xt, yc + 30, cond(tri ? sis.n : 2, gen.S, gen.St), { s: 6.6, f: GR });
+  T(xt, my + 30, "INTERRUPTOR GENERAL", { s: 7.4, b: 1, f: NAVY });
+  T(xt, my + 42, `${np}×${gen.itm} A · ${gen.pdc} kA`, { s: 7.2, b: 1 });
+  T(xt, my + 53, "Caja moldeada", { s: 6.6, f: GR });
+  T(xt, my + 63, "Alimentador general (IE-01)", { s: 6.6, f: GR });
+  // Llegada: fases al interruptor; neutro y tierra por el borde izquierdo
+  polos.forEach((f, k) =>
     tramo(
       [
-        [bx(i), yc + 6],
-        [bx(i), my + 4]
+        [bx(k), yc + 6],
+        [bx(k), my + 4]
       ],
       f,
       2.6
     )
   );
-  /* Barras de cobre: una vertical por fase, cada una en su zona, y el neutro horizontal abajo, a lo ancho. Cada salida
-     toma con un perno la fase de su barra y la lleva con cable aislado a su borne de fase; su neutro sale del borne
-     vecino y baja por su zona hasta la barra N. Así ningún conductor pasa sobre otra barra. */
-  const zx = x0 + 22,
-    zw = (gw - 44) / np,
-    zL = z => zx + z * zw,
-    xBarZ = z => zL(z) + 16,
-    bw = 12;
-  polos.forEach((f, z) => {
-    const xb = xBarZ(z);
-    [yB1 - 8, yB2 - 4].forEach(y => R(xb - 4, y, bw + 8, 12, { fi: CU, st: "", sw: 0 }));
-    R(xb, yB1 - 4, bw, yB2 - yB1 + 8, { fi: COL[f], st: "", sw: 0 });
-    perno(xb + bw / 2, yB1 - 2, 3);
-    perno(xb + bw / 2, yB2 + 2, 3);
-    T(xb + bw / 2, yB1 - 14, nomF(f), { s: 7.4, b: 1, a: "middle", f: colTxt(f) });
+  // Barras de cobre juntas, en el orden de la foto de obra (N, R, S, T), sobre placas aislantes arriba y abajo
+  [yB1 - 10, yB2 - 2].forEach(y => R(xb0 - 14, y, anchoB + 28, 12, { fi: CU, st: "", sw: 0 }));
+  barras.forEach(f => {
+    // El neutro, blanco con borde gris (en AutoCAD, gris claro, para no confundirlo con la S negra)
+    R(xBar(f), yB1 - 6, bw, yB2 - yB1 + 8, { fi: f === "N" ? "#e6e9ed" : COL[f], st: f === "N" ? GR : "", sw: 0.8 });
+    perno(cx(f), yB1 - 4, 3);
+    perno(cx(f), yB2 + 4, 3);
+    T(cx(f), yB1 - 16, nomF(f), { s: 7.4, b: 1, a: "middle", f: colTxt(f) });
   });
-  const cx = f => xBarZ(polos.indexOf(f)) + bw / 2;
-  // Del interruptor a la cabeza de cada barra, sin cruzarse: T arriba, S al medio y R abajo
-  polos.forEach((f, i) => {
-    const yv = my + mh + 12 + (np - 1 - i) * 7;
+  // Del interruptor a la cabeza de cada barra, con cable grueso
+  polos.forEach((f, k) =>
     tramo(
       [
-        [bx(i), my + mh],
-        [bx(i), yv],
-        [cx(f), yv],
-        [cx(f), yB1 - 2]
+        [bx(k), my + mh],
+        [bx(k), my + mh + 18],
+        [cx(f), my + mh + 18],
+        [cx(f), yB1 - 4]
       ],
       f,
       3.2
-    );
-  });
-  // Barra de neutro (blanca con borde gris; en AutoCAD, gris claro, para no confundirla con la S negra)
-  if (conN) {
-    R(zx, yN - 5, gw - 44, 10, { fi: "#e6e9ed", st: GR, sw: 0.8 });
-    [zx - 8, zx + gw - 44].forEach(x => R(x, yN - 6, 8, 12, { fi: CU, st: "", sw: 0 }));
-    T(zx + gw - 50, yN + 16, "Barra de neutro (N)", { s: 6.8, b: 1, a: "end", f: GR });
+    )
+  );
+  if (conN)
     tramo(
       [
         [x0 + 16, yc + 6],
-        [x0 + 16, yN],
-        [zx, yN]
+        [x0 + 16, my + mh + 32],
+        [cx("N"), my + mh + 32],
+        [cx("N"), yB1 - 4]
       ],
       "N",
       3.2
     );
-  }
-  // Salidas de cada zona: perno en la barra, cable a su borne de fase, borne de neutro y su bajada a la barra N
-  const yaN = new Set();
-  porFase.forEach((zona, z) => {
-    const f = polos[z],
-      xb = cx(f),
-      xF = zL(z) + 52,
-      xNb = xF + 12;
-    zona.forEach((sa, k) => {
-      const y = yB1 + 16 + k * paso;
-      perno(xb, y, 2.4);
-      cable(xb + 3, y, xF - 4, y, f, 1.4);
-      R(xF - 4, y - 5, 8, 10, { fi: "#c9ced5", st: GR, sw: 0.5 });
-      C(xF, y, 1.8, { fi: "#fff", st: GR, sw: 0.5 });
-      const conNeutro = conN && !yaN.has(sa.m);
-      if (conNeutro) {
-        yaN.add(sa.m);
-        R(xNb - 4, y - 5, 8, 10, { fi: "#c9ced5", st: GR, sw: 0.5 });
-        C(xNb, y, 1.8, { fi: "#fff", st: GR, sw: 0.5 });
-        // Bajada del neutro: las filas de arriba bajan más a la derecha, para no cruzar las de abajo
-        const xv = zL(z) + zw - 10 - k * 3;
-        tramo(
-          [
-            [xNb + 3, y + 5],
-            [xv, y + 5],
-            [xv, yN - 5]
-          ],
-          "N",
-          1.2
-        );
-        C(xv, yN - 5, 1.6, { fi: GR, st: "" });
-      }
-      T(xNb + 10, y + 2, `${sa.m.nom} · ${nomF(f)}${conNeutro ? "-N" : ""} → ${sa.m.tab}`, {
-        s: 6.2,
-        b: 1,
-        f: colTxt(f)
-      });
-    });
+  /* Salidas: la pletina de cada fase sale del perno de su barra hacia la bornera de la derecha y pasa por delante de
+     las otras barras, que están en otro plano sobre sus aisladores: donde cruza lleva una manga aislante. El neutro
+     de cada suministro sale de la barra N hacia la izquierda. */
+  const xS = xb0 + anchoB + 24,
+    xNL = xb0 - 24;
+  filas.forEach((sa, k) => {
+    const y = yB1 + 24 + k * paso;
+    R(cx(sa.f), y - 3, xS - cx(sa.f), 6, { fi: "#c98a4b", st: CU, sw: 0.5 });
+    barras
+      .slice(barras.indexOf(sa.f) + 1)
+      .forEach(b => R(xBar(b) - 2, y - 4.5, bw + 4, 9, { fi: "#5a6775", st: INK, sw: 0.5 }));
+    perno(cx(sa.f), y, 2.4);
+    perno(xS, y, 2.4);
+    cable(xS + 3, y, xS + 22, y, sa.f, 1.4);
+    T(xS + 26, y + 3, `${sa.m.nom} · ${nomF(sa.f)} → ${sa.m.tab}`, { s: 6.2, b: 1, f: colTxt(sa.f) });
+    if (conN && filas.findIndex(x => x.m === sa.m) === k) {
+      R(xNL, y - 2.5, cx("N") - xNL, 5, { fi: "#c98a4b", st: CU, sw: 0.5 });
+      perno(cx("N"), y, 2.2);
+      perno(xNL, y, 2.2);
+      cable(xNL - 18, y, xNL - 3, y, "N", 1.4);
+      T(xNL - 21, y + 3, `N · ${sa.m.nom}`, { s: 6, a: "end", f: GR });
+    }
   });
   // Riel DIN para equipos (DPS u otros, si el proyecto los lleva)
-  R(x0 + 60, yDin, 300, 14, { fi: "#c9ced5", st: GR, sw: 0.7 });
-  for (let x = x0 + 66; x < x0 + 356; x += 12) R(x, yDin + 5, 6, 4, { fi: "#e6e9ed", st: "", sw: 0 });
-  T(x0 + 366, yDin + 10, "Riel DIN", { s: 6.8, f: GR });
+  R(xc - 130, yDin, 260, 14, { fi: "#c9ced5", st: GR, sw: 0.7 });
+  for (let x = xc - 124; x < xc + 126; x += 12) R(x, yDin + 5, 6, 4, { fi: "#e6e9ed", st: "", sw: 0 });
+  T(xc + 136, yDin + 10, "Riel DIN", { s: 6.6, f: GR });
   // Barra de tierra con sus bornes y aisladores; conductor de tierra a la puerta y al pozo
-  R(x0 + 40, yPE, 360, 10, { fi: CU, st: "", sw: 0 });
-  [x0 + 32, x0 + 400].forEach(x => R(x, yPE - 2, 10, 14, { fi: "#ffd200", st: GR, sw: 0.5 }));
-  for (let x = x0 + 52; x < x0 + 396; x += 20) C(x, yPE + 5, 2.4, { fi: "#fff", st: GR, sw: 0.5 });
-  T(x0 + 40, yPE + 24, `Barra de tierra (PE) · conductor de puesta a tierra ${r.Selec} mm² al pozo`, { s: 6.8, f: VE });
+  R(xc - 150, yPE, 300, 10, { fi: CU, st: "", sw: 0 });
+  [xc - 158, xc + 148].forEach(x => R(x, yPE - 2, 10, 14, { fi: "#ffd200", st: GR, sw: 0.5 }));
+  for (let x = xc - 140; x < xc + 146; x += 18) C(x, yPE + 5, 2.4, { fi: "#fff", st: GR, sw: 0.5 });
+  T(xc, yPE + 24, `Barra de tierra (PE) · ${r.Selec} mm² al pozo`, { s: 6.8, a: "middle", f: VE });
   tramo(
     [
-      [x0 + 400, yPE + 5],
-      [x0 + gw - 14, yPE + 5],
-      [x0 + gw - 14, yPE - 40]
+      [xc + 158, yPE + 5],
+      [x0 + wG - 14, yPE + 5],
+      [x0 + wG - 14, yPE - 34]
     ],
     "PE",
     1.6
   );
-  T(x0 + gw - 18, yPE - 44, "A la puerta", { s: 6.4, a: "end", f: VE });
+  T(x0 + wG - 18, yPE - 6, "A la puerta", { s: 6.4, a: "end", f: VE });
   tramo(
     [
       [x0 + 10, yc + 6],
       [x0 + 10, yPE + 5],
-      [x0 + 40, yPE + 5]
+      [xc - 158, yPE + 5]
     ],
     "PE",
     1.6
@@ -311,7 +293,7 @@ function tableroGeneral(r) {
   const notas = [
     "Caja toma F1 (concesionaria) → tablero general → banco de medidores (lámina IE-06) → tablero de cada suministro (lámina IE-04).",
     "Interruptor general y alimentador del cálculo (lámina IE-01). Gabinete, tipo de interruptor y sección de las barras según el fabricante.",
-    "Cada salida toma con perno la fase del balance y la lleva con cable aislado a su borne, junto a su neutro; el interruptor de cada suministro va después de su medidor.",
+    "Cada salida toma con perno la fase del balance y su neutro; las pletinas pasan por delante de las otras barras (en otro plano, sobre aisladores) con manga aislante. El interruptor de cada suministro va después de su medidor.",
     "Conductores: R rojo, S negro, T azul (orden de fases: criterio), N blanco, tierra verde-amarillo. Barra de tierra unida a la puerta y al pozo."
   ];
   let ny = yr + 32;
