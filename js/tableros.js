@@ -19,31 +19,11 @@ function tableros(r, op = {}) {
     c = r.c,
     o = [],
     { L, T, R, C } = trazos(o);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
-    VE = "#2f7a4b",
+  const { INK, NAVY, CU, GR, LN, VE } = PAL,
     W = 1123;
-  /* Colores de los conductores en el tablero peinado, como se ven en obra: fases rojo (R, y F en monofásico), negro (S)
-     y azul (T); neutro blanco, dibujado con borde gris para que se vea sobre la lámina; tierra verde con franjas
-     amarillas. El orden de las fases es criterio de diseño. */
-  const COLC = { R: "#c62828", S: "#000000", T: "#1565c0", F: "#c62828", N: "#ffffff" };
-  const colTxt = b => (b === "N" ? GR : COLC[b] === "#000000" ? INK : COLC[b] || INK);
-  const cable = (x1, y1, x2, y2, b, w = 1.2) => {
-    const ln = (col, ww, dash) =>
-      o.push(
-        `<line x1="${px2(x1)}" y1="${px2(y1)}" x2="${px2(x2)}" y2="${px2(y2)}" stroke="${col}" stroke-width="${ww}"${dash ? ` stroke-dasharray="${dash}"` : ""} data-capa="E-CABLEADO"/>`
-      );
-    if (b === "PE") {
-      ln(VE, w + 0.4);
-      ln("#ffd200", w * 0.6, "3 3");
-    } else if (b === "N") {
-      ln("#8a9199", w + 0.8);
-      ln("#ffffff", w * 0.55);
-    } else ln(COLC[b] || INK, w);
-  };
+  // Conductores en sus colores (js/dibujo.js)
+  const colTxt = colTxtCond,
+    cable = conductorSvg(o);
   T(20, 28, op.cont ? `DETALLE DE TABLEROS (continuación de la lámina ${op.cont})` : "DETALLE DE TABLEROS", {
     s: 13,
     b: 1,
@@ -239,25 +219,14 @@ function tableros(r, op = {}) {
       T(pc, yP + 14, tb.tab, { s: 9, b: 1, a: "middle", f: NAVY });
       T(pc, yP + 31, nomT, { s: 6, b: 1, a: "middle", f: GR });
     } else {
-      /* Vista de la puerta metálica, como la del tablero general: bisagras a la izquierda, chapa con manija a la
-       derecha, señal de riesgo eléctrico centrada, placa con el nombre del tablero y rejillas de ventilación abajo */
-      const sS = Math.min(130, pw * 0.5, (ph - 170) / 1.45),
-        // Señal, placa y descripción centradas a lo alto de la puerta, sobre las rejillas
-        yS0 = yc + 20 + Math.max(0, (ph - 100 - (sS * 1.45 + 56)) / 2);
-      R(px, yc, pw, ph, { fi: "#e6e9ed", sw: 1.4 });
-      R(px + 9, yc + 9, pw - 18, ph - 18, { fi: "#f3f6f9", sw: 0.9 });
-      [0.16, 0.84].forEach(p => R(px + 2, yc + ph * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
-      R(px + pw - 30, yc + ph / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
-      R(px + pw - 27, yc + ph / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
-      C(px + pw - 24, yc + ph / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
-      const yS = yS0 + senalRiesgoTexto(o, pc - sS / 2, yS0, sS) + 12,
-        pl = Math.min(Math.max(104, sS * 1.1), pw - 70),
-        rj = Math.min(100, pw - 70);
-      R(pc - pl / 2, yS, pl, 26, { fi: "#fff", sw: 0.9 });
-      T(pc, yS + 17, tb.tab, { s: 10, b: 1, a: "middle", f: NAVY });
-      T(pc, yS + 40, nomT, { s: 7, b: 1, a: "middle", f: GR });
-      if (yS + 50 < yc + ph - 70)
-        for (let k = 0; k < 6; k++) R(pc - rj / 2, yc + ph - 70 + k * 8, rj, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
+      // Puerta metálica (js/dibujo.js): señal, placa y descripción centradas a lo alto, sobre las rejillas
+      const sS = Math.min(130, pw * 0.5, (ph - 170) / 1.45);
+      puertaMetalica(o, px, yc, pw, ph, {
+        s: sS,
+        ys: yc + 20 + Math.max(0, (ph - 100 - (sS * 1.45 + 56)) / 2),
+        tab: tb.tab,
+        nom: nomT
+      });
     }
     T(pc, yc + ph + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
     T(pc, yc + ph + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
@@ -499,9 +468,6 @@ function tableros(r, op = {}) {
   const hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
-  o.push(`<g data-capa="E-NOTAS">`);
-  R(20, yb, rx - 40, hr, { st: NAVY, sw: 1 });
-  T(30, yb + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
     "Vistas esquemáticas generadas del cálculo: dispositivos y orden según el cuadro de cargas, cada diferencial con sus circuitos. Medida del gabinete referencial, de catálogo según sus polos (criterio): la define el fabricante.",
     "Espacio de trabajo libre de 1 m frente al tablero, con piso no deslizante, que permita abrir la puerta al menos 90° (Regla 020-308).",
@@ -512,25 +478,7 @@ function tableros(r, op = {}) {
       ? "Cableado esquemático (peinado): alimentación por la canaleta superior y salidas por la inferior. Colores: fases rojo (R o F), negro (S) y azul (T), neutro blanco y tierra verde con amarillo; el orden de las fases es criterio de diseño."
       : ""
   ].filter(Boolean);
-  let ny = yb + 32;
-  notas.forEach((t, i) => {
-    const ln = [];
-    let u = "";
-    t.split(" ").forEach(w => {
-      if ((u + " " + w).trim().length > 150 && u) {
-        ln.push(u);
-        u = w;
-      } else u = (u + " " + w).trim();
-    });
-    ln.push(u);
-    ln.forEach((l, j) => {
-      if (!j) T(30, ny, `${i + 1}.`, { s: 7.6, b: 1, f: NAVY });
-      T(42, ny, l, { s: 7.6 });
-      ny += 10;
-    });
-    ny += 1.5;
-  });
-  o.push(`</g>`);
+  notasSvg(o, 20, yb, rx - 40, hr, notas);
   rotuloSvg(
     o,
     rx,

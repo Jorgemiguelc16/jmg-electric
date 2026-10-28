@@ -80,11 +80,7 @@ function alturas(r) {
     o = [],
     S = salidasAltura(r),
     rige = a120Aplica(r);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
+  const { INK, NAVY, CU, GR, LN } = PAL,
     W = 1123;
   // Línea; en el DXF, los niveles (punteados) y la tubería (cobre) van en sus propias capas
   const L = (x1, y1, x2, y2, w = 1.3, col = INK, dash) =>

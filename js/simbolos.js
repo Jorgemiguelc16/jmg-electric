@@ -5,7 +5,7 @@
    svgDxf() los pase a AutoCAD. */
 // Coordenadas con 2 decimales
 const px2 = v => +(+v).toFixed(2);
-const INK_S = "#14212e";
+const INK_S = PAL.INK;
 // Primitivas de dibujo sobre la lista o (cadenas SVG)
 function trazos(o) {
   const L = (x1, y1, x2, y2, w = 1.2, col = INK_S, dash) =>

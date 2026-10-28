@@ -15,6 +15,7 @@ const { DOMParser } = require("./mini-dom.js");
 
 const { ctx, cargar, run, raiz } = crearContexto([
   "js/logo.js",
+  "js/dibujo.js",
   "js/unifilar.js",
   "js/simbolos.js",
   "js/alturas.js",

@@ -17,10 +17,7 @@ function unifilar(r, op = {}) {
     a0 = r.alims[0],
     s0 = a0.s,
     multi = r.mode === "multi";
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
+  const { INK, NAVY, CU, GR } = PAL,
     CW = 74;
   const L = (x1, y1, x2, y2, w = 1.3, col = INK, dash) =>
     o.push(
@@ -759,7 +756,7 @@ function unifilarHojas(r, lam = laminaPlano()) {
 /* Rótulo de las láminas (unifilar y alturas): logo, datos del proyecto, plano y número de lámina, dentro del
    recuadro x, y, w, h. El logo vectorial (oculto en pantalla) es el que usa el DXF. */
 function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
-  const INK = "#14212e";
+  const { INK } = PAL;
   const L = (x1, y1, x2, y2, w = 1.3, col = INK) =>
     o.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}"/>`);
   const T = (x, y, t, { s = 9, b = 0, a = "start", f = INK } = {}) =>
@@ -768,8 +765,7 @@ function rotuloSvg(o, rx, yr, rw, hr, P, plano, lamina) {
     );
   const LY = "#ffd200",
     LB = "#1f2328",
-    CU = "#9a5a23",
-    NAVY = "#14304f";
+    { CU, NAVY } = PAL;
   o.push(`<g data-capa="E-ROTULO">`);
   o.push(`<rect x="${rx}" y="${yr}" width="110" height="${hr}" fill="${LB}"/>`);
   if (typeof LOGO_JPG === "string")

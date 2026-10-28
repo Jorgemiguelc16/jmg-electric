@@ -10,29 +10,11 @@ function tableroGeneral(r) {
   const c = r.c,
     o = [],
     { L, T, R, C } = trazos(o);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
-    VE = "#2f7a4b",
+  const { INK, NAVY, CU, GR, LN, VE } = PAL,
     W = 1123;
-  // Conductores como se ven en obra: R rojo, S negro, T azul, N blanco (con borde gris para que se vea), PE verde-amarillo
-  const COL = { R: "#c62828", S: "#000000", T: "#1565c0", N: "#ffffff" },
-    colTxt = f => (f === "N" ? GR : f === "S" ? INK : COL[f] || INK);
-  const cable = (x1, y1, x2, y2, f, w = 1.4) => {
-    const ln = (col, ww, dash) =>
-      o.push(
-        `<line x1="${px2(x1)}" y1="${px2(y1)}" x2="${px2(x2)}" y2="${px2(y2)}" stroke="${col}" stroke-width="${ww}" stroke-linecap="round"${dash ? ` stroke-dasharray="${dash}"` : ""} data-capa="E-CABLEADO"/>`
-      );
-    if (f === "PE") {
-      ln(VE, w + 0.4);
-      ln("#ffd200", w * 0.6, "3 3");
-    } else if (f === "N") {
-      ln("#8a9199", w + 0.8);
-      ln("#ffffff", w * 0.55);
-    } else ln(COL[f] || INK, w);
-  };
+  // Conductores en sus colores (js/dibujo.js), con los extremos redondeados
+  const colTxt = colTxtCond,
+    cable = conductorSvg(o, 1.4, true);
   // Recorrido de un cable por varios puntos
   const tramo = (pts, f, w) => pts.slice(1).forEach((p, i) => cable(pts[i][0], pts[i][1], p[0], p[1], f, w));
   const perno = (x, y, rr = 2.6) => {
@@ -100,19 +82,7 @@ function tableroGeneral(r) {
 
   /* ---------- Vista de la puerta ---------- */
   const xdc = xD + wD / 2;
-  R(xD, yc, wD, bh, { fi: "#e6e9ed", sw: 1.4 });
-  R(xD + 9, yc + 9, wD - 18, bh - 18, { fi: "#f3f6f9", sw: 0.9 });
-  // Bisagras a la izquierda y chapa con manija a la derecha
-  [0.16, 0.84].forEach(p => R(xD + 2, yc + bh * p - 14, 7, 28, { fi: "#c9ced5", st: GR, sw: 0.6 }));
-  R(xD + wD - 30, yc + bh / 2 - 26, 12, 52, { fi: "#c9ced5", st: GR, sw: 0.7 });
-  R(xD + wD - 27, yc + bh / 2 - 18, 6, 26, { fi: INK, st: "", sw: 0 });
-  C(xD + wD - 24, yc + bh / 2 + 16, 2.4, { fi: "#fff", st: GR, sw: 0.6 });
-  const hS = senalRiesgoTexto(o, xdc - 45, yc + 44, 90);
-  R(xdc - 52, yc + 56 + hS, 104, 26, { fi: "#fff", sw: 0.9 });
-  T(xdc, yc + 73 + hS, "TG", { s: 10, b: 1, a: "middle", f: NAVY });
-  T(xdc, yc + 96 + hS, "TABLERO GENERAL", { s: 7.4, b: 1, a: "middle", f: GR });
-  // Rejillas de ventilación abajo
-  for (let k = 0; k < 6; k++) R(xdc - 50, yc + bh - 70 + k * 8, 100, 3.5, { fi: "#c9ced5", st: "", sw: 0 });
+  puertaMetalica(o, xD, yc, wD, bh, { s: 90, ys: yc + 44, tab: "TG", nom: "TABLERO GENERAL", sNom: 7.4 });
   T(xdc, yc + bh + 14, "VISTA DE LA PUERTA", { s: 7, b: 1, a: "middle", f: GR });
   T(xdc, yc + bh + 24, `≈ ${gm.a} × ${gm.h} mm (referencial)`, { s: 6.4, a: "middle", f: GR });
 
@@ -162,7 +132,7 @@ function tableroGeneral(r) {
   [yB1 - 10, yB2 - 2].forEach(y => R(xb0 - 14, y, anchoB + 28, 12, { fi: CU, st: "", sw: 0 }));
   barras.forEach(f => {
     // El neutro, blanco con borde gris (en AutoCAD, gris claro, para no confundirlo con la S negra)
-    R(xBar(f), yB1 - 6, bw, yB2 - yB1 + 8, { fi: f === "N" ? "#e6e9ed" : COL[f], st: f === "N" ? GR : "", sw: 0.8 });
+    R(xBar(f), yB1 - 6, bw, yB2 - yB1 + 8, { fi: f === "N" ? "#e6e9ed" : COND[f], st: f === "N" ? GR : "", sw: 0.8 });
     perno(cx(f), yB1 - 4, 3);
     perno(cx(f), yB2 + 4, 3);
     T(cx(f), yB1 - 16, nomF(f), { s: 7.4, b: 1, a: "middle", f: colTxt(f) });
@@ -311,9 +281,6 @@ function tableroGeneral(r) {
     hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
-  o.push(`<g data-capa="E-NOTAS">`);
-  R(20, yr, rx - 40, hr, { st: NAVY, sw: 1 });
-  T(30, yr + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
     "Caja toma F1 (concesionaria) → tablero general → banco de medidores (lámina IE-06) → tablero de cada suministro (lámina IE-04). Los medidores quedan en el lado de carga del interruptor general (Regla 040-402(2)).",
     "Interruptor general y alimentador del cálculo (lámina IE-01). Tipo de interruptor y sección de las barras según el fabricante; la medida del gabinete es referencial, de catálogo (criterio).",
@@ -321,25 +288,7 @@ function tableroGeneral(r) {
     "Cada salida toma con perno la fase del balance y su neutro; las pletinas pasan por delante de las otras barras (en otro plano, sobre aisladores) con manga aislante. El interruptor de cada suministro va después de su medidor.",
     "Conductores: R rojo, S negro, T azul (orden de fases: criterio), N blanco, tierra verde-amarillo. Barra de tierra unida a la puerta y al pozo."
   ];
-  let ny = yr + 32;
-  notas.forEach((t, i) => {
-    const ln = [];
-    let u = "";
-    t.split(" ").forEach(w => {
-      if ((u + " " + w).trim().length > 150 && u) {
-        ln.push(u);
-        u = w;
-      } else u = (u + " " + w).trim();
-    });
-    ln.push(u);
-    ln.forEach((l, j) => {
-      if (!j) T(30, ny, `${i + 1}.`, { s: 7.6, b: 1, f: NAVY });
-      T(42, ny, l, { s: 7.6 });
-      ny += 10;
-    });
-    ny += 1.5;
-  });
-  o.push(`</g>`);
+  notasSvg(o, 20, yr, rx - 40, hr, notas);
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Tablero general del edificio · Escala S/E", "IE-05");
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;

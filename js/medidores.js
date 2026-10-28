@@ -68,14 +68,10 @@ function bancoMedidores(r) {
     bm = c.bm,
     o = [],
     { L, T, R } = trazos(o);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
-    VE = "#2f7a4b",
+  const { INK, NAVY, CU, GR, LN, VE } = PAL,
     W = 1123;
-  const COLF = { R: "#c62828", S: "#000000", T: "#1565c0", N: "#8a9199" };
+  // Fases en sus colores (js/dibujo.js); en esta lámina el neutro va en gris
+  const COLF = { R: COND.R, S: COND.S, T: COND.T, N: "#8a9199" };
   const titulo = (x, y, w, t) => {
     R(x, y, w, 18, { st: "", fi: NAVY });
     T(x + w / 2, y + 12.5, t, { s: 8.5, b: 1, a: "middle", f: "#fff" });
@@ -386,9 +382,6 @@ function bancoMedidores(r) {
     hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
-  o.push(`<g data-capa="E-NOTAS">`);
-  R(20, yr, rx - 40, hr, { st: NAVY, sw: 1 });
-  T(30, yr + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
   const notas = [
     `Medidas del banco según la concesionaria (${bm.conc}), editables en Parámetros › Banco de medidores; no las fija el CNE.`,
     `La cajuela respeta ${fmt(bm.dist, 2)} m respecto a las instalaciones de gas, agua y desagüe; su fondo es de material noble; se respetan las distancias mínimas de seguridad del CNE.`,
@@ -397,25 +390,7 @@ function bancoMedidores(r) {
     "Se deja una reserva de conductor no menor de 450 mm en los puntos de conexión de cada medidor (Regla 040-402(1)(c)).",
     bm.conc !== "Luz del Sur" ? `La tabla de calibres es la de Luz del Sur: verifíquela con la de ${bm.conc}.` : ""
   ].filter(Boolean);
-  let ny = yr + 32;
-  notas.forEach((t, i) => {
-    const ln = [];
-    let u = "";
-    t.split(" ").forEach(w => {
-      if ((u + " " + w).trim().length > 150 && u) {
-        ln.push(u);
-        u = w;
-      } else u = (u + " " + w).trim();
-    });
-    ln.push(u);
-    ln.forEach((l, j) => {
-      if (!j) T(30, ny, `${i + 1}.`, { s: 7.6, b: 1, f: NAVY });
-      T(42, ny, l, { s: 7.6 });
-      ny += 10;
-    });
-    ny += 1.5;
-  });
-  o.push(`</g>`);
+  notasSvg(o, 20, yr, rx - 40, hr, notas);
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Banco de medidores y balance de fases · Escala S/E", "IE-06");
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;

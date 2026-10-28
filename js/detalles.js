@@ -10,11 +10,7 @@ function detalles(r) {
     pz = c.pozo,
     o = [],
     { L, T, R, C, TRI } = trazos(o);
-  const INK = "#14212e",
-    NAVY = "#14304f",
-    CU = "#9a5a23",
-    GR = "#5a6775",
-    LN = "#bfc8d2",
+  const { INK, NAVY, CU, GR, LN } = PAL,
     W = 1123;
   const titulo = (x, y, w, t) => {
     R(x, y, w, 18, { st: "", fi: NAVY });
@@ -261,9 +257,7 @@ function detalles(r) {
     hr = 124,
     rx = W - 480,
     rw = W - 20 - rx;
-  o.push(`</g><g data-capa="E-NOTAS">`);
-  R(20, yr, rx - 40, hr, { st: NAVY, sw: 1 });
-  T(30, yr + 16, "NOTAS", { s: 9, b: 1, f: NAVY });
+  o.push(`</g>`);
   const notas = [
     "Símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME), redibujados conservando sus proporciones. Solo se listan los que usan los planos del proyecto.",
     `Varilla de cobre de ${fmt(p.Lv, 2)} m × ${PULGD} (mínimo 2 m y 13 mm, Regla 060-702) y conductor de ${r.Selec} mm² según la Tabla 17; resistencia no mayor de 25 Ω (Regla 060-712).`,
@@ -273,25 +267,7 @@ function detalles(r) {
       : "Relleno de tierra cernida compactada por capas; sin tratamiento del suelo (factor 1).",
     nV > 1 ? `Se requieren ${nV} pozos iguales, unidos entre sí con conductor desnudo de cobre.` : ""
   ].filter(Boolean);
-  let ny = yr + 32;
-  notas.forEach((t, i) => {
-    const ln = [];
-    let u = "";
-    t.split(" ").forEach(w => {
-      if ((u + " " + w).trim().length > 150 && u) {
-        ln.push(u);
-        u = w;
-      } else u = (u + " " + w).trim();
-    });
-    ln.push(u);
-    ln.forEach((l, j) => {
-      if (!j) T(30, ny, `${i + 1}.`, { s: 7.6, b: 1, f: NAVY });
-      T(42, ny, l, { s: 7.6 });
-      ny += 10;
-    });
-    ny += 1.5;
-  });
-  o.push(`</g>`);
+  notasSvg(o, 20, yr, rx - 40, hr, notas);
   rotuloSvg(o, rx, yr, rw, hr, c.proj, "Leyenda y detalle del pozo de tierra · Escala S/E", "IE-03");
   const H = yr + hr + 16;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, Helvetica, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/><rect x="6" y="4" width="${W - 12}" height="${H - 10}" fill="none" stroke="${NAVY}" stroke-width="1.5"/>${o.join("")}</svg>`;
