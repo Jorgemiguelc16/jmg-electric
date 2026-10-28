@@ -158,6 +158,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.8",
+    "Edificios: nuevas láminas IE-05 Tablero general (interruptor general en caja moldeada y barras de cobre N, R, S y T de las que sale la fase de cada suministro según el balance) e IE-06 Banco de medidores (cajas de la concesionaria a escala, con sus medidas, alturas y el balance de fases). En el detalle de tableros, la puerta y el interior tienen el mismo tamaño, con la medida de catálogo del gabinete y sus polos por fila; los tableros de vivienda y de departamento de hasta 24 polos son de PVC empotrable con tapa transparente (se cambia en la ficha del tablero, pestaña Equipos). Las notas incluyen el espacio de trabajo de 1 m (Regla 020-308) y la reserva de 450 mm de conductor en cada medidor (Regla 040-402), y el metrado indica la medida y el tipo de cada tablero."
+  ],
+  [
     "v2.9.7",
     "Expediente técnico con diseño profesional: portada con firma y sello y número de revisión, control del documento con tabla de revisiones, índice general, índice de tablas y lista de láminas en páginas propias, tablas técnicas numeradas con su fuente (líneas horizontales finas y encabezado gris suave), ecuaciones numeradas, tablas anchas en página horizontal y margen para encuadernar. El expediente incluye ahora todos los planos (IE-01 a IE-04), reducidos a A4. El detalle de tableros se divide en láminas IE-04A… cuando no entra a lo ancho de la lámina."
   ],
