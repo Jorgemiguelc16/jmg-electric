@@ -58,6 +58,7 @@ function medidaGabinete(polos, moldeada = false) {
   if (moldeada) return { a: 600, h: 1000, pf: 28 };
   if (polos <= 12) return { a: 250, h: 300, pf: 10 };
   if (polos <= 24) return { a: 300, h: 400, pf: 12 };
+  if (polos <= 30) return { a: 350, h: 500, pf: 15 };
   if (polos <= 54) return { a: 500, h: 800, pf: 18 };
   return { a: 600, h: 1200, pf: 24 };
 }
