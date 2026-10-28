@@ -12,10 +12,10 @@ servidor propio ni instalación. Se publica en GitHub Pages; el acceso con cuent
 | --- | --- |
 | Estructura de todas las pantallas | `index.html` |
 | Apariencia (colores, tamaños, diseño) | `style.css` |
-| Lógica y cálculo | `js/` (20 archivos) |
+| Lógica, cálculo y planos | `js/` (38 archivos) |
 | Imágenes de la plataforma | `img/`, `logo.png`, `foto.png`, `og.png` |
 | Manual de usuario y referencia técnica | `manual/manual.html` → `manual/JMG-ELECTRIC-Manual-v2.1.pdf` |
-| Pruebas automáticas del cálculo | `pruebas/` |
+| Pruebas automáticas: casos, referencia del cálculo y huellas de los planos | `pruebas/` |
 | Herramientas de desarrollo | `herramientas/`, `package.json` |
 
 ## 2. Los archivos de `js/` y en qué orden se cargan
@@ -31,31 +31,50 @@ está al final de `index.html` y es este:
 | 4 | `datos.js` | Valores por defecto, listas editables y ayudas de cada dato |
 | 5 | `calculo.js` | **Motor de cálculo** |
 | 6 | `resultados.js` | Estado global y tarjetas de resultados |
-| 7 | `metrado.js` | Metrado de materiales |
-| 8 | `unifilar.js` | Diagrama unifilar (SVG, PNG, DXF) |
-| 9 | `expediente.js` | Expediente técnico en PDF |
-| 10 | `interfaz.js` | **Ciclo principal** `update()` y navegación |
-| 11 | `excel.js` | Memoria de cálculo en Excel |
-| 12 | `descargas.js` | Guardar archivos y diálogos de exportación |
-| 13 | `sitio.js` | Páginas de la web (glosario, novedades, soporte) |
-| 14 | `proyectos.js` | Guardar, abrir y ejemplos de proyectos |
-| 15 | `herramientas.js` | Calculadoras rápidas |
-| 16 | `archivo.js` | Abrir y guardar `.json` |
-| 17 | `app.js` | Espacio de trabajo: árbol, propiedades, cinta |
-| 18 | `ventana.js` | Comportamiento común de las ventanas (mover, redimensionar, recordar tamaño) |
-| 19 | `conductores.js` | Ventana Cuadro de conductores |
-| 20 | `ficha.js` | Ventana Ficha del circuito (con vista previa) |
-| 21 | `ficha-tablero.js` | Ventana Ficha del tablero |
-| 22 | `tabla-cargas.js` | Ventana Editor de cargas especiales (con vista previa) |
-| 23 | `parametros.js` | Ventana Parámetros de diseño (se arma con el formulario de parámetros) |
-| 24 | `datos-proyecto.js` | Ventana Datos del proyecto (se arma con los formularios del panel) |
-| 25 | `menus-cinta.js` | Menús ▾ de la cinta (sistema eléctrico y agregar cargas) |
-| 26 | `centro.js` | Centro de ingeniería (Inicio) |
-| 27 | `inicio.js` | Arranque y bienvenida |
-| 28 | `tema.js` | Tema, zoom y mano de arrastre |
-| 29 | `acceso.js` | Ingreso con cuenta y Administración |
+| 7 | `metrado.js` | Metrado de materiales, capacidad de cada tablero en polos y medida de su gabinete |
+| 8 | `dibujo.js` | **Piezas comunes de los planos**: paleta, colores de los conductores, notas, puerta metálica |
+| 9 | `unifilar.js` | Diagrama unifilar (IE-01), rótulo de las láminas y conversión SVG → DXF (`svgDxf()`) |
+| 10 | `simbolos.js` | Símbolos de la Norma DGE y primitivas de dibujo (`trazos()`: L, T, R, C, TRI) |
+| 11 | `alturas.js` | Diagrama de alturas (IE-02) |
+| 12 | `detalles.js` | Leyenda y detalle del pozo de tierra (IE-03) |
+| 13 | `tableros.js` | Detalle de tableros (IE-04): puerta metálica o de PVC, interior, peinado |
+| 14 | `medidores.js` | Banco de medidores y balance de fases (IE-06, edificios) |
+| 15 | `tablerogeneral.js` | Tablero general del edificio (IE-05, edificios) |
+| 16 | `expediente.js` | Expediente técnico en PDF |
+| 17 | `interfaz.js` | **Ciclo principal** `update()` y navegación |
+| 18 | `excel.js` | Memoria de cálculo en Excel |
+| 19 | `descargas.js` | Guardar archivos, lista de planos (`PLANOS`) y diálogos de exportación |
+| 20 | `sitio.js` | Páginas de la web (glosario, novedades, soporte) |
+| 21 | `proyectos.js` | Guardar, abrir y ejemplos de proyectos |
+| 22 | `herramientas.js` | Calculadoras rápidas |
+| 23 | `archivo.js` | Abrir y guardar `.json` |
+| 24 | `app.js` | Espacio de trabajo: árbol, propiedades, cinta |
+| 25 | `ventana.js` | Comportamiento común de las ventanas (mover, redimensionar, recordar tamaño) |
+| 26 | `conductores.js` | Ventana Cuadro de conductores |
+| 27 | `ficha.js` | Ventana Ficha del circuito (con vista previa) |
+| 28 | `ficha-tablero.js` | Ventana Ficha del tablero (alimentador, circuitos, equipos y gabinete) |
+| 29 | `tabla-cargas.js` | Ventana Editor de cargas especiales (con vista previa) |
+| 30 | `parametros.js` | Ventana Parámetros de diseño (se arma con el formulario de parámetros) |
+| 31 | `departamentos.js` | Ventana Editor de departamentos |
+| 32 | `datos-proyecto.js` | Ventana Datos del proyecto (se arma con los formularios del panel) |
+| 33 | `panel.js` | Panel del proyecto (resumen, elemento elegido, por revisar) |
+| 34 | `menus-cinta.js` | Menús ▾ de la cinta (sistema eléctrico y agregar cargas) |
+| 35 | `centro.js` | Centro de ingeniería (Inicio) |
+| 36 | `inicio.js` | Arranque y bienvenida |
+| 37 | `tema.js` | Tema, zoom y mano de arrastre |
+| 38 | `acceso.js` | Ingreso con cuenta y Administración |
 
 Cada archivo empieza con un comentario que explica lo mismo con más detalle.
+
+### Cómo están hechos los planos
+
+Cada plano es una función que recibe el resultado del cálculo `r` y devuelve `{ svg, W, H }`, por ejemplo
+`tableroGeneral(r)`. Dibuja con las primitivas de `trazos(o)` (`simbolos.js`) sobre una lista de textos SVG y
+termina con su recuadro de notas (`notasSvg()`) y su rótulo (`rotuloSvg()`). Todos los planos están en la lista
+`PLANOS` de `descargas.js`, que usan la pantalla, el DXF, el Excel y el expediente.
+
+**Para un plano nuevo o un cambio de colores:** usar la paleta `PAL`, los colores `COND` y las piezas de
+`dibujo.js`, y no copiarlas. Si una pieza nueva se repite en dos planos, va a `dibujo.js`.
 
 ## 3. Cómo viaja un dato (el camino del cálculo)
 
@@ -90,18 +109,28 @@ Están instaladas con Node.js. Si se cambia de computadora, se reinstalan con `n
 | --- | --- |
 | `npm run formato` | Ordena el formato del código (Prettier). No cambia lo que hace el código. |
 | `npm run revisar` | Busca errores y código sin usar (ESLint), analizando todos los archivos juntos. |
+| `npm test` | **Pruebas del cálculo**: 32 casos contra `pruebas/referencia.js` (cálculo, metrado, alertas). |
+| `npm run pruebas-planos` | **Pruebas de los planos**: la huella de cada plano (SVG y DXF) de los 32 casos contra `pruebas/huellas.js`. |
+| `npm run pruebas-ui` | **Pruebas de la interfaz**: 15 escenarios en Chrome (fichas, editores, vista previa, deshacer). |
 | `npm run estilos-sin-uso` | Lista estilos de `style.css` que ya no usa ninguna pantalla. |
 
-Las **pruebas del cálculo** se abren con `pruebas/ejecutar-pruebas.bat`. Comparan 31 casos con resultados de
-referencia y con los ejemplos del manual. Son solo para desarrollo: nunca se enlazan desde la plataforma.
+Las pruebas del cálculo y de los planos corren en Node sin navegador: `herramientas/contexto.js` carga los
+archivos de `js/` en un contexto aislado y `herramientas/mini-dom.js` lee el SVG para el DXF. La página
+`pruebas/index.html` (`pruebas/ejecutar-pruebas.bat`) repite las del cálculo en el navegador. Son solo para
+desarrollo: nunca se enlazan desde la plataforma.
+
+**Cuando un plano cambia a propósito**, `npm run pruebas-planos` lo marca y guarda el plano nuevo en la carpeta
+temporal (`jmg-planos`). Se revisa y, si es el cambio buscado, se actualizan las huellas con
+`npm run pruebas-planos -- --actualizar`. Al **ordenar código sin cambiar lo que hace**, las huellas no deben
+cambiar: si cambian, algo se rompió.
 
 ## 6. Antes de publicar (lista de control)
 
-1. `npm run revisar` sin errores.
-2. Pruebas del cálculo en verde. Si el cálculo cambió a propósito, revisar cada diferencia y regenerar
-   `pruebas/referencia.js` desde la misma página de pruebas.
+1. `npm run revisar` sin errores y `npm run revisar-formato` en verde.
+2. `npm test`, `npm run pruebas-planos` y `npm run pruebas-ui` en verde. Si el cálculo o un plano cambió a
+   propósito, revisar cada diferencia y regenerar `pruebas/referencia.js` o `pruebas/huellas.js`.
 3. Subir el número de versión de los archivos (`?v=X.Y.Z` en `index.html`) para que los navegadores no usen
-   archivos viejos guardados en su memoria.
+   archivos viejos guardados en su memoria, y la versión de `package.json`.
 4. Con el cambio ya aprobado: actualizar el manual, regenerar el PDF y agregar la entrada en `NOVEDADES`
    (`textos.js`).
 5. Publicar en `main`.
