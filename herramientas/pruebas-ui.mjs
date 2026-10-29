@@ -2,63 +2,10 @@
    Abre index.html en Chrome sin ventana (protocolo DevTools), entra sin cuenta y recorre las ventanas como lo
    haría un usuario: abrir, editar, vista previa, aplicar, cancelar, deshacer, doble clic. Cada prueba verifica
    el resultado esperado; al final muestra cuáles pasaron. Las pruebas del cálculo son «npm test».
-   Chrome se busca en la ruta habitual de Windows; otra ruta se indica con la variable CHROME. */
-import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, existsSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+   Chrome lo abre herramientas/chrome.mjs. */
+import { abrirApp, esperar } from "./chrome.mjs";
 
-const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CHROME =
-  process.env.CHROME ||
-  [
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
-  ].find(existsSync);
-if (!CHROME) {
-  console.log("No se encontró Chrome ni Edge; indique la ruta con la variable CHROME.");
-  process.exit(1);
-}
-const PUERTO = 9400 + Math.floor(Math.random() * 400),
-  perfil = mkdtempSync(join(tmpdir(), "jmg-ui-")),
-  nav = spawn(CHROME, [
-    "--headless=new",
-    `--remote-debugging-port=${PUERTO}`,
-    `--user-data-dir=${perfil}`,
-    "--no-first-run",
-    "--window-size=1366,768",
-    "about:blank"
-  ]);
-const esperar = ms => new Promise(r => setTimeout(r, ms));
-let ws;
-for (let i = 0; i < 60 && !ws; i++) {
-  await esperar(250);
-  try {
-    const t = await (await fetch(`http://127.0.0.1:${PUERTO}/json/new?about:blank`, { method: "PUT" })).json();
-    ws = new WebSocket(t.webSocketDebuggerUrl);
-  } catch (e) {}
-}
-await new Promise(r => (ws.onopen = r));
-let id = 0;
-const pend = {};
-ws.onmessage = m => {
-  const d = JSON.parse(m.data);
-  if (d.id && pend[d.id]) pend[d.id](d);
-};
-const cdp = (method, params = {}) =>
-  new Promise(r => {
-    pend[++id] = r;
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-// Evalúa en la página; un error de la página hace fallar la prueba
-const ev = async expr => {
-  const r = await cdp("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true });
-  if (r.result.exceptionDetails)
-    throw new Error("error en la página: " + (r.result.exceptionDetails.exception?.description || "").split("\n")[0]);
-  return r.result.result?.value;
-};
-const J = async expr => JSON.parse(await ev(`JSON.stringify(${expr})`));
+const { cdp, ev, J, cerrar } = await abrirApp();
 const poner = (sel, v) =>
   ev(
     `(el => { el.focus(); el.value = ${JSON.stringify(String(v))}; el.dispatchEvent(new Event("input", {bubbles:true})); el.dispatchEvent(new Event("change", {bubbles:true})); })(document.querySelector(${JSON.stringify(sel)}))`
@@ -90,15 +37,6 @@ const deshacer = async (n = 1) => {
   for (let i = 0; i < n; i++) await ev("histGo(-1)");
 };
 
-// Carga la plataforma y entra sin cuenta (el acceso con cuenta no interviene en estas pruebas)
-await cdp("Emulation.setDeviceMetricsOverride", { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
-await cdp("Page.navigate", { url: pathToFileURL(join(raiz, "index.html")).href });
-for (let i = 0; i < 80; i++) {
-  await esperar(250);
-  try {
-    if (await ev("typeof cargarEjemplo === 'function' && document.readyState === 'complete'")) break;
-  } catch (e) {}
-}
 // Carga un ejemplo y espera a que el historial lo registre (agrupa los cambios de medio segundo)
 const ejemplo = async m => {
   const r = await ev(`(() => {
@@ -462,8 +400,5 @@ console.log(
     ? `\n✘ ${mal} de ${n} pruebas de la interfaz fallaron (${((Date.now() - t0) / 1000).toFixed(1)} s)`
     : `\n✔ Todas las pruebas de la interfaz pasaron (${n} de ${n}) en ${((Date.now() - t0) / 1000).toFixed(1)} s`
 );
-nav.kill();
-try {
-  rmSync(perfil, { recursive: true, force: true });
-} catch (e) {}
+cerrar();
 process.exit(mal ? 1 : 0);
