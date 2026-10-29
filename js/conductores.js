@@ -5,7 +5,7 @@
    cumplen. Las elecciones quedan pendientes (CD_PEND) hasta «Aplicar» o «Aceptar»: entonces pasan a SECF y
    dimensionar() las aplica (js/calculo-conductores.js). La ventana se mueve y redimensiona como las demás ventanas de
    escritorio (js/ventana.js). Si se angosta, la tabla oculta primero las columnas secundarias (container
-   queries en style.css) en lugar de desplazarse hacia el costado. Doble clic en un circuito abre su ficha. */
+   queries en css/ventanas.css) en lugar de desplazarse hacia el costado. Doble clic en un circuito abre su ficha. */
 let CD_PEND = null;
 const CD_VW = ventanaMovil(document.querySelector("#condDlg .vw"), "jmg-electric-cuadro-conductores", {
   w: 940,

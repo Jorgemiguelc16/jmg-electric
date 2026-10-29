@@ -1,16 +1,19 @@
 /* Declaraciones de CSS que nunca se aplican («npm run estilos-tapados»; con --quitar las elimina).
-   Una declaración está tapada si, más abajo en style.css, el mismo selector (escrito igual, por lo tanto con la
-   misma especificidad) vuelve a declarar la misma propiedad dentro del mismo contexto (las mismas @media,
-   @supports o @container): por la cascada siempre gana la última. Se respeta !important: una declaración
-   !important solo la tapa otra !important. Las reglas que quedan vacías se eliminan. */
+   Una declaración está tapada si, más abajo en los estilos (los archivos de css/ en el orden de index.html), el
+   mismo selector (escrito igual, por lo tanto con la misma especificidad) vuelve a declarar la misma propiedad
+   dentro del mismo contexto (las mismas @media, @supports o @container): por la cascada siempre gana la última.
+   Se respeta !important: una declaración !important solo la tapa otra !important. Las reglas que quedan vacías se
+   eliminan. */
 const fs = require("fs");
 const path = require("path");
 const postcss = require("postcss");
+const { raiz: base, archivosCss } = require("./estilos");
 
-const archivo = path.join(__dirname, "..", "style.css"),
-  quitar = process.argv.includes("--quitar"),
-  css = fs.readFileSync(archivo, "utf8"),
-  raiz = postcss.parse(css);
+const quitar = process.argv.includes("--quitar"),
+  hojas = archivosCss().map(f => {
+    const css = fs.readFileSync(path.join(base, f), "utf8");
+    return { f, lineas: css.split("\n").length, raiz: postcss.parse(css, { from: f }) };
+  });
 // Contexto de una regla: las at-rules que la contienen
 const contexto = r => {
   const c = [];
@@ -24,10 +27,11 @@ const selectores = r => r.selectors.map(s => s.replace(/\s+/g, " ").trim());
 const visto = new Map(),
   tapadas = [];
 const reglas = [];
-raiz.walkRules(r => {
-  if (r.parent.type === "atrule" && /keyframes$/.test(r.parent.name)) return;
-  reglas.push(r);
-});
+for (const { raiz } of hojas)
+  raiz.walkRules(r => {
+    if (r.parent.type === "atrule" && /keyframes$/.test(r.parent.name)) return;
+    reglas.push(r);
+  });
 for (let i = reglas.length - 1; i >= 0; i--) {
   const r = reglas[i],
     ctx = contexto(r),
@@ -51,14 +55,14 @@ for (let i = reglas.length - 1; i >= 0; i--) {
 }
 const lineas = tapadas.length;
 console.log(
-  `${lineas} declaraciones tapadas en style.css (${raiz.nodes.length} bloques, ${css.split("\n").length} líneas)`
+  `${lineas} declaraciones tapadas en ${hojas.length} archivos de css/ (${hojas.reduce((s, h) => s + h.lineas, 0)} líneas)`
 );
 if (!quitar) {
   tapadas
     .slice(0, 15)
     .forEach(d =>
       console.log(
-        `  línea ${d.source.start.line}: ${d.parent.selector.replace(/\s+/g, " ").slice(0, 60)} { ${d.prop}: ${d.value} }`
+        `  ${d.source.input.from.replace(/^.*css[\\/]/, "css/")}:${d.source.start.line}: ${d.parent.selector.replace(/\s+/g, " ").slice(0, 60)} { ${d.prop}: ${d.value} }`
       )
     );
   if (lineas > 15) console.log(`  … y ${lineas - 15} más. Use --quitar para eliminarlas.`);
@@ -66,15 +70,17 @@ if (!quitar) {
   tapadas.forEach(d => d.remove());
   // Reglas que quedaron sin declaraciones, y at-rules que quedaron vacías
   let vacias = 0;
-  raiz.walkRules(r => {
-    if (!r.nodes.length) {
-      r.remove();
-      vacias++;
-    }
-  });
-  raiz.walkAtRules(a => {
-    if (a.nodes && !a.nodes.length && a.name !== "font-face") a.remove();
-  });
-  fs.writeFileSync(archivo, raiz.toString());
+  for (const { f, raiz } of hojas) {
+    raiz.walkRules(r => {
+      if (!r.nodes.length) {
+        r.remove();
+        vacias++;
+      }
+    });
+    raiz.walkAtRules(a => {
+      if (a.nodes && !a.nodes.length && a.name !== "font-face") a.remove();
+    });
+    fs.writeFileSync(path.join(base, f), raiz.toString());
+  }
   console.log(`Eliminadas: ${lineas} declaraciones y ${vacias} reglas vacías.`);
 }

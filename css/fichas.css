@@ -1,0 +1,555 @@
+/* FICHAS Y PANELES: parámetros de diseño, ficha del tablero, datos del proyecto, departamentos y paneles laterales.
+   Parte de los estilos de la plataforma: index.html carga los archivos de css/ en orden, y el orden importa (si
+   dos reglas dicen cosas distintas, gana la de más abajo). */
+/* v2.9 · Parámetros de diseño (js/parametros.js): grupos de la ficha con etiquetas largas en dos líneas */
+.pp-box {
+  container-type: inline-size;
+}
+.pp-tabs {
+  margin-top: 10px;
+}
+/* Casilla de ancho fijo a la derecha, como en las ventanas de propiedades de escritorio; los números, más angostos */
+.fc-f.pp-f {
+  grid-template-columns: minmax(150px, 1fr) 300px;
+  min-height: 26px;
+}
+.fc-f.pp-f input[type="number"] {
+  width: 110px;
+}
+.fc-f.pp-f > span:first-child {
+  white-space: normal;
+  line-height: 1.3;
+}
+.fc-g legend small {
+  margin-left: 4px;
+  color: var(--dl-ink2);
+  font-size: 10.5px;
+}
+/* «i»: el texto de ayuda del grupo, en el globo */
+.pp-i {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 5px;
+  border: 1px solid var(--dl-ink2);
+  border-radius: 50%;
+  color: var(--dl-ink2);
+  font:
+    italic 600 9px/1 Georgia,
+    serif;
+  cursor: help;
+}
+@container (max-width: 520px) {
+  .fc-f.pp-f {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+}
+/* El formulario del editor pasa a una columna solo si él mismo queda angosto */
+@container (max-width: 380px) {
+  .tc-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Ficha del circuito: aviso de vista previa en las pestañas de resultados y verificación en vista previa */
+.fc-prev {
+  margin: 8px 0 0;
+  padding: 4px 8px;
+  border-left: 3px solid var(--dl-acc);
+  background: var(--dl-hover);
+  color: var(--dl-acc);
+  font-size: 11.5px;
+}
+.fc-est.previa {
+  border-style: dashed;
+}
+.fc-est.previa legend {
+  color: var(--dl-acc);
+}
+
+/* Ficha del tablero (js/ficha-tablero.js): circuitos en rejilla y equipos adicionales con su descripción */
+.ft-circ {
+  margin: 0;
+}
+.ft-circ tr[data-ftc] td {
+  cursor: default;
+  user-select: none;
+}
+.ft-eq {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.ft-eq:hover {
+  background: var(--dl-hover);
+}
+.ft-eq.mod {
+  border-color: var(--dl-acc);
+  background: #e3effb;
+}
+:root[data-theme="dark"] .ft-eq.mod {
+  background: #1b3149;
+}
+.fc-body label.ft-eq {
+  flex-direction: row;
+  margin: 0;
+  font-size: 12px;
+  color: var(--dl-ink);
+}
+.fc-body .ft-eq input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: var(--dl-acc);
+}
+.ft-eq span {
+  display: grid;
+  gap: 1px;
+}
+.ft-eq small {
+  color: var(--dl-ink2);
+  font-size: 11px;
+}
+/* Datos del proyecto: botón para agregar un piso o un tipo de departamento */
+.dp-add {
+  margin-top: 10px;
+}
+
+/* v2.9.1 · Resultados: valores al 90 % o más de su límite en ámbar, filas que abren su ficha con doble clic y
+   nota normativa discreta al pie */
+.app .vpanel td.cerca {
+  background: #fdf1d8;
+  color: #8a5a00;
+  font-weight: 600;
+}
+:root[data-theme="dark"] .app .vpanel td.cerca {
+  background: #3a2f17;
+  color: #f0c060;
+}
+.app .vpanel tr[data-ficha],
+.app .vpanel tr[data-fichatab] {
+  cursor: default;
+  user-select: none;
+}
+.app .vpanel tr[data-ficha]:hover td,
+.app .vpanel tr[data-fichatab]:hover td {
+  box-shadow:
+    inset 0 1px 0 #cfdbea,
+    inset 0 -1px 0 #cfdbea;
+}
+.app .aviso-norma {
+  padding: 4px 16px;
+  font-size: 10.5px;
+  background: none;
+  border-left: 0;
+  color: var(--muted);
+  opacity: 0.85;
+}
+/* Franja de resultados de las ventanas Parámetros de diseño y Datos del proyecto */
+#ppRes,
+#dpRes {
+  flex: none;
+  margin: 8px 12px 0;
+}
+/* Datos del proyecto: grilla de campos (textos y listas a todo lo ancho, números de a dos o tres por fila) */
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 180px));
+  align-items: end;
+  gap: 6px 12px;
+}
+.dp-c {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+}
+.dp-c.ancho {
+  grid-column: 1 / -1;
+}
+.dp-c > span {
+  color: var(--dl-ink2);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+.dp-c input,
+.dp-c select {
+  min-width: 0;
+  width: 100%;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  box-shadow: none;
+}
+.dp-c input[type="number"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dp-c input:focus,
+.dp-c select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  box-shadow: 0 0 0 1px var(--dl-acc);
+}
+.dp-c.mod input,
+.dp-c.mod select {
+  background-color: #e3effb;
+}
+:root[data-theme="dark"] .dp-c.mod input,
+:root[data-theme="dark"] .dp-c.mod select {
+  background-color: #1b3149;
+}
+/* Editor de departamentos (js/departamentos.js): lista de tipos y, a la derecha, datos, salidas de otra potencia
+   y cargas especiales del tipo elegido en tablas pequeñas */
+.dd-main {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+/* La lista de tipos queda a la vista al bajar por el formulario */
+.dd-main .tc-izq {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  align-self: start;
+  max-height: 420px;
+}
+#ddRes {
+  margin: 0 0 8px;
+}
+.dd-der {
+  min-width: 0;
+}
+.dd-der > .fc-g:first-child {
+  margin-top: 0;
+}
+.dd-sub,
+.dp-adds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+}
+.dd-sub > span {
+  margin-right: auto;
+  color: var(--dl-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.dd-sub .vw-btn,
+.dp-adds .vw-btn {
+  min-width: 0;
+  height: 23px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+.dd-t {
+  width: 100%;
+  margin-top: 6px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.dd-t th,
+.vw .dd-t th {
+  position: static;
+  padding: 2px 4px;
+  background: none;
+  border: 0;
+  color: var(--dl-ink2);
+  font: 400 11px var(--f-body);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: right;
+}
+.dd-t th.dd-tipo {
+  width: 24%;
+}
+.dd-t th.dd-n {
+  width: 80px;
+}
+.dd-t td,
+.vw .dd-t td {
+  border: 0;
+  background: none;
+}
+.dd-t th.t {
+  text-align: left;
+}
+.dd-t th:last-child {
+  width: 26px;
+}
+.dd-t td {
+  padding: 2px;
+}
+.dd-t td.tc-falta input {
+  background-color: var(--falta-bg, #fffaf0);
+  border-color: #e0a43a;
+}
+.dd-t input,
+.dd-t select {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  box-shadow: none;
+}
+.dd-t input[type="number"] {
+  text-align: right;
+}
+.dd-t .tc-u input {
+  padding-right: 22px;
+}
+.dd-x {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--dl-ink2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.dd-x:hover {
+  border-color: var(--dl-btn-b);
+  color: var(--bad);
+}
+legend .dd-x {
+  height: 18px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+#dpBody .tc-rap {
+  margin-top: 8px;
+}
+@container (max-width: 520px) {
+  .dd-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Angosta: la lista va arriba del formulario y se desplaza con él (fija, se encimaría sobre los campos) */
+  .dd-main .tc-izq {
+    position: static;
+    max-height: 120px;
+  }
+}
+.dd-t th.dd-e {
+  width: 58px;
+}
+
+/* v2.9.3 · Paneles laterales: elemento elegido del explorador con la barra dorada y contador en pastilla. Panel
+   del proyecto de solo lectura (js/panel.js), con secciones que se muestran u ocultan desde la cinta. */
+#exCount {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: #e6ebf1;
+  color: #14304f;
+  font: 600 10px var(--f-mono);
+  letter-spacing: 0;
+  text-align: center;
+}
+/* Vistas de resultados: se eligen solo en la cinta; el botón de la vista abierta queda marcado y un punto avisa
+   lo que no cumple (rojo) o hay por revisar (ámbar) */
+.rb[data-view].on {
+  background: #dbe7f5;
+  border-color: #b9cde4;
+  box-shadow: inset 0 -2px 0 var(--gold, #d9a23a);
+}
+.rb[data-view].bad::after,
+.rb[data-view].warn::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bad);
+}
+.rb[data-view].warn::after {
+  background: #c98a12;
+}
+:root[data-theme="dark"] .rb[data-view].on {
+  background: #22344a;
+  border-color: #34506f;
+}
+#exCount.falta {
+  background: #fbf0d9;
+  color: #8a5a00;
+}
+#ws .tn.sel {
+  background: var(--ws-sel, #dde9f6);
+  box-shadow: inset 3px 0 0 var(--gold, #d9a23a);
+  color: var(--ws-text, #14304f);
+}
+#ws .tn.tabk {
+  margin-top: 4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+/* Panel del proyecto: secciones con título pequeño y línea, como los grupos de las ventanas */
+#propBody {
+  padding: 4px 0 12px;
+}
+.pp-sec {
+  margin: 10px 12px 0;
+}
+.pp-sec h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ws-line, #d6dde6);
+  color: var(--accent, #9a5a23);
+  font: 600 10.5px var(--f-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pp-sec h3 em {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #fbf0d9;
+  color: #8a5a00;
+  font: 600 10px var(--f-body);
+  font-style: normal;
+  letter-spacing: 0;
+  text-align: center;
+}
+.pp-sec .rt {
+  width: 100%;
+  font-size: 11.5px;
+}
+.pp-sec .rt td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pp-big {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--ws-line, #d6dde6);
+  background: var(--ws-pane-h, #f1f4f8);
+}
+.pp-big > small {
+  color: var(--ws-text2, #66737f);
+  font-size: 11px;
+}
+.pp-big b {
+  color: var(--ws-text, #14304f);
+  font: 600 22px var(--f-mono);
+}
+.pp-big b small {
+  font-size: 11px;
+  font-weight: 400;
+}
+.pp-estado {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.pp-estado i {
+  width: 9px;
+  height: 9px;
+}
+.pp-estado.ok {
+  color: var(--ok);
+}
+.pp-estado.ok i {
+  background: var(--ok);
+}
+.pp-estado.bad {
+  color: var(--bad);
+}
+.pp-estado.bad i {
+  background: var(--bad);
+}
+.pp-nota {
+  margin: 0 0 6px;
+  color: var(--ws-text2, #66737f);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.pp-nota.pp-vacio {
+  margin: 12px;
+}
+.pp-nota.pp-ok {
+  color: var(--ok);
+}
+.pp-abrir {
+  width: 100%;
+  margin-top: 6px;
+}
+/* Por revisar: cada elemento abre la ventana donde se corrige */
+.pp-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pp-it {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--ws-line, #e3e8ee);
+  background: none;
+  color: var(--ws-text, #1f2a36);
+  font: 400 11.5px/1.35 var(--f-body);
+  text-align: left;
+  cursor: pointer;
+}
+.pp-it:hover {
+  background: var(--ws-hover, #e7eef8);
+}
+.pp-it i {
+  width: 9px;
+  height: 9px;
+}
+.pp-it.falta i {
+  background: #d49a2a;
+}
+.pp-it.warn i {
+  background: #c48a0a;
+  border-radius: 50%;
+}
+.pp-it.bad i {
+  background: var(--bad);
+}
+.pp-it.info i {
+  background: var(--navy2, #22507c);
+  border-radius: 50%;
+}
+.pp-it b {
+  color: var(--ws-text2, #8a96a3);
+  font-weight: 400;
+}
+.pp-mas {
+  margin-top: 6px;
+  font-size: 11.5px;
+}

@@ -1,0 +1,1043 @@
+/* VENTANAS: menús de la cinta, cuadro de conductores, ficha del circuito y editor de cargas especiales.
+   Parte de los estilos de la plataforma: index.html carga los archivos de css/ en orden, y el orden importa (si
+   dos reglas dicen cosas distintas, gana la de más abajo). */
+/* v2.8 · Menús desplegables de la cinta (js/menus-cinta.js) */
+.mc-caret {
+  font-size: 8px;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+.ap-ribbon .mc-open {
+  background: var(--ws-hover, #e7eef8);
+  border-color: var(--ws-hover-b, #cfdbea);
+}
+.mc-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 230px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--ws-pane, #fff);
+  color: var(--ws-text, #1f2a36);
+  border: 1px solid var(--ws-line, #d6dde6);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(20, 48, 79, 0.18);
+  padding: 4px;
+}
+.mc-menu h4 {
+  margin: 4px 9px 5px;
+  font: 600 10.5px var(--f-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ws-text2, #66737f);
+}
+.mc-mi {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  width: 100%;
+  border: 0;
+  background: none;
+  border-radius: 5px;
+  padding: 6px 10px 6px 4px;
+  text-align: left;
+  cursor: pointer;
+  font: 400 12.5px var(--f-body);
+  color: inherit;
+}
+.mc-mi:hover,
+.mc-mi:focus-visible {
+  background: var(--ws-hover, #e7eef8);
+  outline: none;
+}
+.mc-mi.sel {
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 #ffc800;
+}
+.mc-mi small {
+  display: block;
+  font-size: 11px;
+  color: var(--ws-text2, #66737f);
+  font-weight: 400;
+}
+.mc-ck {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: #c99d00;
+  font-weight: 700;
+}
+.mc-sep {
+  height: 1px;
+  background: var(--ws-line, #d6dde6);
+  margin: 4px 6px;
+}
+
+/* v2.8 · Cuadro de conductores (js/conductores.js): ventana de escritorio al estilo de los diálogos de software
+   de ingeniería (gris de sistema, barra de título clara, tabla en rejilla). Se mueve desde la barra y se
+   redimensiona desde cualquier borde; al angostarse oculta columnas secundarias en vez de desplazarse. */
+.vw-ov {
+  background: rgba(14, 30, 48, 0.22);
+}
+.vw {
+  --dl-bg: #f0f0f0;
+  --dl-bar: #ffffff;
+  --dl-ink: #1b1b1b;
+  --dl-ink2: #5f6b77;
+  --dl-edge: #8f9fb1;
+  --dl-grid: #e1e4e8;
+  --dl-grid2: #c9cfd6;
+  --dl-th: #f3f4f6;
+  --dl-cell: #ffffff;
+  --dl-alt: #fafbfc;
+  --dl-grp: #eaeff5;
+  --dl-hover: #e5f1fb;
+  --dl-btn: #fdfdfd;
+  --dl-btn-b: #adadad;
+  --dl-acc: #22507c;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--dl-bg);
+  color: var(--dl-ink);
+  border: 1px solid var(--dl-edge);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.26);
+  font: 400 12px var(--f-body);
+}
+:root[data-theme="dark"] .vw {
+  --dl-bg: #1c2632;
+  --dl-bar: #16202b;
+  --dl-ink: #e2e9f1;
+  --dl-ink2: #98a7b7;
+  --dl-edge: #3a4b5f;
+  --dl-grid: #26333f;
+  --dl-grid2: #34424f;
+  --dl-th: #1f2a36;
+  --dl-cell: #131c26;
+  --dl-alt: #16202b;
+  --dl-grp: #1d2b3a;
+  --dl-hover: #1e3450;
+  --dl-btn: #243140;
+  --dl-btn-b: #3d4e61;
+  --dl-acc: #6fa3d6;
+}
+.vw.max {
+  left: 8px !important;
+  top: 8px !important;
+  width: calc(100vw - 16px) !important;
+  height: calc(100vh - 16px) !important;
+}
+.vw.mov,
+.vw.mov * {
+  user-select: none;
+}
+/* Barra de título: arrastrar mueve, doble clic maximiza */
+/* Barra de título con la identidad JMG: azul marino de la barra del espacio de trabajo y línea dorada */
+.vw-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: 32px;
+  padding-left: 10px;
+  background: var(--ws-title, #14304f);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  user-select: none;
+  cursor: default;
+}
+.vw-bar:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--brand-line, #d9a23a);
+}
+.vw-ico {
+  width: 15px;
+  height: 15px;
+  margin-right: 8px;
+  color: var(--gold, #d9a23a);
+}
+.vw-bar span {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vw-bar button {
+  width: 42px;
+  height: 30px;
+  border: 0;
+  background: none;
+  color: #dfe7ef;
+  font: 400 16px/1 var(--f-body);
+  cursor: pointer;
+}
+.vw-bar .vw-help {
+  font-size: 13px;
+  font-weight: 600;
+}
+.vw-bar button[aria-expanded="true"] {
+  color: var(--gold, #d9a23a);
+}
+.vw-bar button svg {
+  width: 10px;
+  height: 10px;
+}
+.vw-bar button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.vw-bar .vw-x:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+.vw-info {
+  flex: none;
+  margin: 8px 8px 0;
+  padding: 6px 9px;
+  color: var(--dl-ink2);
+  font-size: 11.5px;
+  line-height: 1.45;
+  background: var(--dl-cell);
+  border: 1px solid var(--dl-grid2);
+  border-left: 3px solid var(--dl-acc);
+}
+.vw-info[hidden] {
+  display: none;
+}
+/* Tabla en rejilla, como las hojas de datos de los programas de ingeniería */
+.cd-tabla {
+  container-type: inline-size;
+  flex: 1;
+  min-height: 0;
+  margin: 8px 8px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--dl-cell);
+  border: 1px solid var(--dl-grid2);
+}
+.cd-tabla table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+.cd-tabla th,
+.cd-tabla td {
+  height: 23px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-grid);
+  border-width: 0 1px 1px 0;
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--dl-cell);
+  color: var(--dl-ink);
+}
+.cd-tabla th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 26px;
+  background: var(--dl-th);
+  border-color: var(--dl-grid2);
+  color: var(--dl-ink);
+  font: 600 11.5px var(--f-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.cd-tabla .t {
+  text-align: left;
+}
+.cd-tabla th.c-l,
+.cd-tabla th.c-n,
+.cd-tabla th.c-itm {
+  width: 66px;
+}
+.cd-tabla th.c-min {
+  width: 80px;
+}
+.cd-tabla th.c-sec {
+  width: 168px;
+}
+.cd-tabla th.c-uso {
+  width: 94px;
+}
+.cd-tabla th.c-est {
+  width: 108px;
+}
+.cd-tabla tbody tr:nth-child(even) td {
+  background: var(--dl-alt);
+}
+.cd-tabla tbody tr:hover td {
+  background: var(--dl-hover);
+}
+.cd-tabla tr.grp td {
+  background: var(--dl-grp) !important;
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--dl-ink);
+  border-right-color: transparent;
+}
+/* El título del grupo se extiende sobre las celdas vacías de su fila */
+.cd-tabla tr.grp td.t {
+  overflow: visible;
+  white-space: nowrap;
+}
+.cd-tabla tbody tr.cd-elegida td {
+  background: #fff8e1;
+}
+.cd-tabla tbody tr.cd-mod td {
+  background: #e3effb;
+}
+:root[data-theme="dark"] .cd-tabla tbody tr.cd-elegida td {
+  background: #2e2817;
+}
+:root[data-theme="dark"] .cd-tabla tbody tr.cd-mod td {
+  background: #1b3149;
+}
+.cd-tabla sup {
+  font: 600 8px var(--f-body);
+  color: #a86b16;
+  margin-left: 2px;
+}
+/* La lista de sección se ve como una celda editable de la rejilla */
+.cd-tabla td.c-sec {
+  padding: 0;
+}
+.cd-tabla select {
+  width: 100%;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background-color: transparent;
+  color: inherit;
+  font: 400 12px var(--f-body);
+  cursor: pointer;
+}
+.cd-tabla select:hover {
+  border-color: var(--dl-btn-b);
+  background-color: var(--dl-cell);
+}
+.cd-tabla select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  background-color: var(--dl-cell);
+}
+.cd-uso {
+  display: inline-block;
+  width: 36px;
+  height: 6px;
+  margin-right: 5px;
+  vertical-align: middle;
+  background: var(--dl-grid);
+}
+.cd-uso i {
+  display: block;
+  height: 100%;
+  background: #2f7a4b;
+}
+.cd-uso i.w {
+  background: #c48a0a;
+}
+/* Estado: texto con un cuadrito de color, sin cápsulas */
+.cd-est:before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  background: currentColor;
+}
+.cd-est.ok {
+  color: var(--ok);
+}
+.cd-est.warn {
+  color: var(--warn, #8a5a00);
+}
+.cd-est.bad {
+  color: var(--bad);
+}
+.cd-est.mod {
+  color: var(--dl-acc);
+}
+/* Al angostar la ventana se ocultan primero las columnas secundarias */
+@container (max-width: 820px) {
+  .cd-tabla .c-uso {
+    display: none;
+  }
+}
+@container (max-width: 680px) {
+  .cd-tabla .c-l,
+  .cd-tabla .c-itm {
+    display: none;
+  }
+}
+@container (max-width: 540px) {
+  .cd-tabla .c-min {
+    display: none;
+  }
+}
+/* Muy angosta: el estado queda solo como cuadrito de color (el texto sigue en el título de la celda) */
+@container (max-width: 470px) {
+  .cd-tabla th.c-sec {
+    width: 150px;
+  }
+  .cd-tabla th.c-est {
+    width: 30px;
+    font-size: 0;
+  }
+  .cd-est {
+    font-size: 0;
+  }
+  .cd-est:before {
+    margin-right: 0;
+  }
+}
+/* Pie con botones de sistema */
+.vw-pie {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 9px 8px;
+}
+.vw-btn {
+  min-width: 78px;
+  height: 25px;
+  padding: 0 12px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 3px;
+  background: var(--dl-btn);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.vw-btn:hover:not(:disabled) {
+  border-color: var(--dl-acc);
+  background: var(--dl-hover);
+}
+/* Botón principal como los de la plataforma: azul marino lleno */
+.vw-btn.def {
+  border-color: var(--btn-bg, #14304f);
+  background: var(--btn-bg, #14304f);
+  color: var(--btn-ink, #fff);
+  font-weight: 500;
+}
+.vw-btn.def:hover:not(:disabled) {
+  border-color: var(--btn-bg2, #1d4470);
+  background: var(--btn-bg2, #1d4470);
+}
+.vw-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vw-btn:focus-visible {
+  outline: 1px dotted var(--dl-ink);
+  outline-offset: -4px;
+}
+.vw-nota {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dl-acc);
+  font-size: 11.5px;
+}
+/* Bordes y esquinas para redimensionar */
+.vw-rs {
+  position: absolute;
+  z-index: 3;
+}
+.vw-rs.n,
+.vw-rs.s {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.vw-rs.e,
+.vw-rs.w {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.vw-rs.n {
+  top: -1px;
+}
+.vw-rs.s {
+  bottom: -1px;
+}
+.vw-rs.e {
+  right: -1px;
+}
+.vw-rs.w {
+  left: -1px;
+}
+.vw-rs.ne,
+.vw-rs.nw,
+.vw-rs.se,
+.vw-rs.sw {
+  width: 12px;
+  height: 12px;
+}
+.vw-rs.ne {
+  top: -1px;
+  right: -1px;
+  cursor: nesw-resize;
+}
+.vw-rs.sw {
+  bottom: -1px;
+  left: -1px;
+  cursor: nesw-resize;
+}
+.vw-rs.nw {
+  top: -1px;
+  left: -1px;
+  cursor: nwse-resize;
+}
+.vw-rs.se {
+  bottom: -1px;
+  right: -1px;
+  cursor: nwse-resize;
+}
+/* Agarradera visible en la esquina inferior derecha */
+.vw-rs.se:after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(
+    135deg,
+    transparent 45%,
+    var(--dl-ink2) 45% 55%,
+    transparent 55% 70%,
+    var(--dl-ink2) 70% 80%,
+    transparent 80%
+  );
+  opacity: 0.7;
+}
+.vw.max .vw-rs {
+  display: none;
+}
+
+/* v2.8 · Ficha del circuito (js/ficha.js): identificación, pestañas y grupos con marco, como los diálogos de
+   propiedades de los programas de ingeniería. Los valores van en cuadros grises de solo lectura. */
+.fc-cab {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  grid-auto-flow: dense;
+  gap: 5px 12px;
+  flex: none;
+  padding: 10px 12px 8px;
+}
+.fc-cab > .fc-f {
+  grid-column: 1;
+}
+.fc-cab > .fc-est {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  margin: 0;
+}
+.fc-f {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) 46px;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+.fc-f > span:first-child {
+  color: var(--dl-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-f output {
+  display: block;
+  min-width: 0;
+  height: 22px;
+  padding: 0 7px;
+  line-height: 20px;
+  border: 1px solid var(--dl-grid2);
+  background: var(--dl-th);
+  color: var(--dl-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-f em {
+  font-style: normal;
+  color: var(--dl-ink2);
+  white-space: nowrap;
+}
+.fc-f[data-ayuda] > span:first-child {
+  text-decoration: underline dotted var(--dl-ink2);
+  text-underline-offset: 3px;
+}
+.fc-id output {
+  font-weight: 600;
+  background: var(--dl-cell);
+}
+.fc-nav {
+  display: flex;
+  flex-direction: column;
+  width: 18px;
+  height: 22px;
+}
+.fc-nav button {
+  flex: 1;
+  padding: 0;
+  border: 1px solid var(--dl-btn-b);
+  background: var(--dl-btn);
+  color: var(--dl-ink);
+  font-size: 6px;
+  line-height: 1;
+  cursor: pointer;
+}
+.fc-nav button + button {
+  border-top: 0;
+}
+.fc-nav button:hover:not(:disabled) {
+  background: var(--dl-hover);
+}
+.fc-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Pestañas */
+.fc-tabs {
+  display: flex;
+  flex: none;
+  gap: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--dl-grid2);
+}
+.fc-tabs button {
+  position: relative;
+  top: 1px;
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: none;
+  color: var(--dl-ink2);
+  font: 400 12px var(--f-body);
+  cursor: pointer;
+}
+.fc-tabs button:hover {
+  color: var(--dl-ink);
+  background: rgba(127, 127, 127, 0.08);
+}
+.fc-tabs button[aria-selected="true"] {
+  border-color: var(--dl-grid2);
+  background: var(--dl-cell);
+  color: var(--dl-ink);
+  font-weight: 500;
+  box-shadow: inset 0 2px 0 var(--gold, #d9a23a);
+}
+.fc-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 12px;
+  padding: 6px 12px 12px;
+  border: 1px solid var(--dl-grid2);
+  border-top: 0;
+  background: var(--dl-cell);
+}
+/* Grupos con marco y título, como los «group box» de escritorio */
+.fc-g {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 4px 10px 8px;
+  border: 1px solid var(--dl-grid2);
+  background: none;
+  min-width: 0;
+}
+/* Anula el estilo general de legend (franja con letra de títulos): aquí es el título pequeño del marco */
+.fc-g legend {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: var(--dl-ink);
+  font: 400 11.5px var(--f-body);
+}
+.fc-cab .fc-g {
+  padding: 2px 10px 6px;
+}
+/* Doble clic en una fila del cuadro abre la ficha: sin seleccionar texto */
+#cdBody tr[data-circ] td {
+  user-select: none;
+}
+.fc-chk {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 22px;
+}
+.fc-chk i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+}
+.fc-chk.ok i {
+  background: var(--ok);
+}
+.fc-chk.bad i {
+  background: var(--bad);
+}
+.fc-est .fc-chk {
+  font-weight: 600;
+}
+.fc-est .fc-chk.ok {
+  color: var(--ok);
+}
+.fc-est .fc-chk.bad {
+  color: var(--bad);
+}
+/* Ventana angosta: etiquetas y cuadro de verificación más estrechos */
+.fc-box {
+  container-type: inline-size;
+}
+@container (max-width: 520px) {
+  .fc-cab {
+    grid-template-columns: 1fr 104px;
+    gap: 5px 8px;
+  }
+  .fc-f {
+    grid-template-columns: 88px minmax(0, 1fr) 30px;
+    gap: 6px;
+  }
+  .fc-tabs button {
+    padding: 4px 8px;
+  }
+}
+
+/* Ficha del circuito · datos editables: cuadro blanco (los grises son de solo lectura); celeste si tiene un
+   cambio sin aplicar, como en el cuadro de conductores */
+.fc-e input,
+.fc-e select {
+  min-width: 0;
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  font-variant-numeric: tabular-nums;
+  box-shadow: none;
+}
+.fc-e input:focus,
+.fc-e select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  box-shadow: 0 0 0 1px var(--dl-acc);
+}
+.fc-e.mod input,
+.fc-e.mod select {
+  background-color: #e3effb;
+}
+:root[data-theme="dark"] .fc-e.mod input,
+:root[data-theme="dark"] .fc-e.mod select {
+  background-color: #1b3149;
+}
+.fc-nota {
+  margin: 8px 0 0;
+  color: var(--dl-ink2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* v2.8 · Editor de cargas especiales (js/tabla-cargas.js): lista de cargas a la izquierda y, a la derecha, los
+   datos de la carga elegida con los grupos y campos de la ficha del circuito (.fc-g, .fc-f, .fc-e). */
+.tc-tabs {
+  margin-top: 8px;
+}
+.tc-tabs[hidden] {
+  display: none;
+}
+.tc-box {
+  container-type: inline-size;
+}
+.tc-main {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px 0;
+}
+.tc-tabs + .tc-main {
+  padding-top: 0;
+}
+.tc-tabs + .tc-main > * {
+  border-top: 0;
+}
+.tc-izq {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--dl-grid2);
+  background: var(--dl-cell);
+}
+.tc-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.tc-it {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto 12px;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--dl-grid);
+  background: none;
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  text-align: left;
+  cursor: pointer;
+}
+.tc-it b {
+  color: var(--dl-ink2);
+  font-weight: 500;
+  text-align: right;
+}
+.tc-it span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tc-it em {
+  color: var(--dl-ink2);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tc-it .cd-est {
+  font-size: 0;
+}
+.tc-it .cd-est:before {
+  margin: 0;
+}
+.tc-it:hover {
+  background: var(--dl-hover);
+}
+.tc-it.mod {
+  background: #e3effb;
+}
+:root[data-theme="dark"] .tc-it.mod {
+  background: #1b3149;
+}
+/* Carga elegida: barra dorada a la izquierda, como la pestaña activa */
+.tc-it.sel {
+  background: var(--dl-hover);
+  box-shadow: inset 3px 0 0 var(--gold, #d9a23a);
+  font-weight: 600;
+}
+.tc-it:focus-visible {
+  outline: 1px dotted var(--dl-ink);
+  outline-offset: -3px;
+}
+.tc-vacio {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--dl-ink2);
+  font-style: italic;
+}
+.tc-acc {
+  display: flex;
+  gap: 5px;
+  padding: 7px;
+  border-top: 1px solid var(--dl-grid2);
+  background: var(--dl-bg);
+}
+.tc-acc .vw-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+  font-size: 14px;
+}
+.tc-der {
+  container-type: inline-size;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+  border: 1px solid var(--dl-grid2);
+  background: var(--dl-cell);
+}
+/* Dato obligatorio vacío: ámbar, como en los formularios */
+.fc-e.tc-falta input {
+  background-color: var(--falta-bg, #fffaf0);
+  border-color: #e0a43a;
+}
+/* Datos de la carga en dos columnas; la descripción ocupa las dos */
+.tc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+}
+.tc-c {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tc-c.tc-ancho {
+  grid-column: 1 / -1;
+}
+.tc-c > span {
+  color: var(--dl-ink);
+  white-space: nowrap;
+}
+.tc-c input,
+.tc-c select {
+  min-width: 0;
+  width: 100%;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 0;
+  background-color: var(--dl-cell);
+  color: var(--dl-ink);
+  font: 400 12px var(--f-body);
+  box-shadow: none;
+}
+.tc-c input:focus,
+.tc-c select:focus {
+  outline: none;
+  border-color: var(--dl-acc);
+  box-shadow: 0 0 0 1px var(--dl-acc);
+}
+.tc-c.mod input,
+.tc-c.mod select {
+  background-color: #e3effb;
+}
+:root[data-theme="dark"] .tc-c.mod input,
+:root[data-theme="dark"] .tc-c.mod select {
+  background-color: #1b3149;
+}
+/* Unidad dentro del cuadro, como en el panel Propiedades */
+.tc-u {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.tc-u input {
+  padding-right: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tc-u em {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dl-ink2);
+  font-style: normal;
+  pointer-events: none;
+}
+.tc-g {
+  margin-top: 12px;
+}
+/* Botones rápidos con las cargas típicas */
+.tc-rap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+.tc-rap > span {
+  margin-right: 2px;
+  color: var(--dl-ink2);
+  font-size: 11px;
+}
+.tc-rap .vw-btn {
+  min-width: 0;
+  height: 23px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+/* Franja del resultado del circuito; con cambios, vista previa */
+.tc-res {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--dl-grid2);
+  border-left: 3px solid var(--dl-grid2);
+  background: var(--dl-th);
+  font-variant-numeric: tabular-nums;
+}
+.tc-res:empty {
+  display: none;
+}
+.tc-res .cd-est {
+  font-size: 0;
+}
+.tc-res .cd-est:before {
+  margin: 0;
+}
+.tc-res b {
+  font-weight: 600;
+}
+.tc-res .tc-ok {
+  margin-left: auto;
+  font-weight: 600;
+}
+.tc-res .tc-rt {
+  color: var(--dl-ink2);
+}
+.tc-res.ir {
+  cursor: pointer;
+}
+.tc-res.ir:hover {
+  border-left-color: var(--gold, #d9a23a);
+}
+.tc-res.previa {
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: var(--dl-acc);
+}
+.tc-res em {
+  flex-basis: 100%;
+  color: var(--dl-acc);
+  font-size: 10.5px;
+  font-style: normal;
+}
+/* Angosta: la lista se reduce */
+@container (max-width: 640px) {
+  .tc-main {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  .tc-it em {
+    display: none;
+  }
+}

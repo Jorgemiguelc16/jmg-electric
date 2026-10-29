@@ -11,7 +11,7 @@ servidor propio ni instalación. Se publica en GitHub Pages; el acceso con cuent
 | Pieza | Archivo o carpeta |
 | --- | --- |
 | Estructura de todas las pantallas | `index.html` |
-| Apariencia (colores, tamaños, diseño) | `style.css` |
+| Apariencia (colores, tamaños, diseño) | `css/` (9 archivos) |
 | Lógica, cálculo y planos | `js/` (52 archivos) |
 | Imágenes de la plataforma | `img/`, `logo.png`, `foto.png`, `og.png` |
 | Manual de usuario y referencia técnica | `manual/manual.html` → `manual/JMG-ELECTRIC-Manual-v2.1.pdf` |
@@ -90,7 +90,29 @@ termina con su recuadro de notas (`notasSvg()`, `dibujo.js`) y su rótulo (`rotu
 **Para un plano nuevo o un cambio de colores:** usar la paleta `PAL`, los colores `COND` y las piezas de
 `dibujo.js`, y no copiarlas. Si una pieza nueva se repite en dos planos, va a `dibujo.js`.
 
-## 3. Cómo viaja un dato (el camino del cálculo)
+## 3. Los estilos de `css/`
+
+La apariencia está en 9 archivos que `index.html` carga **en este orden**. El orden importa: si dos reglas dicen
+cosas distintas sobre lo mismo, gana la de más abajo, aunque esté en otro archivo. Los colores y tamaños se
+definen una sola vez como variables (`--bg`, `--panel`, `--acc`…) en `sitio.css` y en `temas.css` /
+`paletas.css`, y las demás reglas las usan.
+
+| # | Archivo | Qué contiene |
+| --- | --- | --- |
+| 1 | `sitio.css` | Variables, cabecera, Inicio, formularios, resultados, normas, ajustes, impresión y bienvenida |
+| 2 | `aplicacion.css` | Espacio de trabajo: barra de título, cinta, explorador, documento, propiedades, barra de estado, asistente, ayudas |
+| 3 | `expediente.css` | Expediente técnico (PDF) y manual en PDF: notación, tablas técnicas y ecuaciones |
+| 4 | `temas.css` | Temas claro, oscuro y automático (solo en pantalla) |
+| 5 | `paletas.css` | Paletas de identidad, selector de paleta, cinta compacta, Ajustes, Novedades, recomendaciones, logo y zoom |
+| 6 | `barra-centro.css` | Barra superior, menú lateral y Centro de ingeniería |
+| 7 | `acceso.css` | Pantalla de ingreso, menú de la cuenta y Administración |
+| 8 | `ventanas.css` | Menús de la cinta, cuadro de conductores, ficha del circuito y editor de cargas especiales |
+| 9 | `fichas.css` | Parámetros de diseño, ficha del tablero, datos del proyecto, departamentos y paneles laterales |
+
+Las rutas de imágenes dentro de `css/` empiezan con `../img/`. **Para un estilo nuevo**, va en el archivo de
+su tema; si cambia algo de otro archivo, comprobar con `npm run capturas` que solo cambió lo buscado.
+
+## 4. Cómo viaja un dato (el camino del cálculo)
 
 1. El usuario escribe un dato, por ejemplo el área techada (`<input id="area">` en `index.html`).
 2. Al cambiarlo se llama a **`update()`** (`interfaz.js`).
@@ -107,7 +129,7 @@ termina con su recuadro de notas (`notasSvg()`, `dibujo.js`) y su rótulo (`rotu
 7. Las exportaciones (`excel.js`, `expediente.js`, `exportar-planos.js`) leen ese mismo `r`. Por eso la pantalla,
    el Excel y el PDF siempre coinciden.
 
-## 4. Por dónde empezar a estudiar
+## 5. Por dónde empezar a estudiar
 
 1. **`tablas-cne.js`**: compara cada tabla con el CNE. Es corto y te conecta el código con la norma.
 2. **El motor**: `dimensionar()` (`calculo-conductores.js`), `mdVivienda()` (`calculo-demanda.js`) y `calcUni()` (`calculo-vivienda.js`). Sigue a mano el ejemplo **C1** del
@@ -115,7 +137,7 @@ termina con su recuadro de notas (`notasSvg()`, `dibujo.js`) y su rótulo (`rotu
 3. **`interfaz.js`**: la función `update()`, para ver cómo se conecta todo.
 4. Después, lo que necesites tocar: `resultados.js` (pantalla), `excel.js` (memoria), `acceso.js` (cuentas).
 
-## 5. Herramientas de desarrollo
+## 6. Herramientas de desarrollo
 
 Están instaladas con Node.js. Si se cambia de computadora, se reinstalan con `npm install`.
 
@@ -127,7 +149,9 @@ Están instaladas con Node.js. Si se cambia de computadora, se reinstalan con `n
 | `npm run pruebas-planos` | **Pruebas de los planos**: la huella de cada plano (SVG y DXF) de los 34 casos contra `pruebas/huellas.js`. |
 | `npm run pruebas-excel` | **Pruebas del Excel**: la huella de cada hoja de la memoria (celdas, fórmulas, formato) de los 34 casos contra `pruebas/huellas-excel.js`, en Chrome. |
 | `npm run pruebas-ui` | **Pruebas de la interfaz**: 15 escenarios en Chrome (fichas, editores, vista previa, deshacer). |
-| `npm run estilos-sin-uso` | Lista estilos de `style.css` que ya no usa ninguna pantalla. |
+| `npm run estilos-sin-uso` | Lista estilos de `css/` que ya no usa ninguna pantalla. |
+| `npm run estilos-tapados` | Lista declaraciones de `css/` que nunca se aplican porque otra más abajo las tapa. |
+| `npm run capturas -- antes` y `npm run capturas -- despues antes` | **Capturas de las pantallas** (ingreso, inicio, vistas, cinta, ventanas; claro y oscuro) y su comparación píxel por píxel, para cambios de estilos. |
 
 Las pruebas del cálculo y de los planos corren en Node sin navegador: `herramientas/contexto.js` carga los
 archivos de `js/` en un contexto aislado y `herramientas/mini-dom.js` lee el SVG para el DXF. La página
@@ -139,7 +163,7 @@ temporal (`jmg-planos`). Se revisa y, si es el cambio buscado, se actualizan las
 `npm run pruebas-planos -- --actualizar`. Al **ordenar código sin cambiar lo que hace**, las huellas no deben
 cambiar: si cambian, algo se rompió.
 
-## 6. Antes de publicar (lista de control)
+## 7. Antes de publicar (lista de control)
 
 1. `npm run revisar` sin errores y `npm run revisar-formato` en verde.
 2. `npm test`, `npm run pruebas-planos`, `npm run pruebas-excel` y `npm run pruebas-ui` en verde. Si el cálculo, un
@@ -151,7 +175,7 @@ cambiar: si cambian, algo se rompió.
    (`textos.js`).
 5. Publicar en `main`.
 
-## 7. Reglas de la casa
+## 8. Reglas de la casa
 
 - **El cálculo sale de la norma.** Todo valor del CNE, EM.010 o DGE se verifica contra el documento antes y
   después de cambiarlo. Lo que es criterio de ingeniería se dice así, en la plataforma y en el manual.

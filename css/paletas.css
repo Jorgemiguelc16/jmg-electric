@@ -1,0 +1,569 @@
+/* PALETAS de identidad, selector de paleta, cinta compacta, Ajustes, Novedades, recomendaciones, logo y zoom.
+   Parte de los estilos de la plataforma: index.html carga los archivos de css/ en orden, y el orden importa (si
+   dos reglas dicen cosas distintas, gana la de más abajo). */
+/* =====================================================================
+   v2.2 · Paletas de identidad (cada una en tema claro y oscuro)
+   ===================================================================== */
+@media screen {
+  /* ---------- Grafito y oro: los colores del logo JMG ---------- */
+  :root[data-paleta="grafito"][data-theme="light"] {
+    --bg: #f2f0eb;
+    --panel: #ffffff;
+    --panel2: #faf8f3;
+    --soft: #fbf2d6;
+    --ink: #1d2228;
+    --muted: #646a71;
+    --line: #ddd8cc;
+    --line2: #ece8df;
+    --grid: #e5e0d4;
+    --grid2: #eeeae2;
+    --navy: #1f252c;
+    --navy2: #4a535d;
+    --accent: #c48a0a;
+    --gold: #ffd200;
+    --btn-bg: #1f252c;
+    --btn-bg2: #353e48;
+    --btn-ink: #fff;
+    --th-bg: #23292f;
+    --icon: #2b333c;
+    --focus: rgba(242, 183, 5, 0.32);
+    --ws-bg: #e9e6df;
+    --ws-title: linear-gradient(90deg, #121417 0%, #22272e 55%, #181b20 100%);
+    --ws-line: #ddd8cc;
+    --ws-tabs: #ffffff;
+    --ws-ribbon: #faf8f3;
+    --ws-hover: #f5efe0;
+    --ws-hover-b: #e8dbb8;
+    --ws-sel: #fcefc4;
+    --ws-pane: #ffffff;
+    --ws-pane-h: #f6f3ec;
+    --ws-text: #23292f;
+    --ws-text2: #6d727a;
+    --ws-doc: #ffffff;
+    --ws-paper: #f1ede4;
+    --brand-line: linear-gradient(90deg, #b07a06, #ffd200 50%, #b07a06);
+    --zebra: #fbfaf6;
+  }
+  :root[data-paleta="grafito"][data-theme="dark"] {
+    --bg: #0e1013;
+    --panel: #16191d;
+    --panel2: #1b1f24;
+    --soft: #2a2512;
+    --ink: #ece8de;
+    --muted: #a39d91;
+    --line: #2c3036;
+    --line2: #23272c;
+    --grid: #14171a;
+    --grid2: #111316;
+    --navy: #f3d36b;
+    --navy2: #ffe08a;
+    --accent: #f2b705;
+    --gold: #ffd200;
+    --btn-bg: #f2b705;
+    --btn-bg2: #ffc929;
+    --btn-ink: #16181b;
+    --th-bg: #262a30;
+    --icon: #f0cf62;
+    --ok-bg: #16291c;
+    --bad-bg: #3a1b19;
+    --warn-bg: #33290f;
+    --focus: rgba(242, 183, 5, 0.3);
+    --ws-bg: #0b0c0f;
+    --ws-title: linear-gradient(90deg, #08090b 0%, #16181c 55%, #0f1114 100%);
+    --ws-line: #272b31;
+    --ws-tabs: #121418;
+    --ws-ribbon: #15181c;
+    --ws-hover: #1f2328;
+    --ws-hover-b: #33373d;
+    --ws-sel: #2f2914;
+    --ws-pane: #131619;
+    --ws-pane-h: #181b20;
+    --ws-text: #e2ddd2;
+    --ws-text2: #9a948a;
+    --ws-doc: #131619;
+    --ws-paper: #1b1e23;
+    --brand-line: linear-gradient(90deg, #b07a06, #ffd200 50%, #b07a06);
+    --zebra: #181b1f;
+  }
+  /* Detalles de identidad comunes */
+  .how .step .n {
+    background: var(--btn-bg);
+    color: var(--btn-ink);
+  }
+  .tn.sel {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+}
+/* v2.2 · Selector de paleta, cinta compacta y plegable, versión sin recuadro */
+@media screen {
+  .ap-ver {
+    border: 0;
+    padding: 0;
+    margin: 0 8px 0 4px;
+    opacity: 0.75;
+    font-size: 11.5px;
+  }
+  .rib {
+    padding: 3px 6px 0;
+  }
+  .rb {
+    padding: 3px 4px;
+    min-width: 60px;
+    font-size: 11px;
+  }
+  .rb svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 3px;
+  }
+  .gl {
+    padding: 1px 0 3px;
+    font-size: 10px;
+  }
+  .rs,
+  .chk {
+    padding: 3px 8px;
+  }
+  #ws.cinta-oculta .ap-ribbon {
+    display: none;
+  }
+  .app .vpanel {
+    padding: 12px;
+  }
+  .app .vpanel .card > h2 {
+    padding: 8px 14px;
+    font-size: 14.5px;
+  }
+  .app .vpanel .card h2 .ref .btn.sm {
+    padding: 4px 10px;
+    font-size: 11.5px;
+  }
+}
+/* v2.2 · Pestañas Ajustes y Novedades */
+.aj-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.aj-grid > .card:first-child {
+  grid-row: span 2;
+}
+@media (max-width: 900px) {
+  .aj-grid {
+    grid-template-columns: 1fr;
+  }
+  .aj-grid > .card:first-child {
+    grid-row: auto;
+  }
+}
+.tema-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+@media (max-width: 560px) {
+  .tema-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.tema-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  cursor: pointer;
+  color: var(--ink);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.tema-card:hover {
+  border-color: var(--navy2);
+  transform: translateY(-2px);
+}
+.tema-card:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent) inset,
+    0 8px 20px rgba(0, 0, 0, 0.08);
+}
+.tema-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.tema-card b {
+  font-size: 14.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tema-card b:before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  box-sizing: border-box;
+}
+.tema-card:has(input:checked) b:before {
+  border: 4px solid var(--accent);
+}
+.tema-card small {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.tema-prev {
+  display: grid;
+  grid-template-columns: 24% 1fr;
+  grid-template-rows: 14px 1fr;
+  gap: 5px;
+  height: 104px;
+  padding: 6px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.tema-prev i {
+  display: block;
+  border-radius: 4px;
+}
+.tema-prev i:nth-child(1) {
+  grid-column: 1/3;
+}
+.prev-claro {
+  background: #f2f0eb;
+  border: 1px solid #ddd8cc;
+}
+.prev-claro i:nth-child(1) {
+  background: linear-gradient(90deg, #121417, #22272e);
+  box-shadow: inset 0 -2px 0 #ffd200;
+}
+.prev-claro i:nth-child(2) {
+  background: #fff;
+  border: 1px solid #e3ded2;
+}
+.prev-claro i:nth-child(3) {
+  background: #fff;
+  border: 1px solid #e3ded2;
+  background-image: linear-gradient(#ece8df 1px, transparent 1px);
+  background-size: 100% 9px;
+}
+.prev-gris {
+  background: #0e1013;
+  border: 1px solid #2c3036;
+}
+.prev-gris i:nth-child(1) {
+  background: linear-gradient(90deg, #08090b, #16181c);
+  box-shadow: inset 0 -2px 0 #ffd200;
+}
+.prev-gris i:nth-child(2) {
+  background: #16191d;
+  border: 1px solid #2c3036;
+}
+.prev-gris i:nth-child(3) {
+  background: #16191d;
+  border: 1px solid #2c3036;
+  background-image: linear-gradient(#23272c 1px, transparent 1px);
+  background-size: 100% 9px;
+}
+.aj-ws {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.aj-ws .check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.aj-ws .check input {
+  width: auto;
+  accent-color: var(--btn-bg, #14304f);
+}
+.aj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line2);
+  padding-top: 14px;
+}
+.aj-row b {
+  display: block;
+  font-size: 13px;
+}
+.aj-row .hint {
+  display: block;
+  font-size: 12px;
+}
+.nov-list li:first-child b {
+  color: var(--accent);
+}
+/* v2.2 · Rótulo de la cabecera (al estilo del cajetín de un plano) */
+/* v2.2 · Cabecera compacta y cuadro «Comenzar» */
+nav.tabs {
+  margin-top: 10px;
+}
+.rt-cont {
+  font-size: 11.5px;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rt-cont b {
+  font-weight: 600;
+}
+/* Recomendaciones de diseño */
+.recs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recs li {
+  border: 1px solid var(--line2);
+  border-left: 4px solid var(--warn);
+  border-radius: 7px;
+  background: var(--panel2);
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.recs li.sobre {
+  border-left-color: var(--navy2);
+}
+.recs li.acep {
+  opacity: 0.72;
+  border-left-color: var(--ok);
+}
+.recs p {
+  margin: 4px 0 0;
+}
+.rec-h {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.rec-t {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.rec-s {
+  color: var(--muted);
+}
+.rec-a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+/* Contador de recomendaciones pendientes sobre el botón de la cinta */
+.rb {
+  position: relative;
+}
+.rbadge {
+  position: absolute;
+  top: 1px;
+  right: 6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #d9a23a;
+  color: #fff;
+  font: 700 10.5px/17px var(--f-mono);
+  font-style: normal;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--ws-ribbon, #f7f8fa);
+}
+/* Cinta con más comandos: altura según el contenido (tres filas de botones pequeños) y barra de desplazamiento fina si no cabe */
+@media screen {
+  .ap-ribbon {
+    height: auto;
+    min-height: 84px;
+    scrollbar-width: none;
+  }
+  .ap-ribbon::-webkit-scrollbar {
+    display: none;
+  }
+  .rib {
+    height: auto;
+  }
+  .col .rs {
+    padding: 2px 8px;
+  }
+}
+/* Atajos de teclado en la pestaña Ayuda de la cinta */
+.col.atajos .rs {
+  cursor: default;
+  gap: 8px;
+}
+.col.atajos .rs:hover {
+  background: none;
+}
+.col.atajos b {
+  display: inline-block;
+  min-width: 46px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--panel);
+  font: 600 10.5px/16px var(--f-mono);
+  text-align: center;
+}
+/* Escala del espacio de trabajo (Ajustes; 80 % por defecto) y compensación del zoom del navegador en las páginas de la web */
+@media screen and (min-width: 900px) {
+  .app {
+    zoom: var(--zws, 0.8);
+    width: calc(100vw / var(--zws, 0.8));
+    height: calc(100vh / var(--zws, 0.8));
+    right: auto;
+    bottom: auto;
+  }
+}
+body:not(.ws-on) {
+  zoom: var(--zsite, 1);
+}
+
+/* Logo de JMG Projects & Energy (vectorial): sello horizontal negro y monograma */
+.jmg-sello {
+  flex: none;
+  display: inline-block;
+  background: #0b0b0c;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  line-height: 0;
+}
+.jmg-sello svg {
+  display: block;
+  width: 132px;
+  height: auto;
+}
+.brandline .jmg-sello {
+  padding: 8px 11px;
+  border-radius: 8px;
+}
+.brandline .jmg-sello svg {
+  width: 96px;
+}
+.wl-head .jmg-sello {
+  padding: 8px 11px;
+  border-radius: 8px;
+}
+.wl-head .jmg-sello svg {
+  width: 92px;
+}
+.contact-logo {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 3/2;
+  background: #0b0b0c;
+}
+.contact-logo .jmg-sello {
+  box-shadow: none;
+  background: none;
+  padding: 0;
+}
+.contact-logo .jmg-sello svg {
+  width: min(70%, 260px);
+  margin: auto;
+}
+.contact-logo .jmg-sello {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+span.jmg-mono.ap-logo {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  background: #0b0b0c;
+  border: 1px solid #3a3f46;
+  border-radius: 5px;
+  border-bottom: 1px solid #3a3f46;
+}
+.jmg-mono svg {
+  display: block;
+  width: 20px;
+  height: auto;
+}
+.ex-cv-top .jmg-sello {
+  box-shadow: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.ex-cv-top .jmg-sello svg {
+  width: 120px;
+}
+@media (max-width: 560px) {
+  .jmg-sello svg {
+    width: 104px;
+  }
+}
+
+/* Zoom del panel central */
+.ap-center {
+  position: relative;
+}
+#results > * {
+  zoom: var(--zc, 1);
+}
+.ap-doc.zoom-on {
+  cursor: grab;
+}
+.ap-doc.arrastre {
+  cursor: grabbing;
+  user-select: none;
+}
+.zoomc {
+  position: absolute;
+  right: 26px;
+  bottom: 22px;
+  z-index: 6;
+  display: flex;
+  background: var(--ws-pane, #fff);
+  border: 1px solid var(--ws-line, #c9d1da);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(20, 48, 79, 0.18);
+  overflow: hidden;
+}
+.zoomc button {
+  border: 0;
+  background: none;
+  font: 600 13px var(--f-body);
+  color: var(--ws-text, #14304f);
+  padding: 6px 11px;
+  cursor: pointer;
+  min-width: 34px;
+}
+.zoomc button:hover {
+  background: var(--ws-hover, #eef2f6);
+}
+.zoomc button + button {
+  border-left: 1px solid var(--ws-line, #e1e6ec);
+}
+.zoomc #zoomV {
+  min-width: 62px;
+  font-variant-numeric: tabular-nums;
+}
