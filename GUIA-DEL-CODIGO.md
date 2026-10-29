@@ -12,7 +12,7 @@ servidor propio ni instalación. Se publica en GitHub Pages; el acceso con cuent
 | --- | --- |
 | Estructura de todas las pantallas | `index.html` |
 | Apariencia (colores, tamaños, diseño) | `style.css` |
-| Lógica, cálculo y planos | `js/` (46 archivos) |
+| Lógica, cálculo y planos | `js/` (52 archivos) |
 | Imágenes de la plataforma | `img/`, `logo.png`, `foto.png`, `og.png` |
 | Manual de usuario y referencia técnica | `manual/manual.html` → `manual/JMG-ELECTRIC-Manual-v2.1.pdf` |
 | Pruebas automáticas: casos, referencia del cálculo y huellas de los planos | `pruebas/` |
@@ -50,7 +50,13 @@ está al final de `index.html` y es este:
 | 15 | `tablerogeneral.js` | Tablero general del edificio (IE-05, edificios) |
 | 16 | `expediente.js` | Expediente técnico en PDF |
 | 17 | `interfaz.js` | **Ciclo principal** `update()` y navegación |
-| 18 | `excel.js` | Memoria de cálculo en Excel |
+| 18 | `excel.js` | Memoria de cálculo en Excel: `exportar()` arma el libro, los estilos y las ayudas, y llama a cada hoja |
+| 18a | `excel-anexos.js` | Hoja Anexos: tablas del CNE que consultan las fórmulas |
+| 18b | `excel-memoria.js` | Hoja Memoria: datos, parámetros (celdas de las fórmulas) y máxima demanda |
+| 18c | `excel-calculos.js` | Hoja Cálculos: alimentadores, cuadro de cargas, balance y cortocircuito |
+| 18d | `excel-resumen.js` | Hoja Memoria (continuación): resumen, suministro, tierra, verificaciones y firmas |
+| 18e | `excel-planos.js` | Hojas de los planos, como imagen |
+| 18f | `excel-metrado.js` | Hoja Metrado |
 | 19 | `descargas.js` | Guardar archivos, lista de planos (`PLANOS`) y diálogos de exportación |
 | 20 | `sitio.js` | Páginas de la web (glosario, novedades, soporte) |
 | 21 | `proyectos.js` | Guardar, abrir y ejemplos de proyectos |
@@ -119,6 +125,7 @@ Están instaladas con Node.js. Si se cambia de computadora, se reinstalan con `n
 | `npm run revisar` | Busca errores y código sin usar (ESLint), analizando todos los archivos juntos. |
 | `npm test` | **Pruebas del cálculo**: 34 casos contra `pruebas/referencia.js` (cálculo, metrado, alertas). |
 | `npm run pruebas-planos` | **Pruebas de los planos**: la huella de cada plano (SVG y DXF) de los 34 casos contra `pruebas/huellas.js`. |
+| `npm run pruebas-excel` | **Pruebas del Excel**: la huella de cada hoja de la memoria (celdas, fórmulas, formato) de los 34 casos contra `pruebas/huellas-excel.js`, en Chrome. |
 | `npm run pruebas-ui` | **Pruebas de la interfaz**: 15 escenarios en Chrome (fichas, editores, vista previa, deshacer). |
 | `npm run estilos-sin-uso` | Lista estilos de `style.css` que ya no usa ninguna pantalla. |
 
@@ -135,8 +142,9 @@ cambiar: si cambian, algo se rompió.
 ## 6. Antes de publicar (lista de control)
 
 1. `npm run revisar` sin errores y `npm run revisar-formato` en verde.
-2. `npm test`, `npm run pruebas-planos` y `npm run pruebas-ui` en verde. Si el cálculo o un plano cambió a
-   propósito, revisar cada diferencia y regenerar `pruebas/referencia.js` o `pruebas/huellas.js`.
+2. `npm test`, `npm run pruebas-planos`, `npm run pruebas-excel` y `npm run pruebas-ui` en verde. Si el cálculo, un
+   plano o el Excel cambió a propósito, revisar cada diferencia y regenerar `pruebas/referencia.js`,
+   `pruebas/huellas.js` o `pruebas/huellas-excel.js` (con `-- --actualizar`).
 3. Subir el número de versión de los archivos (`?v=X.Y.Z` en `index.html`) para que los navegadores no usen
    archivos viejos guardados en su memoria, y la versión de `package.json`.
 4. Con el cambio ya aprobado: actualizar el manual, regenerar el PDF y agregar la entrada en `NOVEDADES`

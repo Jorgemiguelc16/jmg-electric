@@ -12,7 +12,11 @@ import { abrirApp, raiz } from "./chrome.mjs";
 const ARCHIVO = join(raiz, "pruebas", "huellas-excel.js"),
   ACTUALIZAR = process.argv.includes("--actualizar");
 const previas = existsSync(ARCHIVO)
-  ? JSON.parse(readFileSync(ARCHIVO, "utf8").replace(/^[^{]*/, "").replace(/;\s*$/, ""))
+  ? JSON.parse(
+      readFileSync(ARCHIVO, "utf8")
+        .replace(/^[^{]*/, "")
+        .replace(/;\s*$/, "")
+    )
   : { casos: {} };
 
 const { ev, cerrar } = await abrirApp();
