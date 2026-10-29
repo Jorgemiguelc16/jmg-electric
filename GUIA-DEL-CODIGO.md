@@ -12,7 +12,7 @@ servidor propio ni instalación. Se publica en GitHub Pages; el acceso con cuent
 | --- | --- |
 | Estructura de todas las pantallas | `index.html` |
 | Apariencia (colores, tamaños, diseño) | `style.css` |
-| Lógica, cálculo y planos | `js/` (38 archivos) |
+| Lógica, cálculo y planos | `js/` (44 archivos) |
 | Imágenes de la plataforma | `img/`, `logo.png`, `foto.png`, `og.png` |
 | Manual de usuario y referencia técnica | `manual/manual.html` → `manual/JMG-ELECTRIC-Manual-v2.1.pdf` |
 | Pruebas automáticas: casos, referencia del cálculo y huellas de los planos | `pruebas/` |
@@ -29,7 +29,13 @@ está al final de `index.html` y es este:
 | 2 | `tablas-cne.js` | **Tablas del CNE** y constantes del cálculo (solo datos) |
 | 3 | `textos.js` | Textos: normas, glosario, preguntas, novedades |
 | 4 | `datos.js` | Valores por defecto, listas editables y ayudas de cada dato |
-| 5 | `calculo.js` | **Motor de cálculo** |
+| 5 | `calculo.js` | **Motor de cálculo**: parámetros (`ctx()`) y entrada `calcular(proyecto)` |
+| 5a | `calculo-conductores.js` | Interruptor, sección, tubo, conductor de protección, alimentadores y circuitos |
+| 5b | `calculo-demanda.js` | Máxima demanda (Reglas 050-200 a 050-210) y salidas |
+| 5c | `calculo-tierra-fases.js` | Puesta a tierra, cortocircuito y balance de fases |
+| 5d | `calculo-vivienda.js` | `calcUni()`: vivienda y otros usos |
+| 5e | `calculo-edificio.js` | `calcMulti()`: edificio multifamiliar |
+| 5f | `verificaciones.js` | Alertas y recomendaciones del resultado |
 | 6 | `resultados.js` | Estado global y tarjetas de resultados |
 | 7 | `metrado.js` | Metrado de materiales, capacidad de cada tablero en polos y medida de su gabinete |
 | 8 | `dibujo.js` | **Piezas comunes de los planos**: paleta, colores de los conductores, notas, puerta metálica |
@@ -96,7 +102,7 @@ termina con su recuadro de notas (`notasSvg()`) y su rótulo (`rotuloSvg()`). To
 ## 4. Por dónde empezar a estudiar
 
 1. **`tablas-cne.js`**: compara cada tabla con el CNE. Es corto y te conecta el código con la norma.
-2. **`calculo.js`**: `dimensionar()`, `mdVivienda()` y `calcUni()`. Sigue a mano el ejemplo **C1** del
+2. **El motor**: `dimensionar()` (`calculo-conductores.js`), `mdVivienda()` (`calculo-demanda.js`) y `calcUni()` (`calculo-vivienda.js`). Sigue a mano el ejemplo **C1** del
    manual (vivienda de 120 m²) con el código al lado.
 3. **`interfaz.js`**: la función `update()`, para ver cómo se conecta todo.
 4. Después, lo que necesites tocar: `resultados.js` (pantalla), `excel.js` (memoria), `acceso.js` (cuentas).
@@ -109,8 +115,8 @@ Están instaladas con Node.js. Si se cambia de computadora, se reinstalan con `n
 | --- | --- |
 | `npm run formato` | Ordena el formato del código (Prettier). No cambia lo que hace el código. |
 | `npm run revisar` | Busca errores y código sin usar (ESLint), analizando todos los archivos juntos. |
-| `npm test` | **Pruebas del cálculo**: 32 casos contra `pruebas/referencia.js` (cálculo, metrado, alertas). |
-| `npm run pruebas-planos` | **Pruebas de los planos**: la huella de cada plano (SVG y DXF) de los 32 casos contra `pruebas/huellas.js`. |
+| `npm test` | **Pruebas del cálculo**: 34 casos contra `pruebas/referencia.js` (cálculo, metrado, alertas). |
+| `npm run pruebas-planos` | **Pruebas de los planos**: la huella de cada plano (SVG y DXF) de los 34 casos contra `pruebas/huellas.js`. |
 | `npm run pruebas-ui` | **Pruebas de la interfaz**: 15 escenarios en Chrome (fichas, editores, vista previa, deshacer). |
 | `npm run estilos-sin-uso` | Lista estilos de `style.css` que ya no usa ninguna pantalla. |
 
@@ -139,5 +145,5 @@ cambiar: si cambian, algo se rompió.
 
 - **El cálculo sale de la norma.** Todo valor del CNE, EM.010 o DGE se verifica contra el documento antes y
   después de cambiarlo. Lo que es criterio de ingeniería se dice así, en la plataforma y en el manual.
-- **Ningún cambio de diseño toca el cálculo.** Si toca `calculo.js` o `tablas-cne.js`, las pruebas lo dicen.
+- **Ningún cambio de diseño toca el cálculo.** Si toca el motor (`calculo*.js`) o `tablas-cne.js`, las pruebas lo dicen.
 - **Cada parámetro nuevo se explica** en su ayuda (`HLP` en `datos.js`) y en el manual.

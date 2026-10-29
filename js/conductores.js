@@ -3,7 +3,7 @@
    Cada tramo usa por defecto la sección automática: la menor que cumple la capacidad de corriente (Tabla 2 con
    5A y 5C) y la caída de tensión (Regla 050-102). La lista ofrece esa sección y las tres siguientes, que también
    cumplen. Las elecciones quedan pendientes (CD_PEND) hasta «Aplicar» o «Aceptar»: entonces pasan a SECF y
-   dimensionar() las aplica (js/calculo.js). La ventana se mueve y redimensiona como las demás ventanas de
+   dimensionar() las aplica (js/calculo-conductores.js). La ventana se mueve y redimensiona como las demás ventanas de
    escritorio (js/ventana.js). Si se angosta, la tabla oculta primero las columnas secundarias (container
    queries en style.css) en lugar de desplazarse hacia el costado. Doble clic en un circuito abre su ficha. */
 let CD_PEND = null;

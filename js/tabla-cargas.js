@@ -7,7 +7,7 @@
    proyecto, se recalcula y se guarda en el historial, igual que al editar en el panel Propiedades. Mientras haya
    cambios, la franja muestra una vista previa: el mismo cálculo (calcUni/calcMulti) hecho con la copia, sin
    cambiar el proyecto (las listas se restauran enseguida). Cada fila recuerda su posición original (_o).
-   Fase: por defecto la asigna el balance de fases (js/calculo.js, balancear); si se elige R, S o T queda fijada
+   Fase: por defecto la asigna el balance de fases (js/calculo-tierra-fases.js, balancear); si se elige R, S o T queda fijada
    en FIX, el mismo dato que se fija en Resultados › Balance de fases. Se guarda en la fila como _fase
    ("" = automática) hasta aplicar. */
 let TC_PEND = null,

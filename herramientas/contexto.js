@@ -20,6 +20,12 @@ const MOTOR = [
   "js/textos.js",
   "js/datos.js",
   "js/calculo.js",
+  "js/calculo-conductores.js",
+  "js/calculo-demanda.js",
+  "js/calculo-tierra-fases.js",
+  "js/calculo-vivienda.js",
+  "js/calculo-edificio.js",
+  "js/verificaciones.js",
   "js/resultados.js",
   "js/metrado.js",
   "js/proyectos.js"
