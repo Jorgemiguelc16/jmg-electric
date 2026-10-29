@@ -111,8 +111,12 @@ function calcular(p) {
   const P0 = P;
   P = p;
   try {
-    const c = ctx(p);
-    return p.MODE === "multi" ? calcMulti(c) : calcUni(c);
+    const c = ctx(p),
+      r = p.MODE === "multi" ? calcMulti(c) : calcUni(c);
+    /* Equipos adicionales y gabinete elegidos en la ficha de cada tablero (TEQ del modo): no intervienen en el
+       cálculo, pero el metrado y los planos los leen de aquí, para que el resultado dependa solo del proyecto */
+    r.teq = JSON.parse(JSON.stringify((p.TEQ || {})[p.MODE] || {}));
+    return r;
   } finally {
     P = P0;
   }

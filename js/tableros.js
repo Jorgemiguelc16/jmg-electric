@@ -15,7 +15,7 @@ function tableros(r, op = {}) {
   const TABS = op.tabs || r.tabs,
     SENAL = op.senal !== false,
     HOJA = op.hoja || "IE-04";
-  const PEIN = TAB_PEINADO,
+  const PEIN = !!op.peinado,
     c = r.c,
     o = [],
     { L, T, R, C } = trazos(o);
@@ -496,21 +496,21 @@ function tableros(r, op = {}) {
 /* Láminas del detalle de tableros: el dibujo tiene un ancho fijo, así que cada lámina lleva los tableros que entran
    sin que el alto obligue a reducirlo (el dibujo ocupa todo el ancho de la lámina elegida); los demás pasan a IE-04A,
    IE-04B… El detalle de la señal va en la última. */
-function tablerosHojas(r, lam = laminaPlano()) {
+function tablerosHojas(r, lam = laminaPlano(), peinado = TAB_PEINADO) {
   const [lw, lh] = LAMINAS[lam] || LAMINAS.A3,
     cabe = u => (lh - 20) / u.H >= (lw - 20) / u.W - 1e-9,
     hojas = [];
   let act = [];
   r.tabs.forEach(tb => {
     const prueba = [...act, tb];
-    if (!act.length || cabe(tableros(r, { tabs: prueba, senal: false }))) act = prueba;
+    if (!act.length || cabe(tableros(r, { tabs: prueba, senal: false, peinado }))) act = prueba;
     else {
       hojas.push(act);
       act = [tb];
     }
   });
   // La señal va con los últimos tableros si entra; si no, en una lámina propia
-  const conSenal = cabe(tableros(r, { tabs: act }));
+  const conSenal = cabe(tableros(r, { tabs: act, peinado }));
   hojas.push(act);
   if (!conSenal && act.length) hojas.push([]);
   const n = hojas.length,
@@ -518,6 +518,7 @@ function tablerosHojas(r, lam = laminaPlano()) {
   return hojas
     .map((tabs, i) => ({
       ...tableros(r, {
+        peinado,
         tabs,
         senal: i === n - 1,
         hoja: nom(i),

@@ -43,7 +43,7 @@ function polosTablero(r, tb) {
     m += pol;
     ids.push({ nom: q.idName, pol, rat: q.idRat, tipo: q.idTipo || "A", circ: g });
   });
-  const eqs = equiposDe(tb.tab).map(([k, d]) => ({
+  const eqs = equiposDe(r, tb.tab).map(([k, d]) => ({
     k,
     d,
     pol: k === "dps" ? (tri ? 4 : 2) : k === "med" ? (tri ? 4 : 2) : 2
@@ -68,7 +68,7 @@ function medidaGabinete(polos, moldeada = false, pvc = false) {
    tapa transparente en los tableros de vivienda y de departamento de hasta 24 polos, y metálico en el TSG y en los de
    más polos (no hay medida de catálogo de PVC para más de 24) */
 function gabineteDe(r, tb, polos) {
-  const el = ((TEQ[r.mode] || {})[tb.tab] || {}).gab || "",
+  const el = ((r.teq || {})[tb.tab] || {}).gab || "",
     pvc = polos <= 24 && (el === "pvc" || (!el && tb.tab !== "TSG"));
   return { ...medidaGabinete(polos, false, pvc), tipo: pvc ? "pvc" : "metal", elegido: el };
 }

@@ -85,7 +85,7 @@ function unifilar(r, op = {}) {
       cs = cs0.slice().sort((p, q) => pos[gk(p)] - pos[gk(q)]),
       nres = c.reserva,
       col0 = X + 96,
-      eqs = equiposDe(tb.tab),
+      eqs = equiposDe(r, tb.tab),
       // Equipos que no van entre la barra y tierra (el DPS sí): franja propia sobre la barra
       eqx = eqs.filter(([k]) => k !== "dps"),
       yb = Y + 46 + (eqx.length ? 54 : 0);
@@ -289,7 +289,7 @@ function unifilar(r, op = {}) {
   // Alto de una columna (para ordenarlas antes de dibujar)
   const altoCol = tb => {
     const cs = r.circ.filter(q => q.tab === tb.tab),
-      eqs = equiposDe(tb.tab),
+      eqs = equiposDe(r, tb.tab),
       fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [];
     return (
       60 +
@@ -310,7 +310,7 @@ function unifilar(r, op = {}) {
       if (!(gk(q) in pos)) pos[gk(q)] = i;
     });
     const cs = cs0.slice().sort((p, q) => pos[gk(p)] - pos[gk(q)]),
-      eqs = equiposDe(tb.tab),
+      eqs = equiposDe(r, tb.tab),
       eqx = eqs.filter(([k]) => k !== "dps"),
       fd = r.mode === "uni" && tb.tab === "TG" ? r.alims.slice(1) : [],
       xb = X0 + 40;
@@ -648,7 +648,7 @@ function unifilar(r, op = {}) {
   });
   // Leyenda y rótulo
   // Equipos marcados en algún tablero: se agregan a la leyenda con su símbolo y código DGE
-  const conEq = new Set(TABS.flatMap(t => equiposDe(t.tab).map(([k]) => k))),
+  const conEq = new Set(TABS.flatMap(t => equiposDe(r, t.tab).map(([k]) => k))),
     ext = [
       conEq.has("dps") && ["dps", "Protector contra sobretensiones (DPS)", "07-75-23"],
       conEq.has("rel") && ["rel", "Relé de tensión (U> U<)", "07-73-01"],

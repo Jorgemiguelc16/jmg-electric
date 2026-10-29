@@ -26,7 +26,7 @@ function detalles(r) {
   const S = salidasAltura(r),
     hay = k => S.some(s => s.k === k),
     cod = k => (S.find(s => s.k === k) || {}).cod,
-    eq = k => r.tabs.some(t => equiposDe(t.tab).some(([e]) => e === k));
+    eq = k => r.tabs.some(t => equiposDe(r, t.tab).some(([e]) => e === k));
   const G = [
     [
       "Tableros y medición",

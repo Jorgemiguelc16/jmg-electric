@@ -428,8 +428,8 @@ const EQT = {
     a: "Enciende y apaga circuitos por horario, por ejemplo el alumbrado de áreas comunes o exteriores."
   }
 };
-// Equipos marcados en un tablero del modo actual: [[clave, definición], ...]
-const equiposDe = tab => Object.entries(EQT).filter(([k]) => ((TEQ[MODE] || {})[tab] || {})[k]);
+// Equipos marcados en un tablero del proyecto calculado r (r.teq): [[clave, definición], ...]
+const equiposDe = (r, tab) => Object.entries(EQT).filter(([k]) => ((r.teq || {})[tab] || {})[k]);
 function ayudas() {
   Object.entries(HLP).forEach(([id, t]) => {
     const el = $(id);
