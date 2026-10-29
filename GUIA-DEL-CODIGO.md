@@ -12,7 +12,7 @@ servidor propio ni instalación. Se publica en GitHub Pages; el acceso con cuent
 | --- | --- |
 | Estructura de todas las pantallas | `index.html` |
 | Apariencia (colores, tamaños, diseño) | `style.css` |
-| Lógica, cálculo y planos | `js/` (44 archivos) |
+| Lógica, cálculo y planos | `js/` (46 archivos) |
 | Imágenes de la plataforma | `img/`, `logo.png`, `foto.png`, `og.png` |
 | Manual de usuario y referencia técnica | `manual/manual.html` → `manual/JMG-ELECTRIC-Manual-v2.1.pdf` |
 | Pruebas automáticas: casos, referencia del cálculo y huellas de los planos | `pruebas/` |
@@ -39,7 +39,9 @@ está al final de `index.html` y es este:
 | 6 | `resultados.js` | Estado global y tarjetas de resultados |
 | 7 | `metrado.js` | Metrado de materiales, capacidad de cada tablero en polos y medida de su gabinete |
 | 8 | `dibujo.js` | **Piezas comunes de los planos**: paleta, colores de los conductores, notas, puerta metálica |
-| 9 | `unifilar.js` | Diagrama unifilar (IE-01), rótulo de las láminas y conversión SVG → DXF (`svgDxf()`) |
+| 9 | `unifilar.js` | Diagrama unifilar (IE-01) y su división en láminas |
+| 9a | `rotulo.js` | Rótulo de todas las láminas (`rotuloSvg()`) |
+| 9b | `exportar-planos.js` | Tamaños de lámina y conversión de cualquier plano a DXF (`svgDxf()`) y PNG (`svgPng()`) |
 | 10 | `simbolos.js` | Símbolos de la Norma DGE y primitivas de dibujo (`trazos()`: L, T, R, C, TRI) |
 | 11 | `alturas.js` | Diagrama de alturas (IE-02) |
 | 12 | `detalles.js` | Leyenda y detalle del pozo de tierra (IE-03) |
@@ -76,7 +78,7 @@ Cada archivo empieza con un comentario que explica lo mismo con más detalle.
 
 Cada plano es una función que recibe el resultado del cálculo `r` y devuelve `{ svg, W, H }`, por ejemplo
 `tableroGeneral(r)`. Dibuja con las primitivas de `trazos(o)` (`simbolos.js`) sobre una lista de textos SVG y
-termina con su recuadro de notas (`notasSvg()`) y su rótulo (`rotuloSvg()`). Todos los planos están en la lista
+termina con su recuadro de notas (`notasSvg()`, `dibujo.js`) y su rótulo (`rotuloSvg()`, `rotulo.js`). Todos los planos están en la lista
 `PLANOS` de `descargas.js`, que usan la pantalla, el DXF, el Excel y el expediente.
 
 **Para un plano nuevo o un cambio de colores:** usar la paleta `PAL`, los colores `COND` y las piezas de
@@ -96,7 +98,7 @@ termina con su recuadro de notas (`notasSvg()`) y su rótulo (`rotuloSvg()`). To
    - el balance de fases con `balancear()` y la puesta a tierra con `pozo()`.
 6. El resultado `r` se guarda en `LAST` y lo dibuja **`render(r)`** con las tarjetas de `resultados.js`,
    `unifilar.js` y `metrado.js`.
-7. Las exportaciones (`excel.js`, `expediente.js`, `unifilar.js`) leen ese mismo `r`. Por eso la pantalla,
+7. Las exportaciones (`excel.js`, `expediente.js`, `exportar-planos.js`) leen ese mismo `r`. Por eso la pantalla,
    el Excel y el PDF siempre coinciden.
 
 ## 4. Por dónde empezar a estudiar

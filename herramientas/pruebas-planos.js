@@ -17,6 +17,8 @@ const { ctx, cargar, run, raiz } = crearContexto([
   "js/logo.js",
   "js/dibujo.js",
   "js/unifilar.js",
+  "js/rotulo.js",
+  "js/exportar-planos.js",
   "js/simbolos.js",
   "js/alturas.js",
   "js/detalles.js",
