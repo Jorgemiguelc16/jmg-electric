@@ -158,6 +158,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v2.9.9",
+    "Por dentro, la plataforma está ordenada para seguir creciendo: el motor de cálculo, la memoria en Excel, los planos y los estilos están divididos por tema en archivos más pequeños, y cada parte tiene pruebas automáticas que comprueban que el cálculo, cada plano, cada hoja del Excel y cada pantalla quedan iguales. El cálculo, los planos y la memoria no cambian."
+  ],
+  [
     "v2.9.8",
     "Edificios: nuevas láminas IE-05 Tablero general (interruptor general en caja moldeada y barras de cobre N, R, S y T de las que sale la fase de cada suministro según el balance) e IE-06 Banco de medidores (cajas de la concesionaria a escala, con sus medidas, alturas y el balance de fases). En el detalle de tableros, la puerta y el interior tienen el mismo tamaño, con la medida de catálogo del gabinete y sus polos por fila; los tableros de vivienda y de departamento de hasta 24 polos son de PVC empotrable con tapa transparente (se cambia en la ficha del tablero, pestaña Equipos). Las notas incluyen el espacio de trabajo de 1 m (Regla 020-308) y la reserva de 450 mm de conductor en cada medidor (Regla 040-402), y el metrado indica la medida y el tipo de cada tablero."
   ],
