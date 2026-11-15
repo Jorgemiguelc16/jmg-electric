@@ -2306,6 +2306,100 @@ prueba("Editor de diseño: presentación y paneles ocultos sin perder el plano n
   );
 });
 
+prueba(
+  "Editor de diseño: circuito desplegable, asignar circuito, tablero del circuito y conductores automáticos",
+  async ok => {
+    await ejemplo("uni");
+    await abrirPlano();
+    // Un tablero TD-1 (el proyecto solo tiene TG) con dos luminarias; la segunda tubería, con su circuito escrito a mano
+    // (sin tablero), como pasaba al escribir «C-1» en Propiedades
+    const ids = await J(`(() => {
+    const D = dsD(), a = o => dsAgregar(o).id;
+    const tb = a({ t: "sim", k: "tab", x: ${OX} + 3, y: ${OY} + 7.9, r: 180, capa: "E-TABLEROS", nom: "TD-1", nc: 3 }),
+      l1 = a({ t: "sim", k: "luz", x: ${OX} + 3, y: ${OY} + 5, r: 0, capa: "E-ALUMBRADO", cir: "C-1", tab: tb }),
+      l2 = a({ t: "sim", k: "luz", x: ${OX} + 3, y: ${OY} + 2, r: 0, capa: "E-ALUMBRADO", cir: "C-1" }),
+      l3 = a({ t: "sim", k: "luz", x: ${OX} + 5, y: ${OY} + 2, r: 0, capa: "E-ALUMBRADO" });
+    const t1 = a({ t: "tub", pts: [${OX} + 3, ${OY} + 7.6, ${OX} + 3, ${OY} + 5], c: false, modo: "techo", capa: "E-TUBERIAS-TECHO", c0: tb, c1: l1, cir: "C-1", tab: tb }),
+      t2 = a({ t: "tub", pts: [${OX} + 3, ${OY} + 5, ${OX} + 3, ${OY} + 2], c: false, modo: "techo", capa: "E-TUBERIAS-TECHO", c0: l1, c1: l2, cir: "C-1" });
+    edCambio();
+    return { tb, l1, l2, l3, t1, t2 };
+  })()`);
+    const el = id => J(`dsD().els.find(e => e.id === "${id}")`);
+    // El circuito escrito a mano toma el tablero de lo conectado: el cálculo ya encuentra su recorrido
+    ok(
+      (await el(ids.t2)).tab === ids.tb && (await el(ids.l2)).tab === ids.tb,
+      "la tubería y la luminaria con el circuito escrito a mano toman el tablero de lo conectado"
+    );
+    // Conductores automáticos: monofásico 220 V, dos fases y tierra
+    const c1 = (await el(ids.t1)).cond;
+    ok(
+      c1 && c1.f === 2 && !c1.n && c1.t && (await el(ids.t1)).condA,
+      `conductores automáticos en 220 V: 2 fases y tierra (${JSON.stringify(c1)})`
+    );
+    // Con 380/220 V: fase y neutro
+    const sist0 = await ev("PROY.sist");
+    await ev(`PROY.sist = "tri380"; edCambio(); 1`);
+    const c2 = (await el(ids.t1)).cond;
+    ok(c2.f === 1 && c2.n === 1 && c2.t, `con 380/220 V: fase, neutro y tierra (${JSON.stringify(c2)})`);
+    await ev(`PROY.sist = ${JSON.stringify(sist0)}; edCambio(); 1`);
+    // Si el proyectista los cambia, se respetan
+    await ev(`DS_SEL.clear(); DS_SEL.add("${ids.t1}"); edProps(); 1`);
+    await poner('#edPropC [data-dsp="condF"]', 3);
+    ok((await el(ids.t1)).cond.f === 3 && !(await el(ids.t1)).condA, "elegidos a mano: ya no cambian solos");
+    ok(await ev(`!!$('edPropC').querySelector('[data-dsa="condauto"]')`), "botón para volver a los automáticos");
+    await clic('#edPropC [data-dsa="condauto"]');
+    ok((await el(ids.t1)).condA && (await el(ids.t1)).cond.f === 2, "«Conductores automáticos» los vuelve a marcar");
+    // Circuito: desplegable con las salidas de cada tablero, agrupadas
+    await ev(`DS_SEL.clear(); DS_SEL.add("${ids.l3}"); edProps(); 1`);
+    const op = await J(
+      `[...$('edPropC').querySelectorAll('select[data-dsp="cir"] option')].map(o => o.value + "/" + (o.parentElement.label || ""))`
+    );
+    ok(
+      op.includes(`${ids.tb}|C-1/TD-1`) && op.includes(`${ids.tb}|C-3/TD-1`) && op[0] === "/",
+      `desplegable de circuitos agrupado por tablero (${op.length} opciones)`
+    );
+    await poner('#edPropC select[data-dsp="cir"]', `${ids.tb}|C-2`);
+    const l3 = await el(ids.l3);
+    ok(l3.cir === "C-2" && l3.tab === ids.tb, "al elegir un circuito se guarda también su tablero");
+    // Varias a la vez: clic derecho › Asignar circuito › C-3
+    await ev(`DS_SEL.clear(); ["${ids.l2}", "${ids.l3}"].forEach(i => DS_SEL.add(i)); edProps(); 1`);
+    ok(
+      (await ev(`$('edPropC').querySelector('select[data-dsp="cir"]').value`)) === "~",
+      "con circuitos distintos, el desplegable dice «(varios)»"
+    );
+    await ev(`edMenuAccion("asigcir"); 1`);
+    ok(
+      await ev(`!!$('edMenu').querySelector('[data-edm="asig:${ids.tb}|C-3"]')`),
+      "menú «Asignar circuito» con las salidas del tablero"
+    );
+    await clic(`#edMenu [data-edm="asig:${ids.tb}|C-3"]`);
+    ok(
+      (await el(ids.l2)).cir === "C-3" && (await el(ids.l3)).cir === "C-3" && (await el(ids.l3)).tab === ids.tb,
+      "las dos luminarias pasan a C-3 de una vez"
+    );
+    await ev(
+      `["${ids.l2}"].forEach(i => { const e = dsD().els.find(x => x.id === i); e.cir = "C-1"; }); edCambio(); 1`
+    );
+    // TD-1 no está en el cálculo: aviso (no nota) con el botón «Renombrar a TG»
+    await ev("revAbrir(); 1");
+    const it = await J(`REV_L.findIndex(o => /TD-1 no está en el cálculo/.test(o.t))`);
+    ok(
+      it >= 0 &&
+        (await J(`REV_L[${it}].nivel`)) === "aviso" &&
+        (await ev(`!!document.querySelector('[data-revr="${it}"]')`)),
+      "«TD-1 no está en el cálculo» como aviso, con botón «Renombrar a TG»"
+    );
+    await clic(`[data-revr="${it}"]`);
+    ok((await el(ids.tb)).nom === "TG", "el botón renombra el tablero a TG");
+    ok(!(await J(`REV_L.some(o => /no está en el cálculo/.test(o.t))`)), "y el aviso desaparece de la revisión");
+    await ev("revCerrar(); 1");
+    await clic('[data-ed="cancelar"]');
+    await ev(
+      "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+    );
+  }
+);
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

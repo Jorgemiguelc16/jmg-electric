@@ -803,7 +803,9 @@ function disValido(v) {
                         // Neutros (antes era sí o no)
                         n: Number.isInteger(e.cond.n) ? Math.max(0, Math.min(6, e.cond.n)) : e.cond.n === true ? 1 : 0,
                         t: e.cond.t === true
-                      }
+                      },
+                      // Marcados solos según el sistema (se actualizan); sin esta marca, los eligió el proyectista
+                      ...(e.condA === true ? { condA: true } : {})
                     }
                   : {})
               }

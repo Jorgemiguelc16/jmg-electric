@@ -1663,7 +1663,7 @@ const DC_AYUDA = {
   pot: "Escriba su potencia en Propiedades (o la de su tipo de luminaria).",
   ruta: "Únalas con tuberías desde la salida del tablero: la longitud se mide por el recorrido.",
   tipo: "Doble clic en el tablero y elija el tipo de cada circuito.",
-  nom: "Los tableros del plano se llaman como en el cálculo: TG, TD-1, TD-2…",
+  nom: "Los tableros del plano se llaman como en el cálculo: TG, TD-1, TD-2… Cámbiele el nombre (doble clic en el tablero) o agregue su piso en Vivienda › Pisos y tableros.",
   ali: "Dibuje una tubería desde el medidor hasta el TG (clic en el TG › Alimentador).",
   sis: "Elija el sistema del tablero (doble clic) o cambie el suministro del proyecto.",
   area: "Encuadre la planta que contiene el área, o márquela dentro de ella."
@@ -1686,17 +1686,22 @@ function dcDatos() {
     }),
     noms = dcNomsCalc();
   // En el edificio, los tableros de departamento se reconocen por su tipo (ventana Tablero), no por el nombre
-  if (R && MODE === "uni")
+  if (R && MODE === "uni") {
+    // Nombre que le corresponde: el primero del cálculo que ningún tablero del plano usa (botón «Renombrar»)
+    const usados = new Set(R.tabs.map(t => t.nom)),
+      libres = noms.filter(n => !usados.has(n));
     R.tabs
       .filter(t => t.circs.length && !noms.includes(t.nom))
       .forEach(t =>
         R.avisos.push({
           t: "aviso",
-          m: `El tablero ${t.nom} no está en el cálculo (${noms.join(", ")})`,
+          m: `El tablero ${t.nom} no está en el cálculo (${noms.join(", ")}): sus ${t.circs.reduce((s, q) => s + q.n, 0)} salidas no se calculan`,
           ids: [t.id],
-          k: "nom"
+          k: "nom",
+          ...(libres.length ? { ren: libres.shift() } : {})
         })
       );
+  }
   return { R, noms, c };
 }
 /* Revisión cruzada: cada dato del cálculo, si sale del plano (verde) o de lo escrito (gris), para que se vea de
@@ -1945,6 +1950,7 @@ function dcEscribir() {
       if (pozo) {
         const S = LAST.Selec;
         t.cond = { f: 0, n: 0, t: true };
+        delete t.condA;
         t.sec = `1×${S} mm² (tierra)`;
         n++;
         return;
@@ -1961,6 +1967,7 @@ function dcEscribir() {
       if (!a) return;
       const fa = a.s.tri ? 3 : 2;
       t.cond = { f: fa, n: Math.max(0, a.s.n - fa), t: true };
+      delete t.condA;
       if (a.tubo && DS_DIAS.includes(a.tubo.mm)) t.dia = a.tubo.mm;
       t.sec = `${a.s.n}-1×${a.S} + 1×${a.St} T mm² (alimentador)`;
       n++;
@@ -1975,6 +1982,7 @@ function dcEscribir() {
         a = (k * OD[qs[0].S] ** 2 * Math.PI) / 4,
         tb = TUBOS.find(([, , di]) => a <= (0.4 * Math.PI * di * di) / 4);
       t.cond = { f: k, n: 0, t: false };
+      delete t.condA;
       if (tb && DS_DIAS.includes(tb[0])) t.dia = tb[0];
       t.sec = `${k}-1×${qs[0].S} mm² (retornos)`;
       ret++;
@@ -1999,6 +2007,7 @@ function dcEscribir() {
     a = ((a + OD[St] ** 2) * Math.PI) / 4;
     const tb = TUBOS.find(([, , di]) => a <= (0.4 * Math.PI * di * di) / 4);
     t.cond = { f: Math.min(12, fa), n: Math.min(6, ne), t: true };
+    delete t.condA;
     if (tb && DS_DIAS.includes(tb[0])) t.dia = tb[0];
     t.sec = `${[...sec].map(([S, k]) => `${k}-1×${S}`).join(" + ")} + 1×${St} T mm²`;
     n++;

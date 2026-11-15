@@ -235,8 +235,13 @@ function edAbrir(conArchivo) {
   dsAsegurar();
   DS_SEL.clear();
   DS_N = 0;
-  // Las puntas conectadas, justo en el dibujo de su artefacto (diseños guardados antes de que llegaran exactas)
-  if (EPL && EPL.dis) dsReconectar();
+  // Las puntas conectadas, justo en el dibujo de su artefacto (diseños guardados antes de que llegaran exactas); el
+  // tablero de los circuitos escritos a mano y los conductores de las tuberías que aún no los tienen
+  if (EPL && EPL.dis) {
+    dsReconectar();
+    dsPropagarCircuitos();
+    dsCondAuto();
+  }
   ED.base = edSnap();
   ED.hist = [ED.base];
   ED.redo = [];
@@ -277,6 +282,7 @@ function edCambio() {
   if (EPL && EPL.dis) {
     dsReconectar();
     dsPropagarCircuitos();
+    dsCondAuto();
   }
   const s = edSnap();
   if (ED.hist[ED.hist.length - 1] !== s) {
@@ -2582,6 +2588,11 @@ function edMenuAbrir(e) {
       b("repmur", "Este a lo largo de un muro…");
       sep();
     }
+    // Circuito de lo elegido (artefactos y tuberías), elegido de las salidas de los tableros
+    if (sel.some(edAsignable) && D.els.some(e => e.k === "tab" && e.nc > 0)) {
+      b("asigcir", `Asignar circuito${sel.length > 1 ? ` a ${sel.filter(edAsignable).length}` : ""} ▸`);
+      sep();
+    }
     b("copiar", "Copiar", "Ctrl+C");
     b("cortar", "Cortar", "Ctrl+X");
     b("pegar", "Pegar", "Ctrl+V", DS_PORTA.length > 0);
@@ -2828,9 +2839,59 @@ function edMenuRecorrido(ctx) {
       .join("");
   ED_MENU.hidden = false;
 }
+// Elementos a los que se les puede asignar un circuito: artefactos (no tableros ni medidores) y tuberías de circuito
+const edAsignable = el =>
+  (el.t === "sim" && el.k !== "tab" && !PL_MED.has(el.k) && el.k !== "pat") || (el.t === "tub" && !el.ali);
+// Submenú «Asignar circuito»: los tableros y, al elegir uno, sus salidas
+function edMenuCircuitos(tb) {
+  const tabs = dsD().els.filter(e => e.k === "tab" && e.nc > 0);
+  if (!tb && tabs.length === 1) tb = tabs[0];
+  ED_MENU.innerHTML = tb
+    ? `<div class="ed-mt">Circuitos de ${esc(tb.nom || "tablero")}</div>` +
+      dsSalidasTab(tb)
+        .map(
+          o =>
+            `<button type="button" data-edm="asig:${tb.id}|${o.n}" role="menuitem"><span><b style="color:${plColorDis(dsColCir(o.n, tb.id))}">${o.n}</b>${o.d ? " · " + esc(o.d) : ""}</span></button>`
+        )
+        .join("") +
+      '<hr><button type="button" data-edm="asig:|" role="menuitem"><span>Sin circuito</span></button>'
+    : `<div class="ed-mt">Asignar circuito · tablero</div>` +
+      tabs
+        .map(
+          t =>
+            `<button type="button" data-edm="asigtab:${t.id}" role="menuitem"><span>${esc(t.nom || "Tablero")}</span><kbd>${t.nc} ▸</kbd></button>`
+        )
+        .join("");
+  ED_MENU.hidden = false;
+}
 function edMenuAccion(a) {
   const fn = ED_MENU.fn,
     ctx = ED_MENU.ctx;
+  if (a === "asigcir") return edMenuCircuitos(null);
+  if (a.startsWith("asigtab:")) return edMenuCircuitos(dsD().els.find(e => e.id === a.slice(8)));
+  if (a.startsWith("asig:")) {
+    edMenuCerrar();
+    const [tb, cir] = a.slice(5).split("|"),
+      l = dsSel().filter(el => dsEditable(el) && edAsignable(el));
+    l.forEach(el => {
+      if (cir) {
+        el.cir = cir;
+        el.tab = tb;
+      } else {
+        delete el.cir;
+        delete el.tab;
+      }
+    });
+    edCambio();
+    edProps();
+    plDibujar();
+    const t = dsD().els.find(e => e.id === tb);
+    return toast(
+      cir
+        ? `${l.length} elemento${l.length === 1 ? "" : "s"} en ${cir} de ${t ? t.nom || "Tablero" : "tablero"}`
+        : `${l.length} elemento${l.length === 1 ? "" : "s"} sin circuito`
+    );
+  }
   if (a === "salmenu" && ctx) return edMenuRecorrido(ctx);
   if (a === "saltab" && ctx && ctx.tb) {
     // Lista de salidas del tablero; al elegir una, el recorrido

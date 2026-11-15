@@ -1557,6 +1557,70 @@ function dsPropagarCircuitos() {
       }
     });
   }
+  /* El tablero del circuito: una tubería o un artefacto con su circuito escrito a mano (sin tablero) lo toma de lo
+     conectado con el mismo circuito, o del tablero de donde sale. Sin tablero, el cálculo no lo encuentra y la salida
+     queda «sin recorrido de tubería» aunque se vea conectada. */
+  for (let vuelta = 0, cambio = true; cambio && vuelta < 50; vuelta++) {
+    cambio = false;
+    tubs.forEach(t => {
+      if (!t.cir) return;
+      const ext = [t.c0, t.c1].map(id => por.get(id)).filter(Boolean);
+      if (!t.tab) {
+        const tb = ext.find(s => s.k === "tab"),
+          s = ext.find(x => x.k !== "tab" && x.cir === t.cir && x.tab);
+        if (tb || s) {
+          t.tab = tb ? tb.id : s.tab;
+          cambio = true;
+        }
+      }
+      if (t.tab)
+        ext.forEach(s => {
+          if (s.k !== "tab" && s.cir === t.cir && !s.tab) {
+            s.tab = t.tab;
+            cambio = true;
+          }
+        });
+    });
+  }
+}
+/* Conductores por defecto de cada tubería de circuito (marcas de la norma), según el sistema del proyecto: en
+   monofásico 220 V los dos conductores son fases (sin neutro); con 380/220 V, fase y neutro; un circuito trifásico,
+   tres fases (sin neutro). Más la tierra (T). La tubería de un interruptor lleva la fase y sus retornos, sin tierra (DC_RET,
+   criterio). Solo en las tuberías sin conductores o con los automáticos (condA): si el proyectista los cambia, se
+   respetan. Las secciones y el diámetro los escribe el cálculo («Datos para el cálculo»). */
+function dsCondAuto() {
+  const D = dsD();
+  if (!D) return;
+  const sk = (typeof MODE !== "undefined" && MODE === "multi" ? PROY.sistG : PROY.sist) || "mono220",
+    n380 = sk === "tri380",
+    por = new Map(D.els.map(e => [e.id, e])),
+    // Circuitos trifásicos: los que tienen alguna salida trifásica (como en el cálculo)
+    tri = new Set();
+  D.els.forEach(s => {
+    if (s.t !== "sim" || !s.cir) return;
+    const cl = plArt(s.k)[0],
+      f3 = cl === "esp" ? (s.fs || (PL_ESP[s.k] || [])[1]) === 3 : PL_TRI.has(s.k) || s.fs === 3;
+    if (f3) tri.add((s.tab || "") + "|" + s.cir);
+  });
+  D.els.forEach(t => {
+    if (t.t !== "tub" || t.ali || !t.cir || (t.cond && !t.condA)) return;
+    const sw = [t.c0, t.c1].map(id => por.get(id)).filter(s => s && DS_CAT[s.k] && DS_CAT[s.k].g === "Interruptores");
+    let c;
+    if (sw.length)
+      c = { f: Math.max(...sw.map(s => (typeof DC_RET !== "undefined" && DC_RET[s.k]) || 2)), n: 0, t: false };
+    else {
+      let f = 0,
+        n = 0;
+      [t.cir, ...(t.cx || [])].forEach(cir => {
+        const f3 = tri.has((t.tab || "") + "|" + cir);
+        f += f3 ? 3 : n380 ? 1 : 2;
+        n += !f3 && n380 ? 1 : 0;
+      });
+      c = { f: Math.min(12, f), n: Math.min(6, n), t: true };
+    }
+    t.cond = c;
+    t.condA = true;
+  });
 }
 // Tuberías que se mueven o giran sin su artefacto: dejan de estar conectadas a él
 function dsDesligar(sel) {
@@ -1977,8 +2041,9 @@ function dsVentanaCond(el) {
         n.n = dsNeutros(n);
         if (k === "t") n.t = !!v;
         else n[k] = parseInt(v, 10) || 0;
-        if (n.f || n.n || n.t) el.cond = n;
-        else delete el.cond;
+        // Elegidos por el proyectista (aunque sean cero): ya no se cambian solos
+        delete el.condA;
+        el.cond = n;
       }
       edCambio();
     }
@@ -3607,6 +3672,37 @@ const dsLumTxt = t =>
   ]
     .filter(Boolean)
     .join(" · ");
+/* Desplegable de circuito: las salidas de cada tablero del diseño (C-1, C-2… con su descripción), agrupadas por
+   tablero. v/tb: circuito y tablero actuales; v === null: la selección tiene circuitos distintos. */
+function dsCircSelect(D, v, tb) {
+  const tabs = D.els.filter(e => e.k === "tab" && e.nc > 0),
+    actual = v ? `${tb || ""}|${v}` : "";
+  let hay = v === null || !v;
+  const grupos = tabs
+    .map(t => {
+      const ops = dsSalidasTab(t)
+        .map(o => {
+          const val = `${t.id}|${o.n}`;
+          if (val === actual) hay = true;
+          return `<option value="${val}"${val === actual ? " selected" : ""}>${esc(o.n)}${o.d ? " · " + esc(o.d) : ""}</option>`;
+        })
+        .join("");
+      return `<optgroup label="${esc(t.nom || "Tablero")}">${ops}</optgroup>`;
+    })
+    .join("");
+  const tbA = tb && D.els.find(e => e.id === tb);
+  return (
+    `<select data-dsp="cir" class="ds-cir">` +
+    (v === null ? '<option value="~" selected>(varios)</option>' : "") +
+    `<option value=""${v === "" || v === undefined ? " selected" : ""}>— Sin circuito —</option>` +
+    // Un circuito escrito que ya no es una salida de su tablero (o sin tablero): se conserva para no perderlo
+    (!hay
+      ? `<option value="${esc(actual)}" selected>${esc(v)}${tbA ? " · " + esc(tbA.nom || "Tablero") : " (sin tablero)"}</option>`
+      : "") +
+    grupos +
+    "</select>"
+  );
+}
 function dsProps(c) {
   const sel = dsSel(),
     D = dsD();
@@ -3614,23 +3710,16 @@ function dsProps(c) {
     campo = (k, html) => `<label class="ed-pf ed-pc"><span>${k}</span>${html}</label>`,
     capas = v =>
       `<select data-dsp="capa">${v === "" ? '<option value="" selected>(varias)</option>' : ""}${D.capas.map(x => `<option${x.n === v ? " selected" : ""}>${esc(x.n)}</option>`).join("")}</select>`,
-    circ = v =>
-      `<input type="text" data-dsp="cir" value="${esc(v || "")}" placeholder="ej. C-1" list="dsCircs" maxlength="12">`,
-    lista = `<datalist id="dsCircs">${D.els
-      .filter(e => e.k === "tab")
-      .flatMap(e =>
-        dsSalidasTab(e).map(
-          o => `<option value="${o.n}">${esc(e.nom || "Tablero")}${o.d ? " · " + esc(o.d) : ""}</option>`
-        )
-      )
-      .join("")}</datalist>`,
+    // Circuito: desplegable con las salidas de todos los tableros, agrupadas por tablero (guarda circuito y tablero)
+    circ = (v, tb) => dsCircSelect(D, v, tb),
+    lista = "",
     acciones = `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="girar">Girar ${DSU.giro || 90}°</button><button type="button" class="btn sec sm" data-dsa="copiar">Copiar</button><button type="button" class="btn sec sm ed-del" data-dsa="borrar">Borrar</button></div>`,
     curvas = `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="curvo" title="Todos los tramos en arco">Curvar</button><button type="button" class="btn sec sm" data-dsa="recto" title="Todos los tramos rectos">Enderezar</button><button type="button" class="btn sec sm" data-dsa="invertir" title="Los arcos al otro lado">Invertir curvas</button></div>`;
   if (sel.length > 1) {
     const cuenta = {};
     sel.forEach(el => (cuenta[dsTipo(el)] = (cuenta[dsTipo(el)] || 0) + 1));
     const capa0 = sel.every(el => el.capa === sel[0].capa) ? sel[0].capa : "",
-      cir0 = sel.every(el => (el.cir || "") === (sel[0].cir || "")) ? sel[0].cir || "" : "",
+      igualCir = sel.every(el => (el.cir || "") === (sel[0].cir || "") && (el.tab || "") === (sel[0].tab || "")),
       tubs = sel.filter(el => el.t === "tub");
     c.innerHTML =
       `<div class="ed-pt">${sel.length} elementos seleccionados</div>` +
@@ -3639,7 +3728,9 @@ function dsProps(c) {
         .join("") +
       (tubs.length ? fila("Tuberías", `${plFm(tubs.reduce((s, el) => s + dsLargo(el), 0))} m`) : "") +
       campo("Capa", capas(capa0)) +
-      (sel.every(el => el.t === "sim" || el.t === "tub") ? campo("Circuito", circ(cir0)) + lista : "") +
+      (sel.every(el => el.t === "sim" || el.t === "tub")
+        ? campo("Circuito", igualCir ? circ(sel[0].cir, sel[0].tab) : circ(null)) + lista
+        : "") +
       (tubs.length === sel.length ? dsCampoCond(campo, tubs) : "") +
       dsCamposVarios(campo, sel) +
       (sel.every(dsConEnc)
@@ -3718,7 +3809,7 @@ function dsProps(c) {
           fila("Circuitos", el.nc ? `${el.nc} (C-1 a C-${el.nc})` : "sin definir") +
           `<div class="ed-pb"><button type="button" class="btn sm" data-dsa="tablero">Circuitos del tablero…</button></div>`
         : cat.s !== "can" && cat.s !== "tie"
-          ? campo("Circuito", circ(el.cir)) + lista
+          ? campo("Circuito", circ(el.cir, el.tab)) + lista
           : "") +
       (dsConEnc(el)
         ? campo(
@@ -3842,7 +3933,7 @@ function dsProps(c) {
             "Uso",
             `<select data-dsp="ali"><option value="">Circuito</option><option value="1"${el.ali ? " selected" : ""}>Alimentador (sin circuito)</option></select>`
           ) +
-          (el.ali ? "" : campo("Circuito", circ(el.cir)) + lista + dsCampoCx(campo, el)) +
+          (el.ali ? "" : campo("Circuito", circ(el.cir, el.tab)) + lista + dsCampoCx(campo, el)) +
           (el.sec ? fila("Del cálculo", esc(el.sec)) : "") +
           dsCampoCond(campo, [el])
         : "") +
@@ -3930,7 +4021,10 @@ function dsCampoCond1(campo, ts) {
         .map(n => `<option value="${n}"${igual && dsNeutros(c) === n ? " selected" : ""}>${n} N</option>`)
         .join("")}</select><label><input type="checkbox" data-dsp="condT"${c.t ? " checked" : ""}>T</label></span>`
     ) +
-    `<p class="ds-crit">Marcas de la norma sobre la tubería: una raya por fase, el neutro (N) con punto y la tierra (T) con tope.</p>` +
+    `<p class="ds-crit">Marcas de la norma sobre la tubería: una raya por fase, el neutro (N) con punto y la tierra (T) con tope. ${ts.every(t => t.condA) ? "Automáticos según el sistema del proyecto (cambian solos si cambia el circuito)." : ts.some(t => t.cir && !t.ali) ? "Elegidos a mano." : ""}</p>` +
+    (ts.some(t => t.cir && !t.ali && !t.condA)
+      ? `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="condauto" title="Vuelve a marcar los conductores según el sistema y el circuito">Conductores automáticos</button></div>`
+      : "") +
     (cir
       ? `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="condcir">Igual en todo el circuito ${esc(cir)}</button></div>`
       : "")
@@ -3964,8 +4058,9 @@ function dsPropCambio(e) {
       else if (k === "condN") c.n = Math.max(0, Math.min(6, parseInt(v, 10) || 0));
       else c.t = !!v;
       c.n = dsNeutros(c);
-      if (c.f || c.n || c.t) el.cond = c;
-      else delete el.cond;
+      // Elegidos por el proyectista: ya no se cambian solos
+      delete el.condA;
+      el.cond = c;
       return;
     }
     if (k === "dia") {
@@ -4018,8 +4113,18 @@ function dsPropCambio(e) {
         delete el.cir;
         delete el.tab;
       }
-    } else if (k === "cir") el.cir = v.replace(/[<>]/g, "").slice(0, 12) || undefined;
-    else if (k === "s") el.s = v.replace(/[<>]/g, "").slice(0, 200) || el.s;
+    } else if (k === "cir") {
+      // «tablero|circuito»; «~»: varios distintos (no se cambia); vacío: sin circuito
+      if (v === "~" || el.k === "tab") return;
+      const [tb, cir] = v.split("|");
+      if (!cir) {
+        delete el.cir;
+        delete el.tab;
+      } else {
+        el.cir = cir.replace(/[<>]/g, "").slice(0, 12);
+        if (tb) el.tab = tb;
+      }
+    } else if (k === "s") el.s = v.replace(/[<>]/g, "").slice(0, 200) || el.s;
     else if (k === "tit")
       el.tit = v.replace(/[<>]/g, "").slice(0, 60) || (el.t === "cua" ? "CUADRO DE CIRCUITOS" : "LEYENDA");
     else if (k === "ht") el.ht = Math.max(0.01, parseFloat(v) || 0.1) / EPL.f;
@@ -4048,12 +4153,23 @@ function dsPropClic(e) {
       if (o.t === "tub" && o !== t && o.cir === t.cir && (o.tab || "") === (t.tab || "")) {
         if (t.cond) o.cond = { ...t.cond };
         else delete o.cond;
+        if (t.condA) o.condA = true;
+        else delete o.condA;
         if (t.dia) o.dia = t.dia;
         n++;
       }
     });
     edCambio();
     toast(`Conductores iguales en ${n + 1} tubería${n ? "s" : ""} del circuito ${t.cir}`);
+  } else if (a === "condauto") {
+    dsSel().forEach(t => {
+      if (t.t === "tub" && t.cir && !t.ali) {
+        delete t.cond;
+        delete t.condA;
+      }
+    });
+    edCambio();
+    edProps();
   } else if (a === "colcapa" || a === "letra0") {
     dsSel().forEach(el => delete el[a === "colcapa" ? "col" : "dt"]);
     edCambio();
@@ -4709,7 +4825,11 @@ function dsVerificar() {
   dpVerifNorma(add);
   // Datos para el cálculo: salidas sin potencia o sin recorrido, circuitos mezclados, tableros que no coinciden
   dcAvisos().forEach(a => {
-    if (a.t !== "info") add(a.t === "error" ? "aviso" : "info", a.m, a.ids.length ? a.ids : ["-"], DC_AYUDA[a.k] || "");
+    if (a.t === "info") return;
+    // Un tablero que no está en el cálculo deja sus salidas sin calcular: es un aviso, con su botón «Renombrar»
+    add(a.t === "error" || a.k === "nom" ? "aviso" : "info", a.m, a.ids.length ? a.ids : ["-"], DC_AYUDA[a.k] || "") &&
+      a.ren &&
+      (out[out.length - 1].ren = { id: a.ids[0], nom: a.ren });
   });
   // Primero lo de seguridad, luego los avisos y al final las notas
   const ord = { seg: 0, aviso: 1, info: 2 };
@@ -4745,7 +4865,7 @@ function revRender() {
   $("revLista").innerHTML = REV_L.length
     ? REV_L.map(
         (o, i) =>
-          `<div class="rev-it ${o.nivel}"><i>${o.nivel === "seg" ? "⛔" : o.nivel === "aviso" ? "⚠" : "ℹ"}</i><span>${o.nivel === "seg" ? '<em class="rev-seg">Seguridad</em>' : ""}${esc(o.t)}<small>${esc(o.d)}</small></span><span class="pla-b">${o.caja ? `<button type="button" class="vw-btn" data-revc="${o.caja}" title="Parte la tubería en el medio de su recorrido con una caja de paso">Poner caja</button>` : ""}<button type="button" class="vw-btn" data-revi="${i}" title="Elige y muestra estos elementos">Ver</button></span></div>`
+          `<div class="rev-it ${o.nivel}"><i>${o.nivel === "seg" ? "⛔" : o.nivel === "aviso" ? "⚠" : "ℹ"}</i><span>${o.nivel === "seg" ? '<em class="rev-seg">Seguridad</em>' : ""}${esc(o.t)}<small>${esc(o.d)}</small></span><span class="pla-b">${o.ren ? `<button type="button" class="vw-btn" data-revr="${i}" title="Le pone al tablero el nombre que tiene en el cálculo">Renombrar a ${esc(o.ren.nom)}</button>` : ""}${o.caja ? `<button type="button" class="vw-btn" data-revc="${o.caja}" title="Parte la tubería en el medio de su recorrido con una caja de paso">Poner caja</button>` : ""}<button type="button" class="vw-btn" data-revi="${i}" title="Elige y muestra estos elementos">Ver</button></span></div>`
       ).join("")
     : '<p class="rev-ok">✓ Sin observaciones: el diseño está conectado y completo.</p>';
   $("revNota").textContent = REV_L.length
@@ -4757,6 +4877,17 @@ $("revDlg").addEventListener("click", e => {
   const b = e.target.closest("[data-rev]"),
     v = e.target.closest("[data-revi]");
   if (b && b.dataset.rev === "cerrar") return revCerrar();
+  const rn = e.target.closest("[data-revr]");
+  if (rn) {
+    const o = REV_L[+rn.dataset.revr],
+      tb = dsD().els.find(x => x.id === o.ren.id);
+    if (tb) {
+      tb.nom = o.ren.nom;
+      edCambio();
+      toast(`Tablero renombrado a ${o.ren.nom}: sus circuitos entran al cálculo`);
+    }
+    return revRender();
+  }
   const pc = e.target.closest("[data-revc]");
   if (pc) {
     dpPonerCaja(pc.dataset.revc);

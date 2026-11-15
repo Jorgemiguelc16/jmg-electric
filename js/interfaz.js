@@ -263,6 +263,8 @@ let RESUMEN = null;
 function planoDatos(D) {
   const vacio = {
     tabs: new Set(),
+    fuera: [],
+    noms: [],
     rutas: {},
     ali: false,
     areas: new Set(),
@@ -289,7 +291,18 @@ function planoDatos(D) {
         .filter(([, o]) => o.m2 > 0)
         .map(([i]) => +i)
     );
-  return { tabs, rutas: R.rutas, ali: !!R.rutas.TG, areas, deps, depsLd, depsArea };
+  // Vivienda y otros usos: tableros del plano con salidas cuyo nombre no está en el cálculo (no se calculan)
+  const P = D.pisos || [],
+    noms =
+      D.MODE === "multi"
+        ? null
+        : new Set(["TG", ...(P.length && D.esqPisos === "td" ? ["TD-1"] : []), ...P.map((_, i) => tabPiso(i + 2))]),
+    fuera = noms
+      ? R.tabs
+          .filter(t => t.circs.length && !noms.has(t.nom))
+          .map(t => ({ nom: t.nom, n: t.circs.reduce((s, q) => s + q.n, 0) }))
+      : [];
+  return { tabs, rutas: R.rutas, ali: !!R.rutas.TG, areas, deps, depsLd, depsArea, fuera, noms: noms ? [...noms] : [] };
 }
 // Resumen del diseño en Salidas (Diseño en el plano) y avisos en los datos que salen del plano
 function planoResumen(r) {
@@ -507,6 +520,19 @@ function marcarDesact() {
   const st = $("wsStatus").children[1];
   if (st) st.innerHTML = `<span class="w">●</span> Resultados desactualizados · F9`;
 }
+/* Tableros dibujados en el plano que el cálculo no reconoce por su nombre: sus salidas no cuentan y por eso el cálculo
+   pide los datos escritos. Se avisa la causa en «Para calcular, complete». */
+function planoFueraAviso() {
+  let PD;
+  try {
+    PD = planoDatos(estado());
+  } catch {
+    return "";
+  }
+  if (!PD.fuera.length) return "";
+  const s = PD.fuera.map(t => `<b>${esc(t.nom)}</b> (${t.n} salida${t.n === 1 ? "" : "s"})`).join(", ");
+  return `<p class="falta-plano"><b>El plano tiene ${PD.fuera.length === 1 ? "el tablero" : "los tableros"} ${s}, pero el cálculo solo tiene ${esc(PD.noms.join(", "))}.</b> Sus salidas no se cuentan y por eso se piden escritas. En el Editor de diseño, cámbiele el nombre (doble clic en el tablero o «Renombrar» en Revisar diseño), o agregue su piso en Vivienda › Pisos y tableros.</p>`;
+}
 function update() {
   if (!AUTO && !FORZAR) {
     DESACT = true;
@@ -531,6 +557,7 @@ function update() {
     $("results").innerHTML =
       `<section class="card falta-card"><h2><span>Para calcular, complete</span><span class="ref">${F.length} dato${F.length > 1 ? "s" : ""} pendiente${F.length > 1 ? "s" : ""}</span></h2><div class="body">
       <p class="hint">Los resultados aparecen automáticamente al completar los datos marcados en ámbar. Haga clic en un dato para ir a él.</p>
+      ${planoFueraAviso()}
       <ul class="faltan">${F.map(x => `<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul>
       <p class="hint">¿Prefiere explorar primero? <button type="button" class="linkbtn" data-ej2="${MODE === "uni" && usoAct() !== "viv" ? "com" : MODE}">Cargue un proyecto de ejemplo</button>.</p></div></section>`;
     vistasCinta(null, {});
