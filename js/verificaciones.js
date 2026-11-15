@@ -90,9 +90,11 @@ function recomendaciones(r) {
         ? { foco: r.mode === "multi" ? "Lgen" : "Lalim", lab: "Ir a la longitud del alimentador" }
         : x.pKey === "servP"
           ? { foco: "Lms", lab: "Ir a la longitud del alimentador" }
-          : x.pKey === "piso" && x.piso === 1
-            ? { foco: "Ltd1", lab: "Ir a la longitud del alimentador" }
-            : { node: "vivienda", lab: "Ir a los datos del tablero" }
+          : x.pKey === "bm"
+            ? { foco: "Lbm", lab: "Ir a la longitud del alimentador" }
+            : x.pKey === "piso" && x.piso === 1
+              ? { foco: "Ltd1", lab: "Ir a la longitud del alimentador" }
+              : { node: "vivienda", lab: "Ir a los datos del tablero" }
       : { node: "circ:" + x.key, lab: `Ir al circuito ${x.id}` };
   // Sección que bastaría solo por capacidad de corriente (sin caída de tensión)
   const porCorriente = x => idxPorCorriente(x, c);

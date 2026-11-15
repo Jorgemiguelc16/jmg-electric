@@ -27,6 +27,7 @@ function ftLongitud(a) {
   if (!a) return null;
   if (a.pKey === "MD") return { id: MODE === "multi" ? "Lgen" : "Lalim" };
   if (a.pKey === "servP") return { id: "Lms" };
+  if (a.pKey === "bm") return { id: "Lbm" };
   if (a.pKey === "tipo") {
     const t = LAST && LAST.T && LAST.T[a.ti];
     return t ? { id: "Ld", lista: "tipos", i: t._i } : null;

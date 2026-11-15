@@ -98,7 +98,7 @@ function depHTML() {
       )
       .join("");
     der =
-      `<fieldset class="fc-g"><legend>Departamento ${j + 1}</legend><div class="dp-grid">${campo("nombre", "Denominación", "", " ancho")}${campo("cant", "Nº de dptos.")}${campo("area", "Área", "m²")}${campo("Ld", "Long. alimentador", "m")}${campo("Lc", "Long. de circuitos", "m")}</div></fieldset>` +
+      `<fieldset class="fc-g"><legend>Departamento ${j + 1}</legend><div class="dp-grid">${campo("nombre", "Denominación", "", " ancho")}${campo("cant", "Nº de dptos.")}${campo("area", "Área", "m²")}${campo("Ld", "Long. alimentador", "m")}${campo("Lc", "Long. de circuitos", "m")}<label class="dp-c fc-e" title="Medidor del departamento en el banco de medidores: trifásico, por ejemplo, para un local comercial"><span>Medidor</span><select data-dd="tipos|${j}|fases" aria-label="Medidor">${FASES_MED.map(([v, l]) => `<option value="${v}"${String(t.fases || "1") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div></fieldset>` +
       `<fieldset class="fc-g"><legend>Salidas</legend><div class="dp-grid">${campo("nAl", "Salidas de alumbrado")}${campo("nTo", "Tomacorrientes")}</div>` +
       `<div class="dd-sub"><span>Salidas de otra potencia</span><button type="button" class="vw-btn" data-ddadd="lumsT">+ Luminarias</button><button type="button" class="vw-btn" data-ddadd="tomsT">+ Tomacorrientes</button></div>${tOtras}</fieldset>` +
       `<fieldset class="fc-g"><legend>Cargas especiales</legend>${tCargas}<div class="tc-rap"><span>Agregar</span>${rap}</div></fieldset>`;

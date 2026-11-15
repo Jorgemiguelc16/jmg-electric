@@ -1851,7 +1851,7 @@
 }
 .ta-cab {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(90px, 1fr) auto auto auto;
   gap: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--dl-grid2, #c9cfd6);
@@ -1864,6 +1864,7 @@
   gap: 4px;
 }
 .ta-cab select {
+  max-width: 190px;
   padding: 4px 4px;
   font: 12px var(--f-body);
 }
@@ -2200,4 +2201,52 @@ input.del-plano,
 #amPlanta {
   padding: 3px 6px;
   font: 12px var(--f-body);
+}
+/* Esquema del tablero en su ventana (ilustrativo) */
+.ta-esq {
+  padding: 8px 12px 4px;
+  border-bottom: 1px solid var(--dl-grid2, #c9cfd6);
+  background: #fbfaf7;
+}
+.ta-esq svg {
+  display: block;
+  max-width: 520px;
+}
+.ta-esq p {
+  margin: 2px 0 2px;
+  font: 11px var(--f-body);
+  color: var(--dl-ink2, #5f6b77);
+}
+.ta-esq .t {
+  font: 10px var(--f-body);
+  fill: #4a5562;
+}
+.ta-esq .t.m {
+  text-anchor: middle;
+  font: 600 9.5px var(--f-mono);
+  fill: #1b1b1b;
+}
+.ta-esq .t.e {
+  fill: #b5651d;
+}
+.ta-esq .b {
+  font: 700 9px var(--f-mono);
+}
+.ta-esq .c {
+  stroke: #1b1b1b;
+  stroke-width: 1.2;
+}
+.ta-esq .c.ext,
+.ta-esq .itm.ext {
+  stroke: #b5651d;
+}
+.ta-esq .ig {
+  fill: #fff;
+  stroke: #14304f;
+  stroke-width: 1.6;
+}
+.ta-esq .itm {
+  fill: #fff;
+  stroke: #1b1b1b;
+  stroke-width: 1;
 }

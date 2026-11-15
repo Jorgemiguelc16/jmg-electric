@@ -80,6 +80,9 @@ const KEYS = [
   "tc_L",
   "Lgen",
   "Lms",
+  "bmJunto",
+  "Lbm",
+  "tsgDe",
   "rho_s",
   "fr",
   "Lv",
@@ -118,9 +121,11 @@ function ponerDato(k, v) {
     true
   )
 );
-["area", "Lalim", "al_n", "al_p", "al_L", "tg_n", "tg_p", "tg_L", "tc_n", "tc_p", "tc_L", "Lgen", "Lms"].forEach(k => {
-  if ($(k) && !$(k).placeholder) $(k).placeholder = "ej. " + DEFV[k];
-});
+["area", "Lalim", "al_n", "al_p", "al_L", "tg_n", "tg_p", "tg_L", "tc_n", "tc_p", "tc_L", "Lgen", "Lms", "Lbm"].forEach(
+  k => {
+    if ($(k) && !$(k).placeholder) $(k).placeholder = "ej. " + DEFV[k];
+  }
+);
 if ($("sot")) $("sot").placeholder = "0 si no hay";
 [["p_nombre", "Nombre del proyecto"]].forEach(([k, t]) => {
   if ($(k) && !$(k).placeholder) $(k).placeholder = t;

@@ -2400,6 +2400,66 @@ prueba(
   }
 );
 
+prueba("Edificio: banco de medidores junto o lejos del TG, TSG, medidor trifásico y esquema del tablero", async ok => {
+  await ejemplo("multi");
+  ok(await ev("$('LbmBox').hidden"), "con el banco junto al TG no se pide la longitud TG → banco");
+  await poner("#bmJunto", "0");
+  await ev("update(); 1");
+  ok(!(await ev("$('LbmBox').hidden")), "con el banco en otro lugar aparece la longitud TG → banco");
+  await poner("#Lbm", "30");
+  await ev("update(); 1");
+  ok(
+    await ev("LAST.alims.some(a => a.pKey === 'bm' && a.L === 30)"),
+    "el cálculo agrega el alimentador TG → banco de medidores (30 m)"
+  );
+  await poner("#tsgDe", "tg");
+  await ev("update(); 1");
+  ok(
+    await ev("/TG → tablero de servicios/.test(LAST.alims.find(a => a.pKey === 'servP').desc) && LAST.topo.tsgTG"),
+    "TSG directo desde el TG"
+  );
+  ok(
+    await ev(
+      "!suministrosBanco(LAST).some(m => m.tab === 'TSG') && suministrosBanco(LAST, true).some(m => m.tab === 'TSG')"
+    ),
+    "el TSG desde el TG no tiene medidor en el banco (sí su salida en el TG)"
+  );
+  const svg = await ev("unifilar(LAST).svg || ''");
+  ok(
+    /TG → banco de medidores/.test(svg) && /desde el TG \(sin medidor\)/.test(svg),
+    "el unifilar muestra el tramo y el TSG desde el TG"
+  );
+  ok(
+    await ev("!!bancoMedidores(LAST) && !!tableroGeneral(LAST)"),
+    "láminas del banco y del tablero general sin errores"
+  );
+  // Medidor trifásico en el tipo B, desde el editor de departamentos
+  await ev("tipos[1].fases = '3'; update(); 1");
+  ok(
+    await ev("LAST.alims.find(a => a.pKey === 'tipo' && LAST.T[a.ti]._i === 1).s.tri"),
+    "departamento con medidor trifásico: alimentador trifásico"
+  );
+  // Esquema en la ventana del tablero
+  await abrirPlano();
+  const id = await J(
+    `dsAgregar({ t: "sim", k: "tab", x: ${OX} + 3, y: ${OY} + 7.9, r: 180, capa: "E-TABLEROS", nom: "TG", nc: 2 }).id`
+  );
+  await ev(`edCambio(); tabAbrir("${id}"); 1`);
+  const esq = await ev("$('taEsq').textContent");
+  ok(
+    /IG 3P/.test(esq) && /→ Banco/.test(esq) && /→ TSG/.test(esq) && /R-S-T-N-PE/.test(esq),
+    `TG del edificio: interruptor tripolar, barras R-S-T-N-PE y salidas al banco y al TSG (${esq.slice(0, 80)}…)`
+  );
+  await poner("#taDep", "0");
+  await poner("#taNom", "TD-A");
+  ok(/IG 2P/.test(await ev("$('taEsq').textContent")), "tablero de departamento monofásico: interruptor bipolar");
+  await ev("tabCerrar(); 1");
+  await clic('[data-ed="cancelar"]');
+  await ev(
+    "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+  );
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

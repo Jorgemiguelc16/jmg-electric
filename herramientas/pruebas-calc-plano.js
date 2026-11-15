@@ -242,6 +242,25 @@ module.exports = function probarPlano(ctx) {
       ["C-2", 1, true]
     ]
   );
+  /* Medidor trifásico de la concesionaria → TG → banco de medidores: el alimentador general se mide desde el medidor
+     (antes tomaba el banco, el más cercano) y el tramo TG → banco aparte; con el banco «en otro lugar», se calcula */
+  const M3 = JSON.parse(JSON.stringify(M));
+  M3.PLANO.dis.els.push(
+    sim("d40", "med3", -10, 0),
+    tub("d41", [-10, 0, -10, -2, 5, -2, 5, 0], { modo: "piso", c0: "d40", c1: "d2" })
+  );
+  const rm3 = calc({ ...M3, calPlano: "1" });
+  ver("edificio: alimentador general desde el medidor de la concesionaria (1.1 + 19 + 1.8)", rm3.alims[0].L, 21.9);
+  ver(
+    "edificio: banco junto al TG, sin tramo TG → banco",
+    rm3.alims.some(a => a.pKey === "bm"),
+    false
+  );
+  ver("edificio: departamento A, desde el banco (1.1 + 20 + 1.8)", rm3.T[0].Ld, 22.9);
+  const rm4 = calc({ ...M3, calPlano: "1", bmJunto: "0", Lbm: "40" }),
+    bm4 = rm4.alims.find(a => a.pKey === "bm");
+  ver("edificio: tramo TG → banco del plano (1.8 + 5 + 1.1)", bm4 && bm4.L, 7.9);
+  ver("edificio: el plano reemplaza la longitud escrita del tramo", rm4.plano.campos.Lbm, 7.9);
   // Servicios generales dibujados (TSG con una electrobomba) y área de un departamento del tipo A
   const M2 = JSON.parse(JSON.stringify(M));
   M2.PLANO.dis.els.push(

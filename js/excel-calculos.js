@@ -75,13 +75,15 @@ function excelCalculos(X) {
   const genRow = k;
   r.alims.forEach((a, i) => {
     const pf =
-      a.pKey === "MD"
-        ? F(MDREF, a.P)
-        : a.pKey === "servP"
-          ? F(servPRef, a.P)
-          : a.pKey === "piso"
-            ? F(`'Memoria'!$J$${pisoRow[a.piso]}`, a.P)
-            : F(`'Memoria'!$J$${tipoRow[r.T[a.ti].nombre]}`, a.P);
+      a.pKey === "bm"
+        ? a.P
+        : a.pKey === "MD"
+          ? F(MDREF, a.P)
+          : a.pKey === "servP"
+            ? F(servPRef, a.P)
+            : a.pKey === "piso"
+              ? F(`'Memoria'!$J$${pisoRow[a.piso]}`, a.P)
+              : F(`'Memoria'!$J$${tipoRow[r.T[a.ti].nombre]}`, a.P);
     span(wsC, k, 1, 3, a.desc, { box: 1, ind: 1, size: 8.5 });
     cell(wsC, k, 4, a.cant ?? 1, { ...val, fmt: "0" });
     cell(wsC, k, 5, pf, { ...val, fmt: "0" });

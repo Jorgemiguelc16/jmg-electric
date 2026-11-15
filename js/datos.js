@@ -45,6 +45,11 @@ const FASES = [
   ["1", "Monofásica"],
   ["3", "Trifásica"]
 ];
+// Medidor de cada tipo de departamento en el banco de medidores
+const FASES_MED = [
+  ["1", "Monofásico"],
+  ["3", "Trifásico"]
+];
 // Pisos de la vivienda unifamiliar: el 1er piso usa los datos de Vivienda y Salidas; la lista «pisos» guarda del 2do piso en adelante
 const ORD = n => ["", "1er", "2do", "3er", "4to", "5to", "6to", "7mo", "8vo", "9no", "10mo"][n] || n + "°";
 const tabPiso = n => "TD-" + n;
@@ -114,6 +119,7 @@ const LISTS = {
       { k: "cant", l: "Nº de dptos. de este tipo", t: "number" },
       { k: "area", l: "Área de vivienda (m²)", t: "number" },
       { k: "Ld", l: "Long. alimentador (m)", t: "number" },
+      { k: "fases", l: "Medidor", t: "select", o: FASES_MED },
       { k: "nAl", l: "Salidas de alumbrado", t: "number" },
       { k: "nTo", l: "Tomacorrientes", t: "number" },
       { k: "Lc", l: "Long. de circuitos (m)", t: "number" }
@@ -125,7 +131,9 @@ const LISTS = {
       nAl: null,
       nTo: null,
       Ld: null,
-      Lc: null
+      Lc: null,
+      // Medidor del departamento en el banco: monofásico (1) o trifásico (3)
+      fases: "1"
     }),
     // al quitar un tipo, se quitan sus luminarias y cargas especiales, y las de los tipos siguientes bajan un número
     quitar: i => {
@@ -271,7 +279,12 @@ const HLP = {
   tc_n: "Tomacorrientes de cocina y lavandería; deje vacío si no hay.",
   tc_p: "Potencia por tomacorriente; típico 180 W.",
   tc_L: "Recorrido hasta el tomacorriente más alejado de la cocina.",
-  Lgen: "Desde el banco de medidores (acometida) hasta el tablero general TG.",
+  Lgen: "Desde el medidor de la concesionaria (acometida) hasta el tablero general TG.",
+  Lbm: "Del tablero general TG al banco de medidores, cuando el banco no está junto al TG.",
+  bmJunto:
+    "Junto al TG, el banco es la barra del TG y no hay tramo entre ellos. En otro lugar, se calcula el alimentador TG → banco (conductor, interruptor y caída de tensión), que los departamentos acumulan. Criterio del proyectista.",
+  tsgDe:
+    "Con su propio medidor en el banco (lo usual) o directo desde el TG, sin pasar por el banco. Cambia desde dónde se mide su alimentador y su caída de tensión. Criterio del proyectista.",
   Lms: "Desde el tablero general TG hasta el tablero de servicios generales TSG.",
   fp: "Factor de potencia de las cargas; típico 0.9 en viviendas.",
   maxSal: "Máximo de salidas por circuito; 12 según la Regla 070-3000.",

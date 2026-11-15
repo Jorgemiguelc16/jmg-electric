@@ -31,7 +31,8 @@ function calibreConc(tri, kW) {
   return { tope, min: mins.length === 1 ? mins[0][4] : null, max: max ? max[4] : null, dudoso: mins.length !== 1 };
 }
 // Suministros del banco de medidores: cada departamento con la fase que le asigna el balance y el servicio general
-function suministrosBanco(r) {
+// conTSG: también el TSG directo desde el TG (en el tablero general sí tiene su salida)
+function suministrosBanco(r, conTSG = false) {
   const items = r.bal ? r.bal.items.filter(x => x.ti != null) : r.units.map(u => ({ ...u, fase: "—" }));
   const M = items.map(u => {
     const t = r.T[u.ti],
@@ -41,14 +42,16 @@ function suministrosBanco(r) {
       nom: `${t.nombre.replace(/^Tipo\s*/i, "")}-${(String(u.ref).match(/N[º°]\s*(\d+)/) || [])[1] || u.ord}`,
       tipo: t.nombre,
       tab: t.tab,
-      tri: false,
-      fase: u.fase,
+      // Medidor trifásico elegido en el tipo de departamento
+      tri: !!u.f3,
+      fase: u.f3 ? "RST" : u.fase,
       kW: t.md.MD / 1000,
       a
     };
   });
+  // El TSG directo desde el TG (criterio del proyectista) no tiene medidor en el banco
   const tsg = r.tabs.find(x => x.tab === "TSG");
-  if (tsg) {
+  if (tsg && (conTSG || !(r.topo && r.topo.tsgTG))) {
     const a = r.alims[tsg.feeder];
     M.push({
       nom: "TSG",

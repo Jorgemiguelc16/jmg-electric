@@ -12,9 +12,17 @@ function calcMulti(c) {
       pv("calPlano") === "1" && P.PLANO
         ? planoCalc(P.PLANO, c, { al_p: c.pAl, tg_p: c.pTo, tc_p: c.pTo, hEnt: pn("hEnt") || 3.1 })
         : null,
+    /* Esquema del edificio (criterio del proyectista): el banco de medidores junto al TG (por defecto: sin tramo
+       entre ellos) o en otro lugar, con su alimentador TG → banco; y el TSG con su propio medidor en el banco (por
+       defecto) o directo desde el TG */
+    bmLejos = pv("bmJunto") === "0",
+    tsgTG = pv("tsgDe") === "tg",
     rG = PLD && PLD.rutas.TG,
-    rS = PLD && PLD.rutas.TSG,
+    rB = PLD && PLD.rutas.BM,
+    // El TSG con medidor en el banco lejos del TG: su alimentador se mide desde el banco
+    rS = PLD && (bmLejos && !tsgTG ? PLD.rutasBM.TSG : PLD.rutas.TSG),
     Lgen = rG ? Math.max(rG.L, 0.5) : pn("Lgen") || 1,
+    Lbm = rB ? Math.max(rB.L, 0.5) : pn("Lbm") || 1,
     Lms = rS ? Math.max(rS.L, 0.5) : pn("Lms") || 1,
     // Tableros del plano de cada tipo de departamento: su alimentador más largo desde los medidores y sus salidas
     // (las del tablero con más salidas: los departamentos de un tipo son iguales) y su circuito más largo
@@ -83,7 +91,15 @@ function calcMulti(c) {
   const units = [];
   T.forEach((t, ti) => {
     for (let k = 0; k < t.cant; k++)
-      units.push({ ti, nombre: t.nombre, md: t.md.sinAire, P: t.md.MD, f3: false, ref: `${t.nombre} · Nº ${k + 1}` });
+      units.push({
+        ti,
+        nombre: t.nombre,
+        md: t.md.sinAire,
+        P: t.md.MD,
+        // Departamento con medidor trifásico: su carga se reparte en las tres fases
+        f3: t.fases === "3" && SIST[sk].tri,
+        ref: `${t.nombre} · Nº ${k + 1}`
+      });
   });
   const fac = i => (i < 1 ? 1 : i < 3 ? 0.65 : i < 5 ? 0.4 : i < 20 ? 0.3 : 0.25);
   units.forEach((u, i) => {
@@ -165,23 +181,57 @@ function calcMulti(c) {
   const iccTG = iccAbajo(c.iccE, gen.s, gen.L, gen.S);
   const alims = [gen],
     tabs = [];
-  if (SV.length) {
-    const f = alimentador(
-      "Alimentador TG → tablero de servicios generales TSG",
-      Pserv + 0.25 * maxMot,
+  /* Banco de medidores lejos del TG: alimentador TG → banco con la demanda de los departamentos (y la de los servicios
+     generales si su medidor está en el banco). Los departamentos (y ese TSG) siguen su caída de tensión y su
+     corriente de cortocircuito. Junto al TG, el banco es la barra del TG (sin tramo). */
+  let bm = null,
+    iccBM = iccTG;
+  if (bmLejos) {
+    bm = alimentador(
+      "Alimentador TG → banco de medidores",
+      mdDeptos + aireTot + (tsgTG ? 0 : mdServ),
       sk,
-      Lms,
+      Lbm,
       gen.dVp,
       DV_ALIM - gen.dVp,
       c,
-      { pKey: "servP" }
+      { pKey: "bm", fd: c.fdA, viv: true }
     );
-    f.iccO = iccTG;
-    f.pdc = pdcPara(iccTG, c.pdcMin);
+    bm.iccO = iccTG;
+    bm.pdc = pdcPara(iccTG, c.pdcMin);
+    if (rB) bm.plano = { Lh: rB.Lh, de: rB.de };
+    alims.push(bm);
+    iccBM = iccAbajo(iccTG, bm.s, bm.L, bm.S);
+  }
+  // Desde el banco de medidores: caída de tensión acumulada y cortocircuito
+  const dvBM = bm ? bm.dvAc : gen.dVp;
+  if (SV.length) {
+    const deBM = bm && !tsgTG,
+      i0 = deBM ? iccBM : iccTG,
+      f = alimentador(
+        deBM
+          ? "Alimentador banco de medidores → tablero de servicios generales TSG"
+          : "Alimentador TG → tablero de servicios generales TSG",
+        Pserv + 0.25 * maxMot,
+        sk,
+        Lms,
+        deBM ? dvBM : gen.dVp,
+        DV_ALIM - (deBM ? dvBM : gen.dVp),
+        c,
+        { pKey: "servP" }
+      );
+    f.iccO = i0;
+    f.pdc = pdcPara(i0, c.pdcMin);
     if (rS) f.plano = { Lh: rS.Lh, de: rS.de };
     alims.push(f);
-    const icc = iccAbajo(iccTG, f.s, f.L, f.S);
-    tabs.push({ tab: "TSG", desc: "Tablero de servicios generales", feeder: 1, icc, pdc: pdcPara(icc, c.pdcMin) });
+    const icc = iccAbajo(i0, f.s, f.L, f.S);
+    tabs.push({
+      tab: "TSG",
+      desc: "Tablero de servicios generales",
+      feeder: alims.length - 1,
+      icc,
+      pdc: pdcPara(icc, c.pdcMin)
+    });
   }
   T.forEach((t, ti) => {
     const tab = "TD-" + t.nombre.replace(/^Tipo\s*/i, "");
@@ -189,18 +239,19 @@ function calcMulti(c) {
     const f = alimentador(
       `Alimentador medidor → ${tab} (${t.nombre})`,
       t.md.MD,
-      "mono220",
+      // Medidor trifásico (por ejemplo, un local comercial): alimentador en el sistema del edificio
+      t.fases === "3" && SIST[sk].tri ? sk : "mono220",
       t.Ld || 1,
-      gen.dVp,
-      DV_ALIM - gen.dVp,
+      dvBM,
+      DV_ALIM - dvBM,
       c,
       { pKey: "tipo", ti, cant: t.cant, Imin: IMIN_DPTO, fd: c.fdA, viv: true }
     );
-    f.iccO = iccTG;
-    f.pdc = pdcPara(iccTG, c.pdcMin);
+    f.iccO = iccBM;
+    f.pdc = pdcPara(iccBM, c.pdcMin);
     if (t.plano && t.plano.Ld) f.plano = { n: t.plano.n };
     alims.push(f);
-    const icc = iccAbajo(iccTG, f.s, f.L, f.S);
+    const icc = iccAbajo(iccBM, f.s, f.L, f.S);
     tabs.push({
       tab,
       desc: `Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,
@@ -211,7 +262,7 @@ function calcMulti(c) {
   });
   const circ = [];
   if (SV.length) {
-    const f = alims[1];
+    const f = alims.find(a => a.pKey === "servP");
     const l = SV.map((x, i) => {
       const q = circuito(
         {
@@ -332,6 +383,8 @@ function calcMulti(c) {
   return {
     mode: "multi",
     iccTG,
+    // Esquema elegido, solo si no es el de por defecto (banco junto al TG y TSG con medidor en el banco)
+    ...(bmLejos || tsgTG ? { topo: { bm: bmLejos, tsgTG, iccBM } } : {}),
     c,
     sk,
     T,
@@ -364,6 +417,7 @@ function calcMulti(c) {
             campos: Object.fromEntries(
               [
                 rG ? ["Lgen", Lgen] : null,
+                bmLejos && rB ? ["Lbm", Lbm] : null,
                 rS ? ["Lms", Lms] : null,
                 rP ? ["pzCond", c.pozo.cond] : null,
                 rP ? ["pzPvc", c.pozo.pvc] : null,

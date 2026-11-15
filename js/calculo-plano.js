@@ -642,10 +642,17 @@ function planoCalc(PL, c, v) {
     GA = grafo(ali, false),
     TG = tabs.find(t => (t.nom || "TG") === "TG"),
     rutas = {},
-    // Desde el medidor más cercano (o el banco de medidores) hasta cada tablero: alimentadores de los departamentos
-    desdeMed = {};
-  if (ali.length && medIds.size) {
-    medIds.forEach(id => {
+    // Desde el banco de medidores (o, si no hay banco, el medidor más cercano) hasta cada tablero: alimentadores de los
+    // departamentos
+    desdeMed = {},
+    // Desde el banco de medidores hasta cada tablero (TSG con su medidor en el banco)
+    rutasBM = {},
+    bancos = sims.filter(s => s.k === "bmed"),
+    // Medidores de la concesionaria (el del alimentador general); sin ellos, el banco hace de medidor
+    conc = sims.filter(s => PL_MED.has(s.k) && s.k !== "bmed"),
+    origen = new Set((bancos.length ? bancos : sims.filter(s => PL_MED.has(s.k))).map(s => s.id));
+  if (ali.length && origen.size) {
+    origen.forEach(id => {
       if (!GA.has(`D:${id}`)) return;
       GA.get(`D:${id}`).push(["S", 0, 0]);
       if (!GA.has("S")) GA.set("S", []);
@@ -655,12 +662,15 @@ function planoCalc(PL, c, v) {
       const dm = plDijkstra(GA, "S");
       tabs.forEach(tb => {
         const d = dm.D.get(`D:${tb.id}`);
-        if (d != null) desdeMed[tb.id] = { L: d, Lh: dm.H.get(`D:${tb.id}`) };
+        if (d != null) {
+          desdeMed[tb.id] = { L: d, Lh: dm.H.get(`D:${tb.id}`) };
+          if (bancos.length) rutasBM[tb.nom || "TG"] = desdeMed[tb.id];
+        }
       });
     }
     // El nodo auxiliar no debe quedar en el grafo (no es un camino real)
     GA.delete("S");
-    medIds.forEach(
+    origen.forEach(
       id =>
         GA.has(`D:${id}`) &&
         GA.set(
@@ -670,13 +680,19 @@ function planoCalc(PL, c, v) {
     );
   }
   if (TG && ali.length) {
-    const desde = plDijkstra(GA, `D:${TG.id}`);
-    sims
-      .filter(s => PL_MED.has(s.k))
-      .forEach(m => {
-        const d = desde.D.get(`D:${m.id}`);
-        if (d != null && (!rutas.TG || d < rutas.TG.L)) rutas.TG = { L: d, Lh: desde.H.get(`D:${m.id}`), de: m.id };
-      });
+    const desde = plDijkstra(GA, `D:${TG.id}`),
+      // El más cercano de una lista de artefactos, por el recorrido de los alimentadores
+      cerca = l =>
+        l.reduce((o, m) => {
+          const d = desde.D.get(`D:${m.id}`);
+          return d != null && (!o || d < o.L) ? { L: d, Lh: desde.H.get(`D:${m.id}`), de: m.id } : o;
+        }, null);
+    /* Alimentador general: desde el medidor de la concesionaria; si el plano no lo tiene, desde el banco de medidores
+       (como antes). El tramo TG → banco de medidores, aparte. */
+    const rTG = cerca(conc) || cerca(bancos),
+      rBM = conc.length ? cerca(bancos) : null;
+    if (rTG) rutas.TG = rTG;
+    if (rBM) rutas.BM = rBM;
     patIds.forEach(id => {
       const d = desde.D.get(`D:${id}`);
       if (d != null && (!rutas.PAT || d < rutas.PAT.L)) rutas.PAT = { L: d, Lh: desde.H.get(`D:${id}`), de: id };
@@ -737,5 +753,5 @@ function planoCalc(PL, c, v) {
       [...medIds],
       "ali"
     );
-  return { tabs: R, cargas, rutas, desdeMed, avisos, areas, pisos, areaDep };
+  return { tabs: R, cargas, rutas, rutasBM, desdeMed, avisos, areas, pisos, areaDep };
 }

@@ -120,4 +120,58 @@ mal += require("./pruebas-calc-plano.js")(ctx);
     console.log("✘ Balance por tablero\n" + fallas.map(x => "    " + x).join("\n"));
   } else console.log(`✔ Balance por tablero: ${n} tableros en el menor desbalance posible; fase fijada respetada`);
 }
+/* Edificio: esquema del banco de medidores y del TSG (criterio del proyectista). Por defecto (banco junto al TG y TSG
+   con medidor en el banco) el cálculo no cambia: lo verifica la referencia. Banco lejos: alimentador TG → banco con la
+   demanda de los departamentos y de los servicios, que los departamentos y el TSG acumulan; TSG desde el TG: sale del
+   TG y no carga el tramo al banco; medidor trifásico en un tipo: su alimentador y su unidad son trifásicos. */
+{
+  const fallas = [],
+    calc = p => vm.runInContext("calcular", ctx)(vm.runInContext("proyectoDe", ctx)(JSON.parse(JSON.stringify(p)))),
+    base = casos.find(c => c.id === "C7").p,
+    cerca = (a, b) => Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(a));
+  const r0 = calc(base),
+    r1 = calc({ ...base, bmJunto: "0", Lbm: "25" }),
+    g1 = r1.alims[0],
+    b1 = r1.alims.find(a => a.pKey === "bm"),
+    s1 = r1.alims.find(a => a.pKey === "servP"),
+    d1 = r1.alims.filter(a => a.pKey === "tipo");
+  if (r0.alims.some(a => a.pKey === "bm") || r0.topo) fallas.push("por defecto no debe haber tramo TG → banco");
+  if (!b1) fallas.push("banco lejos: falta el alimentador TG → banco");
+  else {
+    if (!cerca(b1.P, r1.mdDeptos + r1.aireTot + r1.mdServ)) fallas.push(`TG → banco: demanda ${b1.P}`);
+    if (b1.L !== 25 || !cerca(b1.dvUp, g1.dVp)) fallas.push("TG → banco: longitud o caída de tensión de arriba");
+    if (!d1.every(a => cerca(a.dvUp, b1.dvAc)))
+      fallas.push("los departamentos no acumulan la caída del tramo al banco");
+    if (!cerca(s1.dvUp, b1.dvAc) || !/banco de medidores → tablero de servicios/.test(s1.desc))
+      fallas.push("el TSG con medidor en el banco no sale del banco");
+    if (!(d1[0].dvAc > r0.alims.find(a => a.pKey === "tipo").dvAc))
+      fallas.push("la caída de los departamentos no subió");
+    if (r1.tabs.some(t => r1.alims[t.feeder].pKey === "bm")) fallas.push("un tablero apunta al tramo TG → banco");
+    if (r1.alims[r1.tabs.find(t => t.tab === "TSG").feeder] !== s1) fallas.push("el TSG no apunta a su alimentador");
+  }
+  const r2 = calc({ ...base, bmJunto: "0", Lbm: "25", tsgDe: "tg" }),
+    b2 = r2.alims.find(a => a.pKey === "bm"),
+    s2 = r2.alims.find(a => a.pKey === "servP");
+  if (!b2 || !cerca(b2.P, r2.mdDeptos + r2.aireTot))
+    fallas.push("TSG desde el TG: el tramo al banco no lleva sus servicios");
+  if (!cerca(s2.dvUp, r2.alims[0].dVp) || !/TG → tablero de servicios/.test(s2.desc))
+    fallas.push("TSG desde el TG: no sale del TG");
+  if (!r2.topo || !r2.topo.tsgTG) fallas.push("TSG desde el TG: falta el esquema en el resultado");
+  // Medidor trifásico en el primer tipo
+  const p3 = JSON.parse(JSON.stringify(base));
+  p3.tipos[0].fases = "3";
+  const r3 = calc(p3),
+    a3 = r3.alims.find(a => a.pKey === "tipo" && r3.T[a.ti]._i === 0),
+    u3 = r3.units.filter(u => r3.T[u.ti]._i === 0);
+  if (!a3.s.tri || !u3.every(u => u.f3)) fallas.push("medidor trifásico: el alimentador o la unidad no son trifásicos");
+  if (!r3.bal.items.filter(x => x.ti != null && r3.T[x.ti]._i === 0).every(x => x.fase === "3φ"))
+    fallas.push("medidor trifásico: en el balance no va en las tres fases");
+  if (fallas.length) {
+    mal++;
+    console.log("✘ Edificio: banco de medidores y TSG" + fallas.map(x => "\n    " + x).join(""));
+  } else
+    console.log(
+      `✔ Edificio: banco junto al TG sin cambios; banco lejos (+${b1.dVp.toFixed(2)} % de caída), TSG desde el TG y medidor trifásico`
+    );
+}
 process.exit(mal ? 1 : 0);

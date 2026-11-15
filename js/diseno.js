@@ -5106,8 +5106,8 @@ $("bibDlg").addEventListener("keydown", e => {
 
 /* ---------- Ventana Tablero (doble clic en un tablero): nombre y circuitos, que salen del tablero como C-1, C-2… ---------- */
 const TA_VW = ventanaMovil(document.querySelector("#tabDlg .vw"), "jmg-electric-tablero", {
-  w: 460,
-  h: 520,
+  w: 540,
+  h: 620,
   minW: 380,
   minH: 300
 });
@@ -5130,6 +5130,7 @@ function tabAbrir(id) {
       )
       .join("");
   tabLista(el.cd || [], el.ct || []);
+  tabEsquema();
   $("tabDlg").hidden = false;
   vwFondo();
   TA_VW.abrir();
@@ -5205,7 +5206,99 @@ function tabAceptar() {
   edCambio();
   toast(`${el.nom}: ${n} circuito${n > 1 ? "s" : ""} (C-1 a C-${n}). Empiece cada tubería en su salida`);
 }
-$("taN").addEventListener("input", () => tabLista());
+$("taN").addEventListener("input", () => {
+  tabLista();
+  tabEsquema();
+});
+["taFs", "taDep", "taNom"].forEach(id => $(id).addEventListener("input", tabEsquema));
+["taFs", "taDep"].forEach(id => $(id).addEventListener("change", tabEsquema));
+/* Esquema del tablero en su ventana (ilustrativo, no es un plano): de dónde llega, su interruptor general, sus barras
+   según el sistema (trifásico 380/220 V: R, S, T, N y tierra; 220 V: dos o tres fases y tierra, sin neutro) y sus
+   salidas. El TG de un edificio muestra también su salida al banco de medidores y, si es el caso, al TSG. El sistema
+   «del proyecto» es el del suministro o, en un tablero de departamento, el de su medidor. */
+function tabEsquema() {
+  const box = $("taEsq");
+  if (!box) return;
+  const nom = ($("taNom").value.trim() || "TG").toUpperCase(),
+    multi = MODE === "multi",
+    dep = multi && $("taDep").value !== "" ? tipos[+$("taDep").value] : null,
+    skP = (multi ? PROY.sistG : PROY.sist) || (multi ? "tri380" : "mono220"),
+    // Sistema del proyecto para este tablero: un departamento con medidor monofásico va en 220 V
+    skDef = dep && !(dep.fases === "3" && SIST[skP].tri) ? "mono220" : skP,
+    fs = $("taFs").value,
+    sk = fs === "3" ? (SIST[skP].tri ? skP : "tri380") : fs === "1" ? "mono220" : skDef,
+    S = SIST[sk] || SIST.mono220,
+    tri = S.tri,
+    // Con 380/220 V hay neutro: un tablero monofásico lleva fase y neutro; en 220 V, dos fases
+    conN = sk === "tri380" || (!tri && skP === "tri380"),
+    esTG = nom === "TG",
+    n = Math.max(1, Math.min(60, Math.round(+$("taN").value) || 1)),
+    llega = esTG
+      ? multi
+        ? "del medidor de la concesionaria"
+        : "del medidor"
+      : dep
+        ? "de su medidor en el banco"
+        : nom === "TSG"
+          ? PROY.tsgDe === "tg"
+            ? "directo del TG"
+            : "de su medidor en el banco"
+          : "del TG",
+    barras = [...(tri ? ["R", "S", "T"] : conN ? ["F"] : ["L1", "L2"]), ...(conN ? ["N"] : []), "PE"],
+    col = {
+      R: "#c62828",
+      F: "#c62828",
+      S: "#1b1b1b",
+      T: "#1565c0",
+      L1: "#c62828",
+      L2: "#1b1b1b",
+      N: "#8a9199",
+      PE: "#2f7a4b"
+    },
+    extra = multi && esTG ? ["Banco de medidores", ...(PROY.tsgDe === "tg" ? ["TSG"] : [])] : [],
+    salidas = [...extra, ...Array.from({ length: Math.min(n, 8 - extra.length) }, (v, i) => `C-${i + 1}`)],
+    mas = n - (salidas.length - extra.length),
+    W = 460,
+    x0 = 120,
+    y0 = 34,
+    dy = 13,
+    yb = i => y0 + i * dy,
+    yf = yb(barras.length - 1),
+    paso = Math.min(40, (W - x0 - 40) / Math.max(1, salidas.length + (mas > 0 ? 1 : 0))),
+    o = [];
+  // Llegada e interruptor general
+  o.push(`<text x="8" y="14" class="t">Llega ${esc(llega)}</text>`);
+  o.push(`<line x1="24" y1="18" x2="24" y2="${yb(0) - 12}" class="c"/>`);
+  o.push(
+    `<rect x="12" y="${yb(0) - 12}" width="24" height="${yf - yb(0) + 24}" rx="3" class="ig"/><text x="24" y="${yf + 26}" class="t m">IG ${tri ? 3 : 2}P</text>`
+  );
+  // Barras con su nombre y color
+  barras.forEach((b, i) => {
+    const y = yb(i);
+    o.push(
+      // Las fases y el neutro salen del interruptor general; la tierra va directa a su barra
+      `<line x1="${b === "PE" ? 70 : 36}" y1="${y}" x2="${W - 18}" y2="${y}" stroke="${col[b]}" stroke-width="${b === "PE" ? 2 : 3}"${b === "N" ? ' stroke-dasharray="6 3"' : ""}/>`,
+      `<rect x="44" y="${y - 6}" width="22" height="12" rx="2" fill="#fbfaf7"/><text x="55" y="${y + 3.5}" class="b" text-anchor="middle" fill="${col[b]}">${b}</text>`
+    );
+  });
+  // Salidas: los suministros del edificio (al banco y al TSG) y los circuitos
+  salidas.forEach((s, i) => {
+    const x = x0 + i * paso + paso / 2,
+      ext = i < extra.length;
+    o.push(
+      `<line x1="${x}" y1="${yb(0)}" x2="${x}" y2="${yf + 16}" class="c${ext ? " ext" : ""}"/>`,
+      `<rect x="${x - 4}" y="${yf + 16}" width="8" height="10" class="itm${ext ? " ext" : ""}"/>`,
+      `<line x1="${x}" y1="${yf + 26}" x2="${x}" y2="${yf + 36}" class="c${ext ? " ext" : ""}"/>`,
+      ext
+        ? `<text x="${x}" y="${yf + 47}" class="t m e">→ ${s === "TSG" ? "TSG" : "Banco"}</text>`
+        : `<text x="${x}" y="${yf + 47}" class="t m">${s}</text>`
+    );
+  });
+  if (mas > 0) o.push(`<text x="${x0 + salidas.length * paso + paso / 2}" y="${yf + 30}" class="t m">+${mas}</text>`);
+  const H = yf + 54,
+    txt = `${esTG ? (multi ? "Tablero general del edificio" : "Tablero general") : nom === "TSG" ? "Tablero de servicios generales" : dep ? `Tablero del ${esc(dep.nombre || "departamento")}` : "Tablero de distribución"} · ${conN && !tri ? "Monofásico 220 V (fase y neutro)" : S.nom}${fs ? "" : ", del proyecto"} · interruptor general ${tri ? "tripolar" : "bipolar"} · barras ${barras.join("-")}${extra.length ? " · salidas al banco de medidores" + (extra.length > 1 ? " y al TSG" : "") : ""}`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${txt}">${o.join("")}</svg><p>${txt}. Esquema ilustrativo.</p>`;
+}
 $("tabDlg").addEventListener("click", e => {
   if (e.target.id === "tabDlg") return tabCerrar();
   const b = e.target.closest("[data-ta]");

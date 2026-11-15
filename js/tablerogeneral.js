@@ -28,7 +28,7 @@ function tableroGeneral(r) {
     polos = tri ? ["R", "S", "T"] : ["R"],
     barras = [...(conN ? ["N"] : []), ...polos],
     nomF = f => (f === "R" && !tri ? "F" : f),
-    M = suministrosBanco(r);
+    M = suministrosBanco(r, true);
   // Salidas: una por fase de cada suministro (el TSG trifásico toma R, S y T) y su neutro
   const filas = [];
   M.forEach(m => (m.tri ? polos : [tri ? m.fase : "R"]).forEach(f => filas.push({ m, f })));

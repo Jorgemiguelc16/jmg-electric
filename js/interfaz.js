@@ -149,6 +149,7 @@ function planoOmitidos(D) {
     S = new Set();
   if (D.MODE === "multi") {
     if (PD.ali) S.add("Lgen");
+    if (PD.rutas.BM) S.add("Lbm");
     if (PD.rutas.TSG) S.add("Lms");
     PD.deps.forEach(i => ["nAl", "nTo", "Lc"].forEach(k => S.add(`tipos_${k}_${i}`)));
     PD.depsLd.forEach(i => S.add(`tipos_Ld_${i}`));
@@ -233,6 +234,7 @@ function validar() {
     });
   } else {
     chk("Lgen", v("Lgen") > 0, "Ingrese la longitud del alimentador general.");
+    if (PROY.bmJunto === "0") chk("Lbm", v("Lbm") > 0, "Ingrese la longitud del TG al banco de medidores.");
     if (serv.length) chk("Lms", v("Lms") > 0, "Ingrese la longitud al tablero de servicios generales.");
     if (!tipos.some(t => t.cant > 0)) E.push("Agregue al menos un tipo de departamento con una o más unidades.");
     tipos.forEach((t, i) => {
@@ -440,6 +442,7 @@ function faltantes(p = null) {
   } else {
     const PD = planoDatos(D);
     if (!PD.ali) req("Lgen", "Longitud del alimentador general");
+    if (D.bmJunto === "0" && !PD.rutas.BM) req("Lbm", "Longitud del TG al banco de medidores");
     if (!tipos.length) F.push({ id: "add_tipos", l: "Agregue al menos un tipo de departamento" });
     tipos.forEach((t, i) => {
       const n = t.nombre || `Tipo ${i + 1}`;
@@ -544,6 +547,8 @@ function update() {
   }
   DESACT = false;
   uiPisos();
+  // Edificio: la longitud TG → banco de medidores solo si el banco no está junto al TG
+  if ($("LbmBox")) $("LbmBox").hidden = PROY.bmJunto !== "0";
   const F = faltantes();
   if (F.length) {
     LAST = null;

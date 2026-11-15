@@ -16,7 +16,11 @@ function unifilar(r, op = {}) {
     o = [],
     a0 = r.alims[0],
     s0 = a0.s,
-    multi = r.mode === "multi";
+    multi = r.mode === "multi",
+    // Edificio: el tramo TG → banco de medidores (si el banco no está junto al TG) y los suministros del banco
+    aBM = multi ? r.alims.find(a => a.pKey === "bm") : null,
+    suministros = r.alims.slice(1).filter(a => a.pKey !== "bm"),
+    sinMedidor = f => f.pKey === "servP" && !!(r.topo && r.topo.tsgTG);
   const { INK, NAVY, CU, GR } = PAL,
     CW = 74;
   const L = (x1, y1, x2, y2, w = 1.3, col = INK, dash) =>
@@ -109,7 +113,7 @@ function unifilar(r, op = {}) {
       T(
         X + 48,
         Y + 40,
-        `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
+        `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" && r.topo && r.topo.tsgTG ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
         { s: 7.5, f: GR }
       );
     }
@@ -320,7 +324,7 @@ function unifilar(r, op = {}) {
       T(
         X0 + 56,
         Y0 + 39,
-        `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
+        `Llega: ${cond(f.s.n, f.S, f.St)} Cu · ${tub(f.tubo)} · ITM ${f.s.tri ? 3 : 2}×${f.itm} A en ${r.mode === "uni" && tb.feeder > 0 ? "tablero TG" : tb.tab === "TSG" && r.topo && r.topo.tsgTG ? "tablero TG" : tb.tab === "TSG" || r.mode === "multi" ? "banco de medidores" : "medidor"}`,
         { s: 7.2, f: GR }
       );
     let y = Y0 + 48;
@@ -493,7 +497,7 @@ function unifilar(r, op = {}) {
       return;
     }
     // Edificio: banco de medidores vertical (una fila por suministro) y luego las columnas de los tableros
-    const feeders = r.alims.slice(1),
+    const feeders = suministros,
       RB = 46,
       hb = 70 + feeders.length * RB;
     const bl = [{ banco: 1, w: CWV, h: hb + 10 }, ...TABS.map(tb => ({ tb, w: CWV, h: altoCol(tb) + 10 }))];
@@ -510,15 +514,19 @@ function unifilar(r, op = {}) {
     L(xb, yb, xb, yb + feeders.length * RB, 4, CU);
     feeders.forEach((f, i) => {
       const yf = yb + 22 + i * RB,
-        tb = r.tabs.find(t => t.feeder === i + 1),
+        tb = r.tabs.find(t => t.feeder === r.alims.indexOf(f)),
         cant = f.cant || 1;
       dot(xb, yf);
       L(xb, yf, xb + 28, yf);
-      o.push(
-        `<rect x="${xb + 28}" y="${yf - 12}" width="28" height="24" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`
-      );
-      L(xb + 34, yf - 12, xb + 34, yf + 12, 1.2);
-      T(xb + 45, yf + 3.5, "Wh", { s: 7.5, b: 1, a: "middle" });
+      // El TSG directo desde el TG no tiene medidor en el banco
+      if (sinMedidor(f)) L(xb + 28, yf, xb + 56, yf);
+      else {
+        o.push(
+          `<rect x="${xb + 28}" y="${yf - 12}" width="28" height="24" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`
+        );
+        L(xb + 34, yf - 12, xb + 34, yf + 12, 1.2);
+        T(xb + 45, yf + 3.5, "Wh", { s: 7.5, b: 1, a: "middle" });
+      }
       L(xb + 56, yf, xb + 70, yf);
       itmH(xb + 70, yf);
       L(xb + 94, yf, xb + 126, yf);
@@ -526,7 +534,7 @@ function unifilar(r, op = {}) {
       T(
         xb + 142,
         yf - 2,
-        `${tb ? tb.tab : ""} · ${f.pKey === "servP" ? "Servicios generales" : `${r.T[f.ti].nombre} · ${cant} unidad${cant > 1 ? "es" : ""}`}`,
+        `${tb ? tb.tab : ""} · ${f.pKey === "servP" ? `Servicios generales${sinMedidor(f) ? " (desde el TG)" : ""}` : `${r.T[f.ti].nombre} · ${cant} unidad${cant > 1 ? "es" : ""}`}`,
         { s: 8.5, b: 1, f: NAVY }
       );
       T(
@@ -565,6 +573,19 @@ function unifilar(r, op = {}) {
       b: 1
     });
     T(x + 16, 175, `L = ${fmt(a0.L, 1)} m · I = ${fmt(a0.I, 2)} A · ΔV = ${fmt(a0.dVp, 2)} %`, { s: 8.5, f: GR });
+    // Banco de medidores lejos del TG: el tramo TG → banco
+    if (aBM) {
+      T(
+        x + 16,
+        187,
+        `TG → banco de medidores: ${cond(aBM.s.n, aBM.S, aBM.St)} Cu · ${tub(aBM.tubo)} · ITM ${aBM.s.tri ? 3 : 2}×${aBM.itm} A`,
+        {
+          s: 8.5,
+          b: 1
+        }
+      );
+      T(x + 16, 198, `L = ${fmt(aBM.L, 1)} m · I = ${fmt(aBM.I, 2)} A · ΔV = ${fmt(aBM.dVp, 2)} %`, { s: 8.5, f: GR });
+    }
   }
 
   if (UNIF_VERTICAL) cuerpoVertical();
@@ -581,7 +602,7 @@ function unifilar(r, op = {}) {
     }
   } else {
     const yb = 246,
-      feeders = r.alims.slice(1),
+      feeders = suministros,
       CF = 200;
     T(x + 20, 214, "BANCO DE MEDIDORES · BARRA GENERAL", { s: 11.5, b: 1, f: NAVY });
     T(x + 20, 228, `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG, r.c.pdcMin)} kA`, { s: 8.5, f: GR });
@@ -592,12 +613,17 @@ function unifilar(r, op = {}) {
     T(X + 8, yb + 172, `PAT · 1×${r.Selec} mm² Cu · R ≤ 25 Ω`, { s: 7.5, f: "#2f7a4b", rot: -90 });
     feeders.forEach((f, i) => {
       const fx = X + 170 + i * CF,
-        tb = r.tabs.find(t => t.feeder === i + 1),
+        tb = r.tabs.find(t => t.feeder === r.alims.indexOf(f)),
         cant = f.cant || 1;
       dot(fx, yb);
       L(fx, yb, fx, yb + 16);
-      kwh(fx, yb + 16);
-      T(fx + 20, yb + 34, cant > 1 ? `kWh × ${cant}` : "kWh", { s: 8.5 });
+      if (sinMedidor(f)) {
+        L(fx, yb + 16, fx, yb + 44);
+        T(fx + 20, yb + 34, "desde el TG (sin medidor)", { s: 8, f: GR });
+      } else {
+        kwh(fx, yb + 16);
+        T(fx + 20, yb + 34, cant > 1 ? `kWh × ${cant}` : "kWh", { s: 8.5 });
+      }
       L(fx, yb + 44, fx, yb + 60);
       itm(fx, yb + 60);
       T(fx + 12, yb + 76, `${f.s.tri ? 3 : 2}×${f.itm} A`, { s: 8.5, b: 1 });

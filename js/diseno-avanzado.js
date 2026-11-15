@@ -1714,10 +1714,23 @@ function dcCruce(R, noms) {
     con = new Map(R.tabs.filter(t => t.circs.length).map(t => [t.nom, t]));
   if (MODE === "multi") {
     f(
-      "Alimentador general (medidor o banco → TG)",
+      "Alimentador general (medidor de la concesionaria → TG)",
       !!R.rutas.TG,
       R.rutas.TG ? m(R.rutas.TG.L) : `escrito: ${PROY.Lgen || "—"} m`
     );
+    // Tramo TG → banco de medidores: solo cuenta si el banco no está junto al TG (Edificio)
+    if (PROY.bmJunto === "0")
+      f(
+        "Alimentador TG → banco de medidores",
+        !!R.rutas.BM,
+        R.rutas.BM ? m(R.rutas.BM.L) : `escrito: ${PROY.Lbm || "—"} m`
+      );
+    else if (R.rutas.BM)
+      f(
+        "Tramo TG → banco de medidores",
+        false,
+        `${m(R.rutas.BM.L)} en el plano; no se calcula: el banco está «junto al TG» (Proyecto › Suministro)`
+      );
     if (serv.length || con.has("TSG"))
       f(
         "Tablero de servicios generales TSG",
@@ -1955,15 +1968,22 @@ function dcEscribir() {
         n++;
         return;
       }
-      const a = LAST.alims.find(x =>
-        tbF.dep != null && LAST.mode === "multi"
-          ? x.pKey === "tipo" && LAST.T[x.ti] && LAST.T[x.ti]._i === tbF.dep
-          : (tbF.nom || "TG") === "TG"
-            ? x === LAST.alims[0]
-            : x.desc.endsWith("→ " + tbF.nom) ||
-              x.desc.includes("→ " + tbF.nom + " ") ||
-              (tbF.nom === "TSG" && x.pKey === "servP")
-      );
+      // Edificio con el banco lejos del TG: la tubería entre el TG y el banco es la del alimentador TG → banco
+      const aBM =
+          LAST.mode === "multi" && (tbF.nom || "TG") === "TG" && fin.some(s => s.k === "bmed")
+            ? LAST.alims.find(x => x.pKey === "bm")
+            : null,
+        a =
+          aBM ||
+          LAST.alims.find(x =>
+            tbF.dep != null && LAST.mode === "multi"
+              ? x.pKey === "tipo" && LAST.T[x.ti] && LAST.T[x.ti]._i === tbF.dep
+              : (tbF.nom || "TG") === "TG"
+                ? x === LAST.alims[0]
+                : x.desc.endsWith("→ " + tbF.nom) ||
+                  x.desc.includes("→ " + tbF.nom + " ") ||
+                  (tbF.nom === "TSG" && x.pKey === "servP")
+          );
       if (!a) return;
       const fa = a.s.tri ? 3 : 2;
       t.cond = { f: fa, n: Math.max(0, a.s.n - fa), t: true };
