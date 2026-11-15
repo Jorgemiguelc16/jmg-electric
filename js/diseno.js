@@ -1828,6 +1828,7 @@ function dsPintar(g) {
       if (el.enc) dsDibEnc(g, el, col, s);
       if (D.nsal && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
       if (el.k === "tab") dsDibSalidas(g, el, col, uk, dsGrosor(cap));
+      if (el.k === "bmed" && el.num !== false) dsDibBanco(g, el, col, uk);
     } else if (el.t === "txt") {
       const hp = el.ht * s;
       if (hp < 2) continue;
@@ -2181,6 +2182,47 @@ function dsSalidasTab(el) {
     out.push({ i, n: "C-" + (i + 1), d: (el.cd || [])[i] || "", a, b0: frente, b, p: dsAMundo(el, a, b) });
   }
   return out;
+}
+/* Medidores del banco de un edificio, numerados M-1, M-2…: uno por departamento (en el orden de los tipos y de su
+   número: A-1, A-2, B-1…) y, si los servicios generales tienen su medidor en el banco, el del TSG al final. Es la
+   misma numeración de las láminas del banco y del tablero general (suministrosBanco). */
+function dsMedidoresBanco() {
+  if (typeof MODE === "undefined" || MODE !== "multi") return [];
+  const out = [];
+  tipos.forEach(t => {
+    const l = (t.nombre || "").replace(/^Tipo\s*/i, ""),
+      n = Math.max(0, Math.round(+t.cant || 0));
+    for (let k = 1; k <= n; k++) out.push({ dep: `${l}-${k}`, tri: t.fases === "3", tab: "TD-" + l });
+  });
+  const D = dsD();
+  if (PROY.tsgDe !== "tg" && (serv.some(x => x.p > 0) || (D && D.els.some(e => e.k === "tab" && e.nom === "TSG"))))
+    out.push({ dep: "TSG", tri: !!(SIST[PROY.sistG || "tri380"] || {}).tri, tab: "TSG" });
+  return out.map((m, i) => ({ ...m, n: `M-${i + 1}` }));
+}
+// Lista numerada de los medidores junto al banco (a su derecha, en columnas de 10), en el plano y en las láminas
+function dsDibBanco(g, el, col, u) {
+  const M = dsMedidoresBanco();
+  if (!M.length || 3 * u < 3) return;
+  const b = dsBBox(el),
+    [x0, y0] = plAPant(b[2], b[3]),
+    h = 4 * u,
+    ancho = 19 * u;
+  g.save();
+  g.font = `600 ${(3 * u) / 0.72}px Arial, sans-serif`;
+  g.textAlign = "left";
+  g.textBaseline = "top";
+  g.lineJoin = "round";
+  g.lineWidth = 3 * plDpr();
+  g.strokeStyle = PL_FONDO;
+  g.fillStyle = col;
+  M.forEach((m, i) => {
+    const x = x0 + 2 * u + Math.floor(i / 10) * ancho,
+      y = y0 + (i % 10) * h,
+      t = `${m.n} ${m.dep}${m.tri ? " 3φ" : ""}`;
+    g.strokeText(t, x, y);
+    g.fillText(t, x, y);
+  });
+  g.restore();
 }
 // Dibuja las salidas del tablero y su nombre
 function dsDibSalidas(g, el, col, u, lw) {
@@ -3703,6 +3745,20 @@ function dsCircSelect(D, v, tb) {
     "</select>"
   );
 }
+// Propiedades del banco de medidores: la lista numerada de sus medidores y si se escribe en el plano
+function dsPropsBanco(el, campo) {
+  const M = dsMedidoresBanco();
+  if (!M.length)
+    return `<p class="ds-crit">${MODE === "multi" ? "Indique el número de departamentos de cada tipo (Proyecto › Departamentos) para numerar sus medidores." : "Los medidores se numeran en un edificio multifamiliar."}</p>`;
+  return (
+    campo(
+      "Numerar",
+      `<select data-dsp="num" title="Escribir la lista numerada junto al banco en el plano"><option value="">Sí</option><option value="0"${el.num === false ? " selected" : ""}>No</option></select>`
+    ) +
+    `<table class="ds-bm"><thead><tr><th>Medidor</th><th>Suministro</th><th>Fases</th></tr></thead><tbody>${M.map(m => `<tr><td>${m.n}</td><td>${esc(m.dep === "TSG" ? "Servicios generales" : `Dpto. ${m.dep} · ${m.tab}`)}</td><td>${m.tri ? "3φ" : "1φ"}</td></tr>`).join("")}</tbody></table>` +
+    `<p class="ds-crit">Uno por departamento (según los tipos y su número) y el de servicios generales si su medidor está en el banco (Proyecto › Suministro). La misma numeración de las láminas del banco y del tablero general.</p>`
+  );
+}
 function dsProps(c) {
   const sel = dsSel(),
     D = dsD();
@@ -3808,9 +3864,11 @@ function dsProps(c) {
         ? fila("Nombre", esc(el.nom || "—")) +
           fila("Circuitos", el.nc ? `${el.nc} (C-1 a C-${el.nc})` : "sin definir") +
           `<div class="ed-pb"><button type="button" class="btn sm" data-dsa="tablero">Circuitos del tablero…</button></div>`
-        : cat.s !== "can" && cat.s !== "tie"
-          ? campo("Circuito", circ(el.cir, el.tab)) + lista
-          : "") +
+        : el.k === "bmed"
+          ? dsPropsBanco(el, campo)
+          : cat.s !== "can" && cat.s !== "tie" && !PL_MED.has(el.k)
+            ? campo("Circuito", circ(el.cir, el.tab)) + lista
+            : "") +
       (dsConEnc(el)
         ? campo(
             "Encendido",
@@ -4105,7 +4163,10 @@ function dsPropCambio(e) {
     } else if (k === "cn") el.cn = v.replace(/[<>]/g, "").trim().slice(0, 60) || undefined;
     else if (k === "ctp") el.ctp = TIPOS[v] ? v : undefined;
     else if (k === "fs") el.fs = v === "3" ? 3 : 1;
-    else if (k === "elc") el.elc = v === "1" || undefined;
+    else if (k === "num" && el.k === "bmed") {
+      if (v === "0") el.num = false;
+      else delete el.num;
+    } else if (k === "elc") el.elc = v === "1" || undefined;
     else if (k === "ali") {
       // Alimentador: sin circuito (no lo hereda ni lo pasa a lo conectado)
       el.ali = v === "1" || undefined;

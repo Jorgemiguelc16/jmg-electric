@@ -2454,6 +2454,32 @@ prueba("Edificio: banco de medidores junto o lejos del TG, TSG, medidor trifási
   await poner("#taNom", "TD-A");
   ok(/IG 2P/.test(await ev("$('taEsq').textContent")), "tablero de departamento monofásico: interruptor bipolar");
   await ev("tabCerrar(); 1");
+  // Banco de medidores: sus medidores numerados (uno por departamento y, con el TSG en el banco, el suyo)
+  await ev("ponerDato('tsgDe', 'bm'); 1");
+  const M = await J("dsMedidoresBanco()"),
+    nDep = await ev("tipos.reduce((s, t) => s + Math.round(+t.cant || 0), 0)");
+  ok(
+    M.length === nDep + 1 && M[0].n === "M-1" && M[M.length - 1].dep === "TSG" && M.some(m => m.tri),
+    `medidores del banco numerados: ${M.length} (${M.map(m => m.n + " " + m.dep)
+      .slice(0, 3)
+      .join(", ")}…)`
+  );
+  const bm = await J(`dsAgregar({ t: "sim", k: "bmed", x: ${OX} + 6, y: ${OY} + 7.5, r: 0, capa: "E-TABLEROS" }).id`);
+  await ev(`edCambio(); DS_SEL.clear(); DS_SEL.add("${bm}"); edProps(); 1`);
+  ok(
+    (await ev("$('edPropC').querySelectorAll('.ds-bm tbody tr').length")) === M.length &&
+      !(await ev(`!!$('edPropC').querySelector('[data-dsp="cir"]')`)),
+    "propiedades del banco: la lista de sus medidores y sin campo de circuito"
+  );
+  // Igual que en la lámina del banco (IE-06)
+  await ev("update(); 1");
+  const L6 = await J("suministrosBanco(LAST).map(m => m.med + ' ' + m.nom)");
+  ok(
+    JSON.stringify(L6) === JSON.stringify(M.map(m => m.n + " " + m.dep)),
+    `la misma numeración en la lámina del banco (${L6.slice(0, 2).join(", ")}…)`
+  );
+  await poner('#edPropC [data-dsp="num"]', "0");
+  ok((await J(`dsD().els.find(e => e.id === "${bm}").num`)) === false, "se puede no escribir la lista en el plano");
   await clic('[data-ed="cancelar"]');
   await ev(
     "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"

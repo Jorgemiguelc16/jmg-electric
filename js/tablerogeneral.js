@@ -28,7 +28,25 @@ function tableroGeneral(r) {
     polos = tri ? ["R", "S", "T"] : ["R"],
     barras = [...(conN ? ["N"] : []), ...polos],
     nomF = f => (f === "R" && !tri ? "F" : f),
-    M = suministrosBanco(r, true);
+    /* Salidas del TG: con el banco junto al TG, una por suministro (cada medidor del banco toma su fase de las barras);
+       con el banco en otro lugar, el alimentador al banco y, si sale del TG, el del TSG */
+    aBM = r.alims.find(a => a.pKey === "bm"),
+    M = aBM
+      ? [
+          {
+            nom: "BM",
+            tipo: "Banco de medidores",
+            tab: "banco de medidores",
+            tri: aBM.s.tri,
+            fase: aBM.s.tri ? "RST" : "R",
+            kW: aBM.P / 1000,
+            a: aBM,
+            med: "",
+            bm: true
+          },
+          ...suministrosBanco(r, true).filter(m => m.tab === "TSG" && r.topo.tsgTG)
+        ]
+      : suministrosBanco(r, true);
   // Salidas: una por fase de cada suministro (el TSG trifásico toma R, S y T) y su neutro
   const filas = [];
   M.forEach(m => (m.tri ? polos : [tri ? m.fase : "R"]).forEach(f => filas.push({ m, f })));
@@ -46,7 +64,7 @@ function tableroGeneral(r) {
   T(
     150,
     yb + 14,
-    `Tablero general · ${sis.txt} · PdC ${gen.pdc} kA · interruptor general ${polos.length}×${gen.itm} A · ${M.length} suministros · llega de la caja toma F1`,
+    `Tablero general · ${sis.txt} · PdC ${gen.pdc} kA · interruptor general ${polos.length}×${gen.itm} A · ${aBM ? "salida al banco de medidores" : `${M.length} suministros`} · llega de la caja toma F1`,
     { s: 8, f: GR }
   );
   /* Gabinete: la puerta y la vista interior del mismo tamaño, porque son el mismo tablero, en la proporción de su
@@ -177,7 +195,7 @@ function tableroGeneral(r) {
     perno(xS, y, 2.4);
     cable(xS + 3, y, xS + 18, y, sa.f, 1.4);
     ref(xS + 20, y);
-    T(xt, y + 3, `${sa.m.nom} · ${nomF(sa.f)}${conNeutro ? "-N" : ""} → ${sa.m.tab}`, {
+    T(xt, y + 3, `${sa.m.med ? sa.m.med + " " : ""}${sa.m.nom} · ${nomF(sa.f)}${conNeutro ? "-N" : ""} → ${sa.m.tab}`, {
       s: 6.2,
       b: 1,
       f: colTxt(sa.f)
@@ -234,7 +252,7 @@ function tableroGeneral(r) {
     ["Icc en barras", `${fmt(r.iccTG, 2)} kA`],
     ["Alimentador", cond(tri ? sis.n : 2, gen.S, gen.St)],
     ["Barras", `Cobre · ${barras.map(nomF).join(", ")}`],
-    ["Salidas", `${M.length} suministros`],
+    ["Salidas", aBM ? `al banco de medidores${M.length > 1 ? " y al TSG" : ""}` : `${M.length} suministros`],
     ["Tierra", `${r.Selec} mm² al pozo`],
     ["Gabinete (referencial)", `≈ ${gm.a} × ${gm.h} mm`],
     ["Espacio de trabajo", "1 m al frente (020-308)"]
@@ -259,8 +277,10 @@ function tableroGeneral(r) {
   yy += 14;
   M.forEach((m, i) => {
     R(dx, yy, dw, 13, { st: LN, fi: i % 2 ? "#fff" : "#f3f6f9", sw: 0.8 });
-    T(dx + 5, yy + 9.5, m.nom, { s: 6.6, b: 1, f: NAVY });
-    T(dx + 44, yy + 9.5, `Medidor → ${m.tab}`, { s: 6.4 });
+    T(dx + 5, yy + 9.5, m.med ? `${m.med} ${m.nom}` : m.nom, { s: 6.6, b: 1, f: NAVY });
+    T(dx + 44, yy + 9.5, m.bm ? "Alimentador → banco" : m.med ? `Medidor → ${m.tab}` : `Directo → ${m.tab}`, {
+      s: 6.4
+    });
     T(dx + 140, yy + 9.5, (m.tri ? polos.map(nomF) : [nomF(tri ? m.fase : "R")]).concat(conN ? ["N"] : []).join("-"), {
       s: 6.4,
       b: 1

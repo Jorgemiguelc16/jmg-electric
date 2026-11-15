@@ -722,6 +722,8 @@ function disValido(v) {
           ...(e.cn ? { cn: txt(e.cn, 60) } : {}),
           ...(["calentador", "cocina", "aire", "motor", "otra"].includes(e.ctp) ? { ctp: e.ctp } : {}),
           ...(e.fs === 1 || e.fs === 3 ? { fs: e.fs } : {}),
+          // Banco de medidores sin su lista numerada en el plano
+          ...(e.k === "bmed" && e.num === false ? { num: false } : {}),
           ...(e.elc === true ? { elc: true } : {})
         };
       if (e.t === "txt" && n(e.x) && n(e.y) && n(e.ht) && e.ht > 0)

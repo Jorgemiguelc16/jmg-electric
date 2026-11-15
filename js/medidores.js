@@ -37,9 +37,11 @@ function suministrosBanco(r, conTSG = false) {
   const M = items.map(u => {
     const t = r.T[u.ti],
       tb = r.tabs.find(x => x.tab === t.tab),
-      a = r.alims[tb.feeder];
+      a = r.alims[tb.feeder],
+      k = +((String(u.ref).match(/N[º°]\s*(\d+)/) || [])[1] || u.ord);
     return {
-      nom: `${t.nombre.replace(/^Tipo\s*/i, "")}-${(String(u.ref).match(/N[º°]\s*(\d+)/) || [])[1] || u.ord}`,
+      nom: `${t.nombre.replace(/^Tipo\s*/i, "")}-${k}`,
+      orden: [t._i, k],
       tipo: t.nombre,
       tab: t.tab,
       // Medidor trifásico elegido en el tipo de departamento
@@ -63,7 +65,15 @@ function suministrosBanco(r, conTSG = false) {
       a
     });
   }
-  return M;
+  /* Numeración de los medidores del banco (M-1, M-2…), la misma del plano del editor (dsMedidoresBanco): los
+     departamentos en el orden de sus tipos y de su número, y al final el de servicios generales. El TSG directo
+     desde el TG no tiene medidor. */
+  const sinMed = m => m.tab === "TSG" && r.topo && r.topo.tsgTG,
+    dep = M.filter(m => m.orden).sort((x, y) => x.orden[0] - y.orden[0] || x.orden[1] - y.orden[1]),
+    out = [...dep, ...M.filter(m => !m.orden)];
+  let n = 0;
+  out.forEach(m => (m.med = sinMed(m) ? "" : `M-${++n}`));
+  return out;
 }
 function bancoMedidores(r) {
   if (r.mode !== "multi") return null;
@@ -174,7 +184,7 @@ function bancoMedidores(r) {
       T(bx + bw / 2, vy + vh * 0.37, "0000", { s: 5.6, b: 1, a: "middle", f: INK });
       T(bx + bw / 2, vy + vh * 0.8, "kWh", { s: 5.6, b: 1, a: "middle", f: GR });
       R(bx + bw - 7, by + bh * 0.62, 2.5, 9, { fi: INK, st: "", sw: 0 });
-      T(bx + bw / 2, by + bh * 0.58, m.nom, { s: 7.4, b: 1, a: "middle", f: NAVY });
+      T(bx + bw / 2, by + bh * 0.58, `${m.med} · ${m.nom}`, { s: 6.6, b: 1, a: "middle", f: NAVY });
       const fc = m.fase.length === 1 ? COLF[m.fase] || INK : INK;
       T(bx + bw / 2, by + bh * 0.74, m.fase, { s: 7, b: 1, a: "middle", f: fc });
       T(bx + bw / 2, by + bh * 0.9, tp, { s: 6, a: "middle", f: GR });
@@ -331,7 +341,7 @@ function bancoMedidores(r) {
             : ["Cumple", VE];
     R(20, yC, W - 40, 14, { st: LN, fi: i % 2 ? "#fff" : "#f7f9fb", sw: 0.6 });
     const val = [
-      String(i + 1),
+      m.med || String(i + 1),
       m.tab === "TSG" ? "TSG · Servicios generales" : `${m.nom} · ${m.tipo} (${m.tab})`,
       m.tri ? "Trifásica" : "Monofásica",
       m.tri ? "LTR" : "LRM",

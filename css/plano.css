@@ -2250,3 +2250,25 @@ input.del-plano,
   stroke: #1b1b1b;
   stroke-width: 1;
 }
+/* Propiedades del banco de medidores: sus medidores numerados */
+.ds-bm {
+  width: calc(100% - 16px);
+  margin: 6px 8px;
+  border-collapse: collapse;
+  font: 11px var(--f-body);
+}
+.ds-bm th,
+.ds-bm td {
+  padding: 2px 4px;
+  font: 11px var(--f-body);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--dl-grid2, #d6dbe1);
+  text-align: left;
+}
+.ds-bm th {
+  font-weight: 600;
+  color: var(--dl-ink2, #5f6b77);
+}
+.ds-bm td:first-child {
+  font: 600 11px var(--f-mono);
+}
