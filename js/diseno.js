@@ -411,13 +411,6 @@ function dsGuardarPref() {
 }
 
 /* ---------- Símbolos: primitivas a partir del SVG de simboloDGE() ---------- */
-/* Clave de la forma de un artefacto: la del símbolo o, en el banco de medidores, la del banco con sus n medidores
-   («bmed#n»: un contador numerado por medidor) */
-function dsKg(el) {
-  if (el.k !== "bmed") return el.k;
-  const n = dsMedidoresBanco(el).length;
-  return n ? `bmed#${Math.min(40, n)}` : "bmed";
-}
 const DS_PRIM = {},
   DS_BB = {};
 function dsPrims(k) {
@@ -1031,7 +1024,7 @@ function dsBBox(el) {
     return [el.x, el.y - H, el.x + W, el.y];
   }
   if (el.t === "sim") {
-    const b = dsBBs(dsKg(el));
+    const b = dsBBs(el.k);
     return dsCaja(
       [
         [b[0], b[1]],
@@ -1189,7 +1182,7 @@ function dsHit(x, y, r) {
         wy = (y - el.y) / u,
         a = wx * Math.cos(rr) + wy * Math.sin(rr),
         b = wx * Math.sin(rr) - wy * Math.cos(rr),
-        bb = dsBBs(dsKg(el)),
+        bb = dsBBs(el.k),
         t = r / u;
       if (a >= bb[0] - t && a <= bb[2] + t && b >= bb[1] - t && b <= bb[3] + t) return el.id;
     } else if (el.t === "txt" || dsEsTabla(el)) {
@@ -1263,7 +1256,7 @@ function dsALocal(el, x, y) {
   return [wx * c + wy * s, wx * s - wy * c];
 }
 const dsCentroCon = el => {
-  const f = dsFormaCon(dsKg(el));
+  const f = dsFormaCon(el.k);
   return dsAMundo(el, f.c[0], f.c[1]);
 };
 /* Hasta dónde llega el dibujo del símbolo k desde el punto c en la dirección (dx, dy), en sus unidades: el punto más
@@ -1324,7 +1317,7 @@ function dsAlcanceSim(k, c, dx, dy) {
 }
 // Punto del borde del artefacto en la dirección de (x, y): allí termina la tubería, tocando el dibujo del símbolo
 function dsBorde(el, x, y) {
-  const f = dsFormaCon(dsKg(el)),
+  const f = dsFormaCon(el.k),
     [a, b] = dsALocal(el, x, y);
   let dx = a - f.c[0],
     dy = b - f.c[1];
@@ -1332,10 +1325,10 @@ function dsBorde(el, x, y) {
   if (d < 1e-9) return dsCentroCon(el);
   dx /= d;
   dy /= d;
-  const t = dsAlcanceSim(dsKg(el), f.c, dx, dy);
+  const t = dsAlcanceSim(el.k, f.c, dx, dy);
   if (t !== null) return dsAMundo(el, f.c[0] + dx * t, f.c[1] + dy * t);
   // Sin dibujo en esa dirección (un símbolo que no rodea su centro): el punto del dibujo más cercano a la tubería
-  const q = dsCercaSim(dsKg(el), a, b);
+  const q = dsCercaSim(el.k, a, b);
   return q ? dsAMundo(el, q[0], q[1]) : dsCentroCon(el);
 }
 // Punto del dibujo del símbolo k más cercano a (x, y), en sus unidades (sin las letras del tipo)
@@ -1388,7 +1381,7 @@ function dsCercaSim(k, x, y) {
 }
 // Radio en que el artefacto atrae la punta de la tubería (en el dibujo)
 const dsRadioCon = el => {
-  const f = dsFormaCon(dsKg(el));
+  const f = dsFormaCon(el.k);
   return (f.r || Math.max(f.w, f.h)) * dsUk(el.k);
 };
 const dsConecta = el => !!(el && el.t === "sim" && el.k !== "tab" && DS_CAT[el.k] && dsVis(el));
@@ -1831,11 +1824,12 @@ function dsPintar(g) {
         g.fillRect(X - 1, Y - 1, 2, 2);
         continue;
       }
-      dsDibSim(g, dsKg(el), X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
+      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
       if (el.enc) dsDibEnc(g, el, col, s);
       if (D.nsal && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
       if (el.k === "tab") dsDibSalidas(g, el, col, uk, dsGrosor(cap));
-      if (el.k === "bmed" && el.num !== false) dsDibBanco(g, el, col, uk);
+      // Banco de medidores: su lista numerada junto a él, solo si el proyectista la pide
+      if (el.k === "bmed" && el.num === true) dsDibBanco(g, el, col, uk);
     } else if (el.t === "txt") {
       const hp = el.ht * s;
       if (hp < 2) continue;
@@ -2508,7 +2502,7 @@ function dsSobre(g) {
     g.globalAlpha = sel ? 0.32 : 0.18;
     if (el.t === "sim") {
       const [X, Y] = plAPant(el.x, el.y);
-      dsDibSim(g, dsKg(el), X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
+      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
     } else if (el.t === "txt") {
       const b = dsBBox(el),
         [a, c] = plAPant(b[0], b[3]),
@@ -2996,6 +2990,7 @@ function dsPuntoTub(p, engX) {
         tb,
         p,
         o => {
+          if (o.dest) return dsAliDirecto(tb, o.dest);
           if (o.ali) return dsPuntoAli(tb, p);
           dsPuntoTub(o.p, [o.p[0], o.p[1], 8, { cir: o.n, tab: tb.id, nom: tb.nom || "" }]);
           plSobreDibujar();
@@ -3091,6 +3086,26 @@ function dsElegirSalida(tb, p, fn, conAli) {
       .els.filter(e => e.t === "tub" && e.c0 === tb.id)
       .map(e => e.cir)
   );
+  /* Alimentadores directos: al banco de medidores, a un medidor o a otro tablero del plano (los que aún no tienen un
+     alimentador desde este tablero); al elegir uno, la tubería se dibuja sola, conectada a los dos */
+  const conAliYa = new Set(
+      dsD()
+        .els.filter(e => e.t === "tub" && e.ali && (e.c0 === tb.id || e.c1 === tb.id))
+        .map(e => (e.c0 === tb.id ? e.c1 : e.c0))
+    ),
+    dest = conAli
+      ? dsD().els.filter(
+          e =>
+            e.t === "sim" &&
+            dsVis(e) &&
+            e.id !== tb.id &&
+            !conAliYa.has(e.id) &&
+            (e.k === "bmed" || PL_MED.has(e.k) || e.k === "tab")
+        )
+      : [],
+    nomDest = e => (e.k === "bmed" ? "Banco de medidores" : e.k === "tab" ? e.nom || "Tablero" : DS_CAT[e.k].n);
+  // Primero el banco, luego los medidores y los tableros
+  dest.sort((a, b) => (a.k === "bmed" ? 0 : a.k === "tab" ? 2 : 1) - (b.k === "bmed" ? 0 : b.k === "tab" ? 2 : 1));
   edMenuLista(
     p,
     `<div class="ed-mt">Salidas de ${esc(tb.nom || "tablero")}</div>` +
@@ -3099,11 +3114,50 @@ function dsElegirSalida(tb, p, fn, conAli) {
           `<button type="button" data-edm="sal:${o.i}" role="menuitem"><span><b style="color:${plColorDis(dsColCir(o.n, tb.id))}">${o.n}</b>${o.d ? " · " + esc(o.d) : ""}</span>${usada.has(o.n) ? "<kbd>en uso</kbd>" : ""}</button>`
       ).join("") +
       (conAli
-        ? `${S.length ? "<hr>" : ""}<button type="button" data-edm="sal:-1" role="menuitem" title="Tubería del alimentador: del medidor al tablero, o del tablero general a un montante o a otro tablero"><span>Alimentador (sin circuito)</span></button>`
+        ? `${S.length ? "<hr>" : ""}${dest
+            .slice(0, 12)
+            .map(
+              (e, j) =>
+                `<button type="button" data-edm="sal:${-100 - j}" role="menuitem" title="Dibuja el alimentador conectado a los dos; luego puede mover sus vértices"><span>Alimentador → <b>${esc(nomDest(e))}</b></span></button>`
+            )
+            .join(
+              ""
+            )}<button type="button" data-edm="sal:-1" role="menuitem" title="Tubería del alimentador punto por punto: del medidor al tablero, o del tablero general a un montante, al banco o a otro tablero"><span>Alimentador punto por punto…</span></button>`
         : "") +
-      `<hr><button type="button" data-edm="tablero:${tb.id}" role="menuitem"><span>Circuitos del tablero…</span></button>`,
-    i => fn(i < 0 ? { ali: true } : S[i])
+      `<hr><button type="button" data-edm="tablero:${tb.id}" role="menuitem"><span>${tb.gen ? "Tablero general…" : "Circuitos del tablero…"}</span></button>`,
+    i => fn(i <= -100 ? { ali: true, dest: dest[-100 - i] } : i < 0 ? { ali: true } : S[i])
   );
+}
+/* Alimentador directo del tablero tb al artefacto o tablero d: una tubería recta de borde a borde (en ángulo recto si
+   no están alineados), conectada a los dos; por el piso con la herramienta del piso, si no por el techo */
+function dsAliDirecto(tb, d) {
+  const a = dsBorde(tb, d.x, d.y),
+    b = dsBorde(d, tb.x, tb.y),
+    recto = Math.abs(a[0] - b[0]) < 1e-9 || Math.abs(a[1] - b[1]) < 1e-9,
+    pts = recto ? [...a, ...b] : [...a, b[0], a[1], ...b],
+    piso = PLH.h === "tubP",
+    capa = piso ? DS_SIS.tubP.capa : DS_SIS.tubT.capa;
+  dsCapa(capa);
+  const el = dsAgregar({
+    t: "tub",
+    pts,
+    c: false,
+    capa,
+    modo: piso ? "piso" : "techo",
+    ali: true,
+    c0: tb.id,
+    c1: d.id
+  });
+  PLH.pts = [];
+  PLH.bul = [];
+  PLH.cirIni = PLH.conIni = null;
+  PLH.ali = false;
+  edCambio();
+  plSobreDibujar();
+  toast(
+    `Alimentador ${tb.nom || "del tablero"} → ${d.k === "bmed" ? "banco de medidores" : d.nom || DS_CAT[d.k].n} (${plFm(dsLargo(el))} m): mueva sus vértices para ajustar el recorrido`
+  );
+  return el;
 }
 /* ---------- Copiar en fila y espejo ---------- */
 // Copia los elementos con una transformación; las conexiones entre los copiados se conservan, las demás se quitan
@@ -3771,6 +3825,31 @@ function dsCircSelect(D, v, tb) {
     "</select>"
   );
 }
+/* Vista del banco en sus propiedades: un contador por medidor, en filas de hasta cinco, con su número, el tablero al
+   que va y sus fases (solo en la ventana; en el plano el banco conserva su símbolo) */
+function dsBancoPrev(M) {
+  const cols = Math.min(5, M.length),
+    filas = Math.ceil(M.length / 5),
+    cw = 52,
+    ch = 66,
+    W = cols * cw + 12,
+    H = filas * ch + 26,
+    o = [`<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="3" class="bp-caja"/>`];
+  M.forEach((m, i) => {
+    const x = 6 + (i % 5) * cw,
+      y = 6 + Math.floor(i / 5) * ch;
+    o.push(
+      `<rect x="${x + 4}" y="${y}" width="${cw - 8}" height="${ch - 8}" rx="2" class="bp-med${m.tri ? " tri" : ""}"/>`,
+      `<rect x="${x + 10}" y="${y + 6}" width="${cw - 20}" height="12" class="bp-vis"/>`,
+      `<text x="${x + cw / 2}" y="${y + 15}" class="bp-k">kWh</text>`,
+      `<text x="${x + cw / 2}" y="${y + 33}" class="bp-n">${m.n}</text>`,
+      `<text x="${x + cw / 2}" y="${y + 45}" class="bp-d">${esc((m.dep || "—").slice(0, 9))}</text>`,
+      `<text x="${x + cw / 2}" y="${y + 55}" class="bp-f">${m.tri ? "3φ" : "1φ"}</text>`
+    );
+  });
+  o.push(`<text x="${W / 2}" y="${H - 8}" class="bp-bm">BANCO DE MEDIDORES · ${M.length}</text>`);
+  return `<div class="ds-prev ds-bprev"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Banco de medidores con ${M.length} medidores">${o.join("")}</svg></div>`;
+}
 // Propiedades del banco de medidores: la lista numerada de sus medidores y si se escribe en el plano
 function dsPropsBanco(el, campo) {
   const auto = dsMedidoresAuto(),
@@ -3800,8 +3879,8 @@ function dsPropsBanco(el, campo) {
       ) +
       (meds.length
         ? campo(
-            "Numerar",
-            `<select data-dsp="num" title="Escribir la lista numerada junto al banco en el plano"><option value="">Sí</option><option value="0"${el.num === false ? " selected" : ""}>No</option></select>`
+            "Lista en el plano",
+            `<select data-dsp="num" title="Escribir también la lista numerada junto al banco en el plano"><option value="">No</option><option value="1"${el.num === true ? " selected" : ""}>Sí</option></select>`
           ) +
           `<table class="ds-bm"><thead><tr><th>Medidor</th><th>Va al tablero</th><th>Fases</th></tr></thead><tbody>${meds
             .map(
@@ -3812,15 +3891,15 @@ function dsPropsBanco(el, campo) {
               ""
             )}</tbody></table><datalist id="dsBmTabs">${tabs.map(t => `<option value="${esc(t)}">`).join("")}</datalist>`
         : "") +
-      `<p class="ds-crit">Escriba cuántos medidores tiene el banco y a qué tablero va cada uno (M-1, M-2…); la lista se escribe junto al banco en el plano.${MODE === "multi" ? (auto.length ? " Las láminas del banco y del tablero general siguen a los departamentos del proyecto." : " Si indica los departamentos de cada tipo (Proyecto › Departamentos), también pueden numerarse solos, uno por departamento.") : ""}</p>`
+      `<p class="ds-crit">Escriba cuántos medidores tiene el banco y a qué tablero va cada uno (M-1, M-2…): arriba se ven en el banco; en el plano el banco conserva su símbolo (con «Lista en el plano», también la lista).${MODE === "multi" ? (auto.length ? " Las láminas del banco y del tablero general siguen a los departamentos del proyecto." : " Si indica los departamentos de cada tipo (Proyecto › Departamentos), también pueden numerarse solos, uno por departamento.") : ""}</p>`
     );
   }
   const M = auto;
   return (
     modo +
     campo(
-      "Numerar",
-      `<select data-dsp="num" title="Escribir la lista numerada junto al banco en el plano"><option value="">Sí</option><option value="0"${el.num === false ? " selected" : ""}>No</option></select>`
+      "Lista en el plano",
+      `<select data-dsp="num" title="Escribir también la lista numerada junto al banco en el plano"><option value="">No</option><option value="1"${el.num === true ? " selected" : ""}>Sí</option></select>`
     ) +
     `<table class="ds-bm"><thead><tr><th>Medidor</th><th>Suministro</th><th>Fases</th></tr></thead><tbody>${M.map(m => `<tr><td>${m.n}</td><td>${esc(m.dep === "TSG" ? "Servicios generales" : `Dpto. ${m.dep} · ${m.tab}`)}</td><td>${m.tri ? "3φ" : "1φ"}</td></tr>`).join("")}</tbody></table>` +
     `<p class="ds-crit">Uno por departamento (según los tipos y su número) y el de servicios generales si su medidor está en el banco (Proyecto › Suministro). La misma numeración de las láminas del banco y del tablero general.</p>`
@@ -3877,7 +3956,9 @@ function dsProps(c) {
       esp = PL_ESP[el.k] || ["otra", 1, "Carga especial"];
     h =
       `<div class="ed-pt">${cat.n}<small>Norma DGE ${cat.c}</small></div>` +
-      `<div class="ds-prev">${dsIcono(el.k)}</div>` +
+      (el.k === "bmed" && dsMedidoresBanco(el).length
+        ? dsBancoPrev(dsMedidoresBanco(el))
+        : `<div class="ds-prev">${dsIcono(el.k)}</div>`) +
       `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="simbolo" title="Relleno, tamaño, letra y grosor de este tipo de símbolo (criterio del proyectista)">Editar símbolo…</button>${dsSimb(el.k) ? '<span class="ds-crit">Con criterio del proyectista</span>' : ""}</div>` +
       campo("Capa", capas(el.capa)) +
       campo("Rotación", `<input type="number" data-dsp="r" value="${+(el.r || 0).toFixed(2)}" step="1"><i>°</i>`) +
@@ -4248,7 +4329,7 @@ function dsPropCambio(e) {
       if (m && k[2] === "d") m.d = v.replace(/[<>]/g, "").slice(0, 20);
       else if (m) m.f = v === "3" ? 3 : 1;
     } else if (k === "num" && el.k === "bmed") {
-      if (v === "0") el.num = false;
+      if (v === "1") el.num = true;
       else delete el.num;
     } else if (k === "elc") el.elc = v === "1" || undefined;
     else if (k === "ali") {

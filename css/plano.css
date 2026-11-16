@@ -1316,6 +1316,60 @@
   border-radius: 6px;
   background: var(--ws-doc, #fff);
 }
+/* Banco de medidores en sus propiedades: sus medidores numerados */
+.ds-bprev {
+  height: auto;
+  padding: 8px;
+  overflow-x: auto;
+}
+.ds-bprev svg {
+  max-width: 100%;
+  height: auto;
+}
+.ds-bprev .bp-caja {
+  fill: none;
+  stroke: #0b7a7a;
+  stroke-width: 1.4;
+}
+.ds-bprev .bp-med {
+  fill: #fff;
+  stroke: #0b7a7a;
+  stroke-width: 1.2;
+}
+.ds-bprev .bp-med.tri {
+  stroke-width: 2;
+}
+.ds-bprev .bp-vis {
+  fill: #e5f3ec;
+  stroke: #8fb9a6;
+  stroke-width: 0.6;
+}
+.ds-bprev text {
+  text-anchor: middle;
+  font-family: var(--f-body);
+}
+.ds-bprev .bp-k {
+  font-size: 7px;
+  fill: #5f6b77;
+}
+.ds-bprev .bp-n {
+  font: 700 11px var(--f-mono);
+  fill: #0b5f5f;
+}
+.ds-bprev .bp-d {
+  font-size: 8.5px;
+  font-weight: 600;
+  fill: #1f2a36;
+}
+.ds-bprev .bp-f {
+  font-size: 8px;
+  fill: #6b7785;
+}
+.ds-bprev .bp-bm {
+  font: 700 8px var(--f-body);
+  letter-spacing: 0.08em;
+  fill: #0b5f5f;
+}
 .ds-prev .ds-ico {
   width: 46px;
   height: 46px;

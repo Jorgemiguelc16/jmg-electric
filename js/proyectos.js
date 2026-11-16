@@ -725,7 +725,7 @@ function disValido(v) {
           // Tablero general: solo alimentadores, sin circuitos derivados
           ...(e.k === "tab" && e.gen === true ? { gen: true } : {}),
           // Banco de medidores sin su lista numerada en el plano
-          ...(e.k === "bmed" && e.num === false ? { num: false } : {}),
+          ...(e.k === "bmed" && e.num === true ? { num: true } : {}),
           // Edificio: los medidores del banco escritos a mano en lugar de los de los departamentos
           ...(e.k === "bmed" && e.mman === true ? { mman: true } : {}),
           // Medidores del banco escritos por el proyectista (fuera de un edificio): a qué tablero va cada uno y sus fases

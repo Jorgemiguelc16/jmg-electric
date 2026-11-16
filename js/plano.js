@@ -2619,6 +2619,11 @@ function edMenuAbrir(e) {
       ED_MENU.ctx = { tb: sel[0] };
       b("saltab", "Salida de circuito ▸");
       sep();
+    } else if (sel.length === 1 && sel[0].k === "tab" && sel[0].gen) {
+      // Tablero general: sus alimentadores (al banco, a un medidor o a otro tablero)
+      ED_MENU.ctx = { tb: sel[0] };
+      b("alitab", "Alimentador ▸");
+      sep();
     } else if (sel.length === 1 && dsConecta(sel[0])) {
       ED_MENU.ctx = { el: sel[0] };
       b("salmenu", "Sacar tubería ▸");
@@ -2931,6 +2936,19 @@ function edMenuAccion(a) {
     );
   }
   if (a === "salmenu" && ctx) return edMenuRecorrido(ctx);
+  if (a === "alitab" && ctx && ctx.tb) {
+    const tb = ctx.tb;
+    return dsElegirSalida(
+      tb,
+      [tb.x, tb.y],
+      o => {
+        if (o.dest) return dsAliDirecto(tb, o.dest);
+        plHerr("tubT");
+        dsPuntoAli(tb, [tb.x, tb.y]);
+      },
+      true
+    );
+  }
   if (a === "saltab" && ctx && ctx.tb) {
     // Lista de salidas del tablero; al elegir una, el recorrido
     const S = dsSalidasTab(ctx.tb);

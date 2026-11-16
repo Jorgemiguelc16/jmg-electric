@@ -2490,8 +2490,8 @@ prueba("Edificio: banco de medidores junto o lejos del TG, TSG, medidor trifási
     JSON.stringify(L6) === JSON.stringify(M.map(m => m.n + " " + m.dep)),
     `la misma numeración en la lámina del banco (${L6.slice(0, 2).join(", ")}…)`
   );
-  await poner('#edPropC [data-dsp="num"]', "0");
-  ok((await J(`dsD().els.find(e => e.id === "${bm}").num`)) === false, "se puede no escribir la lista en el plano");
+  await poner('#edPropC [data-dsp="num"]', "1");
+  ok((await J(`dsD().els.find(e => e.id === "${bm}").num`)) === true, "se puede escribir también la lista en el plano");
   await clic('[data-ed="cancelar"]');
   await ev(
     "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
@@ -2617,6 +2617,17 @@ prueba("Tablero general solo con alimentadores, banco con sus medidores y tuber�
     !(await J("dsVerificar().some(o => /TG sin circuitos/.test(o.t))")),
     "la revisión no pide circuitos al tablero general"
   );
+  // Del tablero general sale el alimentador al banco: el menú lo ofrece y la tubería se dibuja conectada a los dos
+  await clic('#editor [data-pl="tubT"]');
+  await ev(`dsPuntoTub([${tg.x}, ${tg.y}], [${tg.x}, ${tg.y}, 10, { tabla: "${ids.tg}", nom: "TG" }]); 1`);
+  ok(
+    /Alimentador → Banco de medidores/.test(await ev("$('edMenu').textContent")),
+    "menú del TG: «Alimentador → Banco de medidores»"
+  );
+  await clic('#edMenu [data-edm="sal:-100"]');
+  const ali = await J(`dsD().els.find(e => e.t === "tub" && e.ali && e.c0 === "${ids.tg}")`);
+  ok(ali && ali.c1 === ids.bm, "alimentador del TG al banco, conectado a los dos");
+  await teclaE("Escape", "Escape", 27);
   // Circuitos de distribución: cada circuito toma su fase (R, S, T en turno) y el neutro
   await ev(`tabAbrir("${ids.td}"); 1`);
   ok(
@@ -2637,9 +2648,9 @@ prueba("Tablero general solo con alimentadores, banco con sus medidores y tuber�
   );
   // El símbolo del banco dibuja sus medidores: un contador numerado por medidor
   ok(
-    (await ev(`dsKg(dsD().els.find(e => e.id === "${ids.bm}"))`)) === "bmed#3" &&
+    /M-3/.test(await ev("$('edPropC').querySelector('.ds-bprev svg')?.textContent || ''")) &&
       (await J("dsPrims('bmed#9').filter(p => p.t === 't').map(p => p.tx).join(',')")) === "1,2,3,4,5,6,7,8,9,BM",
-    "el banco dibuja sus medidores numerados (1, 2, 3…)"
+    "las propiedades del banco dibujan sus medidores (M-1, M-2, M-3)"
   );
   await esperar(800);
   ok(
