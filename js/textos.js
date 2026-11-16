@@ -190,6 +190,10 @@ const FAQ = [
 ];
 const NOVEDADES = [
   [
+    "v3.1",
+    "Edificios multifamiliares como se construyen: medidor de la concesionaria → tablero general TG con su interruptor general → banco de medidores → departamentos. El banco puede estar junto al TG o en otro lugar (con su alimentador TG → banco, cuya caída de tensión suman los departamentos); el TSG sale con su medidor en el banco o directo del TG; cada tipo de departamento puede tener medidor monofásico o trifásico; los medidores se numeran M-1, M-2… y las tuberías del TG al banco se dimensionan (hasta Ø 50 mm por tubería, criterio editable). Editor de diseño: el proyecto con plano se abre en el editor, que guarda solo; pestaña Revisión con el avance del diseño en siete pasos y el cálculo en vivo; revisión de seguridad por ambiente (tomacorrientes junto a la ducha, diferenciales, interruptores al alcance, circuitos independientes y escaleras); ambientes detectados por su nombre; circuito elegido de una lista y asignado a varios con clic derecho; conductores automáticos según el sistema; tablero general sin circuitos, con su esquema; banco de medidores con sus medidores en las propiedades; alimentador del TG al banco con un clic; vértices, partir y unir tuberías; etiquetas de cada tubería y salida. Balance de fases en dos niveles: cada tablero y el total. Proyectos en la nube: los encuentra con su plano al ingresar desde otra computadora. Cuenta: ojo para ver la contraseña y «Crear contraseña» para las cuentas de Google."
+  ],
+  [
     "v3.0.1",
     "La plataforma se presenta como lo que hoy es: diseño y cálculo. Título «Diseño y Cálculo de Instalaciones Eléctricas Interiores»; Acerca de, Cómo funciona, la bienvenida, la guía y el manual explican el trabajo sobre el plano de arquitectura; el alcance se divide en diseño y cálculo; el expediente muestra también las láminas de planta eléctrica y los detalles; la Norma DGE de símbolos gráficos (R.M. N.° 091-2002-EM/VME) figura en Normas aplicadas; acceso rápido «Editor de diseño» en el inicio y nueva pregunta frecuente sobre el diseño."
   ],
