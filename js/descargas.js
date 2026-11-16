@@ -21,6 +21,7 @@ function descargarLocal(blob, nombre) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 btn.addEventListener("click", async () => {
+  if (!entregable()) return;
   if (typeof ExcelJS === "undefined") {
     msg.textContent = "No se cargó la librería de Excel. Verifique la conexión a internet.";
     return;
@@ -107,7 +108,7 @@ function pdfDialogo(abrir) {
   }
 }
 $("btnPrint").addEventListener("click", () => {
-  if (PRINT && LAST) pdfDialogo(true);
+  if (PRINT && LAST && entregable()) pdfDialogo(true);
 });
 $("pdfDlg").addEventListener("click", e => {
   const b = e.target.closest("[data-pd]");
@@ -124,7 +125,7 @@ addEventListener("keydown", e => {
   if (e.key === "Escape" && !$("pdfDlg").hidden) pdfDialogo(false);
 });
 async function imprimirExpediente(estilo) {
-  if (!LAST) return;
+  if (!LAST || LAST.prelim) return;
   let pa = $("printArea");
   if (!pa) {
     pa = document.createElement("div");
@@ -190,6 +191,7 @@ $("btnMode").addEventListener("click", () => setMode(MODE === "uni" ? "multi" : 
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-dl]");
   if (!b || !LAST) return;
+  if (LAST.prelim) return entregable();
   const nm =
     (LAST.c.proj.nombre || "proyecto")
       .replace(/[^\wáéíóúñÁÉÍÓÚÑ .-]/g, "")
@@ -257,7 +259,7 @@ function dxfDialogo(abrir) {
 $("dxfDlg").addEventListener("click", async e => {
   const b = e.target.closest("[data-dx]");
   if (e.target.id === "dxfDlg" || (b && b.dataset.dx === "close")) return dxfDialogo(false);
-  if (!b || b.dataset.dx !== "ok" || !LAST) return;
+  if (!b || b.dataset.dx !== "ok" || !LAST || !entregable()) return;
   const op = { lamina: $("dx_lam").value, colores: radio("dx_col") || "jmg" };
   try {
     localStorage.setItem("jmg-electric-dxf", JSON.stringify(op));

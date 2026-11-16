@@ -16,8 +16,8 @@ function abrirNodo(n, fs) {
   if (n in dp) return abrirDatos(fs === "fs-pisos" ? "pis" : fs === "fs-viv" ? "viv" : dp[n]);
   if (n === "cargas") return abrirTabla(multi ? "cargasT" : "cargas");
   if (n === "servicios") return abrirTabla(multi ? "serv" : "cargas");
-  if (n === "param" || n === "pat" || n === "metrado") {
-    if (n === "metrado") return verVista("metrado");
+  if (n === "param" || n === "pat" || n === "metrado" || n === "presupuesto") {
+    if (n === "metrado" || n === "presupuesto") return verVista(n);
     return abrirParametros(n === "pat" ? "pat" : "car");
   }
 }
@@ -176,11 +176,12 @@ function ppSeleccion(r, n) {
     servicios: `${serv.length} cargas comunes`,
     param: "Criterios del proyecto: conductores, protección, caída de tensión y tierra",
     pat: r ? `${fmt(r.pat.Rn ?? r.pat.Rt, 1)} Ω` : "",
-    metrado: "Cuantificación referencial de materiales"
+    metrado: "Cuantificación referencial de materiales",
+    presupuesto: "Metrado por precios unitarios: costo directo, gastos generales, utilidad e IGV"
   }[n];
   return ppSec(
     esc(t),
-    `<p class="pp-nota">${txt || ""}</p>${ppBoton(n, n === "metrado" ? "Ver el metrado" : "Abrir")}`
+    `<p class="pp-nota">${txt || ""}</p>${ppBoton(n, n === "metrado" ? "Ver el metrado" : n === "presupuesto" ? "Ver el presupuesto" : "Abrir")}`
   );
 }
 // Lo que hay por revisar: datos que faltan, tramos que no cumplen o con poco margen, y recomendaciones pendientes

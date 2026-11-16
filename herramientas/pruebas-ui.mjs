@@ -329,7 +329,7 @@ prueba("Doble clic en cada elemento del explorador abre su ventana", async ok =>
   // Ventana (o vista) que debe quedar abierta tras el doble clic en cada elemento
   const abierta = async () =>
     ev(
-      "['dpDlg','ppDlg','tcDlg','fichaDlg','ftDlg','condDlg'].find(d => !$(d).hidden) || (VIEW === 'metrado' ? 'metrado' : '')"
+      "['dpDlg','ppDlg','tcDlg','fichaDlg','ftDlg','condDlg'].find(d => !$(d).hidden) || (VIEW === 'metrado' || VIEW === 'presupuesto' ? VIEW : '')"
     );
   const cerrar = () =>
     ev(
@@ -2536,6 +2536,12 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
   })()`);
   await esperar(1000);
   ok(/alimentador hasta el TG/.test(await ev("$('edVivo').textContent")), "lo que falta dice cómo sacarlo del plano");
+  // Con tableros en el plano, el cálculo sale aunque falten datos: preliminar, sin Excel
+  ok(
+    /Preliminar/.test(await ev("$('edVivoE').textContent")) &&
+      !!(await ev("!!(LAST && LAST.prelim) && $('btnXlsx').disabled")),
+    "cálculo preliminar con lo que tiene el diseño, sin Excel"
+  );
   // El área y el alimentador escritos (en un proyecto real, se marcan en el plano)
   await ev("ponerDato('area', '100'); ponerDato('Lalim', '12'); calcularAhora(); edVivo(); 1");
   const pasos = await J(
@@ -3162,6 +3168,153 @@ prueba("Editor de diseño: etiquetas de cada tubería y salida (propiedades y cl
   await clic('[data-ed="cancelar"]');
   await ev(
     "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+  );
+});
+
+prueba("Presupuesto: precios unitarios, desperdicio, porcentajes, precios recordados y hoja del Excel", async ok => {
+  await ejemplo("uni");
+  await ev(
+    `(() => { ponerDato("p_nombre", "Casa con precios"); PRESU = presuVacio(); saveDraft(); setTab("calculo"); verVista("presupuesto"); return 1; })()`
+  );
+  await esperar(300);
+  ok(
+    await ev(`!!document.querySelector(".pre-card") && /^0 de [0-9]+ partidas/.test($("preSt").textContent)`),
+    "la vista Presupuesto empieza sin precios"
+  );
+  const filas = await J(
+    `PRE_F.filter(x => !x.sec).map(x => ({ i: x.i, cod: x.cod, q: x.q, cant: x.cant, desp: x.desp }))`
+  );
+  const cond = filas.find(f => f.cod.startsWith("OE.5.2.3")),
+    caja = filas.find(f => f.cod.startsWith("OE.5.2.1"));
+  ok(
+    cond && Math.abs(cond.q - Math.round(cond.cant * 1.05 * 100) / 100) < 1e-9,
+    "en conductores la cantidad suma el desperdicio (5 %)"
+  );
+  ok(caja && caja.q === caja.cant && !caja.desp, "en las salidas la cantidad es el metrado");
+  const precio = (i, v) => poner(`[data-pre="${i}"]`, v);
+  await precio(cond.i, "2.5");
+  await precio(caja.i, "10");
+  await esperar(700);
+  const esp = Math.round((Math.round(cond.q * 2.5 * 100) / 100 + caja.q * 10) * 100) / 100;
+  const t = await J(
+    `({ cd: PRE_F && preCalc(LAST, metrado(LAST), false), txt: $("pre_cd").textContent, st: $("preSt").textContent })`
+  );
+  ok(Math.abs(t.cd.cd - esp) < 0.005, "el costo directo suma cantidad × precio");
+  ok(
+    Math.abs(t.cd.gg - Math.round(esp * 10) / 100) < 0.006 &&
+      Math.abs(t.cd.igv - Math.round(t.cd.sub * 18) / 100) < 0.006,
+    "gastos generales 10 % del CD e IGV 18 % del subtotal"
+  );
+  ok(/^2 de/.test(t.st), "cuenta las partidas con precio");
+  await poner('[data-prepct="gg"]', "5");
+  await esperar(600);
+  ok(
+    await ev(`PRESU.gg === 5 && libLoad()[PID].PRESU.gg === 5`),
+    "el porcentaje se cambia en la tabla y se guarda en el proyecto"
+  );
+  await precio(caja.i, "");
+  await esperar(600);
+  ok(
+    await ev(`PRESU.p[PRE_F[${caja.i}].desc] === null && /^1 de/.test($("preSt").textContent)`),
+    "un precio borrado queda sin precio"
+  );
+  await precio(caja.i, "10");
+  await esperar(600);
+  // Excel: hoja «Presupuesto» con fórmulas, después del Metrado
+  const xl = JSON.parse(
+    await ev(
+      `(async () => { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await exportar()); const ws = wb.getWorksheet("Presupuesto"); let f = 0, tot = null; ws.eachRow(r => r.eachCell(c => { if (c.value && c.value.formula) f++; if (c.value === "TOTAL PRESUPUESTO (S/)") tot = r.number; })); return JSON.stringify({ hojas: wb.worksheets.map(w => w.name), f, tot: tot && ws.getCell(tot, 9).value.formula }); })()`
+    )
+  );
+  ok(
+    xl.hojas.join() === "Memoria,Cálculos,Unifilar,Alturas,Detalles,Tableros,Metrado,Presupuesto,Anexos",
+    "el Excel lleva la hoja Presupuesto después del Metrado"
+  );
+  ok(xl.f > 20 && /^I\d+\+I\d+$/.test(xl.tot), "con fórmulas: parciales, títulos y total");
+  // Otro proyecto: las partidas sin precio toman el último usado («recordado»)
+  await ev(
+    `(() => { PID = null; PRESU = presuVacio(); ponerDato("p_nombre", "Casa nueva"); saveDraft(); verVista("presupuesto"); return 1; })()`
+  );
+  await esperar(400);
+  ok(
+    await ev(
+      `document.querySelectorAll(".pre-rec").length === 2 && Object.values(PRESU.r).every(n => n === "Casa con precios")`
+    ),
+    "un proyecto nuevo propone los precios recordados"
+  );
+  await precio(cond.i, "3");
+  await esperar(600);
+  ok(
+    await ev(`document.querySelectorAll(".pre-rec").length === 1 && PRESU.p[PRE_F[${cond.i}].desc] === 3`),
+    "al cambiarlo, el precio queda como propio"
+  );
+  // Sin precios, el Excel no cambia
+  await ev(
+    `(() => { PRESU = presuVacio(); PRESU.p = Object.fromEntries(PRE_F.filter(x => !x.sec).map(x => [x.desc, null])); return 1; })()`
+  );
+  ok(
+    !(await ev(
+      `exportar().then(b => { const wb = new ExcelJS.Workbook(); return wb.xlsx.load(b).then(() => !!wb.getWorksheet("Presupuesto")); })`
+    )),
+    "sin precios, el Excel no lleva la hoja"
+  );
+  await ev(
+    `(() => { const L = libLoad(); Object.keys(L).forEach(k => delete L[k]); libSave(L); PRESU = presuVacio(); return 1; })()`
+  );
+});
+
+prueba("Respaldo: descargar todos los proyectos con sus planos y restaurarlos", async ok => {
+  await ejemplo("uni");
+  await ev(
+    `(() => { const L = libLoad(); Object.keys(L).forEach(k => delete L[k]); libSave(L); ponerDato("p_nombre", "Casa respaldada"); PRESU = presuVacio(); saveDraft(); setTab("proy"); return 1; })()`
+  );
+  await esperar(300);
+  const id = await ev("PID");
+  ok(
+    /Aún no ha descargado un respaldo/.test(await ev(`$("respSt").textContent`)),
+    "el recuadro Respaldo avisa que no hay uno"
+  );
+  await ev(
+    `window.__desc = window.descargarLocal; window.descargarLocal = (b, n) => { window.__blob = b; window.__nom = n; }; 1`
+  );
+  await ev(`respDescargar().then(() => 1)`);
+  const R = JSON.parse(await ev(`__blob.text()`));
+  ok(
+    R.app === "JMG-ELECTRIC" &&
+      R.tipo === "respaldo" &&
+      R.proyectos.length === 1 &&
+      /Respaldo \d{4}-\d\d-\d\d\.json$/.test(await ev("__nom")),
+    "el respaldo lleva los proyectos en un archivo"
+  );
+  ok(/Último respaldo:/.test(await ev(`$("respSt").textContent`)), "y recuerda la fecha del último");
+  // Eliminado por error: vuelve con el respaldo
+  await ev(`(() => { const L = libLoad(); delete L["${id}"]; libSave(L); renderProy(); return 1; })()`);
+  await ev(`__blob.text().then(t => { respLeer(new File([t], "r.json")); return 1; })`);
+  await esperar(400);
+  ok(
+    await ev(
+      `!$("cfmDlg").hidden && /Se agregarán/.test($("cfmTxt").textContent) && /Casa respaldada/.test($("cfmTxt").textContent)`
+    ),
+    "antes de restaurar, muestra qué se agrega"
+  );
+  await ev("cerrarCfm(true); 1");
+  await esperar(400);
+  ok(
+    await ev(`!!libLoad()["${id}"] && libLoad()["${id}"].p_nombre === "Casa respaldada"`),
+    "el proyecto eliminado vuelve"
+  );
+  await ev(`__blob.text().then(t => { respLeer(new File([t], "r.json")); return 1; })`);
+  await esperar(300);
+  ok(
+    await ev(`$("cfmDlg").hidden && /al día/.test($("toast").textContent)`),
+    "si ya está al día, no pregunta ni cambia nada"
+  );
+  ok(
+    (await ev("NUBE_CARPETA")) === "proyectos" && (await ev("NUBE_PRE")) === "jmg-electric-nube",
+    "el sitio oficial usa su carpeta de la nube (el de pruebas, proyectos-beta)"
+  );
+  await ev(
+    `(() => { window.descargarLocal = __desc; const L = libLoad(); Object.keys(L).forEach(k => delete L[k]); libSave(L); return 1; })()`
   );
 });
 

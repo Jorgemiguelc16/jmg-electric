@@ -62,6 +62,7 @@ function render(r) {
     S.medidores = () => cardMedidores(r, "");
   }
   S.metrado = () => cardMetrado(r);
+  S.presupuesto = () => cardPresupuesto(r);
   S.verif = () => cardAlertas(r, "") + cardRecom(r);
   const st = {
     alims: r.alims.every(a => a.ok) ? "" : "bad",
@@ -80,7 +81,7 @@ function render(r) {
       f = new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
     return `<header class="pr-head"><div class="pr-brand"><b>JMG - ELECTRIC</b><span>Resultados de cálculo · ${nomRes(r)}</span></div>
     <dl class="pr-info"><dt>Proyecto</dt><dd>${esc(P.nombre || "—")}</dd><dt>Propietario</dt><dd>${esc(P.prop || "—")}</dd><dt>Ubicación</dt><dd>${esc(P.ubic || "—")}</dd><dt>Proyectista</dt><dd>${esc(P.proy || "—")}</dd><dt>Normativa</dt><dd>CNE-Utilización · RNE EM.010 · Norma DGE</dd><dt>Fecha</dt><dd>${f} · ${VERSION}</dd></dl></header>
-    ${kp}${VORDEN.filter(k => S[k] && k !== "verif")
+    ${kp}${VORDEN.filter(k => S[k] && k !== "verif" && (k !== "presupuesto" || presuHay(r)))
       .map(k => `<div class="pr-sec"><h2 class="pr-h">${VLBL[k]}</h2>${S[k]()}</div>`)
       .join("")}
     <p class="aviso-norma">Cálculos conforme al CNE-Utilización, RNE EM.010 y Normas DGE vigentes. Como en todo proyecto eléctrico, los resultados deben ser verificados por el profesional responsable antes de su ejecución.</p>`;
@@ -277,7 +278,13 @@ function planoDatos(D) {
   };
   if (D.calPlano !== "1" || !D.PLANO || !D.PLANO.dis) return vacio;
   const n = k => parseFloat(D[k]) || 0,
-    R = planoCalc(D.PLANO, ctx(D), { al_p: n("al_p"), tg_p: n("tg_p"), tc_p: n("tc_p"), hEnt: n("hEnt") || 3.1 });
+    R = planoCalc(D.PLANO, ctx(D), {
+      al_p: n("al_p"),
+      tg_p: n("tg_p"),
+      tc_p: n("tc_p"),
+      hEnt: n("hEnt") || 3.1,
+      ...(D.MODE === "multi" ? { nTipos: (D.tipos || []).length, tipo0: ((D.tipos || [])[0] || {}).nombre } : {})
+    });
   if (!R) return vacio;
   const tabs = new Set(R.tabs.filter(t => t.circs.length).map(t => t.nom));
   // Pisos con áreas marcadas en el plano (su área no se pide)
@@ -456,8 +463,9 @@ function faltantes(p = null) {
         ["Lc", "longitud de los circuitos"]
       ].forEach(([k, l]) => {
         // Con el diseño: las salidas y la longitud de los circuitos del tipo salen de sus tableros del plano
+        // (el número de unidades, de cuántos tableros del tipo hay dibujados)
         if (
-          (["nAl", "nTo", "Lc"].includes(k) && PD.deps.has(i)) ||
+          (["cant", "nAl", "nTo", "Lc"].includes(k) && PD.deps.has(i)) ||
           (k === "Ld" && PD.depsLd.has(i)) ||
           (k === "area" && PD.depsArea.has(i))
         )
@@ -545,6 +553,44 @@ function planoFueraAviso() {
 document.addEventListener("click", e => {
   if (e.target.closest("[data-abred]")) edAbrir(!PLANO);
 });
+/* Cálculo preliminar: con datos pendientes, el proyecto que se calcula con el diseño se calcula igual con lo que ya
+   tiene (el plano y lo escrito), para ver cómo va mientras se dibuja. Lo que falta cuenta como 0 (salidas, potencias, áreas), 1 m (longitudes) o 1
+   unidad (departamentos de un tipo). El resultado lleva la marca «preliminar» y la lista de pendientes; el Excel,
+   el expediente y los planos se habilitan solo con el proyecto completo. Sin tipos de departamento no hay cálculo. */
+// Solo con «Calcular con el diseño» y un plano que ya tiene tableros con circuitos o áreas (un proyecto vacío no)
+const prelimPosible = () =>
+  PROY.calPlano === "1" && !!(PLANO && PLANO.dis && PLANO.dis.els.some(e => (e.k === "tab" && e.nc) || e.ar));
+function estadoParcial(D, F) {
+  if (F.some(x => x.id === "add_tipos")) return null;
+  const P = JSON.parse(JSON.stringify(D));
+  for (const x of F) {
+    const m = /^(tipos|cargasT|cargas|pisos|serv)_(.+)_(d+)$/.exec(x.id),
+      k = m ? m[2] : x.id,
+      v = k === "cant" ? 1 : /^L|_L$/.test(k) ? 1 : 0;
+    if (m) {
+      const o = (P[m[1]] || [])[+m[3]];
+      if (o) o[k] = v;
+    } else P[k] = String(v);
+  }
+  return P;
+}
+// Aviso del resultado preliminar, con los datos que faltan (clic: ir al dato)
+function prelimCard(F) {
+  return `<section class="card falta-card prelim"><h2><span>Resultado preliminar</span><span class="ref">${F.length} dato${F.length > 1 ? "s" : ""} pendiente${F.length > 1 ? "s" : ""}</span></h2><div class="body">
+      <p class="hint">Se calculó con lo que el proyecto tiene hasta ahora, para ver cómo va el diseño. Lo que falta cuenta como 0 salidas, 0 W o 0 m², 1 m de longitud o 1 departamento: los valores cambiarán al completarlo. El Excel, el expediente y los planos se habilitan con el proyecto completo.</p>
+      ${planoFueraAviso()}
+      <ul class="faltan">${F.map(x => `<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul></div></section>`;
+}
+// Resultado listo para entregar (Excel, expediente, planos): calculado y sin datos pendientes; si no, lo avisa
+function entregable() {
+  if (LAST && !LAST.prelim) return true;
+  toast(
+    LAST
+      ? `Resultado preliminar: complete ${LAST.prelim.length === 1 ? "el dato pendiente" : `los ${LAST.prelim.length} datos pendientes`} para exportar`
+      : "Complete los datos para exportar"
+  );
+  return false;
+}
 function update() {
   if (!AUTO && !FORZAR) {
     DESACT = true;
@@ -561,7 +607,19 @@ function update() {
   // y el diámetro máximo de la tubería TG → banco, solo si el banco está junto al TG
   if ($("tgbmBox")) $("tgbmBox").hidden = PROY.bmJunto === "0";
   const F = faltantes();
-  if (F.length) {
+  // Con datos pendientes: cálculo preliminar con lo que el proyecto tiene (si se puede); si no, la lista de lo que falta
+  let r = null;
+  if (F.length && prelimPosible()) {
+    const D = estadoParcial(estado(), F);
+    try {
+      r = D ? calcular(D) : null;
+      if (!r || !r.alims || !r.alims.length) r = null;
+    } catch (e) {
+      r = null;
+    }
+    if (r) r.prelim = F;
+  }
+  if (F.length && !r) {
     LAST = null;
     PRINT = null;
     $("btnXlsx").disabled = true;
@@ -584,9 +642,8 @@ function update() {
     wsRefresh(F);
     return;
   }
-  $("btnPrint").disabled = false;
-  const errs = validar();
-  if (MODE === "multi" && !tipos.some(t => t.cant > 0)) {
+  const errs = F.length ? [] : validar();
+  if (!r && MODE === "multi" && !tipos.some(t => t.cant > 0) && !planoDatos(estado()).deps.size) {
     LAST = null;
     $("btnXlsx").disabled = true;
     $("results").innerHTML =
@@ -594,24 +651,27 @@ function update() {
     saveDraft();
     return;
   }
-  $("btnXlsx").disabled = false;
+  // El Excel y el expediente, solo con el proyecto completo
+  $("btnXlsx").disabled = $("btnPrint").disabled = !!F.length;
   // El motor recibe los datos del proyecto (el mismo objeto que se guarda en el .json) y no lee la pantalla
-  const r = calcular(estado()),
-    c = r.c;
+  if (!r) r = calcular(estado());
+  const c = r.c;
   LAST = r;
   RESUMEN = {
-    pend: 0,
+    pend: F.length,
     tot: F.total,
-    ok: r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
+    ok: !F.length && r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
     MD: Math.round(r.mode === "multi" ? r.MD : r.md.MD)
   };
   $("projline").innerHTML =
     `<span>Proyecto: <b>${esc(c.proj.nombre || "—")}</b></span><span>Propietario: <b>${esc(c.proj.prop || "—")}</b></span><span>Ubicación: <b>${esc(c.proj.ubic || "—")}</b></span><span>Proyectista: <b>${esc(c.proj.proy || "—")}</b></span>`;
   render(r);
+  if (F.length) PRINT = null;
   planoResumen(r);
   saveDraft();
   hdrEstado();
-  wsRefresh([]);
+  wsRefresh(F);
+  if (F.length) $("results").insertAdjacentHTML("afterbegin", prelimCard(F));
   if (errs.length)
     $("results").insertAdjacentHTML(
       "afterbegin",

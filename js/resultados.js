@@ -38,6 +38,7 @@ const VORDEN = [
   "tgeneral",
   "medidores",
   "metrado",
+  "presupuesto",
   "verif"
 ];
 const VLBL = {
@@ -53,6 +54,7 @@ const VLBL = {
   tgeneral: "Tablero general",
   medidores: "Banco de medidores",
   metrado: "Metrado",
+  presupuesto: "Presupuesto",
   verif: "Verificaciones"
 };
 

@@ -358,6 +358,8 @@ function estado() {
     TEQ,
     SECF,
     PLANO,
+    // Precios unitarios del presupuesto (js/presupuesto.js)
+    PRESU,
     res: RESUMEN,
     sist: PROY.sist || radio("sist"),
     sistG: PROY.sistG || radio("sistG")
@@ -466,7 +468,7 @@ async function alUso() {
     el.innerHTML = `Espacio usado en este navegador: <b>${mb(e.usage || 0)} MB</b> de unos ${mb(e.quota || 0)} MB disponibles${p ? " · protegido: el navegador no lo borra por falta de espacio" : ""}. ${
       typeof NUBE !== "undefined" && NUBE.uid
         ? " Sus proyectos, con sus planos DXF, se guardan también en su cuenta (nube): los encuentra al ingresar desde otra computadora."
-        : " Para no perder su trabajo, exporte sus proyectos de vez en cuando: el archivo lleva también el plano DXF."
+        : " Para no perder su trabajo, descargue un respaldo de vez en cuando (recuadro «Respaldo»): lleva también los planos DXF."
     }`;
   } catch (e) {}
 }
@@ -571,6 +573,7 @@ function normalizar(o) {
   const sv = v => (["mono220", "tri220", "tri380"].includes(v) ? v : null);
   return {
     PLANO: planoValido(o.PLANO),
+    PRESU: presuValido(o.PRESU),
     id: typeof o.id === "string" && /^[\w-]{1,40}$/.test(o.id) ? o.id : null,
     campos,
     listas,
@@ -987,6 +990,7 @@ function aplicar(o) {
   TEQ = n.TEQ;
   SECF = n.SECF;
   PLANO = n.PLANO;
+  PRESU = n.PRESU;
   renderSys("sys_uni", "sist", n.sist);
   renderSys("sys_multi", "sistG", n.sistG);
   PROY.sist = n.sist;
@@ -1140,6 +1144,7 @@ function renderProy() {
       )
       .join("")}</tbody></table><p class="hint al-uso" id="alUso"></p>`;
   alUso();
+  if (typeof respEstado === "function") respEstado();
 }
 $("projList").addEventListener("click", async e => {
   const b = e.target.closest("[data-pa]");

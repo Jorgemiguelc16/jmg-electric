@@ -39,6 +39,7 @@ está al final de `index.html` y es este:
 | 5f | `verificaciones.js` | Alertas y recomendaciones del resultado |
 | 6 | `resultados.js` | Estado global y tarjetas de resultados |
 | 7 | `metrado.js` | Metrado de materiales, capacidad de cada tablero en polos y medida de su gabinete |
+| 7a | `presupuesto.js` | **Presupuesto**: precios unitarios del proyecto (`PRESU`, `presuValido`), precios recordados de otros proyectos (`preMemoria`, `preCompletar`), cálculo (`preCalc`: desperdicio en tuberías y conductores, CD, GG, utilidad, IGV) y vista «Presupuesto» editable (`cardPresupuesto`, `preRefrescar`) |
 | 8 | `dibujo.js` | **Piezas comunes de los planos**: paleta, colores de los conductores, notas, puerta metálica |
 | 9 | `unifilar.js` | Diagrama unifilar (IE-01) y su división en láminas |
 | 9a | `rotulo.js` | Rótulo de todas las láminas (`rotuloSvg()`) |
@@ -58,11 +59,13 @@ está al final de `index.html` y es este:
 | 18d | `excel-resumen.js` | Hoja Memoria (continuación): resumen, suministro, tierra, verificaciones y firmas |
 | 18e | `excel-planos.js` | Hojas de los planos, como imagen |
 | 18f | `excel-metrado.js` | Hoja Metrado |
+| 18g | `excel-presupuesto.js` | Hoja Presupuesto, con fórmulas (solo si el proyecto tiene precios) |
 | 19 | `descargas.js` | Guardar archivos, lista de planos (`PLANOS`) y diálogos de exportación |
 | 20 | `sitio.js` | Páginas de la web (glosario, novedades, soporte) |
 | 21 | `proyectos.js` | Guardar, abrir y ejemplos de proyectos. **Almacén** (v3.0): biblioteca y proyecto abierto en IndexedDB (`jmg-electric-proyectos`, `alCargar`, `alEscribir`), con copia de respaldo en localStorage (completos si caben, si no su resumen `_idb`); almacenamiento persistente; respaldo .json con el plano DXF (`proyectoConPlano`, `guardarPlanoDeArchivo`) |
 | 22 | `herramientas.js` | Calculadoras rápidas |
 | 23 | `archivo.js` | Abrir y guardar `.json` |
+| 23a | `respaldo.js` | **Respaldo**: todos los proyectos con sus planos en un archivo (`respDescargar`) y su restauración sin borrar nada (`respLeer`, `respAplicar`); fecha del último respaldo |
 | 24 | `app.js` | Espacio de trabajo: árbol, propiedades, cinta |
 | 25 | `ventana.js` | Comportamiento común de las ventanas (mover, redimensionar, recordar tamaño) |
 | 26 | `conductores.js` | Ventana Cuadro de conductores |
@@ -84,6 +87,8 @@ está al final de `index.html` y es este:
 | 36 | `inicio.js` | Arranque y bienvenida |
 | 37 | `tema.js` | Tema, zoom y mano de arrastre |
 | 38 | `acceso.js` | Ingreso con cuenta y Administración |
+| 39 | `nube.js` | **Proyectos en la nube** (Firestore): copia de cada proyecto y su plano en `proyectos/{uid}` (el sitio de pruebas, en `proyectos-beta/{uid}`), gana la fecha más reciente, eliminados como «borrado» |
+| 40 | `admin.js` | **Administración** (solo el administrador): PIN, panel con agenda, calendario, pendientes y notas, hoja de cuentas con vigencia y nueva cuenta |
 
 Cada archivo empieza con un comentario que explica lo mismo con más detalle.
 

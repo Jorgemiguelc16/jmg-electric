@@ -35,10 +35,14 @@ async function exportar() {
   const wsD = wb.addWorksheet("Detalles", { properties: { tabColor: { argb: "FF14304F" } } });
   const wsB = wb.addWorksheet("Tableros", { properties: { tabColor: { argb: "FFFFD200" } } });
   // Banco de medidores: solo en edificios (una hoja más)
+  // Presupuesto: solo si el proyecto tiene precios unitarios (js/presupuesto.js; una hoja más)
+  const PRE = typeof preCalc === "function" ? preCalc(r) : null,
+    conPre = !!(PRE && PRE.nP);
   const wsTG = multi ? wb.addWorksheet("TG", { properties: { tabColor: { argb: "FFC62828" } } }) : null,
     wsBM = multi ? wb.addWorksheet("Medidores", { properties: { tabColor: { argb: "FF2F7A4B" } } }) : null,
-    NH = multi ? 10 : 8;
+    NH = (multi ? 10 : 8) + (conPre ? 1 : 0);
   const wsT = wb.addWorksheet("Metrado", { properties: { tabColor: { argb: "FF22507C" } } });
+  const wsP = conPre ? wb.addWorksheet("Presupuesto", { properties: { tabColor: { argb: "FF9A5A23" } } }) : null;
   const wsX = wb.addWorksheet("Anexos", { properties: { tabColor: { argb: "FF5A6775" } } });
   const setup = (ws, orient, widths) => {
     ws.columns = widths.map(w => ({ width: w }));
@@ -206,6 +210,8 @@ async function exportar() {
     wsBM,
     NH,
     wsT,
+    wsP,
+    PRE,
     wsX,
     setup,
     cell,
@@ -226,6 +232,7 @@ async function exportar() {
   excelResumen(X);
   await excelPlanos(X);
   excelMetrado(X);
+  excelPresupuesto(X);
 
   wb.calcProperties.fullCalcOnLoad = true;
   return await wb.xlsx.writeBuffer();

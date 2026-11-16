@@ -344,7 +344,7 @@ $("exTree").addEventListener("click", e => {
 // Doble clic en los demás elementos del explorador: cada uno abre su ventana
 $("exTree").addEventListener("click", e => {
   const n = e.target.closest(
-    '[data-node="cargas"],[data-node="servicios"],[data-node="param"],[data-node="pat"],[data-node="metrado"]'
+    '[data-node="cargas"],[data-node="servicios"],[data-node="param"],[data-node="pat"],[data-node="metrado"],[data-node="presupuesto"]'
   );
   if (!n || e.detail !== 2) return;
   const k = n.dataset.node;
@@ -354,6 +354,6 @@ $("exTree").addEventListener("click", e => {
     else if (k === "param" || k === "pat") {
       PP_TAB = k === "pat" ? "pat" : "car";
       parametros(true);
-    } else if (k === "metrado") verVista("metrado");
+    } else if (k === "metrado" || k === "presupuesto") verVista(k);
   });
 });

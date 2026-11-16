@@ -1682,7 +1682,8 @@ function dcDatos() {
       al_p: n("al_p"),
       tg_p: n("tg_p"),
       tc_p: n("tc_p"),
-      hEnt: n("hEnt") || 3.1
+      hEnt: n("hEnt") || 3.1,
+      ...(MODE === "multi" ? { nTipos: tipos.length, tipo0: (tipos[0] || {}).nombre } : {})
     }),
     noms = dcNomsCalc();
   // En el edificio, los tableros de departamento se reconocen por su tipo (ventana Tablero), no por el nombre
@@ -1741,6 +1742,15 @@ function dcCruce(R, noms) {
       const tb = R.tabs.filter(x => x.dep === i && x.circs.length),
         a = R.areaDep[i],
         dm = tb.map(x => R.desdeMed[x.id]).filter(Boolean);
+      f(
+        `${t.nombre || "Tipo"}: número de unidades`,
+        !(t.cant > 0) && tb.length > 0,
+        t.cant > 0
+          ? `escrito: ${t.cant}`
+          : tb.length
+            ? `${tb.length} tablero${tb.length > 1 ? "s" : ""} en el plano`
+            : "—"
+      );
       f(`${t.nombre || "Tipo"}: área`, !!(a && a.m2), a && a.m2 ? m2(a.m2) : `escrita: ${t.area || "—"} m²`);
       f(
         `${t.nombre || "Tipo"}: circuitos`,
@@ -1840,7 +1850,7 @@ function dcRender() {
     const dep = MODE === "multi" && Number.isInteger(tb.dep) ? tipos[tb.dep] : null,
       en = dep || noms.includes(tb.nom),
       dm = R.desdeMed[tb.id];
-    h += `<h4>${esc(tb.nom)}${tb.fs ? ` <small>${tb.fs === 3 ? "trifásico" : "monofásico"}</small>` : ""}<small class="${en ? "" : "bad"}">${dep ? `departamento ${esc(dep.nombre || "")}` : en ? "en el cálculo" : MODE === "multi" ? "elija su tipo de departamento con doble clic" : `no está en el cálculo (${noms.join(", ")})`}</small>${dm && tb.nom !== "TG" ? `<small>desde el medidor: ${m(dm.L)} m</small>` : ""} ${ver([tb.id])}</h4>`;
+    h += `<h4>${esc(tb.nom)}${tb.fs ? ` <small>${tb.fs === 3 ? "trifásico" : "monofásico"}</small>` : ""}<small class="${en ? "" : "bad"}">${dep ? `departamento ${esc(dep.nombre || "")}${tb.depAuto ? " (el único tipo)" : ""}` : en ? "en el cálculo" : MODE === "multi" ? "elija su tipo de departamento con doble clic" : `no está en el cálculo (${noms.join(", ")})`}</small>${dm && tb.nom !== "TG" ? `<small>desde el medidor: ${m(dm.L)} m</small>` : ""} ${ver([tb.id])}</h4>`;
     if (!tb.circs.length) {
       h += '<p class="dc-nota">Sin circuitos con carga: defina sus circuitos con doble clic y conecte las salidas.</p>';
       return;
@@ -3222,7 +3232,7 @@ function edRevCinta(E) {
     const ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
       md = r.mode === "multi" ? r.MD : r.md.MD,
       dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
-    calc = `<div class="col rev-calc"><span class="rev-dato">Máxima demanda <b>${fmt(md / 1000, 2)} kW</b></span><span class="rev-dato">ΔV máxima <b${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</b></span><span class="rev-dato">Estado <b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b></span></div>`;
+    calc = `<div class="col rev-calc"><span class="rev-dato">Máxima demanda <b>${fmt(md / 1000, 2)} kW</b></span><span class="rev-dato">ΔV máxima <b${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</b></span><span class="rev-dato">Estado ${r.prelim ? `<b class="w" title="Calculado con lo que el diseño tiene; faltan ${r.prelim.length} datos">Preliminar</b>` : `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`}</span></div>`;
   }
   $("edRevRib").innerHTML =
     `<div class="rgrp"><div class="gi">${pasos}</div><div class="gl">Avance del diseño · ${hechos} de ${ED_PASOS.length}</div></div>` +
@@ -3237,6 +3247,14 @@ function edRevCinta(E) {
   av.className = "ed-avance" + (n.sg ? " seg" : pend || obs ? " av" : hechos === ED_PASOS.length ? " ok" : "");
   av.textContent = `Diseño ${hechos}/${ED_PASOS.length}${n.sg ? ` · ${n.sg} de seguridad` : ""}${n.av ? ` · ${n.av} aviso${n.av > 1 ? "s" : ""}` : ""}`;
 }
+// Cómo sale del plano cada dato que falta (si no, se escribe en el proyecto)
+const ED_PISTA = {
+  area: "márquela con las áreas del plano (Dibujo › Área) o escríbala",
+  Lalim: "dibuje el medidor y la tubería alimentador hasta el TG",
+  Lgen: "dibuje el medidor y la tubería alimentador hasta el TG",
+  Lbm: "dibuje la tubería alimentador del TG al banco"
+};
+const edPistaLi = x => `<li>${esc(x.l)}${ED_PISTA[x.id] ? `<small>${ED_PISTA[x.id]}</small>` : ""}</li>`;
 function edVivo() {
   if (!ED.abierto) return;
   edRevCinta(edPasosEstado());
@@ -3251,15 +3269,8 @@ function edVivo() {
   if (!r) {
     const F = faltantes(estado());
     $("edVivoE").textContent = F.length ? `${F.length} pendiente${F.length > 1 ? "s" : ""}` : "";
-    // Cómo sale del plano cada dato que falta (si no, se escribe en el proyecto)
-    const PISTA = {
-      area: "márquela con las áreas del plano (Dibujo › Área) o escríbala",
-      Lalim: "dibuje el medidor y la tubería alimentador hasta el TG",
-      Lgen: "dibuje el medidor y la tubería alimentador hasta el TG",
-      Lbm: "dibuje la tubería alimentador del TG al banco"
-    };
     v.innerHTML = `<p class="pend">Para calcular falta:</p><ul>${F.slice(0, 5)
-      .map(x => `<li>${esc(x.l)}${PISTA[x.id] ? `<small>${PISTA[x.id]}</small>` : ""}</li>`)
+      .map(edPistaLi)
       .join(
         ""
       )}${F.length > 5 ? `<li>y ${F.length - 5} más</li>` : ""}</ul><p class="nota">Dibuje los tableros con sus circuitos, las salidas y las tuberías: el cálculo los toma del plano.</p><button type="button" class="vw-btn" data-vivo="datos">Escribir los datos que faltan</button>`;
@@ -3269,13 +3280,26 @@ function edVivo() {
     a0 = r.alims[0],
     md = r.mode === "multi" ? r.MD : r.md.MD,
     dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
-  $("edVivoE").innerHTML = `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`;
+  // Preliminar: calculado con lo que hay; debajo, lo que falta
+  const F = r.prelim || [];
+  $("edVivoE").innerHTML = F.length
+    ? `<b class="w">Preliminar · ${F.length} pendiente${F.length > 1 ? "s" : ""}</b>`
+    : `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`;
   v.innerHTML =
+    (F.length
+      ? `<p class="nota">Calculado con lo que el diseño tiene hasta ahora; los valores cambian al completar:</p><ul>${F.slice(
+          0,
+          4
+        )
+          .map(edPistaLi)
+          .join("")}${F.length > 4 ? `<li>y ${F.length - 4} más</li>` : ""}</ul>`
+      : "") +
     `<dl><dt>Máxima demanda</dt><dd>${fmt(md / 1000, 2)} kW</dd>` +
     `<dt>Alimentador</dt><dd>${a0.s.n}-1×${a0.S} mm² · ${a0.s.tri ? 3 : 2}×${a0.itm} A</dd>` +
     `<dt>ΔV máxima</dt><dd${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</dd>` +
     `<dt>Circuitos</dt><dd>${r.circ.length}${r.circ.some(q => !q.ok) ? ` · ${r.circ.filter(q => !q.ok).length} por revisar` : ""}</dd></dl>` +
-    `<button type="button" class="vw-btn" data-vivo="res">Ver resultados completos</button>`;
+    `<button type="button" class="vw-btn" data-vivo="res">Ver resultados completos</button>` +
+    (F.length ? `<button type="button" class="vw-btn" data-vivo="datos">Escribir los datos que faltan</button>` : "");
 }
 $("edRevRib").addEventListener("click", e => {
   const vv = e.target.closest("[data-vivo]");

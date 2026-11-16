@@ -637,6 +637,32 @@ function planoCalc(PL, c, v) {
       ...(Number.isInteger(tb.dep) ? { dep: tb.dep } : {})
     };
   });
+  /* Edificio multifamiliar (v.nTipos: número de tipos de departamento): un tablero con circuitos que no es el TG ni el
+     TSG y no tiene tipo elegido no se calcularía. Con un solo tipo pasa a ese tipo (y se avisa, por si es de otro
+     uso); con varios, la revisión pide elegirlo. */
+  if (v && v.nTipos > 0) {
+    const sinTipo = R.filter(t => t.circs.length && !Number.isInteger(t.dep) && t.nom !== "TG" && t.nom !== "TSG");
+    if (v.nTipos === 1)
+      sinTipo.forEach(t => {
+        t.dep = 0;
+        t.depAuto = true;
+        aviso(
+          "info",
+          `${t.nom}: sin tipo de departamento elegido, se calcula como ${v.tipo0 || "el único tipo"}. Si es de otro uso, elíjalo con doble clic en el tablero`,
+          [t.id],
+          "dep"
+        );
+      });
+    else
+      sinTipo.forEach(t =>
+        aviso(
+          "aviso",
+          `${t.nom}: elija su tipo de departamento (doble clic en el tablero); mientras no lo tenga, sus ${t.circs.reduce((s, q) => s + q.n, 0)} salidas no se calculan`,
+          [t.id],
+          "dep"
+        )
+      );
+  }
   // Alimentadores: tuberías marcadas como alimentador, del medidor al TG y del TG a cada tablero
   const ali = tubs.filter(esAli),
     GA = grafo(ali, false),
@@ -746,6 +772,17 @@ function planoCalc(PL, c, v) {
     if (tp === "libre") return sumar(piso, "libre", m2);
     sumar(piso, tp, m2);
   });
+  // Edificio: áreas que no son de ningún departamento mientras algún tipo no tiene la suya (no se pide escrita si se marca)
+  if (v && v.nTipos > 0) {
+    const libres = areas.filter(a => !Number.isInteger(a.dep) && (a.tp === "tech" || a.tp === "ext"));
+    if (libres.length && Object.keys(areaDep).length < v.nTipos)
+      aviso(
+        "info",
+        `${libres.length === 1 ? "Un área marcada no es" : `${libres.length} áreas marcadas no son`} de ningún departamento: para que el área de un tipo salga del plano, elija su tipo en la ventana del área (doble clic)`,
+        libres.map(a => a.id),
+        "area"
+      );
+  }
   if (TG && medIds.size && !rutas.TG)
     aviso(
       "aviso",

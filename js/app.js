@@ -22,7 +22,8 @@ const NODEFS = {
     "fs-p-dat"
   ],
   pat: ["fs-p-pat", "fs-p-pozo"],
-  metrado: ["fs-p-met"]
+  metrado: ["fs-p-met"],
+  presupuesto: ["fs-p-met"]
 };
 const NODETIT = {
   proyecto: "Datos del proyecto",
@@ -33,7 +34,8 @@ const NODETIT = {
   servicios: "Servicios generales",
   param: "Parámetros de diseño",
   pat: "Puesta a tierra",
-  metrado: "Metrado"
+  metrado: "Metrado",
+  presupuesto: "Presupuesto"
 };
 let NODE = "proyecto",
   WSF = [],
@@ -186,6 +188,7 @@ function exTree() {
     document.querySelector("#fs-p-car .inv,#fs-p-cond .inv,#fs-p-prot .inv,#fs-p-pat .inv") ? "bad" : "ok"
   );
   if (r) add(1, "Metrado", "metrado", "ok");
+  if (r) add(1, "Presupuesto", "presupuesto", "ok");
   $("exTree").innerHTML = N.join("");
   const cuenta = $("exCount");
   cuenta.textContent = r ? r.circ.length : WSF.length;
@@ -336,12 +339,12 @@ $("ws").addEventListener("click", e => {
     toast(LAST ? "Cálculo actualizado" : "Complete los datos para calcular");
   } else if (a === "xlsx") {
     if (DESACT) calcularAhora();
-    if (!LAST) return toast("Complete los datos para exportar");
+    if (!entregable()) return;
     $("btnXlsx").click();
     toast("Generando memoria de cálculo…");
   } else if (a === "print") {
     if (DESACT) calcularAhora();
-    if (!LAST) return toast("Complete los datos para imprimir");
+    if (!entregable()) return;
     $("btnPrint").click();
   } else if (a === "undo") histGo(-1);
   else if (a === "redo") histGo(1);

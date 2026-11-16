@@ -1023,3 +1023,91 @@ body.arrastrando * {
   margin: 0;
   padding: 8px 12px 10px;
 }
+
+/* Presupuesto (js/presupuesto.js): precio unitario y porcentajes escritos en la tabla, totales al pie */
+.pre-cab {
+  padding-bottom: 0;
+}
+.pre-st {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.pre-st.w {
+  color: var(--warn, #b26a00);
+}
+.pre-tab td.n,
+.pre-tab tr.grp td.n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pre-pu {
+  white-space: nowrap;
+}
+.pre-pu input,
+.pre-pct {
+  width: 92px;
+  padding: 2px 6px;
+  font: inherit;
+  text-align: right;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 2px;
+}
+.pre-pct {
+  width: 58px;
+  margin: 0 2px 0 6px;
+}
+.pre-pu input:focus,
+.pre-pct:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+}
+.pre-rec {
+  display: block;
+  font-size: 10px;
+  font-style: normal;
+  color: var(--accent);
+  text-align: right;
+  cursor: help;
+}
+.pre-tot {
+  width: auto;
+  min-width: 380px;
+  margin: 0 0 10px auto;
+}
+.pre-tot td {
+  padding: 4px 10px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pre-tot td.t {
+  text-align: left;
+}
+.pre-tot small {
+  margin-left: 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.pre-tot tr.sub td {
+  border-top: 1px solid var(--line2);
+  font-weight: 600;
+}
+.pre-tot tr.tot td {
+  border-top: 2px solid var(--navy);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--navy);
+}
+@media print {
+  .pre-pu input,
+  .pre-pct {
+    border: 0;
+    background: none;
+    padding: 0;
+  }
+  .pre-rec {
+    display: none;
+  }
+}

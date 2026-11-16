@@ -8,12 +8,16 @@
    · proyectos/{uid}/planos/{huella}: el plano DXF en base64, en trozos; se sube una sola vez por huella.
    · Un proyecto eliminado queda en la nube como «borrado» (con su fecha), para que se borre en los demás equipos.
    Gana la fecha más reciente (savedAt). Un proyecto del navegador que otra cuenta subió no pasa a esta cuenta.
-   Reglas de Firestore: cada cuenta solo lee y escribe su carpeta proyectos/{uid}. */
+   Reglas de Firestore: cada cuenta solo lee y escribe su carpeta proyectos/{uid}.
+   Sitio de pruebas: su propia carpeta (proyectos-beta) y sus propios registros en el navegador (los dos sitios están
+   en el mismo dominio y comparten el almacenamiento), para que nada de lo que se pruebe toque los proyectos reales. */
 const NUBE_PARTE = 300000,
   NUBE_PARTE_DXF = 900000,
   NUBE_DXF_MAX = 60e6,
-  NUBE_DUENOS = "jmg-electric-nube-duenos",
-  NUBE_BORRADOS = "jmg-electric-nube-borrados";
+  NUBE_CARPETA = BETA ? "proyectos-beta" : "proyectos",
+  NUBE_PRE = BETA ? "jmg-electric-beta-nube" : "jmg-electric-nube",
+  NUBE_DUENOS = NUBE_PRE + "-duenos",
+  NUBE_BORRADOS = NUBE_PRE + "-borrados";
 const NUBE = {
   uid: null,
   des: null,
@@ -29,7 +33,7 @@ const NUBE = {
   planos: new Set(),
   avisoDxf: false
 };
-const nubeCol = () => firebase.firestore().collection("proyectos").doc(NUBE.uid);
+const nubeCol = () => firebase.firestore().collection(NUBE_CARPETA).doc(NUBE.uid);
 const nubeLS = (k, v) => {
   try {
     if (v === undefined) return JSON.parse(localStorage.getItem(k) || "{}") || {};
@@ -57,7 +61,7 @@ function nubeIniciar(u) {
   if (NUBE.uid === u.uid && NUBE.des) return;
   nubeDetener();
   NUBE.uid = u.uid;
-  const r = nubeLS("jmg-electric-nube-" + u.uid);
+  const r = nubeLS(NUBE_PRE + "-" + u.uid);
   NUBE.subidos = r.s || {};
   NUBE.planos = new Set(r.pl || []);
   NUBE.listo = false;
@@ -217,7 +221,7 @@ async function nubeSubirCambios() {
   nubeLS(NUBE_BORRADOS, B);
 }
 function nubeGuardarReg() {
-  if (NUBE.uid) nubeLS("jmg-electric-nube-" + NUBE.uid, { s: NUBE.subidos, pl: [...NUBE.planos] });
+  if (NUBE.uid) nubeLS(NUBE_PRE + "-" + NUBE.uid, { s: NUBE.subidos, pl: [...NUBE.planos] });
 }
 async function nubeSubir(o) {
   const ref = nubeCol().collection("p").doc(o.id),

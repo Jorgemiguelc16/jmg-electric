@@ -59,7 +59,14 @@ function calcMulti(c) {
   const sk = pv("sistG") || "tri380",
     PLD =
       pv("calPlano") === "1" && P.PLANO
-        ? planoCalc(P.PLANO, c, { al_p: c.pAl, tg_p: c.pTo, tc_p: c.pTo, hEnt: pn("hEnt") || 3.1 })
+        ? planoCalc(P.PLANO, c, {
+            al_p: c.pAl,
+            tg_p: c.pTo,
+            tc_p: c.pTo,
+            hEnt: pn("hEnt") || 3.1,
+            nTipos: P.tipos.length,
+            tipo0: (P.tipos[0] || {}).nombre
+          })
         : null,
     /* Esquema del edificio (criterio del proyectista): el banco de medidores junto al TG (por defecto: sin tramo
        entre ellos) o en otro lugar, con su alimentador TG → banco; y el TSG con su propio medidor en el banco (por
@@ -96,8 +103,12 @@ function calcMulti(c) {
   // Cargas especiales de cada tipo de departamento (lista cargasT): sumadas por tipo para la máxima demanda,
   // su potencia total (Pesp) para la carga instalada y su número (nEsp) para el metrado
   const espT = i => P.cargasT.filter(x => Math.round(+x.dep || 0) === i && x.p > 0);
+  /* Número de unidades de cada tipo: el escrito; si no lo tiene, el de sus tableros dibujados en el plano */
   const T = P.tipos
-    .map((t, i) => ({ ...t, _i: i }))
+    .map((t, i) => {
+      const dp = dPlano(i);
+      return { ...t, _i: i, ...(!(t.cant > 0) && dp ? { cant: dp.n, cantPlano: true } : {}) };
+    })
     .filter(t => t.cant > 0)
     .map(t => {
       const dp = dPlano(t._i),

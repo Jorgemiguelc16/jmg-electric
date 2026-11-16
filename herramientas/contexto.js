@@ -29,6 +29,7 @@ const MOTOR = [
   "js/verificaciones.js",
   "js/resultados.js",
   "js/metrado.js",
+  "js/presupuesto.js",
   "js/proyectos.js"
 ];
 

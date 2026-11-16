@@ -282,6 +282,29 @@ module.exports = function probarPlano(ctx) {
   ver("TSG del plano: la electrobomba como motor", [s1 && s1.id, s1 && s1.P, rm2.SV[0].tipo], ["C-1", 1500, "motor"]);
   ver("alimentador TG → TSG del plano (1.8 + 6 + 1.8)", rm2.alims[1].L, 9.6);
   ver("área del tipo A, marcada en el plano", rm2.T[0].area, 80);
+  // Tablero de departamento sin tipo elegido: con un solo tipo, pasa a ese tipo (con una nota); con varios, se avisa
+  const M5 = JSON.parse(JSON.stringify(M));
+  delete M5.PLANO.dis.els.find(e => e.id === "d3").dep;
+  const rm5 = calc({ ...M5, calPlano: "1" });
+  ver("tablero sin tipo y un solo tipo: sus salidas son del tipo A", [rm5.T[0].nAl, rm5.T[0].nTo], [2, 1]);
+  ver(
+    "tablero sin tipo y un solo tipo: nota en la revisión",
+    rm5.plano.avisos.filter(a => a.k === "dep").map(a => a.t),
+    ["info"]
+  );
+  const rm6 = calc({
+    ...M5,
+    calPlano: "1",
+    tipos: [...M5.tipos, { nombre: "Tipo B", cant: 1, area: 60, Ld: 20, nAl: 6, nTo: 8, Lc: 12 }]
+  });
+  ver(
+    "tablero sin tipo y dos tipos: aviso y datos escritos",
+    [rm6.plano.avisos.filter(a => a.k === "dep").map(a => a.t), rm6.T.find(t => t.nombre === "Tipo A").nAl],
+    [["aviso"], 10]
+  );
+  // Sin número de unidades escrito: el de los tableros del tipo dibujados
+  const rm7 = calc({ ...M, calPlano: "1", tipos: [{ ...M.tipos[0], cant: "" }] });
+  ver("unidades del tipo A: una por tablero dibujado", [rm7.T[0].cant, rm7.T[0].cantPlano], [1, true]);
 
   const s = ((Date.now() - t0) / 1000).toFixed(2);
   if (fallas.length) {

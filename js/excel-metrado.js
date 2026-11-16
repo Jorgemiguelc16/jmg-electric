@@ -7,7 +7,7 @@ function excelMetrado(X) {
   {
     const LT = 8;
     setup(wsT, "portrait", [9, 13, 13, 13, 13, 7, 10, 22]);
-    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", `Hoja ${multi ? NH - 1 : 7} de ${NH}`);
+    let t = cabecera(wsT, LT, "METRADO DE INSTALACIONES ELÉCTRICAS", `Hoja ${multi ? 9 : 7} de ${NH}`);
     t = thead(wsT, t, [
       [1, 1, "Ítem"],
       [2, 5, "Descripción"],
