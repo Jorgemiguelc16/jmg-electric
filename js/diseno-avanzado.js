@@ -1984,6 +1984,16 @@ function dcEscribir() {
                   x.desc.includes("→ " + tbF.nom + " ") ||
                   (tbF.nom === "TSG" && x.pKey === "servP")
           );
+      // Banco junto al TG: la tubería del TG al banco lleva las fases y neutros de todos los suministros
+      if (!aBM && LAST.tgbm && LAST.mode === "multi" && (tbF.nom || "TG") === "TG" && fin.some(s => s.k === "bmed")) {
+        const g = LAST.tgbm;
+        t.cond = { f: Math.min(12, g.nf), n: Math.min(6, g.nn), t: false };
+        delete t.condA;
+        if (g.tubos[0].mm && DS_DIAS.includes(g.tubos[0].mm)) t.dia = g.tubos[0].mm;
+        t.sec = `${g.n} conductores (${g.tubos.length > 1 ? g.tubos.length + " tuberías" : "1 tubería"}; ver resultados)`;
+        n++;
+        return;
+      }
       if (!a) return;
       const fa = a.s.tri ? 3 : 2;
       t.cond = { f: fa, n: Math.max(0, a.s.n - fa), t: true };
@@ -3134,7 +3144,7 @@ function edPasosEstado() {
   const amb = els.filter(e => e.ar && e.ar.amb).length;
   E.amb = amb ? { st: "ok", d: `${amb} marcados` } : { st: "opc", d: "Opcional" };
   const tabs = els.filter(e => e.k === "tab"),
-    conC = tabs.filter(e => e.nc > 0);
+    conC = tabs.filter(e => e.nc > 0 || e.gen);
   E.tab = !tabs.length
     ? { st: "no", d: "Coloque el TG" }
     : conC.length < tabs.length

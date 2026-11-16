@@ -2186,8 +2186,18 @@ function dsSalidasTab(el) {
 /* Medidores del banco de un edificio, numerados M-1, M-2…: uno por departamento (en el orden de los tipos y de su
    número: A-1, A-2, B-1…) y, si los servicios generales tienen su medidor en el banco, el del TSG al final. Es la
    misma numeración de las láminas del banco y del tablero general (suministrosBanco). */
-function dsMedidoresBanco() {
-  if (typeof MODE === "undefined" || MODE !== "multi") return [];
+function dsMedidoresBanco(el) {
+  if (typeof MODE === "undefined") return [];
+  /* Fuera de un edificio multifamiliar (por ejemplo, locales de un comercio), los medidores del banco los escribe el
+     proyectista en el banco: a qué tablero va cada uno y si es monofásico o trifásico */
+  if (MODE !== "multi")
+    return ((el && el.meds) || []).map((m, i) => ({
+      n: `M-${i + 1}`,
+      dep: m.d || "",
+      tab: m.d || "",
+      tri: m.f === 3,
+      man: true
+    }));
   const out = [];
   tipos.forEach(t => {
     const l = (t.nombre || "").replace(/^Tipo\s*/i, ""),
@@ -2201,7 +2211,7 @@ function dsMedidoresBanco() {
 }
 // Lista numerada de los medidores junto al banco (a su derecha, en columnas de 10), en el plano y en las láminas
 function dsDibBanco(g, el, col, u) {
-  const M = dsMedidoresBanco();
+  const M = dsMedidoresBanco(el);
   if (!M.length || 3 * u < 3) return;
   const b = dsBBox(el),
     [x0, y0] = plAPant(b[2], b[3]),
@@ -2218,7 +2228,7 @@ function dsDibBanco(g, el, col, u) {
   M.forEach((m, i) => {
     const x = x0 + 2 * u + Math.floor(i / 10) * ancho,
       y = y0 + (i % 10) * h,
-      t = `${m.n} ${m.dep}${m.tri ? " 3φ" : ""}`;
+      t = `${m.n}${m.dep ? " " + m.dep : ""}${m.tri ? " 3φ" : ""}`;
     g.strokeText(t, x, y);
     g.fillText(t, x, y);
   });
@@ -3747,9 +3757,41 @@ function dsCircSelect(D, v, tb) {
 }
 // Propiedades del banco de medidores: la lista numerada de sus medidores y si se escribe en el plano
 function dsPropsBanco(el, campo) {
-  const M = dsMedidoresBanco();
+  // Fuera del edificio: los medidores se escriben aquí (cuántos, a qué tablero va cada uno y sus fases)
+  if (MODE !== "multi") {
+    const meds = el.meds || [],
+      tabs = [
+        ...new Set(
+          dsD()
+            .els.filter(e => e.k === "tab" && e.nom)
+            .map(e => e.nom)
+        )
+      ];
+    return (
+      campo(
+        "Medidores",
+        `<input type="number" data-dsp="bmn" value="${meds.length}" min="0" max="40" step="1" title="Cuántos medidores tiene el banco">`
+      ) +
+      (meds.length
+        ? campo(
+            "Numerar",
+            `<select data-dsp="num" title="Escribir la lista numerada junto al banco en el plano"><option value="">Sí</option><option value="0"${el.num === false ? " selected" : ""}>No</option></select>`
+          ) +
+          `<table class="ds-bm"><thead><tr><th>Medidor</th><th>Va al tablero</th><th>Fases</th></tr></thead><tbody>${meds
+            .map(
+              (m, i) =>
+                `<tr><td>M-${i + 1}</td><td><input type="text" data-dsp="bmd${i}" value="${esc(m.d || "")}" maxlength="20" list="dsBmTabs" placeholder="ej. TD-1" aria-label="Tablero del medidor M-${i + 1}"></td><td><select data-dsp="bmf${i}" aria-label="Fases del medidor M-${i + 1}"><option value="1">1φ</option><option value="3"${m.f === 3 ? " selected" : ""}>3φ</option></select></td></tr>`
+            )
+            .join(
+              ""
+            )}</tbody></table><datalist id="dsBmTabs">${tabs.map(t => `<option value="${esc(t)}">`).join("")}</datalist>`
+        : "") +
+      `<p class="ds-crit">Escriba cuántos medidores tiene el banco y a qué tablero va cada uno (M-1, M-2…); la lista se escribe junto al banco en el plano. En un edificio multifamiliar se numeran solos, uno por departamento.</p>`
+    );
+  }
+  const M = dsMedidoresBanco(el);
   if (!M.length)
-    return `<p class="ds-crit">${MODE === "multi" ? "Indique el número de departamentos de cada tipo (Proyecto › Departamentos) para numerar sus medidores." : "Los medidores se numeran en un edificio multifamiliar."}</p>`;
+    return `<p class="ds-crit">Indique el número de departamentos de cada tipo (Proyecto › Departamentos) para numerar sus medidores.</p>`;
   return (
     campo(
       "Numerar",
@@ -3862,7 +3904,10 @@ function dsProps(c) {
         : "") +
       (el.k === "tab"
         ? fila("Nombre", esc(el.nom || "—")) +
-          fila("Circuitos", el.nc ? `${el.nc} (C-1 a C-${el.nc})` : "sin definir") +
+          fila(
+            "Circuitos",
+            el.gen ? "Tablero general: solo alimentadores" : el.nc ? `${el.nc} (C-1 a C-${el.nc})` : "sin definir"
+          ) +
           `<div class="ed-pb"><button type="button" class="btn sm" data-dsa="tablero">Circuitos del tablero…</button></div>`
         : el.k === "bmed"
           ? dsPropsBanco(el, campo)
@@ -4163,7 +4208,18 @@ function dsPropCambio(e) {
     } else if (k === "cn") el.cn = v.replace(/[<>]/g, "").trim().slice(0, 60) || undefined;
     else if (k === "ctp") el.ctp = TIPOS[v] ? v : undefined;
     else if (k === "fs") el.fs = v === "3" ? 3 : 1;
-    else if (k === "num" && el.k === "bmed") {
+    else if (k === "bmn" && el.k === "bmed") {
+      const n = Math.max(0, Math.min(40, Math.round(+v) || 0)),
+        m = (el.meds || []).slice(0, n);
+      while (m.length < n) m.push({ d: "", f: 1 });
+      if (m.length) el.meds = m;
+      else delete el.meds;
+    } else if (/^bm[df]\d+$/.test(k) && el.k === "bmed" && el.meds) {
+      const i = +k.slice(3),
+        m = el.meds[i];
+      if (m && k[2] === "d") m.d = v.replace(/[<>]/g, "").slice(0, 20);
+      else if (m) m.f = v === "3" ? 3 : 1;
+    } else if (k === "num" && el.k === "bmed") {
       if (v === "0") el.num = false;
       else delete el.num;
     } else if (k === "elc") el.elc = v === "1" || undefined;
@@ -4200,6 +4256,8 @@ function dsPropCambio(e) {
     }
   });
   edCambio();
+  // Otro número de medidores del banco: su tabla cambia de filas
+  if (k === "bmn") edProps();
 }
 function dsPropClic(e) {
   const b = e.target.closest("[data-dsa]");
@@ -4853,7 +4911,7 @@ function dsVerificar() {
   });
   // Tableros
   D.els.forEach(tb => {
-    if (tb.k !== "tab" || !dsVis(tb)) return;
+    if (tb.k !== "tab" || !dsVis(tb) || tb.gen) return;
     if (!tb.nc)
       return add(
         "aviso",
@@ -5180,6 +5238,9 @@ function tabAbrir(id) {
   $("taNom").value = el.nom || "";
   $("taN").value = el.nc || 6;
   $("taFs").value = el.fs === 3 ? "3" : el.fs === 1 ? "1" : "";
+  // Tablero general (solo alimentadores): el TG de un edificio lo es por defecto mientras no tenga circuitos
+  $("taGen").value =
+    el.gen || (el.gen === undefined && !el.nc && MODE === "multi" && (el.nom || "TG") === "TG") ? "1" : "";
   // Edificio: a qué tipo de departamento pertenece (el cálculo toma de él sus salidas y su alimentador)
   $("taDepL").hidden = MODE !== "multi";
   $("taDep").innerHTML =
@@ -5191,6 +5252,7 @@ function tabAbrir(id) {
       )
       .join("");
   tabLista(el.cd || [], el.ct || []);
+  tabTipo();
   tabEsquema();
   $("tabDlg").hidden = false;
   vwFondo();
@@ -5252,6 +5314,17 @@ function tabAceptar() {
   const ct = [...$("taLista").querySelectorAll("select")].slice(0, n).map(s => (PL_TCIR[s.value] ? s.value : ""));
   while (ct.length && !ct[ct.length - 1]) ct.pop();
   el.nom = $("taNom").value.replace(/[<>]/g, "").trim().slice(0, 20) || el.nom || "TG";
+  // Tablero general: sin salidas de circuitos (las tuberías de alimentador llegan a su borde)
+  if ($("taGen").value === "1") {
+    el.gen = true;
+    el.nc = 0;
+    if ($("taFs").value) el.fs = +$("taFs").value;
+    else delete el.fs;
+    tabCerrar();
+    edCambio();
+    return toast(`${el.nom}: tablero general, solo alimentadores (dibújelos con la tubería «Alimentador»)`);
+  }
+  delete el.gen;
   el.nc = n;
   if ($("taFs").value) el.fs = +$("taFs").value;
   else delete el.fs;
@@ -5273,6 +5346,20 @@ $("taN").addEventListener("input", () => {
 });
 ["taFs", "taDep", "taNom"].forEach(id => $(id).addEventListener("input", tabEsquema));
 ["taFs", "taDep"].forEach(id => $(id).addEventListener("change", tabEsquema));
+$("taGen").addEventListener("change", () => {
+  tabTipo();
+  tabEsquema();
+});
+// Tablero general: sin número de circuitos ni lista de circuitos
+function tabTipo() {
+  const g = $("taGen").value === "1";
+  $("taNL").hidden = g;
+  $("taLista").hidden = g;
+  if (g)
+    $("taNota").textContent =
+      "Tablero general: sin circuitos derivados; sus alimentadores se dibujan con la tubería «Alimentador» hasta su borde.";
+  else tabLista();
+}
 /* Esquema del tablero en su ventana (ilustrativo, no es un plano): de dónde llega, su interruptor general, sus barras
    según el sistema (trifásico 380/220 V: R, S, T, N y tierra; 220 V: dos o tres fases y tierra, sin neutro) y sus
    salidas. El TG de un edificio muestra también su salida al banco de medidores y, si es el caso, al TSG. El sistema
@@ -5316,9 +5403,24 @@ function tabEsquema() {
       N: "#8a9199",
       PE: "#2f7a4b"
     },
-    extra = multi && esTG ? ["Banco de medidores", ...(PROY.tsgDe === "tg" ? ["TSG"] : [])] : [],
-    salidas = [...extra, ...Array.from({ length: Math.min(n, 8 - extra.length) }, (v, i) => `C-${i + 1}`)],
-    mas = n - (salidas.length - extra.length),
+    gen = $("taGen").value === "1",
+    D = dsD(),
+    // Alimentadores: en el edificio, al banco (y al TSG si sale del TG); en un tablero general, también a los demás
+    // tableros del plano
+    otros = gen
+      ? [
+          ...new Set(D.els.filter(e => e.k === "tab" && e.id !== TA_ID && e.nom && e.nom !== "TSG").map(e => e.nom))
+        ].filter(x => !multi || x === "TSG")
+      : [],
+    hayBM = multi ? esTG || gen : gen && D.els.some(e => e.k === "bmed"),
+    extra = [
+      ...(hayBM ? ["Banco"] : []),
+      ...(multi && (esTG || gen) && PROY.tsgDe === "tg" ? ["TSG"] : []),
+      ...otros
+    ].slice(0, 8),
+    circs = gen ? 0 : n,
+    salidas = [...extra, ...Array.from({ length: Math.min(circs, 8 - extra.length) }, (v, i) => `C-${i + 1}`)],
+    mas = circs - (salidas.length - extra.length),
     W = 460,
     x0 = 120,
     y0 = 34,
@@ -5342,22 +5444,32 @@ function tabEsquema() {
       `<rect x="44" y="${y - 6}" width="22" height="12" rx="2" fill="#fbfaf7"/><text x="55" y="${y + 3.5}" class="b" text-anchor="middle" fill="${col[b]}">${b}</text>`
     );
   });
-  // Salidas: los suministros del edificio (al banco y al TSG) y los circuitos
+  /* Salidas: los alimentadores (al banco, al TSG o a otros tableros) toman todas las fases y el neutro; cada circuito,
+     su fase (R, S y T en turno; en 220 V, las dos fases) y el neutro. Un punto marca la barra a la que se conecta; la
+     salida sale desde la primera de ellas */
+  const fases = barras.filter(b => b !== "N" && b !== "PE");
+  let k = 0;
   salidas.forEach((s, i) => {
     const x = x0 + i * paso + paso / 2,
-      ext = i < extra.length;
+      ext = i < extra.length,
+      con = ext || !tri ? [...fases, ...(conN ? ["N"] : [])] : [fases[k++ % 3], ...(conN ? ["N"] : [])],
+      y1 = Math.min(...con.map(b => yb(barras.indexOf(b))));
     o.push(
-      `<line x1="${x}" y1="${yb(0)}" x2="${x}" y2="${yf + 16}" class="c${ext ? " ext" : ""}"/>`,
+      `<line x1="${x}" y1="${y1}" x2="${x}" y2="${yf + 16}" class="c${ext ? " ext" : ""}"/>`,
+      ...con.map(
+        b =>
+          `<circle cx="${x}" cy="${yb(barras.indexOf(b))}" r="2.6" fill="${col[b]}" stroke="#fff" stroke-width="0.8"/>`
+      ),
       `<rect x="${x - 4}" y="${yf + 16}" width="8" height="10" class="itm${ext ? " ext" : ""}"/>`,
       `<line x1="${x}" y1="${yf + 26}" x2="${x}" y2="${yf + 36}" class="c${ext ? " ext" : ""}"/>`,
       ext
-        ? `<text x="${x}" y="${yf + 47}" class="t m e">→ ${s === "TSG" ? "TSG" : "Banco"}</text>`
+        ? `<text x="${x}" y="${yf + 47}" class="t m e">→ ${esc(s)}</text>`
         : `<text x="${x}" y="${yf + 47}" class="t m">${s}</text>`
     );
   });
   if (mas > 0) o.push(`<text x="${x0 + salidas.length * paso + paso / 2}" y="${yf + 30}" class="t m">+${mas}</text>`);
   const H = yf + 54,
-    txt = `${esTG ? (multi ? "Tablero general del edificio" : "Tablero general") : nom === "TSG" ? "Tablero de servicios generales" : dep ? `Tablero del ${esc(dep.nombre || "departamento")}` : "Tablero de distribución"} · ${conN && !tri ? "Monofásico 220 V (fase y neutro)" : S.nom}${fs ? "" : ", del proyecto"} · interruptor general ${tri ? "tripolar" : "bipolar"} · barras ${barras.join("-")}${extra.length ? " · salidas al banco de medidores" + (extra.length > 1 ? " y al TSG" : "") : ""}`;
+    txt = `${esTG ? (multi ? "Tablero general del edificio" : "Tablero general") : nom === "TSG" ? "Tablero de servicios generales" : dep ? `Tablero del ${esc(dep.nombre || "departamento")}` : "Tablero de distribución"} · ${conN && !tri ? "Monofásico 220 V (fase y neutro)" : S.nom}${fs ? "" : ", del proyecto"} · interruptor general ${tri ? "tripolar" : "bipolar"} · barras ${barras.join("-")}${gen ? " · solo alimentadores" : ""}${extra.length ? ` · alimentadores a: ${extra.map(x => (x === "Banco" ? "banco de medidores" : x)).join(", ")}` : ""}`;
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${txt}">${o.join("")}</svg><p>${txt}. Esquema ilustrativo.</p>`;
 }
 $("tabDlg").addEventListener("click", e => {

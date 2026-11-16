@@ -1,7 +1,7 @@
 // Huellas de los planos de cada caso de pruebas (herramientas/pruebas-planos.js). No editar a mano:
 // se regeneran con «npm run pruebas-planos -- --actualizar» después de revisar los planos.
 const HUELLAS = {
- "fecha": "2026-11-15",
+ "fecha": "2026-11-16",
  "casos": {
   "C1": {
    "A4 unifilar Unifilar": "6d814e022548adb8 3b093603d7189f9c",
@@ -130,7 +130,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04D": "b2289fdd04329eab 8e4044b23c9f75c8"
   },
   "C7": {
-   "A4 unifilar Unifilar IE-01": "9376f96f50dc1839 e77a5a73c925c41b",
+   "A4 unifilar Unifilar IE-01": "0b6d2ab02f199e8f d535a13c03ff0446",
    "A4 unifilar Unifilar IE-01A": "528be1c5f206fbb5 cd746121ce80341b",
    "A4 unifilar Unifilar IE-01B": "562341910d01745d 5db4b800c032b046",
    "A4 unifilar Unifilar IE-01C": "aad849bbe344d4fb d61d16c964a4397c",
@@ -146,7 +146,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "fa897b2625da0046 c37a63d43d4e36ec",
    "A4 tableros peinado Tableros IE-04B": "dea3810953baf525 c22741e77ead9539",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "9376f96f50dc1839 1ebf7cd6dd26f95c",
+   "A3 unifilar Unifilar IE-01": "0b6d2ab02f199e8f c201ab48dcfae939",
    "A3 unifilar Unifilar IE-01A": "528be1c5f206fbb5 acb9e17e2c18311b",
    "A3 unifilar Unifilar IE-01B": "562341910d01745d acbafd0f89d09747",
    "A3 unifilar Unifilar IE-01C": "aad849bbe344d4fb 7ff4d11f340df472",
@@ -164,7 +164,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04C": "764b2d5be363e58b af161b5870c590cc"
   },
   "C8": {
-   "A4 unifilar Unifilar IE-01": "4f0e40e79b5224f1 a9b5f7ab5802abf5",
+   "A4 unifilar Unifilar IE-01": "9d20547cccd5081b fbf6be4c31fbce78",
    "A4 unifilar Unifilar IE-01A": "95abfc7a102115a6 49cc032af87adc7e",
    "A4 unifilar Unifilar IE-01B": "8bde49daa6dd712f d346ee9fc9d35fa1",
    "A4 unifilar Unifilar IE-01C": "aad849bbe344d4fb d61d16c964a4397c",
@@ -180,7 +180,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "fa897b2625da0046 c37a63d43d4e36ec",
    "A4 tableros peinado Tableros IE-04B": "dea3810953baf525 c22741e77ead9539",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "4f0e40e79b5224f1 1986cf79f11bfa28",
+   "A3 unifilar Unifilar IE-01": "9d20547cccd5081b 02ba5806ee5592e4",
    "A3 unifilar Unifilar IE-01A": "95abfc7a102115a6 1dde833cc0371d19",
    "A3 unifilar Unifilar IE-01B": "8bde49daa6dd712f 3cabd7f1fa8e6ae9",
    "A3 unifilar Unifilar IE-01C": "aad849bbe344d4fb 7ff4d11f340df472",
@@ -306,7 +306,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04A": "75dab948c10d11cb 41c6f0c5dbccf021"
   },
   "P8": {
-   "A4 unifilar Unifilar IE-01": "bc051121362eebad 7526fc92adcc341f",
+   "A4 unifilar Unifilar IE-01": "daf2d9aad5708c33 090fb3e822a7ee7c",
    "A4 unifilar Unifilar IE-01A": "d9378fa6c7866bba a18a1048a5d2dfab",
    "A4 unifilar Unifilar IE-01B": "0203f5887e4f0a1a 80305849d2b4c469",
    "A4 unifilar Unifilar IE-01C": "7cc7c4deeba3a61b 62b43b52c95c48ee",
@@ -323,7 +323,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "f5bf77b519dc5663 2fc3fd06faa9e5a0",
    "A4 tableros peinado Tableros IE-04B": "33714997cff18a1c d15e94f4309b9135",
    "A4 tableros peinado Tableros IE-04C": "2c44c5d45eb7c38b cf576a15e9f40d0a",
-   "A3 unifilar Unifilar IE-01": "bc051121362eebad 30c7e317d47c09c5",
+   "A3 unifilar Unifilar IE-01": "daf2d9aad5708c33 43a5f729c4ff5d53",
    "A3 unifilar Unifilar IE-01A": "d9378fa6c7866bba a6855ef42a6dd949",
    "A3 unifilar Unifilar IE-01B": "0203f5887e4f0a1a 4fc7095404c9bf55",
    "A3 unifilar Unifilar IE-01C": "7cc7c4deeba3a61b 7c49a18e66389f83",
@@ -342,7 +342,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04C": "2c44c5d45eb7c38b 0c76921f82bf28a9"
   },
   "P9": {
-   "A4 unifilar Unifilar IE-01": "68b9c35a5873709e 5ad1419a0d5527e7",
+   "A4 unifilar Unifilar IE-01": "4da49562761ec54a 80266ab8e995aa21",
    "A4 unifilar Unifilar IE-01A": "5f60258460effc48 aa525277aabd1b77",
    "A4 unifilar Unifilar IE-01B": "e3d738c63b84b9cb 6e514fb3b1d6a417",
    "A4 alturas Alturas": "18f137c1ddf4d31f 7c81a4bacea1004c",
@@ -355,7 +355,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04": "6f0e6feee0a73c13 a7a7a1c0a4b10144",
    "A4 tableros peinado Tableros IE-04A": "1f20b36af87a0c8b 7860dfb5a10d9d2a",
    "A4 tableros peinado Tableros IE-04B": "4c34b24a405f71dc dffed775dd1d32b0",
-   "A3 unifilar Unifilar IE-01": "68b9c35a5873709e 60f6189a86b1726b",
+   "A3 unifilar Unifilar IE-01": "4da49562761ec54a a262c9901477f52c",
    "A3 unifilar Unifilar IE-01A": "5f60258460effc48 489ebd405f085365",
    "A3 unifilar Unifilar IE-01B": "e3d738c63b84b9cb cd5c459f6461efbe",
    "A3 alturas Alturas": "18f137c1ddf4d31f 95955253c7482c7c",
@@ -402,7 +402,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04A": "75dab948c10d11cb 41c6f0c5dbccf021"
   },
   "P12": {
-   "A4 unifilar Unifilar IE-01": "db494a00806bc124 33b99420f89887e2",
+   "A4 unifilar Unifilar IE-01": "1512a8e8c5d862e6 b1f56bb28ce4180d",
    "A4 unifilar Unifilar IE-01A": "9008ded14757d745 a9cfc12b4aed84eb",
    "A4 unifilar Unifilar IE-01B": "b695f74c2b6a0a4d 93bf538cf4da2e8e",
    "A4 unifilar Unifilar IE-01C": "2bc6ffe117b39d19 33c8752f863d6e09",
@@ -418,7 +418,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "5e9a592900018410 a4224c43c8d96b2f",
    "A4 tableros peinado Tableros IE-04B": "b7f5ee788d768c93 42e7260e82eb1229",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "db494a00806bc124 910336e79de7af92",
+   "A3 unifilar Unifilar IE-01": "1512a8e8c5d862e6 d6b9b8197aa11cda",
    "A3 unifilar Unifilar IE-01A": "9008ded14757d745 64248976e6b78644",
    "A3 unifilar Unifilar IE-01B": "b695f74c2b6a0a4d 143ce33b3228075d",
    "A3 unifilar Unifilar IE-01C": "2bc6ffe117b39d19 48a2081927c1bd70",
@@ -474,7 +474,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04B": "4c34b24a405f71dc 47c5eb821282ce53"
   },
   "P15": {
-   "A4 unifilar Unifilar IE-01": "bcf7144da4d9a910 2e078da692da6bf6",
+   "A4 unifilar Unifilar IE-01": "918049c03f89558c 1c89d2a0f3de6ef9",
    "A4 unifilar Unifilar IE-01A": "528be1c5f206fbb5 cd746121ce80341b",
    "A4 unifilar Unifilar IE-01B": "3bd67f5fea5344bc bf209c148d647ad2",
    "A4 unifilar Unifilar IE-01C": "91e24f1e67324ced 2fa51d2e963fb7fa",
@@ -490,7 +490,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "fa897b2625da0046 c37a63d43d4e36ec",
    "A4 tableros peinado Tableros IE-04B": "7e97ef9ec4df0b94 01a7cf279e995d22",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "bcf7144da4d9a910 2a16e9a1549c1f19",
+   "A3 unifilar Unifilar IE-01": "918049c03f89558c ddd4731603dabacb",
    "A3 unifilar Unifilar IE-01A": "528be1c5f206fbb5 acb9e17e2c18311b",
    "A3 unifilar Unifilar IE-01B": "3bd67f5fea5344bc b1366fe9d2c3d3fe",
    "A3 unifilar Unifilar IE-01C": "91e24f1e67324ced 153be98b6c04cbda",
@@ -668,7 +668,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04C": "764b2d5be363e58b af161b5870c590cc"
   },
   "P23": {
-   "A4 unifilar Unifilar IE-01": "3f1f787c0e5876cb 0006e60252521e15",
+   "A4 unifilar Unifilar IE-01": "b2ed92e6a3263e80 ce971041141786f7",
    "A4 unifilar Unifilar IE-01A": "528be1c5f206fbb5 cd746121ce80341b",
    "A4 unifilar Unifilar IE-01B": "562341910d01745d 5db4b800c032b046",
    "A4 unifilar Unifilar IE-01C": "f3eb59caf7e1e30b 0d30a2976e52d2a1",
@@ -684,7 +684,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "fa897b2625da0046 c37a63d43d4e36ec",
    "A4 tableros peinado Tableros IE-04B": "69d300541786538b ee1e5312442714ab",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "3f1f787c0e5876cb f7e78e62c9576e87",
+   "A3 unifilar Unifilar IE-01": "b2ed92e6a3263e80 9d4390de811d1daa",
    "A3 unifilar Unifilar IE-01A": "528be1c5f206fbb5 acb9e17e2c18311b",
    "A3 unifilar Unifilar IE-01B": "562341910d01745d acbafd0f89d09747",
    "A3 unifilar Unifilar IE-01C": "f3eb59caf7e1e30b d2386b3f95e143af",
@@ -702,7 +702,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04C": "764b2d5be363e58b af161b5870c590cc"
   },
   "P24": {
-   "A4 unifilar Unifilar IE-01": "d6a1457bfb7baa72 5f60c532b584f857",
+   "A4 unifilar Unifilar IE-01": "d1b83dfebd50a7f6 22aaad8b416a7b5e",
    "A4 unifilar Unifilar IE-01A": "4d904f09777624d3 30d9222cb44d04d7",
    "A4 unifilar Unifilar IE-01B": "6071ffb660f09de9 2ad08ea143727949",
    "A4 unifilar Unifilar IE-01C": "b4257d95e0c9cd12 9958624afd56759e",
@@ -718,7 +718,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "9140a1cbd91e05e3 0a950ca3098adfcf",
    "A4 tableros peinado Tableros IE-04B": "5c2db97788adbb30 ba6614e0db204c9f",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "d6a1457bfb7baa72 8c0bcf193f131d88",
+   "A3 unifilar Unifilar IE-01": "d1b83dfebd50a7f6 519111c7e648bdaf",
    "A3 unifilar Unifilar IE-01A": "4d904f09777624d3 50b0986154b9400b",
    "A3 unifilar Unifilar IE-01B": "6071ffb660f09de9 5d512a3d0534490a",
    "A3 unifilar Unifilar IE-01C": "b4257d95e0c9cd12 6c9dfe2308888632",
@@ -736,7 +736,7 @@ const HUELLAS = {
    "A3 tableros peinado Tableros IE-04C": "764b2d5be363e58b af161b5870c590cc"
   },
   "P25": {
-   "A4 unifilar Unifilar IE-01": "9376f96f50dc1839 e77a5a73c925c41b",
+   "A4 unifilar Unifilar IE-01": "0b6d2ab02f199e8f d535a13c03ff0446",
    "A4 unifilar Unifilar IE-01A": "f6bc1fa6dd7faf25 a296315272af2eaa",
    "A4 unifilar Unifilar IE-01B": "562341910d01745d 5db4b800c032b046",
    "A4 unifilar Unifilar IE-01C": "aad849bbe344d4fb d61d16c964a4397c",
@@ -752,7 +752,7 @@ const HUELLAS = {
    "A4 tableros peinado Tableros IE-04A": "aecfe597b4ae6def 5a2a684b991dc5bf",
    "A4 tableros peinado Tableros IE-04B": "dea3810953baf525 c22741e77ead9539",
    "A4 tableros peinado Tableros IE-04C": "764b2d5be363e58b 6bc928a6bfeb3378",
-   "A3 unifilar Unifilar IE-01": "9376f96f50dc1839 1ebf7cd6dd26f95c",
+   "A3 unifilar Unifilar IE-01": "0b6d2ab02f199e8f c201ab48dcfae939",
    "A3 unifilar Unifilar IE-01A": "f6bc1fa6dd7faf25 1ba350d207483642",
    "A3 unifilar Unifilar IE-01B": "562341910d01745d acbafd0f89d09747",
    "A3 unifilar Unifilar IE-01C": "aad849bbe344d4fb 7ff4d11f340df472",

@@ -722,8 +722,21 @@ function disValido(v) {
           ...(e.cn ? { cn: txt(e.cn, 60) } : {}),
           ...(["calentador", "cocina", "aire", "motor", "otra"].includes(e.ctp) ? { ctp: e.ctp } : {}),
           ...(e.fs === 1 || e.fs === 3 ? { fs: e.fs } : {}),
+          // Tablero general: solo alimentadores, sin circuitos derivados
+          ...(e.k === "tab" && e.gen === true ? { gen: true } : {}),
           // Banco de medidores sin su lista numerada en el plano
           ...(e.k === "bmed" && e.num === false ? { num: false } : {}),
+          // Medidores del banco escritos por el proyectista (fuera de un edificio): a qué tablero va cada uno y sus fases
+          ...(e.k === "bmed" && Array.isArray(e.meds) && e.meds.length
+            ? {
+                meds: e.meds.slice(0, 40).map(m => ({
+                  d: String((m && m.d) || "")
+                    .replace(/[<>]/g, "")
+                    .slice(0, 20),
+                  f: m && m.f === 3 ? 3 : 1
+                }))
+              }
+            : {}),
           ...(e.elc === true ? { elc: true } : {})
         };
       if (e.t === "txt" && n(e.x) && n(e.y) && n(e.ht) && e.ht > 0)

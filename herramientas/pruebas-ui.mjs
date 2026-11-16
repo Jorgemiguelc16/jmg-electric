@@ -2580,6 +2580,80 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
   ok(await ev("PROY.calPlano !== '1' && $('editor').hidden"), "«Cálculo rápido»: sin editor y con los datos escritos");
 });
 
+prueba("Tablero general solo con alimentadores, banco con sus medidores y tuberías del TG al banco", async ok => {
+  await ejemplo("uni");
+  await abrirPlano();
+  const ids = await J(`(() => {
+    const a = o => dsAgregar(o).id;
+    return {
+      tg: a({ t: "sim", k: "tab", x: ${OX} + 3, y: ${OY} + 7.9, r: 180, capa: "E-TABLEROS", nom: "TG", nc: 5, fs: 3 }),
+      td: a({ t: "sim", k: "tab", x: ${OX} + 8, y: ${OY} + 7.9, r: 180, capa: "E-TABLEROS", nom: "TD-1", nc: 3 }),
+      bm: a({ t: "sim", k: "bmed", x: ${OX} + 5, y: ${OY} + 7.5, r: 0, capa: "E-TABLEROS" })
+    };
+  })()`);
+  await ev("ponerDato('sist', 'tri380'); edCambio(); 1");
+  // Tablero general: sin circuitos derivados; el esquema muestra sus alimentadores, cada uno con todas las fases
+  await ev(`tabAbrir("${ids.tg}"); 1`);
+  await poner("#taGen", "1");
+  ok(await ev("$('taNL').hidden && $('taLista').hidden"), "tablero general: sin número ni lista de circuitos");
+  const esq = await ev("$('taEsq').textContent");
+  ok(
+    /→ Banco/.test(esq) && /→ TD-1/.test(esq) && !/C-1/.test(esq),
+    `alimentadores al banco y al TD-1 (${esq.slice(0, 60)}…)`
+  );
+  ok(
+    (await ev("$('taEsq').querySelectorAll('circle').length")) >= 8,
+    "cada alimentador se conecta a las barras R, S, T y N (puntos de conexión)"
+  );
+  await clic('[data-ta="ok"]');
+  const tg = await J(`dsD().els.find(e => e.id === "${ids.tg}")`);
+  ok(
+    tg.gen === true &&
+      tg.nc === 0 &&
+      (await ev(`dsSalidasTab(dsD().els.find(e => e.id === "${ids.tg}")).length`)) === 0,
+    "el TG ya no tiene salidas C-1, C-2…"
+  );
+  ok(
+    !(await J("dsVerificar().some(o => /TG sin circuitos/.test(o.t))")),
+    "la revisión no pide circuitos al tablero general"
+  );
+  // Circuitos de distribución: cada circuito toma su fase (R, S, T en turno) y el neutro
+  await ev(`tabAbrir("${ids.td}"); 1`);
+  ok(
+    (await ev("$('taEsq').querySelectorAll('circle').length")) === 6,
+    "tablero de distribución trifásico: cada circuito con su fase y el neutro"
+  );
+  await ev("tabCerrar(); 1");
+  // Banco de medidores fuera de un edificio: sus medidores se escriben en el banco
+  await ev(`DS_SEL.clear(); DS_SEL.add("${ids.bm}"); edProps(); 1`);
+  await poner('#edPropC [data-dsp="bmn"]', "3");
+  ok((await ev("$('edPropC').querySelectorAll('.ds-bm tbody tr').length")) === 3, "3 medidores en la tabla del banco");
+  await poner('#edPropC [data-dsp="bmd0"]', "TD-1");
+  await poner('#edPropC [data-dsp="bmf1"]', "3");
+  const M = await J(`dsMedidoresBanco(dsD().els.find(e => e.id === "${ids.bm}"))`);
+  ok(
+    M.length === 3 && M[0].n === "M-1" && M[0].dep === "TD-1" && M[1].tri && !M[2].dep,
+    `medidores escritos: ${M.map(m => m.n + " " + (m.dep || "—") + (m.tri ? " 3φ" : "")).join(", ")}`
+  );
+  await esperar(800);
+  ok(
+    (await J(`PLANO.dis.els.find(e => e.id === "${ids.bm}").meds.length`)) === 3,
+    "los medidores se guardan con el proyecto"
+  );
+  await clic('[data-ed="cancelar"]');
+  await ev(
+    "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+  );
+  // Edificio con el banco junto al TG: tuberías del TG al banco con todos sus conductores
+  await ejemplo("multi");
+  ok(
+    await ev(
+      "!!LAST.tgbm && LAST.tgbm.tubos.length >= 1 && LAST.tgbm.n > 0 && /Del TG al banco de medidores/.test(tablaAlims(LAST, 1))"
+    ),
+    "tuberías del TG al banco dimensionadas y en los resultados"
+  );
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

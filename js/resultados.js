@@ -63,7 +63,26 @@ function tablaAlims(r, nro) {
   return `<section class="card"><h2><span><span class="num">${nro}</span>Alimentadores</span><span class="ref">050-102 · 050-104 · Tabla 2</span></h2>
   <div class="tbl-wrap"><table><thead><tr><th class="t">Alimentador</th>${r.mode === "multi" ? "<th>Cant.</th>" : ""}<th>P (kW)</th><th>Sistema</th><th>I (A)</th><th>Id (A)</th><th>ITM</th><th>PdC</th><th>Conductor Cu</th><th>Iz corr. (A)</th><th>L (m)</th><th>ΔV %</th><th>ΔV acum. %</th><th>Tierra</th><th>Tubo</th><th class="t">Estado</th></tr></thead><tbody>
   ${r.alims.map((a, i) => `<tr${(t => (t ? ` data-fichatab="${t.tab}" title="Doble clic: ficha del tablero ${t.tab}"` : ""))(r.tabs.find(t => t.feeder === i))}><td class="t">${a.desc}</td>${r.mode === "multi" ? `<td>${a.cant ?? 1}</td>` : ""}<td>${fmt(a.P / 1000, 2)}</td><td>${a.s.txt}</td><td>${fmt(a.I, 2)}</td><td>${fmt(a.Id, 2)}${a.Imin && a.Id === a.Imin ? "*" : ""}</td><td>${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</td><td>${a.pdc ?? "—"} kA</td><td>${condTxt(a.s.n, a.S, r.c)}</td><td>${fmt(a.Izc, 1)}</td><td>${fmt(a.L, 1)}</td><td>${fmt(a.dVp, 2)}</td><td${cerca(a.dvAc, DV_ALIM)}>${fmt(a.dvAc, 2)}</td><td>${a.St} mm²</td><td>${a.tubo.mm ? a.tubo.mm + " mm" : a.tubo.pul}</td><td class="t">${pill(a.ok, "Cumple", "Revisar")}</td></tr>`).join("")}
-  </tbody></table></div><div class="body"><p class="hint">* Corriente mínima del código: ${r.mode === "uni" ? "40 A (050-200(1)(b))" : "25 A por departamento (050-202(1)(b))"}. PdC: poder de corte mínimo del interruptor. En ámbar: valores al 90 % o más de su límite. Doble clic en una fila: ficha del tablero.</p></div></section>`;
+  </tbody></table></div><div class="body"><p class="hint">* Corriente mínima del código: ${r.mode === "uni" ? "40 A (050-200(1)(b))" : "25 A por departamento (050-202(1)(b))"}. PdC: poder de corte mínimo del interruptor. En ámbar: valores al 90 % o más de su límite. Doble clic en una fila: ficha del tablero.</p>${tgbmTxt(r) ? `<p class="hint"><b>Del TG al banco de medidores:</b> ${tgbmTxt(r)}.</p>` : ""}</div></section>`;
+}
+/* Tuberías entre el TG y el banco de medidores (banco junto al TG): sus conductores y cuántas tuberías llevan
+   (criterio del diámetro máximo) */
+function tgbmTxt(r) {
+  const g = r.tgbm;
+  if (!g) return "";
+  const grupos = {};
+  g.tubos.forEach(t => {
+    const k = `Ø${t.mm || t.pul} mm`;
+    (grupos[k] = grupos[k] || []).push(t);
+  });
+  return `${g.n} conductores (las fases y el neutro de cada suministro, con la sección de su alimentador) en ${g.tubos.length === 1 ? "una tubería" : `${g.tubos.length} tuberías`}: ${Object.entries(
+    grupos
+  )
+    .map(
+      ([k, l]) =>
+        `${l.length > 1 ? l.length + " × " : ""}${k} (${l.map(t => `${t.n} cond., ${fmt(t.ocup, 0)} %`).join("; ")})`
+    )
+    .join(" + ")} · ocupación hasta 40 % · hasta Ø${g.max} mm por tubería (criterio)`;
 }
 function tablaCircuitos(r, nro) {
   let rows = "";

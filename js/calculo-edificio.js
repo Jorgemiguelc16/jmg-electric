@@ -5,6 +5,54 @@
    (del medidor o banco de medidores al TG), la del tablero de servicios generales (del TG al TSG) y, por cada tipo de
    departamento (el elegido en la ventana de sus tableros), la del alimentador desde el banco de medidores, las salidas
    de alumbrado y tomacorrientes y la longitud de sus circuitos (planoCalc, js/calculo-plano.js). */
+// Diámetro máximo de cada tubería entre el TG y el banco de medidores (criterio de la plataforma: 2")
+const TGBM_MAX = 50;
+/* Conductores del TG al banco de medidores (banco junto al TG): por cada suministro, sus fases y su neutro con la
+   sección de su alimentador, sin tierra (el medidor no la lleva). Se reparten en tuberías de hasta TGBM_MAX mm con el
+   40 % de ocupación, los más grandes primero; cada tubería toma el menor diámetro que le alcanza. */
+function tuberiasTGBanco(units, T, alims, aSG, sk) {
+  const area = S => (Math.PI * OD[S] ** 2) / 4,
+    cap = di => (0.4 * Math.PI * di * di) / 4,
+    sup = [];
+  units.forEach(u => {
+    const a = alims.find(x => x.pKey === "tipo" && x.ti === u.ti);
+    if (!a) return;
+    // Fases y neutros: trifásico, las tres y su neutro; monofásico, fase y neutro (380/220 V) o dos fases (220 V)
+    const nf = a.s.tri ? 3 : sk === "tri380" ? 1 : 2,
+      nn = a.s.tri ? a.s.n - 3 : sk === "tri380" ? 1 : 0;
+    sup.push({ nom: u.ref, n: nf + nn, nf, nn, S: a.S, A: (nf + nn) * area(a.S) });
+  });
+  if (aSG) sup.push({ nom: "TSG", n: aSG.s.n, nf: 3, nn: aSG.s.n - 3, S: aSG.S, A: aSG.s.n * area(aSG.S) });
+  if (!sup.length) return null;
+  const tope = cap((TUBOS.find(t => t[0] === TGBM_MAX) || TUBOS[TUBOS.length - 1])[2]),
+    tubos = [];
+  [...sup]
+    .sort((a, b) => b.A - a.A)
+    .forEach(s => {
+      const t = tubos.find(x => x.A + s.A <= tope);
+      if (t) {
+        t.A += s.A;
+        t.sup.push(s);
+      } else tubos.push({ A: s.A, sup: [s] });
+    });
+  return {
+    max: TGBM_MAX,
+    n: sup.reduce((x, s) => x + s.n, 0),
+    nf: sup.reduce((x, s) => x + s.nf, 0),
+    nn: sup.reduce((x, s) => x + s.nn, 0),
+    tubos: tubos.map(t => {
+      const tb = TUBOS.find(x => t.A <= cap(x[2]));
+      return {
+        mm: tb ? tb[0] : null,
+        pul: tb ? tb[1] : '> 3"',
+        n: t.sup.reduce((x, s) => x + s.n, 0),
+        secc: [...new Set(t.sup.map(s => s.S))].sort((a, b) => a - b),
+        ocup: tb ? (100 * t.A) / ((Math.PI * tb[2] * tb[2]) / 4) : null,
+        sum: t.sup.length
+      };
+    })
+  };
+}
 function calcMulti(c) {
   SFX = (P.SECF || {}).multi || {};
   const sk = pv("sistG") || "tri380",
@@ -369,6 +417,12 @@ function calcMulti(c) {
     circ.filter(q => q.tab === "TSG"),
     c
   );
+  /* Banco junto al TG: de las barras del TG sale hacia el banco la fase (o las tres) y el neutro de cada suministro,
+     con la sección de su alimentador (lámina IE-05), todos por la tubería entre el TG y el banco. Se dimensionan con
+     el 40 % de ocupación, como las demás; si no entran en una de hasta TGBM_MAX mm (criterio), van en varias. */
+  const tgbm = bm
+    ? null
+    : tuberiasTGBanco(units, T, alims, SV.length && !tsgTG ? alims.find(a => a.pKey === "servP") : null, sk);
   const emerg = SV.some(s => /emergencia/i.test(s.nombre));
   const CI =
     T.reduce(
@@ -385,6 +439,7 @@ function calcMulti(c) {
     iccTG,
     // Esquema elegido, solo si no es el de por defecto (banco junto al TG y TSG con medidor en el banco)
     ...(bmLejos || tsgTG ? { topo: { bm: bmLejos, tsgTG, iccBM } } : {}),
+    ...(tgbm ? { tgbm } : {}),
     c,
     sk,
     T,

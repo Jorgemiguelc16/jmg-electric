@@ -605,7 +605,12 @@ function unifilar(r, op = {}) {
       feeders = suministros,
       CF = 200;
     T(x + 20, 214, "BANCO DE MEDIDORES · BARRA GENERAL", { s: 11.5, b: 1, f: NAVY });
-    T(x + 20, 228, `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG, r.c.pdcMin)} kA`, { s: 8.5, f: GR });
+    T(
+      x + 20,
+      228,
+      `Icc ≈ ${fmt(r.iccTG, 2)} kA · PdC mín. ${pdcPara(r.iccTG, r.c.pdcMin)} kA${r.tgbm ? ` · del TG al banco: ${r.tgbm.tubos.length > 1 ? r.tgbm.tubos.length + " tuberías " : ""}${[...new Set(r.tgbm.tubos.map(t => `Ø${t.mm || t.pul} mm`))].join(" y ")} con ${r.tgbm.n} conductores` : ""}`,
+      { s: 8.5, f: GR }
+    );
     const xe = X + 170 + (feeders.length - 1) * CF + 40;
     L(X + 14, yb, xe, yb, 4, CU);
     L(X + 14, yb, X + 14, yb + 180, 1.2, "#2f7a4b", "5 3");

@@ -1854,7 +1854,7 @@
 }
 .ta-cab {
   display: grid;
-  grid-template-columns: minmax(90px, 1fr) auto auto auto;
+  grid-template-columns: minmax(90px, 1fr) repeat(4, auto);
   gap: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--dl-grid2, #c9cfd6);
@@ -2271,6 +2271,13 @@ input.del-plano,
 .ds-bm th {
   font-weight: 600;
   color: var(--dl-ink2, #5f6b77);
+}
+.ds-bm input {
+  width: 100%;
+  min-width: 70px;
+}
+.ds-bm select {
+  width: 60px;
 }
 .ds-bm td:first-child {
   font: 600 11px var(--f-mono);
