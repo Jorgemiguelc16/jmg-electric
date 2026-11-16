@@ -236,6 +236,8 @@ function libSave(L) {
   LIB = L;
   libEspejo();
   alProgramar();
+  // Y su copia en la nube (js/nube.js), con la cuenta aprobada
+  if (typeof nubeProgramar === "function") nubeProgramar();
   return true;
 }
 // Copia en el almacenamiento pequeño: completos los que caben (los más recientes primero); los demás, su resumen
@@ -461,7 +463,11 @@ async function alUso() {
     const e = await navigator.storage.estimate(),
       p = navigator.storage.persisted ? await navigator.storage.persisted() : false,
       mb = v => fmt(v / 1048576, v < 1048576 * 10 ? 1 : 0);
-    el.innerHTML = `Espacio usado en este navegador: <b>${mb(e.usage || 0)} MB</b> de unos ${mb(e.quota || 0)} MB disponibles${p ? " · protegido: el navegador no lo borra por falta de espacio" : ""}. Para no perder su trabajo, exporte sus proyectos de vez en cuando: el archivo lleva también el plano DXF.`;
+    el.innerHTML = `Espacio usado en este navegador: <b>${mb(e.usage || 0)} MB</b> de unos ${mb(e.quota || 0)} MB disponibles${p ? " · protegido: el navegador no lo borra por falta de espacio" : ""}. ${
+      typeof NUBE !== "undefined" && NUBE.uid
+        ? " Sus proyectos, con sus planos DXF, se guardan también en su cuenta (nube): los encuentra al ingresar desde otra computadora."
+        : " Para no perder su trabajo, exporte sus proyectos de vez en cuando: el archivo lleva también el plano DXF."
+    }`;
   } catch (e) {}
 }
 // Borra el proyecto abierto (Restablecer valores iniciales)
@@ -1169,6 +1175,7 @@ $("projList").addEventListener("click", async e => {
   if (a === "del-no") DELQ = null;
   if (a === "del-ok") {
     delete L[b.dataset.id];
+    if (typeof nubeMarcarBorrado === "function") nubeMarcarBorrado(b.dataset.id);
     libSave(L);
     if (b.dataset.id === PID) PID = null;
     DELQ = null;

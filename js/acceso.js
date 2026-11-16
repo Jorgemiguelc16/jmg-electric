@@ -107,6 +107,7 @@ function seguirFicha(u) {
         cuentaUI();
         if (esAdminCuenta) {
           abrirPlataforma(true);
+          if (typeof nubeIniciar === "function") nubeIniciar(u);
           return;
         }
         if (!FICHA) {
@@ -117,6 +118,8 @@ function seguirFicha(u) {
         }
         if (FICHA.estado === "aprobado") {
           abrirPlataforma(true);
+          // Sus proyectos en la nube (js/nube.js)
+          if (typeof nubeIniciar === "function") nubeIniciar(u);
           // Bienvenida formal cada vez que la persona inicia sesión (y la primera vez en este navegador);
           // al recargar con la sesión guardada no se repite. El administrador recibe su saludo personal.
           const clave = "jmg-electric-bienvenida-" + u.uid;
@@ -133,6 +136,7 @@ function seguirFicha(u) {
           }
           return;
         }
+        if (typeof nubeDetener === "function") nubeDetener();
         $("pendCorreo").textContent = u.email;
         accVista(FICHA.estado === "pendiente" ? "pendiente" : "denegado");
         abrirPlataforma(false);
@@ -166,6 +170,7 @@ function iniciarAcceso() {
         desAdmin = null;
       }
       FICHA = null;
+      if (typeof nubeDetener === "function") nubeDetener();
       accVista("ingreso");
       abrirPlataforma(false);
       return;

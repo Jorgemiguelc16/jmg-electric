@@ -283,7 +283,7 @@ function wsRefresh(F) {
     (r
       ? `<div>MD ${fmt((r.mode === "multi" ? r.MD : r.md.MD) / 1000, 2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri ? 3 : 2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt)), 2)} %</div><div class="${ok ? "g" : "b"}">${ok ? "CONFORME" : "REVISAR"}</div>`
       : `<div class="w">${WSF.length} dato${WSF.length === 1 ? "" : "s"} pendiente${WSF.length === 1 ? "" : "s"}</div>`) +
-    `<div class="r">${n && !/^EJEMPLO\b/.test(n) ? `Guardado ${hh}` : /^EJEMPLO\b/.test(n) ? "Ejemplo · no se guarda" : "Sin nombre · no se guarda"} · ${VERSION}</div>`;
+    `<div class="r">${n && !/^EJEMPLO\b/.test(n) ? `Guardado ${hh}` : /^EJEMPLO\b/.test(n) ? "Ejemplo · no se guarda" : "Sin nombre · no se guarda"}${typeof nubeTxt === "function" ? " · " + nubeTxt() : ""} · ${VERSION}</div>`;
   if (!$("ws").hidden) exTree();
   if (FC_KEY && !FC_APL) renderFicha();
   if (TC_PEND) tcSync();

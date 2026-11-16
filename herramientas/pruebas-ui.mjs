@@ -2696,6 +2696,106 @@ prueba("Tablero general solo con alimentadores, banco con sus medidores y tuber�
   );
 });
 
+prueba("Proyectos en la nube: se suben, se traen con su plano DXF y se borran en los demás equipos", async ok => {
+  // Firestore simulado en memoria (la prueba no toca la nube real)
+  await ev(`(() => {
+    const S = (window.FSM = new Map()), O = [];
+    const cp = v => JSON.parse(JSON.stringify(v));
+    const avisar = () => setTimeout(() => O.slice().forEach(f => f()), 0);
+    const snapCol = p => {
+      const docs = [...S.keys()]
+        .filter(k => k.startsWith(p + "/") && !k.slice(p.length + 1).includes("/"))
+        .map(k => ({ id: k.slice(p.length + 1), exists: true, data: () => cp(S.get(k)) }));
+      return { docs, forEach: f => docs.forEach(f) };
+    };
+    const doc = p => ({
+      collection: n => col(p + "/" + n),
+      get: async () => ({ id: p.split("/").pop(), exists: S.has(p), data: () => (S.has(p) ? cp(S.get(p)) : undefined) }),
+      set: async v => (S.set(p, cp(v)), avisar()),
+      delete: async () => (S.delete(p), avisar())
+    });
+    const col = p => ({
+      doc: id => doc(p + "/" + id),
+      get: async () => snapCol(p),
+      onSnapshot: cb => {
+        const f = () => cb(snapCol(p));
+        O.push(f);
+        f();
+        return () => O.splice(O.indexOf(f), 1);
+      }
+    });
+    window.firebase = window.firebase || {};
+    window.FS_ORIG = firebase.firestore;
+    firebase.firestore = () => ({ collection: n => col(n) });
+    ["jmg-electric-nube-duenos", "jmg-electric-nube-borrados", "jmg-electric-nube-u1", "jmg-electric-nube-u2"].forEach(k => localStorage.removeItem(k));
+    return 1;
+  })()`);
+  const hasta = async (expr, ms = 8000) => {
+    for (let t = 0; t < ms; t += 100) {
+      if (await ev(expr)) return true;
+      await esperar(100);
+    }
+    return false;
+  };
+  const alDia = () => hasta("!NUBE.ocupado && NUBE.est === 'al día'");
+  await ejemplo("uni");
+  await abrirPlano();
+  await clic('[data-ed="aceptar"]');
+  await ev("ponerDato('p_nombre', 'Casa en la nube'); saveDraft(); 1");
+  const id = await ev("PID"),
+    sha = await ev("PLANO.sha");
+  await esperar(400);
+  await ev("nubeIniciar({ uid: 'u1' }); 1");
+  ok(await alDia(), "con la cuenta, la nube queda «al día»");
+  const m = await J(`FSM.get("proyectos/u1/p/${id}")`);
+  ok(m && m.nombre === "Casa en la nube" && m.n >= 1, "el proyecto se sube a la cuenta");
+  ok(
+    await ev(
+      `(() => { const m = FSM.get("proyectos/u1/planos/${sha}"); return !!(m && m.ok && FSM.get("proyectos/u1/planos/${sha}/partes/0").d.length > 100); })()`
+    ),
+    "y su plano DXF, en partes"
+  );
+  ok(/Nube: al día/.test(await ev("$('wsStatus').textContent")), "la barra de abajo dice «Nube: al día»");
+  // Otro equipo cambia el proyecto: este equipo trae la versión más reciente
+  await ev(
+    `(() => { const o = JSON.parse(JSON.stringify(libLoad()["${id}"])); o.p_nombre = "Casa editada en otra PC"; o.savedAt = new Date(Date.now() + 60000).toISOString(); return nubeSubir(o).then(() => 1); })()`
+  );
+  ok(
+    await hasta(`libLoad()["${id}"] && libLoad()["${id}"].p_nombre === "Casa editada en otra PC"`),
+    "trae el cambio hecho en otro equipo"
+  );
+  // Una computadora nueva (sin el proyecto ni su plano): al ingresar, aparecen los dos
+  await ev(`(async () => {
+    nubeDetener();
+    const L = libLoad(); delete L["${id}"]; libSave(L);
+    const db = await plDb();
+    await new Promise(r => { const t = db.transaction("planos", "readwrite"); t.objectStore("planos").delete("${sha}"); t.oncomplete = r; });
+    ["jmg-electric-nube-duenos", "jmg-electric-nube-u1"].forEach(k => localStorage.removeItem(k));
+    return 1;
+  })()`);
+  ok(!(await ev(`plLeerArchivo("${sha}").then(a => !!a)`)), "(equipo nuevo: sin el plano)");
+  await ev("nubeIniciar({ uid: 'u1' }); 1");
+  ok(await hasta(`!!libLoad()["${id}"]`), "en otro equipo, el proyecto aparece desde la nube");
+  ok(await ev(`plLeerArchivo("${sha}").then(a => !!(a && a.buf && a.buf.byteLength > 100))`), "con su plano DXF");
+  await alDia();
+  // Eliminado en un equipo: queda «borrado» en la nube (los demás equipos lo quitan)
+  await ev(`(() => { const L = libLoad(); delete L["${id}"]; nubeMarcarBorrado("${id}"); libSave(L); return 1; })()`);
+  ok(
+    await hasta(`!!(FSM.get("proyectos/u1/p/${id}") || {}).borrado`),
+    "al eliminarlo, queda marcado como borrado en la nube"
+  );
+  ok(!(await ev(`FSM.has("proyectos/u1/p/${id}/partes/0")`)), "y sin sus datos");
+  // Los proyectos que otra cuenta subió en este navegador no pasan a la nueva cuenta
+  await ev(
+    `(() => { nubeDetener(); const L = libLoad(); L["pz"] = { app: "JMG-ELECTRIC", id: "pz", p_nombre: "De u1", savedAt: new Date().toISOString() }; const D = JSON.parse(localStorage.getItem("jmg-electric-nube-duenos") || "{}"); D.pz = "u1"; localStorage.setItem("jmg-electric-nube-duenos", JSON.stringify(D)); libSave(L); nubeIniciar({ uid: "u2" }); return 1; })()`
+  );
+  await alDia();
+  ok(!(await ev(`FSM.has("proyectos/u2/p/pz")`)), "un proyecto de otra cuenta no se sube a esta");
+  await ev(
+    `(() => { nubeDetener(); const L = libLoad(); delete L.pz; libSave(L); if (window.FS_ORIG) firebase.firestore = FS_ORIG; ["jmg-electric-nube-duenos", "jmg-electric-nube-borrados", "jmg-electric-nube-u1", "jmg-electric-nube-u2"].forEach(k => localStorage.removeItem(k)); return 1; })()`
+  );
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();
