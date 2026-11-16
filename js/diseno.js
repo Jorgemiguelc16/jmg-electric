@@ -1,6 +1,6 @@
 /* DISEÑO ELÉCTRICO EN EL EDITOR (etapa 2 del diseño en planta)
    Los elementos que el proyectista dibuja sobre el plano de arquitectura, guardados en la copia del editor como
-   EPL.dis = { capas, actual, els, escala, etq } (pasan al proyecto con Aplicar, en PLANO.dis):
+   EPL.dis = { capas, actual, els, escala, etq } (se guardan solos en el proyecto, en PLANO.dis):
    - símbolos de la Norma DGE «Símbolos gráficos en electricidad» (R.M. N.° 091-2002-EM/VME), los mismos de las
      láminas (simboloDGE() en js/simbolos.js), cada uno con su código, en la capa de su sistema, con rotación,
      altura de montaje, potencia y circuito; los que van en la pared se encajan solos en el muro más cercano;

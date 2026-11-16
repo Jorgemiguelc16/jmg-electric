@@ -1719,6 +1719,10 @@ body:not(.sin-falta) select.falta {
   font-size: 12.5px;
   line-height: 1.5;
 }
+.falta-plano .btn {
+  margin-left: 6px;
+  vertical-align: baseline;
+}
 .faltan {
   list-style: none;
   margin: 12px 0;

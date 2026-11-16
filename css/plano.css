@@ -50,6 +50,9 @@
   font: 500 11.5px var(--f-body);
   color: #f0c060;
 }
+.ed-sucio.ok {
+  color: #9fd8a8;
+}
 /* Cuerpo: plantas y capas | plano | propiedades */
 .ed-main {
   flex: 1;
@@ -2271,4 +2274,129 @@ input.del-plano,
 }
 .ds-bm td:first-child {
   font: 600 11px var(--f-mono);
+}
+/* Pasos del diseño: el orden de trabajo con el plano, con el estado de cada uno (clic: su herramienta) */
+.ed-pasos {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--ws-line, #d6dde6);
+  background: var(--ws-ribbon, #f6f8fb);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.ed-pasos:empty {
+  display: none;
+}
+.ed-paso {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 8px 2px 4px;
+  border: 1px solid transparent;
+  background: none;
+  font: 11px var(--f-body);
+  color: var(--ink, #1b1b1b);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ed-paso:hover {
+  border-color: var(--ws-hover-b, #c9d3de);
+  background: var(--ws-hover, #eef2f6);
+}
+.ed-paso i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid #9aa6b2;
+  font: 700 10px var(--f-mono);
+  font-style: normal;
+  color: #5f6b77;
+}
+.ed-paso.ok i {
+  border-color: #2f7a4b;
+  background: #2f7a4b;
+  color: #fff;
+}
+.ed-paso.av i {
+  border-color: #c77d2e;
+  background: #c77d2e;
+  color: #fff;
+}
+.ed-paso.opc i {
+  border-style: dashed;
+}
+.ed-paso span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.ed-paso b {
+  font-weight: 600;
+}
+.ed-paso small {
+  font-size: 10px;
+  color: var(--muted, #6b7785);
+}
+.ed-paso.av small {
+  color: #a35f17;
+}
+.ed-paso-f {
+  color: #9aa6b2;
+  font-size: 13px;
+}
+/* Cálculo en vivo en el panel izquierdo del editor */
+.ed-vivo {
+  padding: 6px 10px 8px;
+  font: 11.5px var(--f-body);
+  color: var(--ink, #1b1b1b);
+}
+.ed-vivo p {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.ed-vivo .pend {
+  font-weight: 600;
+  color: #a35f17;
+}
+.ed-vivo .nota {
+  color: var(--muted, #6b7785);
+}
+.ed-vivo ul {
+  margin: 0 0 6px;
+  padding-left: 16px;
+}
+.ed-vivo li small {
+  display: block;
+  color: var(--muted, #6b7785);
+}
+.ed-vivo dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0 0 8px;
+}
+.ed-vivo dt {
+  color: var(--muted, #6b7785);
+}
+.ed-vivo dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.ed-vivo .bad,
+#edVivoE .bad {
+  color: #b42318;
+}
+#edVivoE .ok {
+  color: #2f7a4b;
+}
+.ed-vivo .vw-btn {
+  width: 100%;
 }

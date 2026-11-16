@@ -42,6 +42,7 @@ $("fileOpen").addEventListener("change", () => {
     $("openMsg").textContent = "";
     msg.textContent = `Proyecto «${o.p_nombre || "sin nombre"}» abierto.`;
     setTab("calculo");
+    abrirSegunFlujo();
   };
   rd.readAsText(f);
 });

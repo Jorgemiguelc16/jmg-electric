@@ -1,6 +1,7 @@
 /* EDITOR DE DISEÑO · PLANO DE ARQUITECTURA (etapa 1 del diseño en planta)
-   El editor ocupa toda la pantalla (se abre desde la pestaña Diseño de la cinta) y trabaja sobre una copia del plano
-   del proyecto: los cambios pasan al proyecto con Aplicar o Aceptar, como en las fichas, y Cancelar los descarta.
+   El editor ocupa toda la pantalla (se abre desde la pestaña Diseño de la cinta, o solo al crear o abrir un proyecto
+   que se trabaja con el plano) y trabaja sobre una copia del plano del proyecto, que se guarda sola en el proyecto
+   medio segundo después de cada cambio (autoguardado); «Descartar cambios» lo vuelve a como estaba al abrir.
    Tiene su propio deshacer (Ctrl+Z / Ctrl+Y) mientras está abierto.
    - Plano de arquitectura en DXF (js/dxf.js): zoom con la rueda del mouse (centrado en el cursor), desplazamiento
      arrastrando, capas que se muestran u ocultan, plano atenuado, escala comprobada con una medida conocida y
@@ -245,6 +246,9 @@ function edAbrir(conArchivo) {
   ED.base = edSnap();
   ED.hist = [ED.base];
   ED.redo = [];
+  // Cómo estaba el proyecto al abrir el editor: «Descartar cambios» vuelve a esto
+  ED.ini = ED.base;
+  ED.iniPlano = PLANO ? clon(PLANO) : null;
   $("editor").hidden = false;
   document.body.classList.add("ed-on");
   $("edNom").textContent = $("p_nombre").value.trim() || "Proyecto sin nombre";
@@ -297,6 +301,28 @@ function edCambio() {
   plMostrar();
   elRender();
   edAutoguardar();
+  edGuardarLuego();
+}
+/* Autoguardado: los cambios del editor pasan solos al proyecto medio segundo después del último (con «Calcular con el
+   diseño», el proyecto se recalcula); el deshacer del editor sigue disponible y «Descartar cambios» vuelve a como
+   estaba al abrir el editor */
+function edGuardarLuego() {
+  clearTimeout(ED.tAuto);
+  ED.tAuto = setTimeout(edGuardarYa, 600);
+  edEstado();
+}
+function edGuardarYa() {
+  clearTimeout(ED.tAuto);
+  ED.tAuto = null;
+  if (ED.abierto && edSnap() !== ED.base) {
+    PLANO = EPL ? clon(EPL) : null;
+    ED.base = edSnap();
+    saveDraft();
+    if (PROY.calPlano === "1") calcularAhora();
+    edAutoguardar(true);
+  }
+  edEstado();
+  if (typeof edVivo === "function") edVivo();
 }
 function edHist(dir) {
   if (dir < 0 && ED.hist.length < 2) return;
@@ -306,6 +332,7 @@ function edHist(dir) {
   EPL = JSON.parse(ED.hist[ED.hist.length - 1]);
   dsAsegurar();
   DS_N = 0;
+  edGuardarLuego();
   [...DS_SEL].forEach(id => {
     if (!dsD() || !dsD().els.some(el => el.id === id)) DS_SEL.delete(id);
   });
@@ -321,27 +348,28 @@ function edHist(dir) {
   plMostrar();
   toast(dir < 0 ? "Cambio deshecho en el editor" : "Cambio rehecho en el editor");
 }
-// Botones del editor: deshacer y rehacer, y Aplicar solo con cambios sin aplicar
+// Barra del editor: deshacer y rehacer, y si el diseño ya está guardado en el proyecto
 function edEstado() {
-  const sucio = edSnap() !== ED.base;
+  const pend = !!ED.tAuto || edSnap() !== ED.base,
+    cambio = pend || ED.base !== ED.ini;
   $("edUndo").disabled = ED.hist.length < 2;
   $("edRedo").disabled = !ED.redo.length;
-  $("edAplicar").disabled = !sucio;
-  $("edSucio").hidden = !sucio;
+  $("edSucio").hidden = !cambio;
+  $("edSucio").textContent = pend ? "Guardando…" : "✓ Guardado en el proyecto";
+  $("edSucio").classList.toggle("ok", !pend);
+  $("edDescartar").disabled = !cambio;
 }
-// Pasa la copia del editor al proyecto (se guarda y entra al historial de deshacer del proyecto)
+/* Guarda ya el diseño en el proyecto (al volver al proyecto): entra al historial de deshacer del proyecto y, la
+   primera vez que el diseño tiene datos para el cálculo, ofrece calcular con él */
 function edAplicar() {
-  if (edSnap() === ED.base) return;
-  PLANO = EPL ? clon(EPL) : null;
-  ED.base = edSnap();
-  saveDraft();
+  edGuardarYa();
+  if (ED.base === ED.ini) return;
+  ED.ini = ED.base;
+  ED.iniPlano = PLANO ? clon(PLANO) : null;
   histPush();
   plLimpiarArchivos();
   edEstado();
   edInfo();
-  edAutoguardar(true);
-  if (PROY.calPlano === "1") calcularAhora();
-  toast("Cambios del diseño aplicados al proyecto");
   const D = EPL && EPL.dis;
   if (
     PROY.calPlano !== "1" &&
@@ -365,18 +393,25 @@ function edAplicar() {
     );
   }
 }
+// Descartar cambios: el proyecto vuelve a como estaba al abrir el editor (o a lo último que se llevó al proyecto)
 function edCancelar() {
-  if (edSnap() === ED.base) return edCerrar();
+  clearTimeout(ED.tAuto);
+  ED.tAuto = null;
+  if (edSnap() === ED.ini) return edCerrar();
   confirmar(
-    "¿Cerrar sin aplicar los cambios?",
-    "<p>Los cambios del editor que no aplicó (plano, escala, capas o plantas) se pierden. El proyecto queda como estaba la última vez que pulsó <b>Aplicar</b>.</p>",
-    "Cerrar sin aplicar",
+    "¿Descartar los cambios del diseño?",
+    "<p>El diseño se guarda solo en el proyecto mientras trabaja. <b>Descartar cambios</b> lo vuelve a como estaba al abrir el editor: se pierden el plano, la escala, las capas, las plantas y los elementos que agregó o cambió desde entonces.</p>",
+    "Descartar cambios",
     ok => {
-      if (!ok) return;
+      if (!ok) return edEstado();
       try {
         localStorage.removeItem(ED_REC);
       } catch (e) {}
+      PLANO = ED.iniPlano ? clon(ED.iniPlano) : null;
+      saveDraft();
+      if (PROY.calPlano === "1") calcularAhora();
       edCerrar();
+      toast("Cambios del diseño descartados");
     }
   );
 }
@@ -2055,6 +2090,9 @@ function plMostrar() {
   edBotonesEstado();
   dsCinta();
   plPanel();
+  // Pasos del diseño y cálculo en vivo (con una pausa: la revisión recorre todo el diseño)
+  clearTimeout(ED.tVivo);
+  ED.tVivo = setTimeout(() => typeof edVivo === "function" && edVivo(), 300);
   edProps();
   if (ED.abierto) {
     plTam();
@@ -2463,8 +2501,8 @@ function edRecuperar() {
   if (!r || r.f >= (ED.t0 || 0) || r.p !== $("p_nombre").value.trim() || r.s === ED.base) return;
   const f = new Date(r.f);
   confirmar(
-    "¿Recuperar el diseño sin aplicar?",
-    `<p>Hay cambios del editor de este proyecto del <b>${f.toLocaleDateString("es-PE")} a las ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}</b> que no se aplicaron (por ejemplo, porque se cerró el navegador).</p><p>¿Quiere recuperarlos? Luego pulse <b>Aplicar</b> para pasarlos al proyecto.</p>`,
+    "¿Recuperar el diseño sin guardar?",
+    `<p>Hay cambios del editor de este proyecto del <b>${f.toLocaleDateString("es-PE")} a las ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}</b> que no llegaron a guardarse (por ejemplo, porque se cerró el navegador).</p><p>¿Quiere recuperarlos? Se guardan en el proyecto al instante.</p>`,
     "Recuperar",
     ok => {
       try {
@@ -2476,7 +2514,7 @@ function edRecuperar() {
       if (EPL && (PL_SHA !== EPL.sha || !PL_MOD)) plCargarGuardado();
       else plPreparar();
       edCambio();
-      toast("Diseño recuperado · pulse Aplicar para pasarlo al proyecto");
+      toast("Diseño recuperado y guardado en el proyecto");
     }
   );
 }

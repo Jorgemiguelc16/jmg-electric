@@ -3105,3 +3105,177 @@ function dpSobre(g, q, d) {
     "top"
   );
 }
+
+/* ---------- Pasos del diseño y cálculo en vivo ----------
+   Barra de pasos bajo la cinta del editor (el orden de trabajo con el plano: plano, ambientes, tableros, artefactos,
+   tuberías, revisión y resultados), cada uno con su estado y un clic que lleva a su herramienta; y, en el panel
+   izquierdo, el resultado del cálculo del proyecto, que se actualiza con el autoguardado del diseño. */
+const ED_PASOS = [
+  ["plano", "Plano y escala"],
+  ["amb", "Ambientes"],
+  ["tab", "Tableros"],
+  ["art", "Artefactos"],
+  ["tub", "Tuberías"],
+  ["rev", "Revisión"],
+  ["res", "Resultados"]
+];
+// Estado de cada paso: ok (hecho), av (con algo por resolver), opc (opcional, sin hacer), no (por hacer)
+function edPasosEstado() {
+  const D = dsD(),
+    els = D ? D.els : [],
+    E = {};
+  const hayPlano = !!(EPL && PL_MOD);
+  E.plano = hayPlano
+    ? {
+        st: "ok",
+        d: `${plNomUnidad(EPL.f)}${EPL.plantas.length ? ` · ${EPL.plantas.length} planta${EPL.plantas.length > 1 ? "s" : ""}` : ""}`
+      }
+    : { st: "no", d: "Abra el DXF" };
+  const amb = els.filter(e => e.ar && e.ar.amb).length;
+  E.amb = amb ? { st: "ok", d: `${amb} marcados` } : { st: "opc", d: "Opcional: reglas del CNE" };
+  const tabs = els.filter(e => e.k === "tab"),
+    conC = tabs.filter(e => e.nc > 0);
+  E.tab = !tabs.length
+    ? { st: "no", d: "Coloque el TG" }
+    : conC.length < tabs.length
+      ? { st: "av", d: `${tabs.length - conC.length} sin circuitos` }
+      : { st: "ok", d: `${tabs.length} tablero${tabs.length > 1 ? "s" : ""}` };
+  const arts = els.filter(e => e.t === "sim" && e.k !== "tab" && plArt(e.k)[0]),
+    sinCir = arts.filter(e => !e.cir);
+  E.art = !arts.length
+    ? { st: "no", d: "Salidas y cargas" }
+    : sinCir.length
+      ? { st: "av", d: `${sinCir.length} sin circuito` }
+      : { st: "ok", d: `${arts.length} salidas` };
+  const tubs = els.filter(e => e.t === "tub"),
+    sl = D ? dsSueltos() : { sims: [] };
+  E.tub = !tubs.length
+    ? { st: "no", d: "Una los circuitos" }
+    : sl.sims.length
+      ? { st: "av", d: `${sl.sims.length} sin tubería` }
+      : { st: "ok", d: `${tubs.length} tuberías` };
+  const R = D && els.length ? dsVerificar() : [],
+    sg = R.filter(o => o.nivel === "seg").length,
+    av = R.filter(o => o.nivel === "aviso").length;
+  E.rev = !els.length
+    ? { st: "no", d: "" }
+    : sg
+      ? { st: "av", d: `${sg} de seguridad` }
+      : av
+        ? { st: "av", d: `${av} aviso${av > 1 ? "s" : ""}` }
+        : { st: "ok", d: "Sin avisos" };
+  const r = LAST,
+    ok = r && r.alims.every(a => a.ok) && r.circ.every(q => q.ok);
+  E.res =
+    PROY.calPlano !== "1"
+      ? { st: "no", d: "Con datos escritos" }
+      : !r
+        ? { st: "no", d: "Faltan datos" }
+        : ok
+          ? { st: "ok", d: "Conforme" }
+          : { st: "av", d: "Revisar" };
+  return E;
+}
+function edVivo() {
+  if (!ED.abierto) return;
+  const E = edPasosEstado(),
+    ic = { ok: "✓", av: "!", opc: "–" };
+  $("edPasos").innerHTML = ED_PASOS.map(
+    ([k, t], i) =>
+      `<button type="button" class="ed-paso ${E[k].st}" data-paso="${k}" title="${esc(E[k].d || t)}"><i>${ic[E[k].st] || i + 1}</i><span><b>${t}</b><small>${esc(E[k].d || "")}</small></span></button>`
+  ).join('<span class="ed-paso-f" aria-hidden="true">›</span>');
+  // Cálculo en vivo
+  const r = LAST,
+    v = $("edVivo");
+  if (PROY.calPlano !== "1") {
+    $("edVivoE").textContent = "";
+    v.innerHTML = `<p>El proyecto se calcula con los <b>datos escritos</b>; el diseño no cambia el cálculo.</p><button type="button" class="vw-btn def" data-vivo="calplano">Calcular con el diseño</button>`;
+    return;
+  }
+  if (!r) {
+    const F = faltantes(estado());
+    $("edVivoE").textContent = F.length ? `${F.length} pendiente${F.length > 1 ? "s" : ""}` : "";
+    // Cómo sale del plano cada dato que falta (si no, se escribe en el proyecto)
+    const PISTA = {
+      area: "márquela con las áreas del plano (Dibujo › Área) o escríbala",
+      Lalim: "dibuje el medidor y la tubería alimentador hasta el TG",
+      Lgen: "dibuje el medidor y la tubería alimentador hasta el TG",
+      Lbm: "dibuje la tubería alimentador del TG al banco"
+    };
+    v.innerHTML = `<p class="pend">Para calcular falta:</p><ul>${F.slice(0, 5)
+      .map(x => `<li>${esc(x.l)}${PISTA[x.id] ? `<small>${PISTA[x.id]}</small>` : ""}</li>`)
+      .join(
+        ""
+      )}${F.length > 5 ? `<li>y ${F.length - 5} más</li>` : ""}</ul><p class="nota">Dibuje los tableros con sus circuitos, las salidas y las tuberías: el cálculo los toma del plano.</p><button type="button" class="vw-btn" data-vivo="datos">Escribir los datos que faltan</button>`;
+    return;
+  }
+  const ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
+    a0 = r.alims[0],
+    md = r.mode === "multi" ? r.MD : r.md.MD,
+    dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
+  $("edVivoE").innerHTML = `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`;
+  v.innerHTML =
+    `<dl><dt>Máxima demanda</dt><dd>${fmt(md / 1000, 2)} kW</dd>` +
+    `<dt>Alimentador</dt><dd>${a0.s.n}-1×${a0.S} mm² · ${a0.s.tri ? 3 : 2}×${a0.itm} A</dd>` +
+    `<dt>ΔV máxima</dt><dd${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</dd>` +
+    `<dt>Circuitos</dt><dd>${r.circ.length}${r.circ.some(q => !q.ok) ? ` · ${r.circ.filter(q => !q.ok).length} por revisar` : ""}</dd></dl>` +
+    `<button type="button" class="vw-btn" data-vivo="res">Ver resultados completos</button>`;
+}
+$("edPasos").addEventListener("click", e => {
+  const b = e.target.closest("[data-paso]");
+  if (!b) return;
+  const k = b.dataset.paso,
+    pest = t => document.querySelector(`#editor [data-tab-e="${t}"]`)?.click(),
+    herr = h => document.querySelector(`#editor [data-pl="${h}"]`)?.click();
+  if (k === "plano") {
+    if (!(EPL && PL_MOD)) return $("plArchivo").click();
+    pest("inicio");
+    herr("planta");
+    return toast(
+      "Encuadre cada planta del plano (dos clics en sus esquinas); la escala se comprueba en Inicio › Comprobar escala"
+    );
+  }
+  if (!(EPL && PL_MOD)) return toast("Primero abra el plano de arquitectura en DXF");
+  if (k === "amb") return ambAbrir();
+  if (k === "tab") {
+    pest("insertar");
+    herr("col:tab");
+    return toast("Coloque el tablero en el plano; luego doble clic en él para darle sus circuitos");
+  }
+  if (k === "art") {
+    pest("insertar");
+    return bibAbrir();
+  }
+  if (k === "tub") {
+    pest("insertar");
+    herr("tubT");
+    return toast("Tubería por el techo: empiece en una salida del tablero (C-1, C-2…) y una los artefactos");
+  }
+  if (k === "rev") return revAbrir();
+  if (k === "res") edIrResultados();
+});
+$("edVivo").addEventListener("click", e => {
+  const b = e.target.closest("[data-vivo]");
+  if (!b) return;
+  if (b.dataset.vivo === "calplano") {
+    ponerDato("calPlano", "1");
+    $("calPlano").dispatchEvent(new Event("change", { bubbles: true }));
+    calcularAhora();
+    edVivo();
+    return toast("El proyecto se calcula con el diseño del plano");
+  }
+  if (b.dataset.vivo === "res") edIrResultados();
+  // Los datos que el plano no da: el proyecto, con el primero que falta resaltado
+  if (b.dataset.vivo === "datos") {
+    edAplicar();
+    edCerrar();
+    const F = faltantes();
+    if (F.length) document.querySelector(`[data-foco="${F[0].id}"]`)?.click();
+  }
+});
+// Guarda el diseño, cierra el editor y muestra los resultados del proyecto
+function edIrResultados() {
+  edAplicar();
+  edCerrar();
+  document.querySelector('#ws [data-tab-r="resultados"]')?.click();
+}

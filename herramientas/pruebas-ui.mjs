@@ -399,12 +399,17 @@ const orden = () => ev("$('plCmdT').textContent");
 const ctrlZ = () =>
   cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "z", code: "KeyZ", windowsVirtualKeyCode: 90, modifiers: 2 });
 
-prueba("Editor de diseño: plano, capas, plantas, deshacer, aplicar, cancelar y guardado", async ok => {
+prueba("Editor de diseño: plano, capas, plantas, deshacer, autoguardado, descartar y guardado", async ok => {
   await ejemplo("uni");
   await abrirPlano();
   ok(await ev("!$('editor').hidden && document.body.classList.contains('ed-on')"), "el editor ocupa la pantalla");
   ok(await ev("EPL.f === 1 && EPL.de === 'cotas'"), "unidad: metros según las cotas (la cabecera dice mm)");
-  ok(await ev("PLANO === null && !$('edSucio').hidden"), "el proyecto no cambia hasta aplicar");
+  // Autoguardado: el plano pasa solo al proyecto medio segundo después del último cambio
+  await esperar(800);
+  ok(
+    await ev("!!PLANO && PLANO.nombre === 'plano-prueba.dxf' && /Guardado/.test($('edSucio').textContent)"),
+    "el plano se guarda solo en el proyecto («✓ Guardado en el proyecto»)"
+  );
   ok(await ev("['OCULTA', 'CONGELADA'].every(c => EPL.ocultas.includes(c))"), "capas apagada y congelada ocultas");
   // Capas en su ventana (Administrador de capas)
   await clic('#editor [data-pl="capas"]');
@@ -418,28 +423,34 @@ prueba("Editor de diseño: plano, capas, plantas, deshacer, aplicar, cancelar y 
   await clic('[data-ca="cerrar"]');
   await ctrlZ();
   ok(await ev("!EPL.ocultas.includes('EJES')"), "Ctrl+Z deshace en el editor");
-  ok((await ev("HIST.length")) === hist0 && (await ev("PLANO === null")), "el deshacer del proyecto no se toca");
+  await esperar(800);
+  ok(
+    (await ev("HIST.length")) === hist0 && (await ev("!PLANO.ocultas.includes('EJES')")),
+    "el deshacer del proyecto no se toca y el proyecto sigue al editor"
+  );
   await clic('#editor [data-pl="planta"]');
   await clicPlano(OX - 0.5, OY - 0.5, 0);
   await clicPlano(OX + 10.5, OY + 8.5, 0);
   ok((await ev("$('plCmdV').value")) === "1er piso", "nombre propuesto para la planta");
   await clic("#plCmdOk");
   ok(await ev("EPL.plantas.length === 1 && EPL.plantas[0].n === '1er piso'"), "planta encuadrada");
-  await clic('[data-ed="aplicar"]');
-  ok(
-    await ev("PLANO && PLANO.plantas.length === 1 && $('edSucio').hidden && $('edAplicar').disabled"),
-    "Aplicar pasa el plano y la planta al proyecto"
-  );
-  // Un cambio sin aplicar y Cancelar: pide confirmación y no llega al proyecto
+  await esperar(800);
+  ok(await ev("PLANO && PLANO.plantas.length === 1"), "la planta se guarda sola en el proyecto");
+  // Volver al proyecto y abrir de nuevo: lo de esta sesión queda; un cambio y «Descartar cambios» lo deshace
+  await clic('[data-ed="aceptar"]');
+  await ev("edAbrir(false); 1");
+  for (let i = 0; i < 40 && !(await ev("!!PL_MOD")); i++) await esperar(100);
   await clic('#editor [data-pl="capas"]');
   await clic('#caTabla tr[data-caa="EJES"] input[data-caf="vis"]');
   await clic('[data-ca="cerrar"]');
+  await esperar(800);
+  ok(await ev("PLANO.ocultas.includes('EJES')"), "el cambio llega solo al proyecto");
   await clic('[data-ed="cancelar"]');
-  ok(await ev("!$('cfmDlg').hidden"), "Cancelar con cambios pide confirmación");
+  ok(await ev("!$('cfmDlg').hidden"), "Descartar cambios pide confirmación");
   await clic("#cfmSi");
   ok(
-    await ev("$('editor').hidden && !PLANO.ocultas.includes('EJES')"),
-    "cerrar sin aplicar: el proyecto queda como estaba"
+    await ev("$('editor').hidden && !PLANO.ocultas.includes('EJES') && PLANO.plantas.length === 1"),
+    "descartar: el proyecto vuelve a como estaba al abrir el editor"
   );
   ok(/plano-prueba\.dxf/.test(await ev("$('plInfo').textContent")), "la pestaña Diseño muestra el plano del proyecto");
   // El proyecto guardado vuelve a abrir el plano desde la base de datos del navegador
@@ -449,7 +460,7 @@ prueba("Editor de diseño: plano, capas, plantas, deshacer, aplicar, cancelar y 
   for (let i = 0; i < 40 && !(await ev("!!PL_MOD")); i++) await esperar(100);
   ok(await ev("!!PL_MOD && EPL.plantas.length === 1"), "el plano se vuelve a leer del navegador con sus plantas");
   await clic('[data-ed="aceptar"]');
-  ok(await ev("$('editor').hidden"), "Aceptar cierra el editor");
+  ok(await ev("$('editor').hidden"), "«Volver al proyecto» cierra el editor");
 });
 
 prueba("Editor de diseño: selección, distancia con enganche, recorrido, objetos y escala", async ok => {
@@ -845,7 +856,7 @@ prueba(
     ok(na > 3 && (await ev("DS_SEL.size")) > 0, `el marco elige objetos de la arquitectura (${na}) y del diseño`);
     await teclaE("x", "KeyX", 88, 2);
     ok((await ev("EPL.borr.length")) === na && (await ev("PL_ASEL.size")) === 0, "Ctrl+X los borra");
-    await clic('[data-ed="aplicar"]');
+    await esperar(800);
     ok((await ev("PLANO.borr.length")) === na, "los borrados se guardan con el proyecto");
     await clic("#edPropC [data-pl-rest]");
     ok(await ev("!EPL.borr && plObjeto(" + (OX + 10) + ", " + (OY + 3) + ", 0.05) >= 0"), "«Restaurar los borrados»");
@@ -1857,7 +1868,8 @@ prueba("Editor de diseño: repartir en un ambiente y a lo largo de un muro", asy
     "dsD().els.filter(e => e.k === 'luz').map(e => [+(e.x - " + OX + ").toFixed(2), +(e.y - " + OY + ").toFixed(2)])"
   );
   ok(
-    l.length === 6 && l.some(p => Math.abs(p[0] - 1.13) < 0.05 && Math.abs(p[1] - 5.85) < 0.05),
+    // Las esquinas del marco pueden engancharse al muro (según el zoom): x ≈ 1.13 m o 1.0 m
+    l.length === 6 && l.some(p => p[0] > 0.95 && p[0] < 1.2 && p[1] > 5.8 && p[1] < 6.05),
     `6 luminarias repartidas (${JSON.stringify(l.slice(0, 2))})`
   );
   await teclaE("Escape", "Escape", 27);
@@ -2484,6 +2496,76 @@ prueba("Edificio: banco de medidores junto o lejos del TG, TSG, medidor trifási
   await ev(
     "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
   );
+});
+
+prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálculo en vivo", async ok => {
+  // Nuevo proyecto «Diseño con plano»: se calcula con el diseño y el editor se abre enseguida
+  await ev("asistente(true, 'uni'); 1");
+  ok(await ev("radio('wz_flujo') === 'plano'"), "el asistente propone «Diseño con plano»");
+  await poner("#wz_nombre", "Casa con plano primero");
+  await clic('[data-wz="ok"]');
+  await esperar(300);
+  ok(
+    await ev("PROY.calPlano === '1' && !$('editor').hidden && document.body.classList.contains('ed-on')"),
+    "el proyecto se calcula con el diseño y el editor se abre solo"
+  );
+  ok(
+    /Abra el DXF/.test(await ev("$('edPasos').textContent")) &&
+      /Para calcular falta/.test(await ev("$('edVivo').textContent")),
+    "pasos del diseño (abra el DXF) y lo que falta para calcular"
+  );
+  // El plano y un diseño mínimo: TG con un circuito de alumbrado y otro de tomacorrientes
+  await cdp("DOM.enable");
+  const doc = await cdp("DOM.getDocument", {});
+  const q = await cdp("DOM.querySelector", { nodeId: doc.result.root.nodeId, selector: "#plArchivo" });
+  await cdp("DOM.setFileInputFiles", { nodeId: q.result.nodeId, files: [join(raiz, "pruebas", "plano-prueba.dxf")] });
+  for (let i = 0; i < 60 && !(await ev("!!PL_MOD && $('plCarga').hidden")); i++) await esperar(100);
+  await J(`(() => {
+    const a = o => dsAgregar(o).id;
+    const tb = a({ t: "sim", k: "tab", x: ${OX} + 3, y: ${OY} + 7.9, r: 180, capa: "E-TABLEROS", nom: "TG", nc: 2 }),
+      l1 = a({ t: "sim", k: "luz", x: ${OX} + 3, y: ${OY} + 5, r: 0, capa: "E-ALUMBRADO", cir: "C-1", tab: tb }),
+      t1 = a({ t: "sim", k: "toma", x: ${OX} + 5, y: ${OY} + 7.5, r: 0, capa: "E-TOMACORRIENTES", cir: "C-2", tab: tb });
+    a({ t: "tub", pts: [${OX} + 3, ${OY} + 7.6, ${OX} + 3, ${OY} + 5], c: false, modo: "techo", capa: "E-TUBERIAS-TECHO", c0: tb, c1: l1, cir: "C-1", tab: tb });
+    a({ t: "tub", pts: [${OX} + 3, ${OY} + 7.6, ${OX} + 5, ${OY} + 7.6, ${OX} + 5, ${OY} + 7.5], c: false, modo: "piso", capa: "E-TUBERIAS-PISO", c0: tb, c1: t1, cir: "C-2", tab: tb });
+    edCambio();
+    return 1;
+  })()`);
+  await esperar(1000);
+  ok(/alimentador hasta el TG/.test(await ev("$('edVivo').textContent")), "lo que falta dice cómo sacarlo del plano");
+  // El área y el alimentador escritos (en un proyecto real, se marcan en el plano)
+  await ev("ponerDato('area', '100'); ponerDato('Lalim', '12'); calcularAhora(); edVivo(); 1");
+  const pasos = await J(
+    "[...document.querySelectorAll('#edPasos .ed-paso')].map(b => b.dataset.paso + ':' + b.className.split(' ')[1])"
+  );
+  ok(
+    ["plano:ok", "tab:ok", "art:ok", "tub:ok"].every(x => pasos.includes(x)),
+    `pasos hechos: plano, tableros, artefactos y tuberías (${pasos.join(", ")})`
+  );
+  ok(await ev("!!PLANO && PLANO.dis.els.length === 5"), "el diseño ya está guardado en el proyecto, sin Aplicar");
+  const vivo = await ev("$('edVivo').textContent");
+  ok(
+    /Máxima demanda/.test(vivo) && /ΔV máxima/.test(vivo) && !!(await ev("LAST && LAST.plano")),
+    `cálculo en vivo con el diseño (${vivo.slice(0, 70)}…)`
+  );
+  // Un clic en «Tableros» lleva a la herramienta del tablero
+  await clic('#edPasos [data-paso="tab"]');
+  ok((await ev("PLH.h")) === "col:tab", "el paso Tableros activa la herramienta del tablero");
+  await teclaE("Escape", "Escape", 27);
+  // «Resultados»: guarda, cierra el editor y muestra los resultados
+  await clic('#edPasos [data-paso="res"]');
+  ok(await ev("$('editor').hidden && HIST.length > 0"), "«Resultados» vuelve al proyecto");
+  // Al abrir el proyecto otra vez, se abre en el editor
+  await ev(
+    "(() => { const o = JSON.parse(JSON.stringify(estado())); aplicar(o); setTab('calculo'); abrirSegunFlujo(); })()"
+  );
+  ok(await ev("!$('editor').hidden"), "un proyecto con el plano se abre en el editor de diseño");
+  await clic('[data-ed="aceptar"]');
+  // Cálculo rápido: como siempre
+  await ev("asistente(true, 'uni'); 1");
+  await poner("#wz_nombre", "Casa rápida");
+  await clic('.wz-flujo input[value="rapido"]');
+  await clic('[data-wz="ok"]');
+  ok(await ev("PROY.calPlano !== '1' && $('editor').hidden"), "«Cálculo rápido»: sin editor y con los datos escritos");
 });
 
 // Ejecución

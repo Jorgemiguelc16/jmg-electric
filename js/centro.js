@@ -90,6 +90,7 @@ $("tab-inicio").addEventListener("click", e => {
     if (o) {
       aplicar(o);
       setTab("calculo");
+      abrirSegunFlujo();
     }
   } else if (a === "todos") setTab("proy");
   else if (a === "nuevo") asistente(true, "uni");

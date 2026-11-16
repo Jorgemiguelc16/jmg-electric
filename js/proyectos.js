@@ -1123,6 +1123,7 @@ $("projList").addEventListener("click", async e => {
   if (a === "open" && o) {
     aplicar(o);
     setTab("calculo");
+    abrirSegunFlujo();
     msg.textContent = `Proyecto «${o.p_nombre}» abierto.`;
     return;
   }

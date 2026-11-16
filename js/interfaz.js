@@ -532,10 +532,18 @@ function planoFueraAviso() {
   } catch {
     return "";
   }
-  if (!PD.fuera.length) return "";
+  // Proyecto que se calcula con el diseño: lo que falta se dibuja en el editor
+  const ir = `<button type="button" class="btn sm" data-abred>Abrir el editor de diseño</button>`;
+  if (!PD.fuera.length)
+    return PROY.calPlano === "1"
+      ? `<p class="falta-plano"><b>Este proyecto se calcula con el diseño del plano.</b> Las salidas, las longitudes y las áreas salen del dibujo: coloque los tableros con sus circuitos, las salidas y las tuberías; lo que el plano aún no tiene se pide abajo. ${ir}</p>`
+      : "";
   const s = PD.fuera.map(t => `<b>${esc(t.nom)}</b> (${t.n} salida${t.n === 1 ? "" : "s"})`).join(", ");
-  return `<p class="falta-plano"><b>El plano tiene ${PD.fuera.length === 1 ? "el tablero" : "los tableros"} ${s}, pero el cálculo solo tiene ${esc(PD.noms.join(", "))}.</b> Sus salidas no se cuentan y por eso se piden escritas. En el Editor de diseño, cámbiele el nombre (doble clic en el tablero o «Renombrar» en Revisar diseño), o agregue su piso en Vivienda › Pisos y tableros.</p>`;
+  return `<p class="falta-plano"><b>El plano tiene ${PD.fuera.length === 1 ? "el tablero" : "los tableros"} ${s}, pero el cálculo solo tiene ${esc(PD.noms.join(", "))}.</b> Sus salidas no se cuentan y por eso se piden escritas. En el Editor de diseño, cámbiele el nombre (doble clic en el tablero o «Renombrar» en Revisar diseño), o agregue su piso en Vivienda › Pisos y tableros. ${ir}</p>`;
 }
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-abred]")) edAbrir(!PLANO);
+});
 function update() {
   if (!AUTO && !FORZAR) {
     DESACT = true;

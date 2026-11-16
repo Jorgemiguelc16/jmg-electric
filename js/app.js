@@ -469,6 +469,9 @@ $("wizard").addEventListener("click", e => {
   o.p_cip = $("wz_cip").value.replace(/[<>]/g, "");
   if (m === "multi") o.sistG = sist;
   else o.sist = sist;
+  // Diseño con plano: el cálculo sale del dibujo desde el inicio
+  const conPlano = radio("wz_flujo") !== "rapido";
+  if (conPlano) o.calPlano = "1";
   asistente(false);
   aplicar(o);
   VIEW = "unifilar";
@@ -476,8 +479,18 @@ $("wizard").addEventListener("click", e => {
   REDO.length = 0;
   abrirWS("vivienda");
   calcularAhora();
-  toast("Proyecto creado: complete los datos marcados en ámbar");
+  if (conPlano) {
+    /* El editor de diseño se abre enseguida y pide el plano de arquitectura (el cuadro para elegir el archivo
+       necesita este mismo clic del usuario) */
+    document.querySelector('#ws [data-tab-r="diseno"]')?.click();
+    edAbrir(true);
+    toast("Proyecto creado: elija el plano de arquitectura (DXF) para empezar el diseño");
+  } else toast("Proyecto creado: complete los datos marcados en ámbar");
 });
+// Al abrir un proyecto que se trabaja con el plano (Calcular con el diseño, con su plano), se abre en el editor
+function abrirSegunFlujo() {
+  if (PROY.calPlano === "1" && PLANO && typeof edAbrir === "function" && !ED.abierto) edAbrir(false);
+}
 $("wizard").addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.tagName === "INPUT") {
     e.preventDefault();

@@ -47,6 +47,7 @@ $("welcome").addEventListener("click", e => {
       if (o) {
         aplicar(o);
         setTab("calculo");
+        abrirSegunFlujo();
       }
     }
   }
