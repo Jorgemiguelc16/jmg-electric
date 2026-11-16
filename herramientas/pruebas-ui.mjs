@@ -2796,6 +2796,69 @@ prueba("Proyectos en la nube: se suben, se traen con su plano DXF y se borran en
   );
 });
 
+prueba("Cuenta: ojo en las contraseñas y crear contraseña para una cuenta de Google", async ok => {
+  await ev(`(() => { $("accClave").value = "secreta123"; return 1; })()`);
+  ok(
+    (await ev(`ACC.querySelectorAll(".acc-ojo").length`)) === 3,
+    "las tres contraseñas del ingreso y la solicitud tienen su ojo"
+  );
+  await ev(`ACC.querySelector("#accClave + .acc-ojo").click(); 1`);
+  ok((await ev(`$("accClave").type`)) === "text", "el ojo muestra la contraseña");
+  await ev(`ACC.querySelector("#accClave + .acc-ojo").click(); 1`);
+  ok((await ev(`$("accClave").type`)) === "password", "y la vuelve a ocultar");
+  await ev(`(() => { accError({ code: "auth/invalid-credential" }); return 1; })()`);
+  ok(
+    /Continuar con Google/.test(await ev(`$("accMsg").textContent`)),
+    "el error explica el caso de la cuenta de Google"
+  );
+  // Cuenta solo con Google (simulada): se le agrega el ingreso con correo y contraseña
+  await ev(`(() => {
+    window.USU0 = USUARIO;
+    window.ENLACE = null;
+    window.firebase = window.firebase || {};
+    firebase.auth = firebase.auth || {};
+    window.EAP0 = firebase.auth.EmailAuthProvider;
+    firebase.auth.EmailAuthProvider = { credential: (e, c) => ({ e, c }) };
+    USUARIO = {
+      email: "prueba@ejemplo.com",
+      providerData: [{ providerId: "google.com" }],
+      linkWithCredential: async cr => { ENLACE = cr; USUARIO.providerData.push({ providerId: "password" }); }
+    };
+    cuentaUI();
+    return 1;
+  })()`);
+  ok(
+    (await ev(`$("cuClaveTxt").textContent`)) === "Crear contraseña",
+    "el menú de la cuenta ofrece «Crear contraseña»"
+  );
+  await ev("cuClave(); 1");
+  await esperar(100);
+  ok(
+    (await ev(`$("cfmTxt").querySelectorAll(".acc-ojo").length`)) === 2,
+    "la ventana tiene sus dos contraseñas con ojo"
+  );
+  await ev(
+    `$("cuClave1").value = "clave123"; $("cuClave2").value = "otra123"; document.querySelector('#cfmDlg [data-cf="si"]').click(); 1`
+  );
+  await esperar(100);
+  ok(
+    /no coinciden/.test(await ev(`$("cfmTxt").textContent`)) && !(await ev("ENLACE")),
+    "si no coinciden, avisa y no guarda"
+  );
+  await ev(
+    `$("cuClave1").value = "clave123"; $("cuClave2").value = "clave123"; document.querySelector('#cfmDlg [data-cf="si"]').click(); 1`
+  );
+  await esperar(150);
+  ok(
+    (await J("ENLACE")).c === "clave123" && (await J("ENLACE")).e === "prueba@ejemplo.com",
+    "la contraseña se agrega a la misma cuenta"
+  );
+  ok((await ev(`$("cuClaveTxt").textContent`)) === "Cambiar contraseña", "luego el menú dice «Cambiar contraseña»");
+  await ev(
+    `(() => { USUARIO = USU0; firebase.auth.EmailAuthProvider = EAP0; cuentaUI(); $("accClave").value = ""; return 1; })()`
+  );
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

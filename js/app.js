@@ -537,8 +537,9 @@ $("uso").addEventListener("change", () => {
 });
 
 /* Diálogo de advertencia antes de desactivar una opción */
-function confirmar(tit, html, si, fn) {
+function confirmar(tit, html, si, fn, eye = "Advertencia") {
   const d = $("cfmDlg");
+  $("cfmEye").textContent = eye;
   $("cfmT").textContent = tit;
   $("cfmTxt").innerHTML = html;
   $("cfmSi").textContent = si;

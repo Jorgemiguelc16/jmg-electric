@@ -35,11 +35,15 @@ const accMsg = (t, ok) => {
   m.className = "acc-msg " + (ok ? "ok" : "bad");
 };
 const accOcupado = b => ACC.querySelectorAll("button").forEach(x => (x.disabled = b));
+/* Una cuenta creada con «Continuar con Google» no tiene contraseña propia (la de Gmail no sirve aquí): se crea en
+   Mi cuenta › Crear contraseña, o con «¿Olvidó su contraseña?» */
+const CLAVE_MAL =
+  "Correo o contraseña incorrectos. Si su cuenta la creó con «Continuar con Google», ingrese con ese botón: la contraseña de Gmail no sirve aquí. Para ingresar también con su correo, cree una contraseña en el menú de su cuenta (arriba a la derecha) › Crear contraseña, o pulse «¿Olvidó su contraseña?».";
 function accError(e) {
   const c = (e && e.code) || "",
     T = {
-      "auth/invalid-credential": "Correo o contraseña incorrectos.",
-      "auth/wrong-password": "Correo o contraseña incorrectos.",
+      "auth/invalid-credential": CLAVE_MAL,
+      "auth/wrong-password": CLAVE_MAL,
       "auth/user-not-found": "No existe una cuenta con ese correo.",
       "auth/invalid-email": "El correo no es válido.",
       "auth/email-already-in-use": "Ya existe una cuenta con ese correo. Ingrese con él o recupere su contraseña.",
@@ -88,6 +92,9 @@ function cuentaUI() {
     im.src = u.photoURL;
   }
   $("cuBtn").classList.toggle("con-av", !!u);
+  // Crear contraseña (cuenta solo con Google) o cambiarla
+  $("cuClaveBtn").hidden = !u;
+  $("cuClaveTxt").textContent = u && !cuTieneClave(u) ? "Crear contraseña" : "Cambiar contraseña";
   document.querySelectorAll(".solo-admin").forEach(x => (x.hidden = !esAdminCuenta));
 }
 
@@ -298,11 +305,92 @@ $("cuMenu").addEventListener("click", e => {
   const b = e.target.closest("[data-cu]");
   if (!b) return;
   $("cuMenu").hidden = true;
+  if (b.dataset.cu === "clave") return cuClave();
   if (b.dataset.cu === "salir") {
     if (document.body.classList.contains("ws-on")) cerrarWS(true);
     firebase.auth().signOut();
   }
 });
+
+const cuTieneClave = u => !!(u && u.providerData.some(p => p && p.providerId === "password"));
+/* Crear o cambiar la contraseña de la cuenta. Sin contraseña (cuenta de Google), se le agrega el ingreso con correo y
+   contraseña a la misma cuenta (linkWithCredential): sigue siendo una sola cuenta, con sus proyectos */
+function cuClave(aviso) {
+  const u = USUARIO;
+  if (!u) return;
+  const tiene = cuTieneClave(u);
+  confirmar(
+    tiene ? "Cambiar contraseña" : "Crear contraseña",
+    `<p>${tiene ? "Escriba su nueva contraseña." : `Su cuenta ingresa con Google. Cree una contraseña para ingresar también con su correo <b>${esc(u.email)}</b>; es una sola cuenta, con los mismos proyectos.`}</p>` +
+      (aviso ? `<p class="acc-msg bad">${esc(aviso)}</p>` : "") +
+      `<div class="acc-form cu-clave"><label>Nueva contraseña<input type="password" id="cuClave1" autocomplete="new-password" minlength="6"></label><label>Repita la contraseña<input type="password" id="cuClave2" autocomplete="new-password" minlength="6"></label></div>`,
+    "Guardar",
+    async ok => {
+      if (!ok) return;
+      const a = $("cuClave1").value,
+        b = $("cuClave2").value;
+      if (a.length < 6) return cuClave("La contraseña debe tener al menos 6 caracteres.");
+      if (a !== b) return cuClave("Las dos contraseñas no coinciden.");
+      try {
+        if (tiene) await u.updatePassword(a);
+        else await u.linkWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, a));
+        cuentaUI();
+        toast(tiene ? "Contraseña cambiada." : `Listo: ya puede ingresar también con ${u.email} y su contraseña.`);
+      } catch (e) {
+        const c = (e && e.code) || "";
+        cuClave(
+          c === "auth/requires-recent-login"
+            ? "Por seguridad, cierre sesión, vuelva a ingresar y cree la contraseña enseguida."
+            : c === "auth/weak-password"
+              ? "La contraseña debe tener al menos 6 caracteres."
+              : c === "auth/network-request-failed"
+                ? "Sin conexión a internet. Intente de nuevo."
+                : "No se pudo guardar la contraseña" + (c ? ` (${c})` : "") + "."
+        );
+      }
+    },
+    "Mi cuenta"
+  );
+  setTimeout(() => {
+    ponerOjos($("cfmTxt"));
+    $("cuClave1").focus();
+  }, 40);
+}
+/* Ojo en las contraseñas: muestra u oculta lo escrito */
+const OJO =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  OJO_NO =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>';
+function ponerOjos(raiz) {
+  raiz.querySelectorAll('input[type="password"]:not([data-ojo])').forEach(inp => {
+    inp.dataset.ojo = "1";
+    const w = document.createElement("span"),
+      b = document.createElement("button");
+    w.className = "acc-clave";
+    inp.parentNode.insertBefore(w, inp);
+    w.appendChild(inp);
+    b.type = "button";
+    b.className = "acc-ojo";
+    b.innerHTML = OJO;
+    b.setAttribute("aria-label", "Mostrar la contraseña");
+    b.addEventListener("click", e => {
+      e.preventDefault();
+      const ver = inp.type === "password";
+      inp.type = ver ? "text" : "password";
+      b.innerHTML = ver ? OJO_NO : OJO;
+      b.setAttribute("aria-label", ver ? "Ocultar la contraseña" : "Mostrar la contraseña");
+      inp.focus();
+    });
+    w.appendChild(b);
+  });
+}
+ponerOjos(ACC);
+// Al ingresar o enviar la solicitud, las contraseñas vuelven a ocultarse
+ACC.addEventListener("submit", () =>
+  ACC.querySelectorAll("input[data-ojo]").forEach(i => {
+    if (i.type === "text") i.nextSibling.click();
+  })
+);
 
 /* Administración: solicitudes de cuenta en vivo, con aprobar, rechazar, desactivar y reactivar */
 const ESTADOS = {
