@@ -2275,81 +2275,223 @@ input.del-plano,
 .ds-bm td:first-child {
   font: 600 11px var(--f-mono);
 }
-/* Pasos del diseño: el orden de trabajo con el plano, con el estado de cada uno (clic: su herramienta) */
-.ed-pasos {
+/* Pestaña Revisión del editor: el avance del diseño por pasos (cada uno con su estado sobre el ícono), la revisión y
+   el cálculo, con el estilo de la cinta */
+.rib-rev {
   display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px 8px;
-  border-top: 1px solid var(--ws-line, #d6dde6);
-  background: var(--ws-ribbon, #f6f8fb);
-  overflow-x: auto;
-  scrollbar-width: thin;
+  height: 100%;
 }
-.ed-pasos:empty {
+.rb-paso {
+  min-width: 70px;
+  position: relative;
+}
+.rb-ico {
+  position: relative;
+  display: block;
+}
+.rb-ico i {
+  position: absolute;
+  right: -7px;
+  top: -3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1.5px solid #fff;
+  background: #9aa6b2;
+  font: 700 9px var(--f-mono);
+  font-style: normal;
+  color: #fff;
+}
+.rb-paso.ok .rb-ico i {
+  background: #2f7a4b;
+}
+.rb-paso.av .rb-ico i {
+  background: #c77d2e;
+}
+.rb-paso.opc .rb-ico i {
   display: none;
 }
-.ed-paso {
+.rb-paso.no svg,
+.rb-paso.opc svg {
+  opacity: 0.55;
+}
+.rb-paso small {
+  margin-top: 1px;
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #6b7785;
+}
+.rb-paso.av small {
+  color: #a35f17;
+}
+.rb-paso.ok small {
+  color: #2f7a4b;
+}
+.rev-c b {
+  min-width: 22px;
+  padding: 0 5px;
+  border-radius: 8px;
+  text-align: center;
+  font: 700 10.5px var(--f-mono);
+  color: #fff;
+  background: #c77d2e;
+}
+.rev-c.seg b {
+  background: #b42318;
+}
+.rev-c.nt b {
+  background: #6b7785;
+}
+.rev-c.cero {
+  color: #8a96a3;
+}
+.rev-c.cero b {
+  background: #c9d1da;
+}
+.rev-calc {
+  justify-content: center;
+  min-width: 170px;
+}
+.rev-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  color: #6b7785;
+}
+.rev-dato b {
+  color: #1f2a36;
+}
+.rev-dato .ok {
+  color: #2f7a4b;
+}
+.rev-dato .bad,
+.rev-dato.pend {
+  color: #b42318;
+}
+/* Número de observaciones en la pestaña Revisión */
+.tb-n {
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font: 700 10px var(--f-mono);
+  font-style: normal;
+  color: #fff;
+  background: #c77d2e;
+}
+.tb-n:empty {
+  display: none;
+}
+.tb-n.seg {
+  background: #b42318;
+}
+/* Avance del diseño en la barra de estado (clic: pestaña Revisión) */
+.ed-avance {
+  align-self: stretch;
+  margin-left: -12px;
+  padding: 0 12px 0 22px;
+  border: 0;
+  border-right: 1px solid var(--ws-line, #d6dde6);
+  background: none;
+  font: 600 11px var(--f-body);
+  color: var(--ws-text2, #66737f);
+  cursor: pointer;
+  position: relative;
+}
+.ed-avance::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: #9aa6b2;
+}
+.ed-avance.ok::before {
+  background: #2f7a4b;
+}
+.ed-avance.av::before {
+  background: #c77d2e;
+}
+.ed-avance.seg::before {
+  background: #b42318;
+}
+.ed-avance:hover {
+  background: var(--ws-hover, #e7eef8);
+  color: var(--ws-text, #1f2a36);
+}
+/* Panel izquierdo del editor: título y secciones que se muestran u ocultan, en orden, con desplazamiento propio */
+.pl-cab {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--ws-line, #d6dde6);
+  background: var(--ws-pane-h, #f1f4f8);
+  font: 700 10.5px var(--f-body);
+  letter-spacing: 0.08em;
+  color: var(--ws-text, #1f2a36);
+}
+.pl-cab .ed-x {
+  margin-left: auto;
+}
+.pl-secs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.pl-secs .pl-sec {
+  max-height: none;
+  flex: none;
+}
+.pl-secs .pl-sec + .pl-sec .pl-h {
+  border-top: 1px solid var(--ws-line, #d6dde6);
+}
+.pl-secs .pl-lista {
+  overflow: visible;
+  flex: none;
+}
+.pl-tg {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-  padding: 2px 8px 2px 4px;
-  border: 1px solid transparent;
+  padding: 0;
+  border: 0;
   background: none;
-  font: 11px var(--f-body);
-  color: var(--ink, #1b1b1b);
-  text-align: left;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   cursor: pointer;
-  white-space: nowrap;
 }
-.ed-paso:hover {
-  border-color: var(--ws-hover-b, #c9d3de);
-  background: var(--ws-hover, #eef2f6);
+.pl-tg::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform 0.15s;
 }
-.ed-paso i {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1.5px solid #9aa6b2;
-  font: 700 10px var(--f-mono);
-  font-style: normal;
-  color: #5f6b77;
+.pl-sec.cerrada .pl-tg::before {
+  transform: rotate(-90deg);
 }
-.ed-paso.ok i {
-  border-color: #2f7a4b;
-  background: #2f7a4b;
-  color: #fff;
+.pl-tg:hover {
+  color: var(--ws-text, #1f2a36);
 }
-.ed-paso.av i {
-  border-color: #c77d2e;
-  background: #c77d2e;
-  color: #fff;
+.pl-sec.cerrada .pl-cu {
+  display: none;
 }
-.ed-paso.opc i {
-  border-style: dashed;
-}
-.ed-paso span {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-.ed-paso b {
-  font-weight: 600;
-}
-.ed-paso small {
-  font-size: 10px;
-  color: var(--muted, #6b7785);
-}
-.ed-paso.av small {
-  color: #a35f17;
-}
-.ed-paso-f {
-  color: #9aa6b2;
-  font-size: 13px;
+.pl-sec.cerrada .pl-h {
+  border-bottom-color: transparent;
 }
 /* Cálculo en vivo en el panel izquierdo del editor */
 .ed-vivo {

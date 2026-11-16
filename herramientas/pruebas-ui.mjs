@@ -2510,7 +2510,7 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
     "el proyecto se calcula con el diseño y el editor se abre solo"
   );
   ok(
-    /Abra el DXF/.test(await ev("$('edPasos').textContent")) &&
+    /Abra el DXF/.test(await ev("$('edRevRib').textContent")) &&
       /Para calcular falta/.test(await ev("$('edVivo').textContent")),
     "pasos del diseño (abra el DXF) y lo que falta para calcular"
   );
@@ -2535,7 +2535,7 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
   // El área y el alimentador escritos (en un proyecto real, se marcan en el plano)
   await ev("ponerDato('area', '100'); ponerDato('Lalim', '12'); calcularAhora(); edVivo(); 1");
   const pasos = await J(
-    "[...document.querySelectorAll('#edPasos .ed-paso')].map(b => b.dataset.paso + ':' + b.className.split(' ')[1])"
+    "[...document.querySelectorAll('#edRevRib .rb-paso')].map(b => b.dataset.paso + ':' + b.className.split(' ')[2])"
   );
   ok(
     ["plano:ok", "tab:ok", "art:ok", "tub:ok"].every(x => pasos.includes(x)),
@@ -2548,11 +2548,23 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
     `cálculo en vivo con el diseño (${vivo.slice(0, 70)}…)`
   );
   // Un clic en «Tableros» lleva a la herramienta del tablero
-  await clic('#edPasos [data-paso="tab"]');
+  await clic('#editor [data-tab-e="revision"]');
+  ok(/Diseño \d\/7/.test(await ev("$('edAvance').textContent")), "avance del diseño en la barra de estado");
+  // Secciones del panel izquierdo: se ocultan y se muestran con su título
+  await clic('[data-sectg="dis"]');
+  ok(
+    await ev(
+      "document.querySelector('[data-sec=\"dis\"]').classList.contains('cerrada') && $('dsResumen').offsetHeight === 0"
+    ),
+    "la sección Diseño eléctrico se oculta con su título"
+  );
+  await clic('[data-sectg="dis"]');
+  ok((await ev("$('dsResumen').offsetHeight")) > 0, "y se vuelve a mostrar");
+  await clic('#edRevRib [data-paso="tab"]');
   ok((await ev("PLH.h")) === "col:tab", "el paso Tableros activa la herramienta del tablero");
   await teclaE("Escape", "Escape", 27);
   // «Resultados»: guarda, cierra el editor y muestra los resultados
-  await clic('#edPasos [data-paso="res"]');
+  await clic('#edRevRib .rb-paso[data-paso="res"]');
   ok(await ev("$('editor').hidden && HIST.length > 0"), "«Resultados» vuelve al proyecto");
   // Al abrir el proyecto otra vez, se abre en el editor
   await ev(

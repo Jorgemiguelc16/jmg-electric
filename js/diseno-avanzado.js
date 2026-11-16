@@ -3132,7 +3132,7 @@ function edPasosEstado() {
       }
     : { st: "no", d: "Abra el DXF" };
   const amb = els.filter(e => e.ar && e.ar.amb).length;
-  E.amb = amb ? { st: "ok", d: `${amb} marcados` } : { st: "opc", d: "Opcional: reglas del CNE" };
+  E.amb = amb ? { st: "ok", d: `${amb} marcados` } : { st: "opc", d: "Opcional" };
   const tabs = els.filter(e => e.k === "tab"),
     conC = tabs.filter(e => e.nc > 0);
   E.tab = !tabs.length
@@ -3158,12 +3158,13 @@ function edPasosEstado() {
     sg = R.filter(o => o.nivel === "seg").length,
     av = R.filter(o => o.nivel === "aviso").length;
   E.rev = !els.length
-    ? { st: "no", d: "" }
+    ? { st: "no", d: "Sin diseño" }
     : sg
       ? { st: "av", d: `${sg} de seguridad` }
       : av
         ? { st: "av", d: `${av} aviso${av > 1 ? "s" : ""}` }
         : { st: "ok", d: "Sin avisos" };
+  E.rev.n = { sg, av, nt: R.length - sg - av };
   const r = LAST,
     ok = r && r.alims.every(a => a.ok) && r.circ.every(q => q.ok);
   E.res =
@@ -3176,14 +3177,59 @@ function edPasosEstado() {
           : { st: "av", d: "Revisar" };
   return E;
 }
+// Íconos de los pasos (como los de la cinta: trazo azul y detalle cobre)
+const ED_PASO_ICO = {
+  plano:
+    '<rect x="3" y="4" width="18" height="16"/><path d="M3 12h8v8M11 8h10"/><path d="M15 16h3" stroke="#c77d2e" stroke-width="2"/>',
+  amb: '<path d="M3 4h18v16H3zM12 4v7M12 15v5M3 11h5"/><path d="M14 13h5v5h-5z" stroke="#c77d2e" stroke-dasharray="2 1.5"/>',
+  tab: '<rect x="4" y="5" width="16" height="14"/><path d="M4 19 20 5v14z" fill="#14304f"/><path d="M8 19v2M12 19v2M16 19v2" stroke="#c77d2e"/>',
+  art: '<circle cx="12" cy="10" r="5"/><path d="M12 2v3M12 15v6M4 10h3M17 10h3"/><path d="M9 21h6" stroke="#c77d2e" stroke-width="2"/>',
+  tub: '<path d="M4 18V9a3 3 0 0 1 3-3h10"/><circle cx="4" cy="19" r="1.8" fill="#c77d2e" stroke="#c77d2e"/><circle cx="19" cy="6" r="1.8" fill="#c77d2e" stroke="#c77d2e"/><path d="m7 11 2-2M7 14l2-2"/>',
+  rev: '<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke="#c77d2e" stroke-width="2"/>',
+  res: '<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6" stroke="#c77d2e" stroke-width="2.4"/>'
+};
+// Pestaña Revisión de la cinta: el avance del diseño por pasos, la revisión y el cálculo; y su resumen abajo
+function edRevCinta(E) {
+  const ic = { ok: "✓", av: "!", opc: "" },
+    r = LAST,
+    hechos = ED_PASOS.filter(([k]) => E[k].st === "ok").length,
+    pend = ED_PASOS.filter(([k]) => E[k].st === "av").length,
+    svg = k =>
+      `<svg viewBox="0 0 24 24" fill="none" stroke="#14304f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ED_PASO_ICO[k]}</svg>`;
+  const pasos = ED_PASOS.map(
+    ([k, t], i) =>
+      `<button type="button" class="rb rb-paso ${E[k].st}" data-paso="${k}" title="${esc(`${i + 1}. ${t}: ${E[k].d || ""}`)}"><span class="rb-ico">${svg(k)}<i>${ic[E[k].st] || i + 1}</i></span><span>${t}</span><small>${esc(E[k].d || "")}</small></button>`
+  ).join("");
+  const n = E.rev.n || { sg: 0, av: 0, nt: 0 },
+    fila = (cl, t, v) =>
+      `<button type="button" class="rs rev-c ${cl}${v ? "" : " cero"}" data-paso="rev"><b>${v}</b>${t}</button>`;
+  let calc;
+  if (PROY.calPlano !== "1")
+    calc = `<div class="col rev-calc"><span class="rev-dato">Se calcula con los <b>datos escritos</b></span><button type="button" class="rs" data-vivo="calplano">Calcular con el diseño</button></div>`;
+  else if (!r)
+    calc = `<div class="col rev-calc"><span class="rev-dato pend">Faltan datos para calcular</span><button type="button" class="rs" data-vivo="datos">Escribir los datos que faltan</button></div>`;
+  else {
+    const ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
+      md = r.mode === "multi" ? r.MD : r.md.MD,
+      dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
+    calc = `<div class="col rev-calc"><span class="rev-dato">Máxima demanda <b>${fmt(md / 1000, 2)} kW</b></span><span class="rev-dato">ΔV máxima <b${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</b></span><span class="rev-dato">Estado <b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b></span></div>`;
+  }
+  $("edRevRib").innerHTML =
+    `<div class="rgrp"><div class="gi">${pasos}</div><div class="gl">Avance del diseño · ${hechos} de ${ED_PASOS.length}</div></div>` +
+    `<div class="rgrp"><div class="gi"><button type="button" class="rb" data-paso="rev" title="Lista de observaciones del diseño, con «Ver» para cada una">${svg("rev")}<span>Revisar<br>diseño</span></button><div class="col">${fila("seg", "de seguridad", n.sg)}${fila("av", n.av === 1 ? "aviso" : "avisos", n.av)}${fila("nt", n.nt === 1 ? "nota" : "notas", n.nt)}</div></div><div class="gl">Revisión</div></div>` +
+    `<div class="rgrp last"><div class="gi"><button type="button" class="rb" data-paso="res" title="Guarda el diseño y muestra los resultados del proyecto">${svg("res")}<span>Ver<br>resultados</span></button>${calc}</div><div class="gl">Cálculo</div></div>`;
+  // Número en la pestaña y resumen en la barra de estado
+  const obs = n.sg + n.av;
+  $("edRevN").textContent = obs ? String(obs) : "";
+  $("edRevN").className = "tb-n" + (n.sg ? " seg" : "");
+  const av = $("edAvance");
+  av.hidden = false;
+  av.className = "ed-avance" + (n.sg ? " seg" : pend || obs ? " av" : hechos === ED_PASOS.length ? " ok" : "");
+  av.textContent = `Diseño ${hechos}/${ED_PASOS.length}${n.sg ? ` · ${n.sg} de seguridad` : ""}${n.av ? ` · ${n.av} aviso${n.av > 1 ? "s" : ""}` : ""}`;
+}
 function edVivo() {
   if (!ED.abierto) return;
-  const E = edPasosEstado(),
-    ic = { ok: "✓", av: "!", opc: "–" };
-  $("edPasos").innerHTML = ED_PASOS.map(
-    ([k, t], i) =>
-      `<button type="button" class="ed-paso ${E[k].st}" data-paso="${k}" title="${esc(E[k].d || t)}"><i>${ic[E[k].st] || i + 1}</i><span><b>${t}</b><small>${esc(E[k].d || "")}</small></span></button>`
-  ).join('<span class="ed-paso-f" aria-hidden="true">›</span>');
+  edRevCinta(edPasosEstado());
   // Cálculo en vivo
   const r = LAST,
     v = $("edVivo");
@@ -3221,7 +3267,9 @@ function edVivo() {
     `<dt>Circuitos</dt><dd>${r.circ.length}${r.circ.some(q => !q.ok) ? ` · ${r.circ.filter(q => !q.ok).length} por revisar` : ""}</dd></dl>` +
     `<button type="button" class="vw-btn" data-vivo="res">Ver resultados completos</button>`;
 }
-$("edPasos").addEventListener("click", e => {
+$("edRevRib").addEventListener("click", e => {
+  const vv = e.target.closest("[data-vivo]");
+  if (vv) return edVivoAccion(vv.dataset.vivo);
   const b = e.target.closest("[data-paso]");
   if (!b) return;
   const k = b.dataset.paso,
@@ -3256,7 +3304,38 @@ $("edPasos").addEventListener("click", e => {
 });
 $("edVivo").addEventListener("click", e => {
   const b = e.target.closest("[data-vivo]");
+  if (b) edVivoAccion(b.dataset.vivo);
+});
+$("edAvance").addEventListener("click", () => document.querySelector('#editor [data-tab-e="revision"]')?.click());
+// Secciones del panel izquierdo: cada una se muestra u oculta con su título (se recuerda en este navegador)
+const ED_SECK = "jmg-electric-editor-secciones";
+function edSecciones() {
+  let o = {};
+  try {
+    o = JSON.parse(localStorage.getItem(ED_SECK) || "{}") || {};
+  } catch (e) {}
+  document.querySelectorAll("#plLado [data-sec]").forEach(s => {
+    const cerrada = !!o[s.dataset.sec];
+    s.classList.toggle("cerrada", cerrada);
+    s.querySelector("[data-sectg]").setAttribute("aria-expanded", String(!cerrada));
+  });
+}
+$("plLado").addEventListener("click", e => {
+  const b = e.target.closest("[data-sectg]");
   if (!b) return;
+  let o = {};
+  try {
+    o = JSON.parse(localStorage.getItem(ED_SECK) || "{}") || {};
+  } catch (er) {}
+  o[b.dataset.sectg] = !o[b.dataset.sectg];
+  try {
+    localStorage.setItem(ED_SECK, JSON.stringify(o));
+  } catch (er) {}
+  edSecciones();
+});
+edSecciones();
+function edVivoAccion(a) {
+  const b = { dataset: { vivo: a } };
   if (b.dataset.vivo === "calplano") {
     ponerDato("calPlano", "1");
     $("calPlano").dispatchEvent(new Event("change", { bubbles: true }));
@@ -3272,7 +3351,7 @@ $("edVivo").addEventListener("click", e => {
     const F = faltantes();
     if (F.length) document.querySelector(`[data-foco="${F[0].id}"]`)?.click();
   }
-});
+}
 // Guarda el diseño, cierra el editor y muestra los resultados del proyecto
 function edIrResultados() {
   edAplicar();
