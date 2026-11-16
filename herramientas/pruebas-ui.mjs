@@ -2875,7 +2875,7 @@ prueba("Cuenta del administrador con su correo sin verificar: pide verificarlo, 
   ok(!r.adm && r.plat, "no entra como administrador hasta verificarlo");
 });
 
-prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta", async ok => {
+prueba("Administración: PIN, panel con agenda, hoja de cuentas en su ventana, vigencia y nueva cuenta", async ok => {
   // Firebase simulado: Firestore en memoria y una segunda instancia para crear cuentas
   await ev(`(() => {
     const S = (window.FSA = new Map()), cp = v => JSON.parse(JSON.stringify(v));
@@ -2919,7 +2919,10 @@ prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta"
   })()`);
   await esperar(300);
   ok(!!(await ev("$('admPin1')")), "sin PIN: pide crearlo");
-  ok(await ev("$('admBarra').hidden"), "y no muestra la lista antes del PIN");
+  ok(
+    !(await ev("$('admCuerpo').querySelector('.adm-kpis')")) && (await ev("$('admDlg').hidden")),
+    "y no muestra nada antes del PIN"
+  );
   await ev(
     `$("admPin1").value = "12"; $("admPin2").value = "12"; $("admCuerpo").querySelector("form").requestSubmit(); 1`
   );
@@ -2934,41 +2937,88 @@ prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta"
     cfg && cfg.pin && cfg.pin.length === 64 && !JSON.stringify(cfg).includes("2468"),
     "el PIN se guarda cifrado (no el número)"
   );
-  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 4, "con el PIN, la hoja con las 4 cuentas");
+  ok(
+    !!(await ev("$('admCuerpo').querySelector('.adm-kpis')")) && !!(await ev("$('agCal')")),
+    "con el PIN: el panel con el resumen y la agenda"
+  );
+  ok(
+    /^1\s*Por vencer/.test(await ev(`$('admCuerpo').querySelector('[data-adk="porvencer"]').textContent`)),
+    "el resumen cuenta 1 por vencer"
+  );
+  // Agenda: los vencimientos aparecen solos; una fecha nueva se guarda en config/agenda
+  ok(
+    /Vence la cuenta de Luis Ramos/.test(await ev("$('agLado').textContent")),
+    "el vencimiento de una cuenta aparece en la agenda"
+  );
+  await ev(
+    `$("agT").value = "Entrega del expediente"; $("agR").value = "3"; $("agF").value = (() => { const d = new Date(Date.now() + 2 * 86400000); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })(); $("agLado").querySelector("form").requestSubmit(); 1`
+  );
+  await esperar(200);
+  const ag = await J(`FSA.get("config/agenda")`);
+  ok(
+    ag && ag.items.length === 1 && ag.items[0].t === "Entrega del expediente" && ag.items[0].r === 3,
+    "la fecha se guarda con su aviso (3 días antes)"
+  );
+  ok(
+    (await J("agTocan().length")) === 1 && /Entrega del expediente/.test(await ev("$('agCal').textContent")),
+    "su aviso ya toca (faltan 2 días) y se ve en el calendario"
+  );
+  ok(
+    (await ev("document.querySelector('.adm-badge').textContent")) === "2",
+    "la insignia del menú suma la solicitud pendiente y el recordatorio"
+  );
+  await ev(`$("agLado").querySelector("[data-agh]").click(); 1`);
+  await esperar(150);
+  ok(
+    (await J(`FSA.get("config/agenda")`)).items[0].hecho === true && (await J("agTocan().length")) === 0,
+    "marcada como hecha, deja de recordar"
+  );
+  // La hoja de cuentas se abre en una ventana
+  await ev(`$('admCuerpo').querySelector('[data-adk="todos"]').click(); 1`);
+  await esperar(150);
+  ok(
+    !(await ev("$('admDlg').hidden")) && (await ev("$('admHoja').querySelectorAll('tbody tr').length")) === 4,
+    "la hoja se abre en su ventana con las 4 cuentas"
+  );
   ok(
     /Por vencer \(7 días\) 1/.test(await ev("$('admFiltros').textContent")) &&
       /Vencidas 1/.test(await ev("$('admFiltros').textContent")),
     "filtros con su cantidad: 1 por vencer y 1 vencida"
   );
   ok(
-    /Su cuenta/.test(await ev(`$("admCuerpo").querySelector('tr[data-id="adm"]').textContent`)),
+    /Su cuenta/.test(await ev(`$("admHoja").querySelector('tr[data-id="adm"]').textContent`)),
     "la fila del administrador, sin acciones"
   );
   // Bloquear y volver a entrar con el PIN
   await ev(`document.querySelector('[data-adb="bloquear"]').click(); 1`);
-  ok(!!(await ev("$('admPin')")), "bloquear vuelve a pedir el PIN");
+  ok(
+    !!(await ev("$('admPin')")) && (await ev("$('admDlg').hidden")),
+    "bloquear cierra la hoja y vuelve a pedir el PIN"
+  );
   await ev(`$("admPin").value = "1111"; $("admCuerpo").querySelector("form").requestSubmit(); 1`);
   await esperar(100);
   ok(/incorrecto/.test(await ev("$('admMsg').textContent")), "PIN incorrecto: no entra");
   await ev(`$("admPin").value = "2468"; $("admCuerpo").querySelector("form").requestSubmit(); 1`);
   await esperar(150);
-  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 4, "PIN correcto: entra");
+  ok(!!(await ev("$('admCuerpo').querySelector('.adm-kpis')")), "PIN correcto: entra al panel");
+  await ev(`$('admCuerpo').querySelector('[data-adk="todos"]').click(); 1`);
+  await esperar(100);
   // Buscar y filtrar
   await ev(`$("admBuscar").value = "rosa"; $("admBuscar").dispatchEvent(new Event("input")); 1`);
-  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 1, "el buscador filtra");
+  ok((await ev("$('admHoja').querySelectorAll('tbody tr').length")) === 1, "el buscador filtra");
   await ev(
     `$("admBuscar").value = ""; $("admBuscar").dispatchEvent(new Event("input")); document.querySelector('[data-adfil="vencido"]').click(); 1`
   );
-  ok(/Vencido/.test(await ev("$('admCuerpo').querySelector('tbody').textContent")), "filtro «Vencidas»");
+  ok(/Vencido/.test(await ev("$('admHoja').querySelector('tbody').textContent")), "filtro «Vencidas»");
   // Renovar la vencida: desde hoy, por su vigencia (3 meses)
-  await ev(`$("admCuerpo").querySelector('[data-ada="renovar"][data-id="u3"]').click(); 1`);
+  await ev(`$("admHoja").querySelector('[data-ada="renovar"][data-id="u3"]').click(); 1`);
   await esperar(150);
   const u3 = await J(`FSA.get("usuarios/u3")`),
     d3 = (u3.vence.ms - Date.now()) / 86400000;
   ok(u3.estado === "aprobado" && d3 > 85 && d3 < 95, "renovar la vencida: aprobada por 3 meses desde hoy");
   // Vigencia editada en la celda: 1 año desde hoy
   await ev(
-    `document.querySelector('[data-adfil="todos"]').click(); const s = $("admCuerpo").querySelector('tr[data-id="u1"] select[data-k="vigencia"]'); s.value = "1a"; s.dispatchEvent(new Event("change", { bubbles: true })); 1`
+    `document.querySelector('[data-adfil="todos"]').click(); const s = $("admHoja").querySelector('tr[data-id="u1"] select[data-k="vigencia"]'); s.value = "1a"; s.dispatchEvent(new Event("change", { bubbles: true })); 1`
   );
   await esperar(150);
   const u1 = await J(`FSA.get("usuarios/u1")`),
@@ -2976,7 +3026,7 @@ prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta"
   ok(u1.vigencia === "1a" && d1 > 360 && d1 < 370, "vigencia en la celda: 1 año");
   // Notas en la celda
   await ev(
-    `const i = $("admCuerpo").querySelector('tr[data-id="u2"] [data-k="notas"]'); i.value = "Pagó hasta marzo"; i.dispatchEvent(new Event("change", { bubbles: true })); 1`
+    `const i = $("admHoja").querySelector('tr[data-id="u2"] [data-k="notas"]'); i.value = "Pagó hasta marzo"; i.dispatchEvent(new Event("change", { bubbles: true })); 1`
   );
   await esperar(100);
   ok((await J(`FSA.get("usuarios/u2")`)).notas === "Pagó hasta marzo", "las notas se guardan solas");
@@ -3003,7 +3053,7 @@ prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta"
   );
   await ev(`document.querySelector('#cfmDlg [data-cf="no"]').click(); 1`);
   await ev(
-    `(() => { firebase.firestore = FA0.fs; firebase.initializeApp = FA0.ini; esAdminCuenta = FA0.adm; USUARIO = FA0.u; Object.assign(ADM, { pin: undefined, abierto: false }); admLista([]); setTab("inicio"); return 1; })()`
+    `(() => { admCerrarVentana(); firebase.firestore = FA0.fs; firebase.initializeApp = FA0.ini; esAdminCuenta = FA0.adm; USUARIO = FA0.u; Object.assign(ADM, { pin: undefined, abierto: false }); Object.assign(AG, { items: [], cargada: false, sel: null }); admLista([]); setTab("inicio"); return 1; })()`
   );
 });
 

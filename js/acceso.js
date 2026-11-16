@@ -485,7 +485,10 @@ function adminLista() {
         const np = L.filter(x => x.estado === "pendiente").length;
         if (!SALUDADO) {
           SALUDADO = true;
-          saludoJorge(np);
+          // Con los recordatorios de su agenda que tocan hoy (js/admin.js); solo la cantidad, sin el detalle
+          (typeof admRecordatorios === "function" ? admRecordatorios() : Promise.resolve([])).then(R =>
+            saludoJorge(np, R.length)
+          );
         }
         document.querySelectorAll(".adm-badge").forEach(x => {
           x.textContent = np;
@@ -503,7 +506,7 @@ function adminLista() {
 
 /* Bienvenida personal del administrador: aparece cada vez que entra, con un saludo según la hora,
    las solicitudes y los proyectos pendientes, y de vez en cuando una frase de ánimo */
-function saludoJorge(np) {
+function saludoJorge(np, nr = 0) {
   const h = new Date().getHours(),
     azar = a => a[Math.floor(Math.random() * a.length)];
   const [tit, txt] =
@@ -522,6 +525,10 @@ function saludoJorge(np) {
   if (np)
     avisos.push(
       `Por cierto, <b>${np} persona${np === 1 ? "" : "s"}</b> quiere${np === 1 ? "" : "n"} unirse a JMG-ELECTRIC 👀🎉 <button type="button" class="linkbtn" data-sj="admin">Revisar</button>`
+    );
+  if (nr)
+    avisos.push(
+      `Tienes <b>${nr} recordatorio${nr === 1 ? "" : "s"}</b> en tu agenda 📅⏰ <button type="button" class="linkbtn" data-sj="admin">Ver</button>`
     );
   if (pp)
     avisos.push(
