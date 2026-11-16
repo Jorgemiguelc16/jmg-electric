@@ -163,28 +163,42 @@ function iniciarAcceso() {
   }
   firebase.initializeApp(FB_CONFIG);
   firebase.auth().languageCode = "es";
-  firebase.auth().onAuthStateChanged(u => {
-    USUARIO = u;
-    esAdminCuenta = !!(u && u.email === ADMIN_CORREO && u.emailVerified);
-    cuentaUI();
-    if (!u) {
-      if (desFicha) {
-        desFicha();
-        desFicha = null;
-      }
-      if (desAdmin) {
-        desAdmin();
-        desAdmin = null;
-      }
-      FICHA = null;
-      if (typeof nubeDetener === "function") nubeDetener();
-      accVista("ingreso");
-      abrirPlataforma(false);
-      return;
+  firebase.auth().onAuthStateChanged(accSesion);
+}
+/* La cuenta del administrador se reconoce por su correo verificado (como en las reglas de Firestore): con Google
+   suele estarlo; con correo y contraseña, solo después de abrir el enlace de verificación. Mientras no lo esté, se
+   le pide verificarlo (y no se la trata como una solicitud nueva). */
+function accSesion(u) {
+  USUARIO = u;
+  esAdminCuenta = !!(u && u.email === ADMIN_CORREO && u.emailVerified);
+  cuentaUI();
+  if (u && u.email === ADMIN_CORREO && !esAdminCuenta) {
+    if (desFicha) {
+      desFicha();
+      desFicha = null;
     }
-    seguirFicha(u);
-    if (esAdminCuenta) adminLista();
-  });
+    $("verCorreo").textContent = u.email;
+    accVista("verificar");
+    abrirPlataforma(false);
+    return;
+  }
+  if (!u) {
+    if (desFicha) {
+      desFicha();
+      desFicha = null;
+    }
+    if (desAdmin) {
+      desAdmin();
+      desAdmin = null;
+    }
+    FICHA = null;
+    if (typeof nubeDetener === "function") nubeDetener();
+    accVista("ingreso");
+    abrirPlataforma(false);
+    return;
+  }
+  seguirFicha(u);
+  if (esAdminCuenta) adminLista();
 }
 
 /* Formularios de la pantalla de ingreso */
@@ -202,6 +216,34 @@ ACC.addEventListener("click", async e => {
   }
   if (a === "salir") {
     firebase.auth().signOut();
+    return;
+  }
+  // Correo del administrador sin verificar: enviar el enlace y, ya abierto, volver a leer la cuenta
+  if (a === "verificar" && USUARIO) {
+    accOcupado(true);
+    try {
+      await USUARIO.sendEmailVerification();
+      accMsg(`Le enviamos el enlace a ${USUARIO.email}. Ábralo y luego pulse «Ya lo verifiqué».`, true);
+    } catch (err) {
+      accError(err);
+    }
+    accOcupado(false);
+    return;
+  }
+  if (a === "verificado" && USUARIO) {
+    accOcupado(true);
+    try {
+      await USUARIO.reload();
+      const u = firebase.auth().currentUser;
+      if (u && u.emailVerified) {
+        // Credencial nueva, con el correo verificado, para las reglas de Firestore
+        await u.getIdToken(true);
+        accSesion(u);
+      } else accMsg("Todavía figura sin verificar. Abra el enlace del correo y vuelva a pulsar «Ya lo verifiqué».");
+    } catch (err) {
+      accError(err);
+    }
+    accOcupado(false);
     return;
   }
   if (a === "google") {

@@ -587,3 +587,10 @@ body.sin-acceso .welcome {
 .cu-clave {
   margin-top: 10px;
 }
+
+/* Verificar el correo del administrador: el segundo botón, debajo del principal */
+[data-av="verificar"] .acc-prim,
+.acc-sec {
+  width: 100%;
+  margin-top: 8px;
+}

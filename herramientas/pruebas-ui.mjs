@@ -2859,6 +2859,22 @@ prueba("Cuenta: ojo en las contraseñas y crear contraseña para una cuenta de G
   );
 });
 
+prueba("Cuenta del administrador con su correo sin verificar: pide verificarlo, no queda como solicitud", async ok => {
+  const r = await J(`(() => {
+    const u0 = USUARIO, d0 = desFicha;
+    accSesion({ email: ADMIN_CORREO, emailVerified: false, providerData: [{ providerId: "password" }] });
+    const out = { ver: !document.querySelector('[data-av="verificar"]').hidden, pend: !document.querySelector('[data-av="pendiente"]').hidden, adm: esAdminCuenta, plat: !ACC.hidden };
+    USUARIO = u0;
+    desFicha = d0;
+    ACC.hidden = true;
+    document.body.classList.remove("sin-acceso");
+    cuentaUI();
+    return out;
+  })()`);
+  ok(r.ver && !r.pend, "muestra «Verifique su correo de administrador», no «Solicitud en revisión»");
+  ok(!r.adm && r.plat, "no entra como administrador hasta verificarlo");
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();
