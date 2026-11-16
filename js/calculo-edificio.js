@@ -5,12 +5,13 @@
    (del medidor o banco de medidores al TG), la del tablero de servicios generales (del TG al TSG) y, por cada tipo de
    departamento (el elegido en la ventana de sus tableros), la del alimentador desde el banco de medidores, las salidas
    de alumbrado y tomacorrientes y la longitud de sus circuitos (planoCalc, js/calculo-plano.js). */
-// Diámetro máximo de cada tubería entre el TG y el banco de medidores (criterio de la plataforma: 2")
+/* Diámetro máximo de cada tubería entre el TG y el banco de medidores: criterio del proyectista (dato tgbmMax), por
+   defecto 2" (50 mm) */
 const TGBM_MAX = 50;
 /* Conductores del TG al banco de medidores (banco junto al TG): por cada suministro, sus fases y su neutro con la
    sección de su alimentador, sin tierra (el medidor no la lleva). Se reparten en tuberías de hasta TGBM_MAX mm con el
    40 % de ocupación, los más grandes primero; cada tubería toma el menor diámetro que le alcanza. */
-function tuberiasTGBanco(units, T, alims, aSG, sk) {
+function tuberiasTGBanco(units, T, alims, aSG, sk, max = TGBM_MAX) {
   const area = S => (Math.PI * OD[S] ** 2) / 4,
     cap = di => (0.4 * Math.PI * di * di) / 4,
     sup = [];
@@ -24,7 +25,7 @@ function tuberiasTGBanco(units, T, alims, aSG, sk) {
   });
   if (aSG) sup.push({ nom: "TSG", n: aSG.s.n, nf: 3, nn: aSG.s.n - 3, S: aSG.S, A: aSG.s.n * area(aSG.S) });
   if (!sup.length) return null;
-  const tope = cap((TUBOS.find(t => t[0] === TGBM_MAX) || TUBOS[TUBOS.length - 1])[2]),
+  const tope = cap((TUBOS.find(t => t[0] === max) || TUBOS[TUBOS.length - 1])[2]),
     tubos = [];
   [...sup]
     .sort((a, b) => b.A - a.A)
@@ -36,7 +37,7 @@ function tuberiasTGBanco(units, T, alims, aSG, sk) {
       } else tubos.push({ A: s.A, sup: [s] });
     });
   return {
-    max: TGBM_MAX,
+    max,
     n: sup.reduce((x, s) => x + s.n, 0),
     nf: sup.reduce((x, s) => x + s.nf, 0),
     nn: sup.reduce((x, s) => x + s.nn, 0),
@@ -422,7 +423,14 @@ function calcMulti(c) {
      el 40 % de ocupación, como las demás; si no entran en una de hasta TGBM_MAX mm (criterio), van en varias. */
   const tgbm = bm
     ? null
-    : tuberiasTGBanco(units, T, alims, SV.length && !tsgTG ? alims.find(a => a.pKey === "servP") : null, sk);
+    : tuberiasTGBanco(
+        units,
+        T,
+        alims,
+        SV.length && !tsgTG ? alims.find(a => a.pKey === "servP") : null,
+        sk,
+        TUBOS.some(t => t[0] === +pv("tgbmMax")) ? +pv("tgbmMax") : TGBM_MAX
+      );
   const emerg = SV.some(s => /emergencia/i.test(s.nombre));
   const CI =
     T.reduce(

@@ -281,6 +281,8 @@ const HLP = {
   tc_L: "Recorrido hasta el tomacorriente más alejado de la cocina.",
   Lgen: "Desde el medidor de la concesionaria (acometida) hasta el tablero general TG.",
   Lbm: "Del tablero general TG al banco de medidores, cuando el banco no está junto al TG.",
+  tgbmMax:
+    'Con el banco junto al TG, las fases y neutros de cada suministro pasan del TG al banco por tubería, al 40 % de ocupación. Si no entran en una tubería de este diámetro, se reparten en varias. Por defecto 50 mm (2"). Criterio del proyectista.',
   bmJunto:
     "Junto al TG, el banco es la barra del TG y no hay tramo entre ellos. En otro lugar, se calcula el alimentador TG → banco (conductor, interruptor y caída de tensión), que los departamentos acumulan. Criterio del proyectista.",
   tsgDe:

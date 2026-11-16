@@ -82,6 +82,7 @@ const KEYS = [
   "Lms",
   "bmJunto",
   "Lbm",
+  "tgbmMax",
   "tsgDe",
   "rho_s",
   "fr",

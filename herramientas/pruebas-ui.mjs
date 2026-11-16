@@ -2418,6 +2418,10 @@ prueba("Edificio: banco de medidores junto o lejos del TG, TSG, medidor trifási
   await poner("#bmJunto", "0");
   await ev("update(); 1");
   ok(!(await ev("$('LbmBox').hidden")), "con el banco en otro lugar aparece la longitud TG → banco");
+  ok(
+    await ev("$('tgbmBox').hidden"),
+    "y se oculta el Ø máximo de la tubería TG → banco (solo con el banco junto al TG)"
+  );
   await poner("#Lbm", "30");
   await ev("update(); 1");
   ok(

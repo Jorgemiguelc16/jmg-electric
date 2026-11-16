@@ -557,6 +557,8 @@ function update() {
   uiPisos();
   // Edificio: la longitud TG → banco de medidores solo si el banco no está junto al TG
   if ($("LbmBox")) $("LbmBox").hidden = PROY.bmJunto !== "0";
+  // y el diámetro máximo de la tubería TG → banco, solo si el banco está junto al TG
+  if ($("tgbmBox")) $("tgbmBox").hidden = PROY.bmJunto === "0";
   const F = faltantes();
   if (F.length) {
     LAST = null;

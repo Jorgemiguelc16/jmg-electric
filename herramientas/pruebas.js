@@ -136,6 +136,17 @@ mal += require("./pruebas-calc-plano.js")(ctx);
     s1 = r1.alims.find(a => a.pKey === "servP"),
     d1 = r1.alims.filter(a => a.pKey === "tipo");
   if (r0.alims.some(a => a.pKey === "bm") || r0.topo) fallas.push("por defecto no debe haber tramo TG → banco");
+  // Diámetro máximo de la tubería TG → banco: 50 mm por defecto; más pequeño, las mismas fases en más tuberías
+  const r0b = calc({ ...base, tgbmMax: "25" });
+  if (!r0.tgbm || r0.tgbm.max !== 50) fallas.push("tubería TG → banco: por defecto debe ser hasta Ø50 mm");
+  else if (
+    !r0b.tgbm ||
+    r0b.tgbm.max !== 25 ||
+    r0b.tgbm.n !== r0.tgbm.n ||
+    r0b.tgbm.tubos.length < r0.tgbm.tubos.length ||
+    r0b.tgbm.tubos.some(t => t.mm > 25)
+  )
+    fallas.push("tubería TG → banco: el diámetro máximo editable no se respeta");
   if (!b1) fallas.push("banco lejos: falta el alimentador TG → banco");
   else {
     if (!cerca(b1.P, r1.mdDeptos + r1.aireTot + r1.mdServ)) fallas.push(`TG → banco: demanda ${b1.P}`);
