@@ -1826,7 +1826,7 @@ function dsPintar(g) {
       }
       dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
       if (el.enc) dsDibEnc(g, el, col, s);
-      if (D.nsal && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
+      if (dsNsalDe(el) && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
       if (el.k === "tab") dsDibSalidas(g, el, col, uk, dsGrosor(cap));
       // Banco de medidores: su lista numerada junto a él, solo si el proyectista la pide
       if (el.k === "bmed" && el.num === true) dsDibBanco(g, el, col, uk);
@@ -1858,7 +1858,7 @@ function dsPintar(g) {
       } else plRuta(g, dsCurva(el), false);
       g.stroke();
       g.setLineDash([]);
-      if (el.t === "tub" && (D.etq !== "no" || D.cirt)) dsEtiquetasTub(g, el, col, s);
+      if (el.t === "tub" && (dsEtqDe(el) !== "no" || dsCirtDe(el))) dsEtiquetasTub(g, el, col, s);
       if (el.t === "tub" && el.cond && DSU.marcas) dsMarcas(g, el, col, s, dsGrosor(cap));
       if (el.ar) dsDibArea(g, el, col, s);
     }
@@ -1901,6 +1901,61 @@ function dsDibArea(g, el, col, s) {
   });
   g.restore();
 }
+/* Etiquetas de cada elemento: lo elegido en el elemento (Propiedades › Etiquetas o clic derecho) manda sobre lo de
+   todo el plano (cinta Diseño › Tuberías); sin elegir, sigue al plano */
+const dsEtqDe = el => (["no", "total", "tramo"].includes(el.etq) ? el.etq : (dsD() && dsD().etq) || "total");
+const dsCirtDe = el => (typeof el.cirt === "boolean" ? el.cirt : !!(dsD() && dsD().cirt));
+const dsNsalDe = el => (typeof el.nsal === "boolean" ? el.nsal : !!(dsD() && dsD().nsal));
+// Elementos con etiquetas propias: tuberías (longitud, circuito y diámetro) y salidas con circuito (su circuito)
+const dsConEtq = el => el.t === "tub" || (el.t === "sim" && el.k !== "tab" && DS_CAT[el.k]);
+/* Campo «Etiquetas» de las propiedades (uno o varios elementos): cada uno como en todo el plano, o mostrar u ocultar */
+function dsCampoEtq(campo, els) {
+  const tubs = els.filter(e => e.t === "tub"),
+    sims = els.filter(e => e.t === "sim"),
+    igual = (L, k) => (L.every(e => e[k] === L[0][k]) ? L[0][k] : "~"),
+    sel = (dsp, v, ops) =>
+      `<select data-dsp="${dsp}">${v === "~" ? '<option value="~" selected>(varios)</option>' : ""}${ops
+        .map(
+          ([k, t]) =>
+            `<option value="${k}"${(v ?? "") === k || (v === true && k === "1") || (v === false && k === "0") ? " selected" : ""}>${t}</option>`
+        )
+        .join("")}</select>`,
+    D = dsD(),
+    plano = t => `Como el plano (${t})`;
+  if (!tubs.length && !sims.length) return "";
+  return (
+    (tubs.length
+      ? campo(
+          "Longitud",
+          sel("etq", igual(tubs, "etq"), [
+            ["", plano({ no: "no", total: "total", tramo: "por tramo" }[D.etq || "total"])],
+            ["total", "Total"],
+            ["tramo", "Por tramo"],
+            ["no", "Ocultar"]
+          ])
+        ) +
+        campo(
+          "Circuito y Ø",
+          sel("cirt", igual(tubs, "cirt"), [
+            ["", plano(D.cirt ? "sí" : "no")],
+            ["1", "Mostrar"],
+            ["0", "Ocultar"]
+          ])
+        )
+      : "") +
+    (sims.length
+      ? campo(
+          "Circuito",
+          sel("nsal", igual(sims, "nsal"), [
+            ["", plano(D.nsal ? "sí" : "no")],
+            ["1", "Mostrar junto a la salida"],
+            ["0", "Ocultar"]
+          ])
+        )
+      : "") +
+    `<p class="ds-crit">Etiquetas de ${els.length > 1 ? "estos elementos" : "este elemento"} en el plano y en las láminas. «Como el plano» sigue a la cinta (Diseño › Tuberías); el clic derecho también las muestra u oculta.</p>`
+  );
+}
 // Longitudes de una tubería: la total en su tramo central o la de cada tramo; texto de 2 mm impreso, a lo largo del
 // tramo y del lado de afuera de la curva (en un tramo recto, a su izquierda), sin tocar la línea
 function dsEtiquetasTub(g, el, col, s) {
@@ -1928,10 +1983,11 @@ function dsEtiquetasTub(g, el, col, s) {
       g.fillText(txt, 0, 0);
       g.restore();
     };
-  if (dsD().etq === "tramo") T.forEach(t => etq(t, `${fmt(t.L * EPL.f, 2)} m`));
-  else if (T.length && dsD().etq !== "no") etq(T[Math.floor((T.length - 1) / 2)], `${fmt(dsLargo(el) * EPL.f, 2)} m`);
+  const modo = dsEtqDe(el);
+  if (modo === "tramo") T.forEach(t => etq(t, `${fmt(t.L * EPL.f, 2)} m`));
+  else if (T.length && modo !== "no") etq(T[Math.floor((T.length - 1) / 2)], `${fmt(dsLargo(el) * EPL.f, 2)} m`);
   // Circuito y diámetro, al otro lado de la tubería, en el medio de su recorrido
-  if (dsD().cirt && (el.cir || el.dia) && T.length) {
+  if (dsCirtDe(el) && (el.cir || el.dia) && T.length) {
     const t = T[Math.floor((T.length - 1) / 2)];
     etq(
       { ...t, k: -(t.k || -1e-9) },
@@ -3934,6 +3990,7 @@ function dsProps(c) {
         ? campo("Circuito", igualCir ? circ(sel[0].cir, sel[0].tab) : circ(null)) + lista
         : "") +
       (tubs.length === sel.length ? dsCampoCond(campo, tubs) : "") +
+      (sel.every(dsConEtq) ? dsCampoEtq(campo, sel) : "") +
       dsCamposVarios(campo, sel) +
       (sel.every(dsConEnc)
         ? campo(
@@ -3962,6 +4019,7 @@ function dsProps(c) {
       `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="simbolo" title="Relleno, tamaño, letra y grosor de este tipo de símbolo (criterio del proyectista)">Editar símbolo…</button>${dsSimb(el.k) ? '<span class="ds-crit">Con criterio del proyectista</span>' : ""}</div>` +
       campo("Capa", capas(el.capa)) +
       campo("Rotación", `<input type="number" data-dsp="r" value="${+(el.r || 0).toFixed(2)}" step="1"><i>°</i>`) +
+      (el.cir && dsConEtq(el) ? dsCampoEtq(campo, [el]) : "") +
       (cat.h
         ? campo(
             "Altura",
@@ -4144,7 +4202,8 @@ function dsProps(c) {
           ) +
           (el.ali ? "" : campo("Circuito", circ(el.cir, el.tab)) + lista + dsCampoCx(campo, el)) +
           (el.sec ? fila("Del cálculo", esc(el.sec)) : "") +
-          dsCampoCond(campo, [el])
+          dsCampoCond(campo, [el]) +
+          dsCampoEtq(campo, [el])
         : "") +
       `<p class="ds-crit ds-crit0">Arrastre el rombo del medio de un tramo para curvarlo; los cuadrados mueven los vértices. Clic derecho en un vértice o en un tramo: quitar o agregar vértices, partir, volver recto o en arco; con dos elegidas, unirlas. Supr sobre un vértice lo quita.</p>` +
       curvas;
@@ -4328,6 +4387,11 @@ function dsPropCambio(e) {
         m = el.meds[i];
       if (m && k[2] === "d") m.d = v.replace(/[<>]/g, "").slice(0, 20);
       else if (m) m.f = v === "3" ? 3 : 1;
+    } else if ((k === "etq" || k === "cirt" || k === "nsal") && v !== "~" && dsConEtq(el)) {
+      // Etiquetas propias del elemento; vacío: como en todo el plano
+      if (k === "etq" && el.t === "tub") ["no", "total", "tramo"].includes(v) ? (el.etq = v) : delete el.etq;
+      else if (k === "cirt" && el.t === "tub") v ? (el.cirt = v === "1") : delete el.cirt;
+      else if (k === "nsal" && el.t === "sim") v ? (el.nsal = v === "1") : delete el.nsal;
     } else if (k === "num" && el.k === "bmed") {
       if (v === "1") el.num = true;
       else delete el.num;

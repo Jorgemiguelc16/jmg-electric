@@ -2651,6 +2651,14 @@ function edMenuAbrir(e) {
     if (sel.length === 1 && (sel[0].t === "sim" || sel[0].t === "txt"))
       b("gexacto", `Ángulo exacto… (ahora ${+(sel[0].r || 0).toFixed(1)}°)`);
     sep();
+    // Etiquetas de lo elegido (longitud y circuito de las tuberías, circuito de las salidas)
+    if (sel.some(dsConEtq)) {
+      b("etqver", "Mostrar sus etiquetas");
+      b("etqocu", "Ocultar sus etiquetas");
+      if (sel.some(el => el.etq || typeof el.cirt === "boolean" || typeof el.nsal === "boolean"))
+        b("etqpla", "Etiquetas como en todo el plano");
+      sep();
+    }
     if (sel.some(dsConEnc)) b("enc", "Letra de encendido (a, b, c…)…");
     if (sel.some(el => el.dt)) b("letra0", "Letra a su lugar");
     if (sel.some(el => el.col)) b("colcapa", "Quitar el color propio");
@@ -2936,6 +2944,28 @@ function edMenuAccion(a) {
     );
   }
   if (a === "salmenu" && ctx) return edMenuRecorrido(ctx);
+  if (a === "etqver" || a === "etqocu" || a === "etqpla") {
+    edMenuCerrar();
+    const D = dsD(),
+      l = dsSel().filter(el => dsEditable(el) && dsConEtq(el));
+    l.forEach(el => {
+      if (a === "etqpla") {
+        delete el.etq;
+        delete el.cirt;
+        delete el.nsal;
+      } else if (el.t === "tub") {
+        // Mostrar: la longitud como la del plano (total si el plano no la muestra) y el circuito con su diámetro
+        el.etq = a === "etqver" ? (D.etq === "tramo" ? "tramo" : "total") : "no";
+        el.cirt = a === "etqver";
+      } else el.nsal = a === "etqver";
+    });
+    edCambio();
+    edProps();
+    plDibujar();
+    return toast(
+      `${a === "etqver" ? "Etiquetas visibles en" : a === "etqocu" ? "Etiquetas ocultas en" : "Etiquetas como el plano en"} ${l.length} elemento${l.length === 1 ? "" : "s"}`
+    );
+  }
   if (a === "alitab" && ctx && ctx.tb) {
     const tb = ctx.tb;
     return dsElegirSalida(

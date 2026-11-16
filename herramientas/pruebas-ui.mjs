@@ -3092,6 +3092,79 @@ prueba("Cuenta vencida: no entra y ve «Su acceso venció»", async ok => {
   ok(!!(await ev(`document.querySelector('[data-av="vencido"] #vencFecha')`)), "existe la pantalla «Su acceso venció»");
 });
 
+prueba("Editor de diseño: etiquetas de cada tubería y salida (propiedades y clic derecho)", async ok => {
+  await ejemplo("uni");
+  await abrirPlano();
+  const ids = await J(`(() => {
+    const D = dsD();
+    D.etq = "total";
+    delete D.cirt;
+    delete D.nsal;
+    const s = dsAgregar({ t: "sim", k: "toma", x: ${OX} + 2, y: ${OY} + 4, r: 0, capa: "E-TOMACORRIENTES", cir: "C-2" }),
+      t = dsAgregar({ t: "tub", pts: [${OX} + 1, ${OY} + 1, ${OX} + 5, ${OY} + 1], modo: "techo", capa: "E-TUBERIAS-TECHO", cir: "C-2", dia: 20 });
+    edCambio();
+    return { s: s.id, t: t.id };
+  })()`);
+  const el = id => J(`dsD().els.find(e => e.id === "${id}")`);
+  ok(
+    (
+      await J(`[dsEtqDe(dsD().els.find(e => e.id === "${ids.t}")), dsCirtDe(dsD().els.find(e => e.id === "${ids.t}"))]`)
+    ).join() === "total,false",
+    "sin elegir, la tubería sigue al plano (longitud total, sin circuito)"
+  );
+  // Propiedades de la tubería: ocultar su longitud y mostrar su circuito
+  await ev(`DS_SEL.clear(); DS_SEL.add("${ids.t}"); edProps(); 1`);
+  ok(
+    !!(await ev(`$('edPropC').querySelector('[data-dsp="etq"]')`)),
+    "las propiedades de la tubería tienen «Longitud» y «Circuito y Ø»"
+  );
+  await poner('#edPropC [data-dsp="etq"]', "no");
+  await poner('#edPropC [data-dsp="cirt"]', "1");
+  let t = await el(ids.t);
+  ok(t.etq === "no" && t.cirt === true, "esta tubería: sin longitud y con su circuito");
+  ok(
+    (
+      await J(`[dsEtqDe(dsD().els.find(e => e.id === "${ids.t}")), dsCirtDe(dsD().els.find(e => e.id === "${ids.t}"))]`)
+    ).join() === "no,true",
+    "lo del elemento manda sobre lo del plano"
+  );
+  // Propiedades de la salida: su circuito junto a ella
+  await ev(`DS_SEL.clear(); DS_SEL.add("${ids.s}"); edProps(); 1`);
+  await poner('#edPropC [data-dsp="nsal"]', "1");
+  ok((await el(ids.s)).nsal === true, "la salida muestra su circuito aunque el plano no lo haga");
+  // Clic derecho con las dos elegidas: ocultar, mostrar y volver a como el plano
+  await ev(`DS_SEL.clear(); DS_SEL.add("${ids.t}"); DS_SEL.add("${ids.s}"); edMenuAccion("etqocu"); 1`);
+  t = await el(ids.t);
+  ok(
+    t.etq === "no" && t.cirt === false && (await el(ids.s)).nsal === false,
+    "«Ocultar sus etiquetas»: las dos sin etiquetas"
+  );
+  await ev(`edMenuAccion("etqver"); 1`);
+  t = await el(ids.t);
+  ok(
+    t.etq === "total" && t.cirt === true && (await el(ids.s)).nsal === true,
+    "«Mostrar sus etiquetas»: longitud, circuito y Ø"
+  );
+  // Se guardan con el proyecto
+  const g = await J(
+    `(() => { const d = disValido(JSON.parse(JSON.stringify(dsD()))); return d.els.filter(e => e.id === "${ids.t}" || e.id === "${ids.s}").map(e => [e.etq || "", e.cirt, e.nsal]); })()`
+  );
+  ok(
+    JSON.stringify(g).includes('["total",true,null]') && JSON.stringify(g).includes('["",null,true]'),
+    "se guardan con el proyecto"
+  );
+  await ev(`edMenuAccion("etqpla"); 1`);
+  t = await el(ids.t);
+  ok(
+    !("etq" in t) && !("cirt" in t) && !("nsal" in (await el(ids.s))),
+    "«Etiquetas como en todo el plano» quita lo propio"
+  );
+  await clic('[data-ed="cancelar"]');
+  await ev(
+    "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+  );
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

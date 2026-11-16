@@ -729,6 +729,8 @@ function disValido(v) {
           ...(e.cn ? { cn: txt(e.cn, 60) } : {}),
           ...(["calentador", "cocina", "aire", "motor", "otra"].includes(e.ctp) ? { ctp: e.ctp } : {}),
           ...(e.fs === 1 || e.fs === 3 ? { fs: e.fs } : {}),
+          // Circuito escrito junto a la salida: propio del elemento (sin él, como en todo el plano)
+          ...(typeof e.nsal === "boolean" && e.k !== "tab" ? { nsal: e.nsal } : {}),
           // Tablero general: solo alimentadores, sin circuitos derivados
           ...(e.k === "tab" && e.gen === true ? { gen: true } : {}),
           // Banco de medidores sin su lista numerada en el plano
@@ -821,6 +823,9 @@ function disValido(v) {
                 ...(e.sec ? { sec: txt(e.sec, 80) } : {}),
                 // Tubería de un alimentador (del medidor al tablero o entre tableros), sin circuito
                 ...(e.ali === true ? { ali: true } : {}),
+                // Etiquetas propias: longitud (total, por tramo u oculta) y circuito con diámetro (sin ellas, como el plano)
+                ...(["no", "total", "tramo"].includes(e.etq) ? { etq: e.etq } : {}),
+                ...(typeof e.cirt === "boolean" ? { cirt: e.cirt } : {}),
                 // Diámetro nominal de la tubería (mm)
                 ...([15, 20, 25, 35, 40, 50, 65, 80].includes(e.dia) ? { dia: e.dia } : {}),
                 // Conductores que lleva (marcas de la norma): fases, neutro y tierra
