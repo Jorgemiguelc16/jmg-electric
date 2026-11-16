@@ -411,6 +411,13 @@ function dsGuardarPref() {
 }
 
 /* ---------- Símbolos: primitivas a partir del SVG de simboloDGE() ---------- */
+/* Clave de la forma de un artefacto: la del símbolo o, en el banco de medidores, la del banco con sus n medidores
+   («bmed#n»: un contador numerado por medidor) */
+function dsKg(el) {
+  if (el.k !== "bmed") return el.k;
+  const n = dsMedidoresBanco(el).length;
+  return n ? `bmed#${Math.min(40, n)}` : "bmed";
+}
 const DS_PRIM = {},
   DS_BB = {};
 function dsPrims(k) {
@@ -1024,7 +1031,7 @@ function dsBBox(el) {
     return [el.x, el.y - H, el.x + W, el.y];
   }
   if (el.t === "sim") {
-    const b = dsBBs(el.k);
+    const b = dsBBs(dsKg(el));
     return dsCaja(
       [
         [b[0], b[1]],
@@ -1182,7 +1189,7 @@ function dsHit(x, y, r) {
         wy = (y - el.y) / u,
         a = wx * Math.cos(rr) + wy * Math.sin(rr),
         b = wx * Math.sin(rr) - wy * Math.cos(rr),
-        bb = dsBBs(el.k),
+        bb = dsBBs(dsKg(el)),
         t = r / u;
       if (a >= bb[0] - t && a <= bb[2] + t && b >= bb[1] - t && b <= bb[3] + t) return el.id;
     } else if (el.t === "txt" || dsEsTabla(el)) {
@@ -1256,7 +1263,7 @@ function dsALocal(el, x, y) {
   return [wx * c + wy * s, wx * s - wy * c];
 }
 const dsCentroCon = el => {
-  const f = dsFormaCon(el.k);
+  const f = dsFormaCon(dsKg(el));
   return dsAMundo(el, f.c[0], f.c[1]);
 };
 /* Hasta dónde llega el dibujo del símbolo k desde el punto c en la dirección (dx, dy), en sus unidades: el punto más
@@ -1317,7 +1324,7 @@ function dsAlcanceSim(k, c, dx, dy) {
 }
 // Punto del borde del artefacto en la dirección de (x, y): allí termina la tubería, tocando el dibujo del símbolo
 function dsBorde(el, x, y) {
-  const f = dsFormaCon(el.k),
+  const f = dsFormaCon(dsKg(el)),
     [a, b] = dsALocal(el, x, y);
   let dx = a - f.c[0],
     dy = b - f.c[1];
@@ -1325,10 +1332,10 @@ function dsBorde(el, x, y) {
   if (d < 1e-9) return dsCentroCon(el);
   dx /= d;
   dy /= d;
-  const t = dsAlcanceSim(el.k, f.c, dx, dy);
+  const t = dsAlcanceSim(dsKg(el), f.c, dx, dy);
   if (t !== null) return dsAMundo(el, f.c[0] + dx * t, f.c[1] + dy * t);
   // Sin dibujo en esa dirección (un símbolo que no rodea su centro): el punto del dibujo más cercano a la tubería
-  const q = dsCercaSim(el.k, a, b);
+  const q = dsCercaSim(dsKg(el), a, b);
   return q ? dsAMundo(el, q[0], q[1]) : dsCentroCon(el);
 }
 // Punto del dibujo del símbolo k más cercano a (x, y), en sus unidades (sin las letras del tipo)
@@ -1381,7 +1388,7 @@ function dsCercaSim(k, x, y) {
 }
 // Radio en que el artefacto atrae la punta de la tubería (en el dibujo)
 const dsRadioCon = el => {
-  const f = dsFormaCon(el.k);
+  const f = dsFormaCon(dsKg(el));
   return (f.r || Math.max(f.w, f.h)) * dsUk(el.k);
 };
 const dsConecta = el => !!(el && el.t === "sim" && el.k !== "tab" && DS_CAT[el.k] && dsVis(el));
@@ -1824,7 +1831,7 @@ function dsPintar(g) {
         g.fillRect(X - 1, Y - 1, 2, 2);
         continue;
       }
-      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
+      dsDibSim(g, dsKg(el), X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
       if (el.enc) dsDibEnc(g, el, col, s);
       if (D.nsal && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
       if (el.k === "tab") dsDibSalidas(g, el, col, uk, dsGrosor(cap));
@@ -2501,7 +2508,7 @@ function dsSobre(g) {
     g.globalAlpha = sel ? 0.32 : 0.18;
     if (el.t === "sim") {
       const [X, Y] = plAPant(el.x, el.y);
-      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
+      dsDibSim(g, dsKg(el), X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
     } else if (el.t === "txt") {
       const b = dsBBox(el),
         [a, c] = plAPant(b[0], b[3]),

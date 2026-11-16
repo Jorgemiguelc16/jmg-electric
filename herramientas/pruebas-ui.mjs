@@ -2635,6 +2635,12 @@ prueba("Tablero general solo con alimentadores, banco con sus medidores y tuber�
     M.length === 3 && M[0].n === "M-1" && M[0].dep === "TD-1" && M[1].tri && !M[2].dep,
     `medidores escritos: ${M.map(m => m.n + " " + (m.dep || "—") + (m.tri ? " 3φ" : "")).join(", ")}`
   );
+  // El símbolo del banco dibuja sus medidores: un contador numerado por medidor
+  ok(
+    (await ev(`dsKg(dsD().els.find(e => e.id === "${ids.bm}"))`)) === "bmed#3" &&
+      (await J("dsPrims('bmed#9').filter(p => p.t === 't').map(p => p.tx).join(',')")) === "1,2,3,4,5,6,7,8,9,BM",
+    "el banco dibuja sus medidores numerados (1, 2, 3…)"
+  );
   await esperar(800);
   ok(
     (await J(`PLANO.dis.els.find(e => e.id === "${ids.bm}").meds.length`)) === 3,

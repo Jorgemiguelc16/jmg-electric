@@ -660,6 +660,26 @@ function simboloDGE(o, k, x, y, z = 1) {
       L(x - 1.5 * z, y + 4 * z, x + 1.5 * z, y + 4 * z, 1.3);
     }
   };
+  /* Banco de medidores con sus n medidores (criterio de la plataforma): un contador numerado por medidor, en filas de
+     hasta cinco (la última, desde la izquierda), dentro de la caja del banco y «BM» abajo */
+  const mb = /^bmed#(\d+)$/.exec(k);
+  if (mb) {
+    const n = Math.max(1, Math.min(40, +mb[1])),
+      cols = Math.min(5, n),
+      filas = Math.ceil(n / 5),
+      w = cols * 10 * z + 2 * z,
+      h = filas * 12 * z + 7 * z;
+    R(x - w / 2, y - h / 2, w, h, { fi: "#fff" });
+    for (let i = 0; i < n; i++) {
+      const cx = x - w / 2 + z + ((i % 5) + 0.5) * 10 * z,
+        cy = y - h / 2 + 1.5 * z + Math.floor(i / 5) * 12 * z;
+      R(cx - 4 * z, cy, 8 * z, 10 * z, { fi: "#fff" });
+      L(cx - 4 * z, cy + 2.8 * z, cx + 4 * z, cy + 2.8 * z, 0.8);
+      T(cx, cy + 8.6 * z, String(i + 1), { s: 4.6 * z, b: 1, a: "middle" });
+    }
+    T(x, y + h / 2 - 1.3 * z, "BM", { s: 4.6 * z, b: 1, a: "middle" });
+    return true;
+  }
   if (!S[k]) return false;
   S[k]();
   return true;
