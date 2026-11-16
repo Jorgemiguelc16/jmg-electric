@@ -2920,7 +2920,7 @@ prueba("Administración: PIN, panel con agenda, hoja de cuentas en su ventana, v
   await esperar(300);
   ok(!!(await ev("$('admPin1')")), "sin PIN: pide crearlo");
   ok(
-    !(await ev("$('admCuerpo').querySelector('.adm-kpis')")) && (await ev("$('admDlg').hidden")),
+    !(await ev("$('admCuerpo').querySelector('.ap-kpis')")) && (await ev("$('admDlg').hidden")),
     "y no muestra nada antes del PIN"
   );
   await ev(
@@ -2938,40 +2938,66 @@ prueba("Administración: PIN, panel con agenda, hoja de cuentas en su ventana, v
     "el PIN se guarda cifrado (no el número)"
   );
   ok(
-    !!(await ev("$('admCuerpo').querySelector('.adm-kpis')")) && !!(await ev("$('agCal')")),
-    "con el PIN: el panel con el resumen y la agenda"
+    !!(await ev("$('admCuerpo').querySelector('.ap-kpis')")) &&
+      !!(await ev("$('admCuerpo').querySelector('.ap-cal .ap-mes')")),
+    "con el PIN: el panel con el resumen y el calendario"
   );
   ok(
     /^1\s*Por vencer/.test(await ev(`$('admCuerpo').querySelector('[data-adk="porvencer"]').textContent`)),
     "el resumen cuenta 1 por vencer"
   );
-  // Agenda: los vencimientos aparecen solos; una fecha nueva se guarda en config/agenda
+  // Agenda: los vencimientos aparecen solos; un evento nuevo se guarda en config/agenda
   ok(
-    /Vence la cuenta de Luis Ramos/.test(await ev("$('agLado').textContent")),
+    /Vence la cuenta de Luis Ramos/.test(await ev("$('agLista').textContent")),
     "el vencimiento de una cuenta aparece en la agenda"
   );
+  await ev(`$('admCuerpo').querySelector('[data-apf="ev"]').click(); 1`);
+  const f2 = await ev(
+    `(() => { const d = new Date(Date.now() + 2 * 86400000); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })()`
+  );
   await ev(
-    `$("agT").value = "Entrega del expediente"; $("agR").value = "3"; $("agF").value = (() => { const d = new Date(Date.now() + 2 * 86400000); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })(); $("agLado").querySelector("form").requestSubmit(); 1`
+    `$("agT").value = "Entrega del expediente"; $("agR").value = "3"; $("agF").value = "${f2}"; $('admCuerpo').querySelector('[data-agf="ev"]').requestSubmit(); 1`
   );
   await esperar(200);
   const ag = await J(`FSA.get("config/agenda")`);
   ok(
     ag && ag.items.length === 1 && ag.items[0].t === "Entrega del expediente" && ag.items[0].r === 3,
-    "la fecha se guarda con su aviso (3 días antes)"
+    "el evento se guarda con su aviso (3 días antes)"
   );
   ok(
-    (await J("agTocan().length")) === 1 && /Entrega del expediente/.test(await ev("$('agCal').textContent")),
-    "su aviso ya toca (faltan 2 días) y se ve en el calendario"
+    (await J("agTocan().length")) === 1 && !!(await ev(`$('admCuerpo').querySelector('.ap-d[data-agd="${f2}"] u.ev')`)),
+    "su aviso ya toca (faltan 2 días) y el calendario marca el día"
+  );
+  // Pendientes: uno urgente cuenta como aviso
+  await ev(
+    `$("taT").value = "Llamar al ingeniero"; $("taP").value = "u"; $('admCuerpo').querySelector('[data-agf="ta"]').requestSubmit(); 1`
+  );
+  await esperar(200);
+  ok(
+    (await J(`FSA.get("config/agenda")`)).tareas[0].p === "u" && (await J("agAvisos()")) === 2,
+    "un pendiente urgente se guarda y cuenta como aviso"
   );
   ok(
-    (await ev("document.querySelector('.adm-badge').textContent")) === "2",
-    "la insignia del menú suma la solicitud pendiente y el recordatorio"
+    (await ev("document.querySelector('.adm-badge').textContent")) === "3",
+    "la insignia del menú suma la solicitud pendiente y los dos avisos"
   );
-  await ev(`$("agLado").querySelector("[data-agh]").click(); 1`);
+  await ev(`$('admCuerpo').querySelector("[data-ath]").click(); 1`);
+  await esperar(150);
+  ok((await J(`FSA.get("config/agenda")`)).tareas[0].hecho === true, "el pendiente se marca como hecho");
+  // Notas de colores
+  await ev(`$('admCuerpo').querySelector("[data-anu]").click(); 1`);
+  await esperar(150);
+  await ev(
+    `const t = $('admCuerpo').querySelector(".ap-papel textarea"); t.value = "Cliente: Sra. Flores, 3 pisos"; t.dispatchEvent(new Event("input", { bubbles: true })); $('admCuerpo').querySelector('.ap-papel [data-anc="verde"]').click(); 1`
+  );
+  await esperar(1000);
+  const nt = (await J(`FSA.get("config/agenda")`)).notas[0];
+  ok(nt && nt.t === "Cliente: Sra. Flores, 3 pisos" && nt.c === "verde", "la nota se guarda con su texto y color");
+  await ev(`$('admCuerpo').querySelector("[data-agh]").click(); 1`);
   await esperar(150);
   ok(
     (await J(`FSA.get("config/agenda")`)).items[0].hecho === true && (await J("agTocan().length")) === 0,
-    "marcada como hecha, deja de recordar"
+    "el evento marcado como hecho deja de recordar"
   );
   // La hoja de cuentas se abre en una ventana
   await ev(`$('admCuerpo').querySelector('[data-adk="todos"]').click(); 1`);
@@ -3000,7 +3026,7 @@ prueba("Administración: PIN, panel con agenda, hoja de cuentas en su ventana, v
   ok(/incorrecto/.test(await ev("$('admMsg').textContent")), "PIN incorrecto: no entra");
   await ev(`$("admPin").value = "2468"; $("admCuerpo").querySelector("form").requestSubmit(); 1`);
   await esperar(150);
-  ok(!!(await ev("$('admCuerpo').querySelector('.adm-kpis')")), "PIN correcto: entra al panel");
+  ok(!!(await ev("$('admCuerpo').querySelector('.ap-kpis')")), "PIN correcto: entra al panel");
   await ev(`$('admCuerpo').querySelector('[data-adk="todos"]').click(); 1`);
   await esperar(100);
   // Buscar y filtrar
@@ -3053,7 +3079,7 @@ prueba("Administración: PIN, panel con agenda, hoja de cuentas en su ventana, v
   );
   await ev(`document.querySelector('#cfmDlg [data-cf="no"]').click(); 1`);
   await ev(
-    `(() => { admCerrarVentana(); firebase.firestore = FA0.fs; firebase.initializeApp = FA0.ini; esAdminCuenta = FA0.adm; USUARIO = FA0.u; Object.assign(ADM, { pin: undefined, abierto: false }); Object.assign(AG, { items: [], cargada: false, sel: null }); admLista([]); setTab("inicio"); return 1; })()`
+    `(() => { admCerrarVentana(); firebase.firestore = FA0.fs; firebase.initializeApp = FA0.ini; esAdminCuenta = FA0.adm; USUARIO = FA0.u; Object.assign(ADM, { pin: undefined, abierto: false }); Object.assign(AG, { items: [], tareas: [], notas: [], cargada: false, sel: null, form: "" }); admLista([]); setTab("inicio"); return 1; })()`
   );
 });
 

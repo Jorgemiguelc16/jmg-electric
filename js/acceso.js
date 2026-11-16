@@ -528,7 +528,7 @@ function saludoJorge(np, nr = 0) {
     );
   if (nr)
     avisos.push(
-      `Tienes <b>${nr} recordatorio${nr === 1 ? "" : "s"}</b> en tu agenda 📅⏰ <button type="button" class="linkbtn" data-sj="admin">Ver</button>`
+      `Tienes <b>${nr} aviso${nr === 1 ? "" : "s"}</b> en tu agenda y pendientes 📅⏰ <button type="button" class="linkbtn" data-sj="admin">Ver</button>`
     );
   if (pp)
     avisos.push(

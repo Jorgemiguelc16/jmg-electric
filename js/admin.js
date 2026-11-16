@@ -242,11 +242,18 @@ function admLista(L) {
   admBadge();
   if (!admAbierto()) return;
   if (!$("admDlg").hidden) admRender();
-  if (ADM.modo === "panel" && !$("tab-admin").hidden) admPanel();
+  // El panel se redibuja, salvo mientras se escribe en él (una nota, un evento)
+  const foco = document.activeElement;
+  if (
+    ADM.modo === "panel" &&
+    !$("tab-admin").hidden &&
+    !(foco && $("admCuerpo").contains(foco) && foco.matches("input, textarea, select"))
+  )
+    admPanel();
 }
 // Insignia de Administración en el menú: solicitudes pendientes y recordatorios de la agenda que tocan hoy
 function admBadge() {
-  const n = ADM.L.filter(x => x.estado === "pendiente").length + (AG.cargada ? agTocan().length : 0);
+  const n = ADM.L.filter(x => x.estado === "pendiente").length + (AG.cargada ? agAvisos() : 0);
   document.querySelectorAll(".adm-badge").forEach(x => {
     x.textContent = n;
     x.hidden = !n;
@@ -498,8 +505,11 @@ addEventListener("keydown", e => {
   if (e.key === "Escape" && !$("admDlg").hidden && $("cfmDlg").hidden) admCerrarVentana();
 });
 
-/* ---------- Panel del administrador: resumen y agenda ---------- */
-const AG = { items: [], cargada: false, mes: null, sel: null };
+/* ---------- Panel del administrador ----------
+   Franja superior (saludo, resumen de cuentas y la hoja) y cinco tarjetas: mini calendario, agenda agrupada (atrasado,
+   hoy, mañana, esta semana, próximamente), pendientes con prioridad y fecha límite, notas de colores y la actividad de
+   las cuentas. Agenda, pendientes y notas se guardan juntos en config/agenda (solo el administrador). */
+const AG = { items: [], tareas: [], notas: [], cargada: false, mes: null, sel: null, form: "", hechas: false };
 const AG_MESES = [
   "enero",
   "febrero",
@@ -520,6 +530,8 @@ const AG_REC = [
   [3, "3 días antes"],
   [7, "1 semana antes"]
 ];
+const AG_PRI = { u: ["Urgente", 0], a: ["Alta", 1], n: ["Normal", 2] };
+const AG_COLORES = ["amarillo", "verde", "azul", "rosa"];
 const agStr = d =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const agHoy = () => agStr(new Date());
@@ -533,25 +545,43 @@ const agCuando = s => {
   const d = agDias(s);
   return d === 0 ? "hoy" : d === 1 ? "mañana" : d === -1 ? "ayer" : d > 1 ? `en ${d} días` : `hace ${-d} días`;
 };
+const agLarga = s => agFecha(s).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
+const agId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Hace cuánto (para la actividad de las cuentas)
+const agHace = ms => {
+  const m = Math.round((Date.now() - ms) / 60000);
+  return m < 1
+    ? "ahora"
+    : m < 60
+      ? `hace ${m} min`
+      : m < 1440
+        ? `hace ${Math.round(m / 60)} h`
+        : `hace ${Math.round(m / 1440)} día${Math.round(m / 1440) === 1 ? "" : "s"}`;
+};
 async function agLeer() {
   const d = await admDb().collection("config").doc("agenda").get(),
     v = d.exists ? d.data() : {};
   AG.items = Array.isArray(v.items) ? v.items : [];
+  AG.tareas = Array.isArray(v.tareas) ? v.tareas : [];
+  AG.notas = Array.isArray(v.notas) ? v.notas : [];
   AG.cargada = true;
 }
-async function agGuardar() {
+async function agGuardar(redibujar = true) {
   AG.items.sort((a, b) => (a.f + (a.h || "")).localeCompare(b.f + (b.h || "")));
   try {
-    await admDb().collection("config").doc("agenda").set({ items: AG.items });
+    await admDb().collection("config").doc("agenda").set({ items: AG.items, tareas: AG.tareas, notas: AG.notas });
   } catch (err) {
-    toast("No se pudo guardar la agenda: " + (err.code || err.message));
+    toast("No se pudo guardar: " + (err.code || err.message));
   }
   admBadge();
-  agRender();
+  if (redibujar) agRender();
 }
-// Recordatorios que tocan hoy: fechas sin marcar como hechas cuyo aviso ya empezó (también las pasadas)
+// Lo que toca hoy: fechas de la agenda cuyo aviso ya empezó (también las pasadas sin marcar como hechas) y
+// pendientes urgentes o con su fecha límite cumplida
 const agTocan = () => AG.items.filter(x => !x.hecho && agDias(x.f) <= (x.r || 0));
-// Para el saludo al entrar: cuántos recordatorios tocan (la agenda se lee una vez)
+const agUrgen = () => AG.tareas.filter(x => !x.hecho && (x.p === "u" || (x.lim && agDias(x.lim) <= 0)));
+const agAvisos = () => agTocan().length + agUrgen().length;
+// Para el saludo al entrar: cuántos avisos hay (la agenda se lee una vez)
 async function admRecordatorios() {
   try {
     if (!AG.cargada) await agLeer();
@@ -559,7 +589,7 @@ async function admRecordatorios() {
     return [];
   }
   admBadge();
-  return agTocan();
+  return [...agTocan(), ...agUrgen()];
 }
 // Los vencimientos de las cuentas, como fechas automáticas de la agenda
 const agVenc = () =>
@@ -570,6 +600,20 @@ const agVenc = () =>
     f: agStr(new Date(admMs(x.vence))),
     t: `Vence la cuenta de ${x.nombre || x.correo}`
   }));
+
+const AG_ICO = {
+  cal: '<path d="M4 6.5h16v13H4z"/><path d="M4 10h16M8.5 4v4M15.5 4v4"/>',
+  lista: '<path d="M9 7h11M9 12h11M9 17h11"/><path d="m4 7 1 1 2-2M4 12l1 1 2-2M4 17l1 1 2-2"/>',
+  nota: '<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/>',
+  act: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',
+  ag: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+  hoja: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/>'
+};
+const agIco = k =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${AG_ICO[k]}</svg>`;
+const agTarjeta = (cls, ico, tit, extra, cuerpo) =>
+  `<section class="ap-card ${cls}"><header class="ap-h">${agIco(ico)}<h3>${tit}</h3>${extra || ""}</header>${cuerpo}</section>`;
+
 async function admPanel() {
   ADM.modo = "panel";
   if (!AG.cargada)
@@ -581,95 +625,220 @@ async function admPanel() {
     const h = new Date();
     AG.mes = new Date(h.getFullYear(), h.getMonth(), 1);
   }
-  const n = f => ADM.L.filter((ADM_FILTROS.find(x => x[0] === f) || ADM_FILTROS[0])[2]).length,
-    kpi = (f, t, cls) =>
-      `<button type="button" class="adm-kpi ${cls}" data-adk="${f}"><b>${n(f)}</b><span>${t}</span></button>`;
-  $("admCuerpo").innerHTML =
-    `<div class="adm-kpis">${kpi("pendiente", "Solicitudes pendientes", "pe")}${kpi("aprobado", "Cuentas activas", "ok")}${kpi("porvencer", "Por vencer (7 días)", "w")}${kpi("vencido", "Vencidas", "bad")}<button type="button" class="adm-kpi abrir" data-adk="todos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/></svg><span>Abrir la hoja de cuentas</span></button></div>` +
-    `<div class="card adm-agenda"><div class="ag-cal" id="agCal"></div><div class="ag-lado" id="agLado"></div></div>` +
-    `<p class="adm-pie-panel hint">Su agenda y este panel solo los ve usted. <button type="button" class="linkbtn" data-adp="cambiarpin">Cambiar PIN</button> · <button type="button" class="linkbtn" data-adp="bloquear">Bloquear</button></p>`;
   agRender();
 }
 function agRender() {
-  if (!$("agCal")) return;
+  if (ADM.modo !== "panel" || !admAbierto()) return;
+  const h = new Date().getHours(),
+    hola = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches",
+    nom = ((FICHA && FICHA.nombre) || (USUARIO && USUARIO.displayName) || "").split(" ")[0],
+    n = f => ADM.L.filter((ADM_FILTROS.find(x => x[0] === f) || ADM_FILTROS[0])[2]).length,
+    kpi = (f, t, cls) =>
+      `<button type="button" class="ap-kpi ${cls}${n(f) ? "" : " cero"}" data-adk="${f}" title="Abrir la hoja: ${t.toLowerCase()}"><b>${n(f)}</b>${t}</button>`,
+    av = agAvisos();
+  // Conserva lo que se está escribiendo en el formulario abierto
+  const borr = {};
+  $("admCuerpo")
+    .querySelectorAll(".ap-form [id]")
+    .forEach(i => (borr[i.id] = i.value));
+  $("admCuerpo").innerHTML =
+    `<div class="ap-top"><div class="ap-hola"><b>${hola}${nom ? ", " + esc(nom) : ""}</b><span>${esc(agLarga(agHoy()))}${av ? ` · <em>${av} aviso${av === 1 ? "" : "s"} para hoy</em>` : " · todo al día"}</span></div>` +
+    `<div class="ap-kpis">${kpi("pendiente", "Pendientes", "pe")}${kpi("aprobado", "Activas", "ok")}${kpi("porvencer", "Por vencer", "w")}${kpi("vencido", "Vencidas", "bad")}</div>` +
+    `<button type="button" class="ap-hoja" data-adk="todos">${agIco("hoja")}Hoja de cuentas</button></div>` +
+    `<div class="ap-grid"><div class="ap-colu">${agCal()}${agActividad()}</div>${agAgenda()}<div class="ap-colu">${agTareas()}${agNotas()}</div></div>` +
+    `<p class="adm-pie-panel hint">Este panel solo lo ve usted. <button type="button" class="linkbtn" data-adp="cambiarpin">Cambiar PIN</button> · <button type="button" class="linkbtn" data-adp="bloquear">Bloquear</button></p>`;
+  Object.entries(borr).forEach(([id, v]) => {
+    if ($(id)) $(id).value = v;
+  });
+}
+// Mini calendario: puntos por día (evento, vencimiento de cuenta, pendiente con fecha límite)
+function agCal() {
   const m = AG.mes,
     y = m.getFullYear(),
     mo = m.getMonth(),
     hoy = agHoy(),
-    todos = [...AG.items, ...agVenc()],
-    porDia = {};
-  todos.forEach(x => (porDia[x.f] = porDia[x.f] || []).push(x));
-  // Semana de lunes a domingo
+    marcas = {},
+    pon = (f, c) => (marcas[f] = marcas[f] || new Set()).add(c);
+  AG.items.forEach(x => pon(x.f, x.hecho ? "hecho" : "ev"));
+  agVenc().forEach(x => pon(x.f, "venc"));
+  AG.tareas.forEach(x => x.lim && !x.hecho && pon(x.lim, "ta"));
   const ini = (new Date(y, mo, 1).getDay() + 6) % 7,
     nd = new Date(y, mo + 1, 0).getDate();
-  let celdas = "";
-  for (let i = 0; i < ini; i++) celdas += `<span class="ag-d vacio"></span>`;
+  let c = "";
+  for (let i = 0; i < ini; i++) c += `<span></span>`;
   for (let d = 1; d <= nd; d++) {
     const s = agStr(new Date(y, mo, d)),
-      L = porDia[s] || [];
-    celdas += `<button type="button" class="ag-d${s === hoy ? " hoy" : ""}${s === AG.sel ? " sel" : ""}" data-agd="${s}"><i>${d}</i>${L.slice(
-      0,
-      2
-    )
-      .map(x => `<em class="${x.auto ? "auto" : x.hecho ? "hecho" : ""}">${esc(x.t)}</em>`)
-      .join("")}${L.length > 2 ? `<small>+${L.length - 2} más</small>` : ""}</button>`;
+      M = [...(marcas[s] || [])],
+      fin = (ini + d - 1) % 7 >= 5;
+    c += `<button type="button" class="ap-d${s === hoy ? " hoy" : ""}${s === AG.sel ? " sel" : ""}${fin ? " fin" : ""}${M.length ? " con" : ""}${s < hoy ? " pas" : ""}" data-agd="${s}" title="${esc(agLarga(s))}">${d}<i>${M.map(k => `<u class="${k}"></u>`).join("")}</i></button>`;
   }
-  $("agCal").innerHTML =
-    `<div class="ag-cab"><button type="button" class="ag-nav" data-agm="-1" aria-label="Mes anterior">‹</button><h3>${AG_MESES[mo]} ${y}</h3><button type="button" class="ag-nav" data-agm="1" aria-label="Mes siguiente">›</button><button type="button" class="btn sm sec" data-agm="0">Hoy</button></div>` +
-    `<div class="ag-sem">${["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(x => `<span>${x}</span>`).join("")}</div><div class="ag-grid">${celdas}</div>`;
-  // Lista: las fechas del día elegido o las próximas (y las pasadas sin marcar como hechas)
-  const lista = (
-      AG.sel
-        ? todos.filter(x => x.f === AG.sel)
-        : todos.filter(x => (x.auto ? agDias(x.f) >= -7 : !x.hecho) && agDias(x.f) <= 90)
-    )
-      .sort((a, b) => (a.f + (a.h || "")).localeCompare(b.f + (b.h || "")))
-      .slice(0, 14),
-    toca = new Set(agTocan().map(x => x.id)),
-    fl = s => agFecha(s).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" }),
-    item = x => {
-      const F = agFecha(x.f);
-      return `<div class="ag-it${x.auto ? " auto" : ""}${x.hecho ? " hecho" : ""}${toca.has(x.id) ? " toca" : ""}"><span class="ag-fe"><b>${F.getDate()}</b><small>${AG_MESES[F.getMonth()].slice(0, 3)}</small></span><div class="ag-tx"><b>${esc(x.t)}</b><small>${x.h ? esc(x.h) + " · " : ""}${agCuando(x.f)}${x.auto ? "" : ` · aviso: ${(AG_REC.find(r => r[0] === (x.r || 0)) || AG_REC[0])[1].toLowerCase()}`}</small>${x.n ? `<p>${esc(x.n)}</p>` : ""}</div><span class="ag-acc">${
-        x.auto
-          ? `<button type="button" class="btn sm sec" data-agv="${x.uid}">Ver</button>`
-          : `<button type="button" class="ag-b" data-agh="${x.id}" title="${x.hecho ? "Marcar como pendiente" : "Marcar como hecho"}">${x.hecho ? "↺" : "✓"}</button><button type="button" class="ag-b" data-agx="${x.id}" title="Eliminar">×</button>`
-      }</span></div>`;
-    };
-  $("agLado").innerHTML =
-    `<form class="ag-form acc-form" data-agf><h4>${AG.sel ? `Nueva fecha · ${fl(AG.sel)}` : "Nueva fecha importante"}</h4><div class="acc-2"><label>Fecha<input type="date" id="agF" value="${AG.sel || hoy}" required></label><label>Hora (opcional)<input type="time" id="agH"></label></div><label>Qué<input id="agT" maxlength="120" placeholder="Entrega del expediente, reunión con el ingeniero…" required></label><label>Nota (opcional)<input id="agN" maxlength="300"></label><div class="acc-2"><label>Recordarme<select id="agR">${AG_REC.map(([k, t]) => `<option value="${k}"${k === 1 ? " selected" : ""}>${t}</option>`).join("")}</select></label><button type="submit" class="btn">Guardar fecha</button></div></form>` +
-    `<div class="ag-lista"><h4>${AG.sel ? `Fechas del ${fl(AG.sel)} <button type="button" class="linkbtn" data-agd="${AG.sel}">ver las próximas</button>` : "Próximas fechas"}</h4>${lista.length ? lista.map(item).join("") : `<p class="hint">${AG.sel ? "Nada anotado para este día." : "Sin fechas próximas. Anote la primera arriba o elija un día del calendario."}</p>`}</div>`;
+  return agTarjeta(
+    "ap-cal",
+    "cal",
+    `${AG_MESES[mo]} ${y}`,
+    `<span class="ap-nav"><button type="button" data-agm="-1" aria-label="Mes anterior">‹</button><button type="button" data-agm="0">Hoy</button><button type="button" data-agm="1" aria-label="Mes siguiente">›</button></span>`,
+    `<div class="ap-sem">${["L", "M", "M", "J", "V", "S", "D"].map(x => `<span>${x}</span>`).join("")}</div><div class="ap-mes">${c}</div><div class="ap-ley"><span><u class="ev"></u>Evento</span><span><u class="ta"></u>Pendiente</span><span><u class="venc"></u>Vence cuenta</span></div>`
+  );
 }
+// Agenda: el día elegido o agrupada (atrasado, hoy, mañana, esta semana, próximamente)
+function agAgenda() {
+  const toca = new Set(agTocan().map(x => x.id)),
+    todos = [...AG.items, ...agVenc()],
+    item = x =>
+      `<div class="ap-ev${x.auto ? " auto" : ""}${x.hecho ? " hecho" : ""}${toca.has(x.id) ? " toca" : ""}"><span class="ap-hr">${x.h ? esc(x.h) : AG.sel ? "" : `${agFecha(x.f).getDate()} ${AG_MESES[agFecha(x.f).getMonth()].slice(0, 3)}`}</span><div class="ap-tx"><b>${esc(x.t)}</b><small>${[
+        AG.sel || !x.h ? "" : `${agFecha(x.f).getDate()} ${AG_MESES[agFecha(x.f).getMonth()].slice(0, 3)}`,
+        x.n ? esc(x.n) : "",
+        x.auto ? "" : toca.has(x.id) ? "⏰ aviso activo" : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")}</small></div><span class="ap-acc">${
+        x.auto
+          ? `<button type="button" data-agv="${x.uid}" title="Ver la cuenta">Ver</button>`
+          : `<button type="button" data-agh="${x.id}" title="${x.hecho ? "Marcar como pendiente" : "Marcar como hecho"}">${x.hecho ? "↺" : "✓"}</button><button type="button" data-agx="${x.id}" title="Eliminar">×</button>`
+      }</span></div>`;
+  let cuerpo = "";
+  if (AG.sel) {
+    const L = todos.filter(x => x.f === AG.sel).sort((a, b) => (a.h || "").localeCompare(b.h || ""));
+    cuerpo = `<div class="ap-grupo"><h4>${esc(agLarga(AG.sel))} <button type="button" class="linkbtn" data-agd="${AG.sel}">ver todo</button></h4>${L.map(item).join("") || `<p class="ap-vacio">Nada anotado para este día.</p>`}</div>`;
+  } else {
+    const G = [
+      ["Atrasado", x => !x.auto && !x.hecho && agDias(x.f) < 0, "bad"],
+      ["Hoy", x => agDias(x.f) === 0, "hoy"],
+      ["Mañana", x => agDias(x.f) === 1, ""],
+      ["Esta semana", x => agDias(x.f) >= 2 && agDias(x.f) <= 7, ""],
+      ["Próximamente", x => agDias(x.f) >= 8 && agDias(x.f) <= 60, ""]
+    ];
+    cuerpo = G.map(([t, f, cls]) => {
+      const L = todos
+        .filter(x => f(x) && !(x.hecho && agDias(x.f) < 0))
+        .sort((a, b) => (a.f + (a.h || "")).localeCompare(b.f + (b.h || "")));
+      return L.length
+        ? `<div class="ap-grupo ${cls}"><h4>${t} <span>${L.length}</span></h4>${L.slice(0, 8).map(item).join("")}</div>`
+        : "";
+    }).join("");
+    if (!cuerpo)
+      cuerpo = `<p class="ap-vacio">Sin fechas próximas. Pulse «+ Evento» o elija un día del calendario.</p>`;
+  }
+  const form =
+    AG.form === "ev"
+      ? `<form class="ap-form" data-agf="ev"><input id="agT" maxlength="120" placeholder="Qué: entrega del expediente, reunión…" required><div class="ap-f3"><input type="date" id="agF" value="${AG.sel || agHoy()}" required title="Fecha"><input type="time" id="agH" title="Hora (opcional)"><select id="agR" title="Cuándo avisarme">${AG_REC.map(([k, t]) => `<option value="${k}"${k === 1 ? " selected" : ""}>Avisar: ${t.toLowerCase()}</option>`).join("")}</select></div><input id="agN" maxlength="300" placeholder="Nota (opcional)"><div class="ap-fb"><button type="button" class="linkbtn" data-apf="">Cancelar</button><button type="submit" class="btn sm">Guardar</button></div></form>`
+      : "";
+  return agTarjeta(
+    "ap-agenda",
+    "ag",
+    "Agenda",
+    `<button type="button" class="ap-mas" data-apf="ev">+ Evento</button>`,
+    form + `<div class="ap-lista" id="agLista">${cuerpo}</div>`
+  );
+}
+// Pendientes: urgentes primero, luego por fecha límite
+function agTareas() {
+  const hechas = AG.tareas.filter(x => x.hecho),
+    L = AG.tareas
+      .filter(x => AG.hechas || !x.hecho)
+      .sort(
+        (a, b) =>
+          (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0) ||
+          AG_PRI[a.p || "n"][1] - AG_PRI[b.p || "n"][1] ||
+          (a.lim || "9999").localeCompare(b.lim || "9999")
+      ),
+    item = x => {
+      const d = x.lim ? agDias(x.lim) : null;
+      return `<div class="ap-ta p-${x.p || "n"}${x.hecho ? " hecho" : ""}"><button type="button" class="ap-chk" data-ath="${x.id}" aria-label="${x.hecho ? "Marcar como pendiente" : "Marcar como hecho"}">${x.hecho ? "✓" : ""}</button><div class="ap-tx"><b>${esc(x.t)}</b><small><span class="ap-pri">${AG_PRI[x.p || "n"][0]}</span>${x.lim ? `<span class="${!x.hecho && d < 0 ? "bad" : !x.hecho && d <= 1 ? "w" : ""}">${d < 0 ? `atrasado ${-d} día${d === -1 ? "" : "s"}` : d === 0 ? "límite hoy" : `límite ${agCuando(x.lim)}`}</span>` : ""}</small></div><span class="ap-acc"><button type="button" data-atx="${x.id}" title="Eliminar">×</button></span></div>`;
+    };
+  return agTarjeta(
+    "ap-tareas",
+    "lista",
+    "Pendientes",
+    `<span class="ap-cnt">${AG.tareas.length - hechas.length}</span>`,
+    `<form class="ap-form ap-rap" data-agf="ta"><input id="taT" maxlength="160" placeholder="Nueva tarea y Enter…" required><select id="taP" title="Prioridad"><option value="u">Urgente</option><option value="a">Alta</option><option value="n" selected>Normal</option></select><input type="date" id="taL" title="Fecha límite (opcional)"><button type="submit" class="btn sm" aria-label="Agregar">+</button></form>` +
+      `<div class="ap-lista">${L.map(item).join("") || `<p class="ap-vacio">Sin pendientes. ¡Bien hecho! 🎉</p>`}</div>` +
+      (hechas.length
+        ? `<button type="button" class="linkbtn ap-ver" data-ahe>${AG.hechas ? "Ocultar" : "Mostrar"} hechas (${hechas.length})</button>${AG.hechas ? ` · <button type="button" class="linkbtn ap-ver" data-ahl>Borrar las hechas</button>` : ""}`
+        : "")
+  );
+}
+// Notas de colores: las fijadas primero; se editan en el mismo papel
+function agNotas() {
+  const L = [...AG.notas].sort((a, b) => (b.fij ? 1 : 0) - (a.fij ? 1 : 0) || (b.ts || 0) - (a.ts || 0));
+  return agTarjeta(
+    "ap-notas",
+    "nota",
+    "Notas",
+    `<button type="button" class="ap-mas" data-anu>+ Nota</button>`,
+    `<div class="ap-papeles">${
+      L.map(
+        x =>
+          `<div class="ap-papel ${x.c || "amarillo"}${x.fij ? " fij" : ""}" data-nid="${x.id}"><div class="ap-pb">${AG_COLORES.map(c => `<button type="button" class="ap-col ${c}${c === (x.c || "amarillo") ? " on" : ""}" data-anc="${c}" aria-label="Color ${c}"></button>`).join("")}<span></span><button type="button" data-anf title="${x.fij ? "Desfijar" : "Fijar arriba"}">${x.fij ? "📌" : "📍"}</button><button type="button" data-anx title="Eliminar">×</button></div><textarea data-ant maxlength="1000" placeholder="Escriba aquí…" rows="4">${esc(x.t || "")}</textarea></div>`
+      ).join("") || `<p class="ap-vacio">Ideas, datos de clientes, recordatorios sueltos… Pulse «+ Nota».</p>`
+    }</div>`
+  );
+}
+// Actividad de las cuentas: solicitudes por revisar, ingresos recientes y los próximos vencimientos
+function agActividad() {
+  const A = [
+    ...ADM.L.filter(x => x.estado === "pendiente").map(x => ({
+      t: admMs(x.creado) || 0,
+      x,
+      ico: "pe",
+      txt: `<b>${esc(x.nombre || x.correo)}</b> pidió una cuenta`
+    })),
+    ...ADM.L.filter(x => admMs(x.ultimo) && !admYo(x)).map(x => ({
+      t: admMs(x.ultimo),
+      x,
+      ico: "ok",
+      txt: `<b>${esc(x.nombre || x.correo)}</b> ingresó`
+    }))
+  ]
+    .sort((a, b) => b.t - a.t)
+    .slice(0, 7);
+  return agTarjeta(
+    "ap-activ",
+    "act",
+    "Actividad de las cuentas",
+    "",
+    `<div class="ap-lista">${
+      A.map(
+        a =>
+          `<button type="button" class="ap-act ${a.ico}" data-agv="${a.x.id}"><u></u><span>${a.txt}</span><small>${a.t ? agHace(a.t) : ""}</small></button>`
+      ).join("") || `<p class="ap-vacio">Aún sin actividad registrada. Los ingresos se anotan desde esta versión.</p>`
+    }</div>`
+  );
+}
+// Clics del panel
 $("admCuerpo").addEventListener("click", e => {
-  const k = e.target.closest("[data-adk]");
-  if (k) return admVentana(k.dataset.adk);
-  const m = e.target.closest("[data-agm]");
-  if (m) {
-    const d = +m.dataset.agm,
+  const t = e.target,
+    q = s => t.closest(s);
+  if (q("[data-adk]")) return admVentana(q("[data-adk]").dataset.adk);
+  if (q("[data-agm]")) {
+    const d = +q("[data-agm]").dataset.agm,
       h = new Date();
     AG.mes = d ? new Date(AG.mes.getFullYear(), AG.mes.getMonth() + d, 1) : new Date(h.getFullYear(), h.getMonth(), 1);
     if (!d) AG.sel = agHoy();
     return agRender();
   }
-  const dd = e.target.closest("[data-agd]");
-  if (dd) {
-    AG.sel = AG.sel === dd.dataset.agd ? null : dd.dataset.agd;
+  if (q("[data-agd]")) {
+    const s = q("[data-agd]").dataset.agd;
+    AG.sel = AG.sel === s ? null : s;
+    return agRender();
+  }
+  if (q("[data-apf]")) {
+    AG.form = q("[data-apf]").dataset.apf;
     agRender();
-    if (AG.sel && $("agT")) $("agT").focus();
+    if ($("agT")) $("agT").focus();
     return;
   }
-  const h = e.target.closest("[data-agh]");
-  if (h) {
-    const x = AG.items.find(i => i.id === h.dataset.agh);
+  if (q("[data-agh]")) {
+    const x = AG.items.find(i => i.id === q("[data-agh]").dataset.agh);
     if (x) x.hecho = !x.hecho;
     return agGuardar();
   }
-  const xx = e.target.closest("[data-agx]");
-  if (xx) {
-    const x = AG.items.find(i => i.id === xx.dataset.agx);
+  if (q("[data-agx]")) {
+    const x = AG.items.find(i => i.id === q("[data-agx]").dataset.agx);
     if (!x) return;
     return confirmar(
-      "Eliminar fecha",
-      `<p>¿Eliminar «${esc(x.t)}» del ${esc(agFecha(x.f).toLocaleDateString("es-PE"))}?</p>`,
+      "Eliminar evento",
+      `<p>¿Eliminar «${esc(x.t)}» del ${esc(agLarga(x.f))}?</p>`,
       "Eliminar",
       ok => {
         if (!ok) return;
@@ -679,31 +848,120 @@ $("admCuerpo").addEventListener("click", e => {
       "Agenda"
     );
   }
-  const v = e.target.closest("[data-agv]");
-  if (v) {
-    const u = ADM.L.find(x => x.id === v.dataset.agv);
+  if (q("[data-agv]")) {
+    const u = ADM.L.find(x => x.id === q("[data-agv]").dataset.agv);
     return admVentana("todos", u ? u.correo : "");
   }
+  if (q("[data-ath]")) {
+    const x = AG.tareas.find(i => i.id === q("[data-ath]").dataset.ath);
+    if (x) x.hecho = !x.hecho;
+    return agGuardar();
+  }
+  if (q("[data-atx]")) {
+    AG.tareas = AG.tareas.filter(i => i.id !== q("[data-atx]").dataset.atx);
+    return agGuardar();
+  }
+  if (q("[data-ahe]")) {
+    AG.hechas = !AG.hechas;
+    return agRender();
+  }
+  if (q("[data-ahl]")) {
+    AG.tareas = AG.tareas.filter(i => !i.hecho);
+    AG.hechas = false;
+    return agGuardar();
+  }
+  if (q("[data-anu]")) {
+    const x = { id: "n" + agId(), t: "", c: "amarillo", fij: false, ts: Date.now() };
+    AG.notas.unshift(x);
+    agRender();
+    agGuardar(false);
+    const ta = $("admCuerpo").querySelector(`[data-nid="${x.id}"] textarea`);
+    if (ta) ta.focus();
+    return;
+  }
+  const papel = q("[data-nid]");
+  if (papel) {
+    const x = AG.notas.find(i => i.id === papel.dataset.nid);
+    if (!x) return;
+    if (q("[data-anc]")) {
+      x.c = q("[data-anc]").dataset.anc;
+      return agGuardar();
+    }
+    if (q("[data-anf]")) {
+      x.fij = !x.fij;
+      return agGuardar();
+    }
+    if (q("[data-anx]")) {
+      if (!x.t.trim()) {
+        AG.notas = AG.notas.filter(i => i !== x);
+        return agGuardar();
+      }
+      return confirmar(
+        "Eliminar nota",
+        `<p>¿Eliminar esta nota?</p><p class="hint">${esc(x.t.slice(0, 140))}${x.t.length > 140 ? "…" : ""}</p>`,
+        "Eliminar",
+        ok => {
+          if (!ok) return;
+          AG.notas = AG.notas.filter(i => i !== x);
+          agGuardar();
+        },
+        "Notas"
+      );
+    }
+  }
 });
+// Formularios: evento y tarea
 $("admCuerpo").addEventListener("submit", e => {
-  if (!e.target.closest("[data-agf]")) return;
+  const f = e.target.closest("[data-agf]");
+  if (!f) return;
   e.preventDefault();
-  const t = $("agT").value.trim(),
-    f = $("agF").value;
-  if (!t || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
-  AG.items.push({
-    id: "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-    f,
-    h: $("agH").value || "",
-    t: t.slice(0, 120),
-    n: $("agN").value.trim().slice(0, 300),
-    r: +$("agR").value || 0,
-    hecho: false
-  });
-  AG.sel = f;
-  AG.mes = new Date(agFecha(f).getFullYear(), agFecha(f).getMonth(), 1);
-  toast(`Fecha guardada: ${t} (${agCuando(f)})`);
-  agGuardar();
+  if (f.dataset.agf === "ev") {
+    const t = $("agT").value.trim(),
+      fe = $("agF").value;
+    if (!t || !/^\d{4}-\d{2}-\d{2}$/.test(fe)) return;
+    AG.items.push({
+      id: "a" + agId(),
+      f: fe,
+      h: $("agH").value || "",
+      t: t.slice(0, 120),
+      n: $("agN").value.trim().slice(0, 300),
+      r: +$("agR").value || 0,
+      hecho: false
+    });
+    AG.form = "";
+    AG.sel = fe;
+    AG.mes = new Date(agFecha(fe).getFullYear(), agFecha(fe).getMonth(), 1);
+    toast(`Evento guardado: ${t} (${agCuando(fe)})`);
+    $("agT").value = "";
+    return agGuardar();
+  }
+  if (f.dataset.agf === "ta") {
+    const t = $("taT").value.trim();
+    if (!t) return;
+    AG.tareas.push({
+      id: "t" + agId(),
+      t: t.slice(0, 160),
+      p: $("taP").value,
+      lim: $("taL").value || "",
+      hecho: false
+    });
+    $("taT").value = "";
+    $("taL").value = "";
+    agGuardar();
+    if ($("taT")) $("taT").focus();
+  }
+});
+// Notas: el texto se guarda al dejar de escribir (sin redibujar, para no perder el cursor)
+let AG_NT = null;
+$("admCuerpo").addEventListener("input", e => {
+  const ta = e.target.closest("[data-ant]");
+  if (!ta) return;
+  const x = AG.notas.find(i => i.id === ta.closest("[data-nid]").dataset.nid);
+  if (!x) return;
+  x.t = ta.value;
+  x.ts = Date.now();
+  clearTimeout(AG_NT);
+  AG_NT = setTimeout(() => agGuardar(false), 800);
 });
 
 /* ---------- Nueva cuenta ---------- */
