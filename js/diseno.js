@@ -2188,9 +2188,11 @@ function dsSalidasTab(el) {
    misma numeración de las láminas del banco y del tablero general (suministrosBanco). */
 function dsMedidoresBanco(el) {
   if (typeof MODE === "undefined") return [];
-  /* Fuera de un edificio multifamiliar (por ejemplo, locales de un comercio), los medidores del banco los escribe el
-     proyectista en el banco: a qué tablero va cada uno y si es monofásico o trifásico */
-  if (MODE !== "multi")
+  /* Escritos por el proyectista en el banco (a qué tablero va cada uno y si es monofásico o trifásico): fuera de un
+     edificio multifamiliar (por ejemplo, locales de un comercio), o en el edificio si los elige así o si aún no hay
+     departamentos con su cantidad */
+  const auto = dsMedidoresAuto();
+  if (dsBancoManual(el, auto))
     return ((el && el.meds) || []).map((m, i) => ({
       n: `M-${i + 1}`,
       dep: m.d || "",
@@ -2198,6 +2200,13 @@ function dsMedidoresBanco(el) {
       tri: m.f === 3,
       man: true
     }));
+  return auto;
+}
+// Los medidores del banco se escriben a mano (y no salen de los departamentos)
+const dsBancoManual = (el, auto) => MODE !== "multi" || !!(el && el.mman) || !auto.some(m => m.dep !== "TSG");
+// Medidores del edificio según sus departamentos (en el orden de los tipos y de su número) y el de servicios generales
+function dsMedidoresAuto() {
+  if (MODE !== "multi") return [];
   const out = [];
   tipos.forEach(t => {
     const l = (t.nombre || "").replace(/^Tipo\s*/i, ""),
@@ -3757,8 +3766,17 @@ function dsCircSelect(D, v, tb) {
 }
 // Propiedades del banco de medidores: la lista numerada de sus medidores y si se escribe en el plano
 function dsPropsBanco(el, campo) {
-  // Fuera del edificio: los medidores se escriben aquí (cuántos, a qué tablero va cada uno y sus fases)
-  if (MODE !== "multi") {
+  const auto = dsMedidoresAuto(),
+    // Edificio con departamentos: los medidores salen de ellos o se escriben aquí (a elección)
+    modo =
+      MODE === "multi" && auto.some(m => m.dep !== "TSG")
+        ? campo(
+            "Medidores",
+            `<select data-dsp="mman" title="De dónde salen los medidores del banco"><option value="">Según los departamentos (${auto.length})</option><option value="1"${el.mman ? " selected" : ""}>Escritos aquí</option></select>`
+          )
+        : "";
+  // Escritos aquí: cuántos, a qué tablero va cada uno y sus fases
+  if (dsBancoManual(el, auto)) {
     const meds = el.meds || [],
       tabs = [
         ...new Set(
@@ -3768,8 +3786,9 @@ function dsPropsBanco(el, campo) {
         )
       ];
     return (
+      modo +
       campo(
-        "Medidores",
+        modo ? "Cantidad" : "Medidores",
         `<input type="number" data-dsp="bmn" value="${meds.length}" min="0" max="40" step="1" title="Cuántos medidores tiene el banco">`
       ) +
       (meds.length
@@ -3786,13 +3805,12 @@ function dsPropsBanco(el, campo) {
               ""
             )}</tbody></table><datalist id="dsBmTabs">${tabs.map(t => `<option value="${esc(t)}">`).join("")}</datalist>`
         : "") +
-      `<p class="ds-crit">Escriba cuántos medidores tiene el banco y a qué tablero va cada uno (M-1, M-2…); la lista se escribe junto al banco en el plano. En un edificio multifamiliar se numeran solos, uno por departamento.</p>`
+      `<p class="ds-crit">Escriba cuántos medidores tiene el banco y a qué tablero va cada uno (M-1, M-2…); la lista se escribe junto al banco en el plano.${MODE === "multi" ? (auto.length ? " Las láminas del banco y del tablero general siguen a los departamentos del proyecto." : " Si indica los departamentos de cada tipo (Proyecto › Departamentos), también pueden numerarse solos, uno por departamento.") : ""}</p>`
     );
   }
-  const M = dsMedidoresBanco(el);
-  if (!M.length)
-    return `<p class="ds-crit">Indique el número de departamentos de cada tipo (Proyecto › Departamentos) para numerar sus medidores.</p>`;
+  const M = auto;
   return (
+    modo +
     campo(
       "Numerar",
       `<select data-dsp="num" title="Escribir la lista numerada junto al banco en el plano"><option value="">Sí</option><option value="0"${el.num === false ? " selected" : ""}>No</option></select>`
@@ -4208,7 +4226,10 @@ function dsPropCambio(e) {
     } else if (k === "cn") el.cn = v.replace(/[<>]/g, "").trim().slice(0, 60) || undefined;
     else if (k === "ctp") el.ctp = TIPOS[v] ? v : undefined;
     else if (k === "fs") el.fs = v === "3" ? 3 : 1;
-    else if (k === "bmn" && el.k === "bmed") {
+    else if (k === "mman" && el.k === "bmed") {
+      if (v === "1") el.mman = true;
+      else delete el.mman;
+    } else if (k === "bmn" && el.k === "bmed") {
       const n = Math.max(0, Math.min(40, Math.round(+v) || 0)),
         m = (el.meds || []).slice(0, n);
       while (m.length < n) m.push({ d: "", f: 1 });
@@ -4256,8 +4277,8 @@ function dsPropCambio(e) {
     }
   });
   edCambio();
-  // Otro número de medidores del banco: su tabla cambia de filas
-  if (k === "bmn") edProps();
+  // Otro número de medidores del banco (o de dónde salen): su tabla cambia
+  if (k === "bmn" || k === "mman") edProps();
 }
 function dsPropClic(e) {
   const b = e.target.closest("[data-dsa]");

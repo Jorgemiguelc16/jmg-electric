@@ -2652,6 +2652,27 @@ prueba("Tablero general solo con alimentadores, banco con sus medidores y tuber�
     ),
     "tuberías del TG al banco dimensionadas y en los resultados"
   );
+  // Edificio: los medidores salen de los departamentos o se escriben en el banco; sin departamentos, se escriben
+  await abrirPlano();
+  const bm2 = await J(`dsAgregar({ t: "sim", k: "bmed", x: ${OX} + 5, y: ${OY} + 7.5, r: 0, capa: "E-TABLEROS" }).id`);
+  await ev(`edCambio(); DS_SEL.clear(); DS_SEL.add("${bm2}"); edProps(); 1`);
+  ok(
+    (await ev("$('edPropC').querySelector('[data-dsp=\"mman\"]').value")) === "" &&
+      (await ev("$('edPropC').querySelectorAll('.ds-bm tbody tr').length")) > 0,
+    "edificio: los medidores según los departamentos"
+  );
+  await poner('#edPropC [data-dsp="mman"]', "1");
+  ok(!!(await ev("$('edPropC').querySelector('[data-dsp=\"bmn\"]')")), "o escritos en el banco («Escritos aquí»)");
+  await ev("tipos.forEach(t => (t.cant = 0)); edProps(); 1");
+  await ev(`dsD().els.find(e => e.id === "${bm2}").mman = undefined; edProps(); 1`);
+  ok(
+    !!(await ev("$('edPropC').querySelector('[data-dsp=\"bmn\"]')")),
+    "edificio sin departamentos con su cantidad: los medidores se escriben en el banco"
+  );
+  await clic('[data-ed="cancelar"]');
+  await ev(
+    "document.querySelector('.welcome:not([hidden]) .vw-btn.def, .welcome:not([hidden]) .btn:not(.sec)')?.click(); 1"
+  );
 });
 
 // Ejecución

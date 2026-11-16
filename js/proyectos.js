@@ -726,6 +726,8 @@ function disValido(v) {
           ...(e.k === "tab" && e.gen === true ? { gen: true } : {}),
           // Banco de medidores sin su lista numerada en el plano
           ...(e.k === "bmed" && e.num === false ? { num: false } : {}),
+          // Edificio: los medidores del banco escritos a mano en lugar de los de los departamentos
+          ...(e.k === "bmed" && e.mman === true ? { mman: true } : {}),
           // Medidores del banco escritos por el proyectista (fuera de un edificio): a qué tablero va cada uno y sus fases
           ...(e.k === "bmed" && Array.isArray(e.meds) && e.meds.length
             ? {
