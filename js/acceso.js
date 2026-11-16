@@ -476,11 +476,15 @@ function adminLista() {
           ? `<p class="hint" style="padding:16px">Aún no hay solicitudes de cuenta.</p>`
           : `<table><thead><tr><th class="t">Nombre</th><th class="t">Correo</th><th class="t">Uso</th><th class="t">Solicitud</th><th class="t">Estado</th><th class="t">Acciones</th></tr></thead><tbody>${L.map(
               x => {
-                const [et, ec] = ESTADOS[x.estado] || [x.estado, "pe"];
+                let [et, ec] = ESTADOS[x.estado] || [x.estado, "pe"];
                 const bt = (k, t, s = "") =>
                   `<button type="button" class="btn sm ${s}" data-adm="${k}" data-id="${x.id}">${t}</button>`;
-                const acc =
-                  x.estado === "pendiente"
+                // La cuenta del administrador: sin acciones (no se puede desactivar por accidente)
+                const yo = x.correo === ADMIN_CORREO || (USUARIO && x.id === USUARIO.uid);
+                if (yo) [et, ec] = ["Administrador", "ok"];
+                const acc = yo
+                  ? `<span class="hint">Su cuenta</span>`
+                  : x.estado === "pendiente"
                     ? bt("aprobado", "Aprobar") + bt("rechazado", "Rechazar", "sec")
                     : x.estado === "aprobado"
                       ? bt("desactivado", "Desactivar", "sec")
