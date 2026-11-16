@@ -2875,6 +2875,147 @@ prueba("Cuenta del administrador con su correo sin verificar: pide verificarlo, 
   ok(!r.adm && r.plat, "no entra como administrador hasta verificarlo");
 });
 
+prueba("Administración: PIN, hoja de cuentas, vigencia, renovar y nueva cuenta", async ok => {
+  // Firebase simulado: Firestore en memoria y una segunda instancia para crear cuentas
+  await ev(`(() => {
+    const S = (window.FSA = new Map()), cp = v => JSON.parse(JSON.stringify(v));
+    const doc = p => ({
+      get: async () => ({ exists: S.has(p), data: () => (S.has(p) ? cp(S.get(p)) : undefined) }),
+      set: async v => S.set(p, cp(v)),
+      update: async v => {
+        if (!S.has(p)) throw { code: "not-found" };
+        S.set(p, { ...S.get(p), ...cp(v) });
+      }
+    });
+    const ts = d => ({ ms: +d, toMillis() { return this.ms; } });
+    window.FA0 = { fs: firebase.firestore, ini: firebase.initializeApp, adm: esAdminCuenta, u: USUARIO };
+    const fs = () => ({ collection: c => ({ doc: id => doc(c + "/" + id) }) });
+    fs.Timestamp = { fromDate: d => ({ ms: +d, toMillis() { return this.ms; } }) };
+    fs.FieldValue = { serverTimestamp: () => ({ ms: Date.now() }) };
+    firebase.firestore = fs;
+    window.ALTAS = [];
+    firebase.initializeApp = (cfg, nom) => ({
+      name: nom,
+      auth: () => ({
+        setPersistence: async () => {},
+        createUserWithEmailAndPassword: async (c, k) => (ALTAS.push([c, k]), { user: { uid: "nuevo1" } }),
+        signOut: async () => {}
+      })
+    });
+    if (!firebase.auth.Auth) firebase.auth.Auth = { Persistence: { NONE: "none" } };
+    esAdminCuenta = true;
+    USUARIO = { uid: "adm", email: ADMIN_CORREO, providerData: [{ providerId: "google.com" }] };
+    Object.assign(ADM, { pin: undefined, abierto: false, f: "todos", q: "", ord: "estado", dir: 1 });
+    const dia = 86400000, now = Date.now();
+    admLista([
+      { id: "adm", nombre: "Jorge", correo: ADMIN_CORREO, uso: "Otro", estado: "aprobado", creado: ts(now - 40 * dia) },
+      { id: "u1", nombre: "Ana Pérez", correo: "ana@x.com", uso: "Docente", estado: "pendiente", creado: ts(now - dia) },
+      { id: "u2", nombre: "Luis Ramos", correo: "luis@x.com", uso: "Ingeniero proyectista", estado: "aprobado", vigencia: "1m", vence: ts(now + 3 * dia), creado: ts(now - 27 * dia), ultimo: ts(now - 3600000) },
+      { id: "u3", nombre: "Rosa Díaz", correo: "rosa@x.com", uso: "Estudiante de ingeniería", estado: "aprobado", vigencia: "3m", vence: ts(now - 2 * dia), creado: ts(now - 95 * dia) }
+    ]);
+    ["u1", "u2", "u3"].forEach(id => FSA.set("usuarios/" + id, { estado: "x" }));
+    setTab("admin");
+    return 1;
+  })()`);
+  await esperar(300);
+  ok(!!(await ev("$('admPin1')")), "sin PIN: pide crearlo");
+  ok(await ev("$('admBarra').hidden"), "y no muestra la lista antes del PIN");
+  await ev(
+    `$("admPin1").value = "12"; $("admPin2").value = "12"; $("admCuerpo").querySelector("form").requestSubmit(); 1`
+  );
+  await esperar(100);
+  ok(/4 a 8 dígitos/.test(await ev("$('admMsg').textContent")), "PIN de menos de 4 dígitos: no");
+  await ev(
+    `$("admPin1").value = "2468"; $("admPin2").value = "2468"; $("admCuerpo").querySelector("form").requestSubmit(); 1`
+  );
+  await esperar(300);
+  const cfg = await J(`FSA.get("config/admin")`);
+  ok(
+    cfg && cfg.pin && cfg.pin.length === 64 && !JSON.stringify(cfg).includes("2468"),
+    "el PIN se guarda cifrado (no el número)"
+  );
+  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 4, "con el PIN, la hoja con las 4 cuentas");
+  ok(
+    /Por vencer \(7 días\) 1/.test(await ev("$('admFiltros').textContent")) &&
+      /Vencidas 1/.test(await ev("$('admFiltros').textContent")),
+    "filtros con su cantidad: 1 por vencer y 1 vencida"
+  );
+  ok(
+    /Su cuenta/.test(await ev(`$("admCuerpo").querySelector('tr[data-id="adm"]').textContent`)),
+    "la fila del administrador, sin acciones"
+  );
+  // Bloquear y volver a entrar con el PIN
+  await ev(`document.querySelector('[data-adb="bloquear"]').click(); 1`);
+  ok(!!(await ev("$('admPin')")), "bloquear vuelve a pedir el PIN");
+  await ev(`$("admPin").value = "1111"; $("admCuerpo").querySelector("form").requestSubmit(); 1`);
+  await esperar(100);
+  ok(/incorrecto/.test(await ev("$('admMsg').textContent")), "PIN incorrecto: no entra");
+  await ev(`$("admPin").value = "2468"; $("admCuerpo").querySelector("form").requestSubmit(); 1`);
+  await esperar(150);
+  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 4, "PIN correcto: entra");
+  // Buscar y filtrar
+  await ev(`$("admBuscar").value = "rosa"; $("admBuscar").dispatchEvent(new Event("input")); 1`);
+  ok((await ev("$('admCuerpo').querySelectorAll('tbody tr').length")) === 1, "el buscador filtra");
+  await ev(
+    `$("admBuscar").value = ""; $("admBuscar").dispatchEvent(new Event("input")); document.querySelector('[data-adfil="vencido"]').click(); 1`
+  );
+  ok(/Vencido/.test(await ev("$('admCuerpo').querySelector('tbody').textContent")), "filtro «Vencidas»");
+  // Renovar la vencida: desde hoy, por su vigencia (3 meses)
+  await ev(`$("admCuerpo").querySelector('[data-ada="renovar"][data-id="u3"]').click(); 1`);
+  await esperar(150);
+  const u3 = await J(`FSA.get("usuarios/u3")`),
+    d3 = (u3.vence.ms - Date.now()) / 86400000;
+  ok(u3.estado === "aprobado" && d3 > 85 && d3 < 95, "renovar la vencida: aprobada por 3 meses desde hoy");
+  // Vigencia editada en la celda: 1 año desde hoy
+  await ev(
+    `document.querySelector('[data-adfil="todos"]').click(); const s = $("admCuerpo").querySelector('tr[data-id="u1"] select[data-k="vigencia"]'); s.value = "1a"; s.dispatchEvent(new Event("change", { bubbles: true })); 1`
+  );
+  await esperar(150);
+  const u1 = await J(`FSA.get("usuarios/u1")`),
+    d1 = (u1.vence.ms - Date.now()) / 86400000;
+  ok(u1.vigencia === "1a" && d1 > 360 && d1 < 370, "vigencia en la celda: 1 año");
+  // Notas en la celda
+  await ev(
+    `const i = $("admCuerpo").querySelector('tr[data-id="u2"] [data-k="notas"]'); i.value = "Pagó hasta marzo"; i.dispatchEvent(new Event("change", { bubbles: true })); 1`
+  );
+  await esperar(100);
+  ok((await J(`FSA.get("usuarios/u2")`)).notas === "Pagó hasta marzo", "las notas se guardan solas");
+  // Nueva cuenta
+  await ev(`document.querySelector('[data-adb="nueva"]').click(); 1`);
+  await esperar(100);
+  await ev(
+    `$("anNom").value = "Carla Soto"; $("anCor").value = "Carla@X.com"; document.querySelector("[data-angen]").click(); $("anVig").value = "6m"; document.querySelector('#cfmDlg [data-cf="si"]').click(); 1`
+  );
+  await esperar(300);
+  const alta = await J("ALTAS[0]"),
+    nu = await J(`FSA.get("usuarios/nuevo1")`);
+  ok(
+    alta && alta[0] === "carla@x.com" && alta[1].length === 10,
+    "la cuenta se crea con el correo y una contraseña generada"
+  );
+  ok(
+    nu && nu.estado === "aprobado" && nu.vigencia === "6m" && nu.creadoPor === "admin",
+    "su ficha queda aprobada, con 6 meses"
+  );
+  ok(
+    /Cuenta creada/.test(await ev("$('cfmT').textContent")) && (await ev("$('cfmTxt').textContent")).includes(alta[1]),
+    "muestra los datos para entregarlos"
+  );
+  await ev(`document.querySelector('#cfmDlg [data-cf="no"]').click(); 1`);
+  await ev(
+    `(() => { firebase.firestore = FA0.fs; firebase.initializeApp = FA0.ini; esAdminCuenta = FA0.adm; USUARIO = FA0.u; Object.assign(ADM, { pin: undefined, abierto: false }); admLista([]); setTab("inicio"); return 1; })()`
+  );
+});
+
+prueba("Cuenta vencida: no entra y ve «Su acceso venció»", async ok => {
+  const r = await J(`(() => {
+    const F = { estado: "aprobado", vence: { toMillis: () => Date.now() - 86400000 } };
+    return { v: fichaVencida(F), n: fichaVencida({ estado: "aprobado", vence: null }), f: fichaVencida({ estado: "aprobado", vence: { toMillis: () => Date.now() + 86400000 } }) };
+  })()`);
+  ok(r.v && !r.n && !r.f, "vencida solo si la fecha ya pasó (sin fecha: indefinida)");
+  ok(!!(await ev(`document.querySelector('[data-av="vencido"] #vencFecha')`)), "existe la pantalla «Su acceso venció»");
+});
+
 // Ejecución
 let mal = 0;
 const t0 = Date.now();

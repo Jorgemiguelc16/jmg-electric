@@ -98,6 +98,17 @@ function cuentaUI() {
   document.querySelectorAll(".solo-admin").forEach(x => (x.hidden = !esAdminCuenta));
 }
 
+let ULTIMO_ESCRITO = false;
+const fichaVencida = F => !!(F && F.vence && typeof F.vence.toMillis === "function" && F.vence.toMillis() < Date.now());
+// Una sesión abierta cuya vigencia vence mientras se usa la plataforma: se revisa cada 10 minutos
+setInterval(() => {
+  if (USUARIO && !esAdminCuenta && FICHA && FICHA.estado === "aprobado" && fichaVencida(FICHA)) {
+    if (typeof nubeDetener === "function") nubeDetener();
+    $("vencFecha").textContent = new Date(FICHA.vence.toMillis()).toLocaleDateString("es-PE");
+    accVista("vencido");
+    abrirPlataforma(false);
+  }
+}, 600000);
 /* Estado de la cuenta: se escucha en vivo para que la aprobación abra la plataforma sin recargar */
 function seguirFicha(u) {
   if (desFicha) {
@@ -123,8 +134,30 @@ function seguirFicha(u) {
           abrirPlataforma(false);
           return;
         }
+        // Aprobada, pero con su vigencia vencida: no entra (el administrador la renueva)
+        if (FICHA.estado === "aprobado" && fichaVencida(FICHA)) {
+          if (typeof nubeDetener === "function") nubeDetener();
+          $("vencFecha").textContent = new Date(FICHA.vence.toMillis()).toLocaleDateString("es-PE", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          });
+          accVista("vencido");
+          abrirPlataforma(false);
+          return;
+        }
         if (FICHA.estado === "aprobado") {
           abrirPlataforma(true);
+          // Último ingreso (una vez por visita), para la hoja del administrador
+          if (!ULTIMO_ESCRITO) {
+            ULTIMO_ESCRITO = true;
+            firebase
+              .firestore()
+              .collection("usuarios")
+              .doc(u.uid)
+              .update({ ultimo: firebase.firestore.FieldValue.serverTimestamp() })
+              .catch(() => {});
+          }
           // Sus proyectos en la nube (js/nube.js)
           if (typeof nubeIniciar === "function") nubeIniciar(u);
           // Bienvenida formal cada vez que la persona inicia sesión (y la primera vez en este navegador);
@@ -435,12 +468,6 @@ ACC.addEventListener("submit", () =>
 );
 
 /* Administración: solicitudes de cuenta en vivo, con aprobar, rechazar, desactivar y reactivar */
-const ESTADOS = {
-  pendiente: ["Pendiente", "pe"],
-  aprobado: ["Aprobado", "ok"],
-  rechazado: ["Rechazado", "bad"],
-  desactivado: ["Desactivado", "bad"]
-};
 function adminLista() {
   if (desAdmin) desAdmin();
   desAdmin = firebase
@@ -464,56 +491,15 @@ function adminLista() {
           x.textContent = np;
           x.hidden = !np;
         });
-        const f = t =>
-          t
-            ? new Date(t.seconds * 1000).toLocaleDateString("es-PE", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-              })
-            : "—";
-        $("admLista").innerHTML = !L.length
-          ? `<p class="hint" style="padding:16px">Aún no hay solicitudes de cuenta.</p>`
-          : `<table><thead><tr><th class="t">Nombre</th><th class="t">Correo</th><th class="t">Uso</th><th class="t">Solicitud</th><th class="t">Estado</th><th class="t">Acciones</th></tr></thead><tbody>${L.map(
-              x => {
-                let [et, ec] = ESTADOS[x.estado] || [x.estado, "pe"];
-                const bt = (k, t, s = "") =>
-                  `<button type="button" class="btn sm ${s}" data-adm="${k}" data-id="${x.id}">${t}</button>`;
-                // La cuenta del administrador: sin acciones (no se puede desactivar por accidente)
-                const yo = x.correo === ADMIN_CORREO || (USUARIO && x.id === USUARIO.uid);
-                if (yo) [et, ec] = ["Administrador", "ok"];
-                const acc = yo
-                  ? `<span class="hint">Su cuenta</span>`
-                  : x.estado === "pendiente"
-                    ? bt("aprobado", "Aprobar") + bt("rechazado", "Rechazar", "sec")
-                    : x.estado === "aprobado"
-                      ? bt("desactivado", "Desactivar", "sec")
-                      : bt("aprobado", "Aprobar");
-                return `<tr><td class="t"><strong>${esc(x.nombre || "—")}</strong></td><td class="t">${esc(x.correo || "")}</td><td class="t">${esc(x.uso || "")}</td><td class="t">${f(x.creado)}</td><td class="t"><span class="pill ${ec}">${et}</span></td><td class="t"><div class="acts-row">${acc}</div></td></tr>`;
-              }
-            ).join("")}</tbody></table>`;
+        // La hoja de cuentas (js/admin.js)
+        if (typeof admLista === "function") admLista(L);
       },
       e => {
-        $("admLista").innerHTML =
-          `<p class="hint" style="padding:16px">No se pudo leer la lista (${esc(e.code || "")}).</p>`;
+        if (typeof admLista === "function") admLista([]);
+        console.warn("Administración:", e);
       }
     );
 }
-$("admLista").addEventListener("click", async e => {
-  const b = e.target.closest("[data-adm]");
-  if (!b) return;
-  b.disabled = true;
-  try {
-    await firebase
-      .firestore()
-      .collection("usuarios")
-      .doc(b.dataset.id)
-      .update({ estado: b.dataset.adm, revisado: firebase.firestore.FieldValue.serverTimestamp() });
-  } catch (err) {
-    b.disabled = false;
-    toast("No se pudo actualizar: " + (err.code || err.message));
-  }
-});
 
 /* Bienvenida personal del administrador: aparece cada vez que entra, con un saludo según la hora,
    las solicitudes y los proyectos pendientes, y de vez en cuando una frase de ánimo */

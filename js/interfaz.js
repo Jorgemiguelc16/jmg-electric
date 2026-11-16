@@ -130,6 +130,7 @@ function setTab(t) {
   if (t === "proy") renderProy();
   if (t === "herr") herr();
   if (t === "soporte") refrSoporte();
+  if (t === "admin" && typeof admAbrir === "function") admAbrir();
   try {
     window.scrollTo({ top: 0 });
   } catch (e) {}
