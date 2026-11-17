@@ -2141,7 +2141,7 @@ prueba("Ambientes: nombres del plano, tipo de ambiente, detección y ventana", a
   await ev(`(() => { const id = dsD().els.find(e => e.ar && e.ar.amb === "bano").id;
     $('amLista').querySelector('[data-am-tipo="' + id + '"]').click(); return 1; })()`);
   ok(
-    await ev("!$('luxDlg').hidden && !!LX_PICK && LX_G === 'viv'"),
+    await ev("!$('ambDlg').hidden && AM_TAB === 'lux' && !!LX_PICK && LX_G === 'viv'"),
     "el botón del tipo abre la ventana para elegirlo, en los de vivienda"
   );
   await ev(`document.querySelector('#lxLista [data-lx-pick="dorm"]').click(); 1`);
@@ -3289,7 +3289,9 @@ prueba(
     await ev("document.querySelector('[data-act=\"lux\"]').click(); 1");
     await esperar(200);
     ok(
-      await ev("!$('luxDlg').hidden && document.querySelectorAll('#lxLista .lx-fila').length > 150"),
+      await ev(
+        "!$('ambDlg').hidden && AM_TAB === 'lux' && document.querySelectorAll('#lxLista .lx-fila').length > 150"
+      ),
       "ventana con todos los ambientes"
     );
     const poner = async (k, v) =>
@@ -3321,7 +3323,7 @@ prueba(
         /Propios del proyecto/.test(await ev("$('lxLista').textContent")),
       "el ambiente propio aparece en la ventana"
     );
-    await ev("luxCerrar(); LUX = luxVacio(); luxRecordar(); 1");
+    await ev("ambCerrar(); LUX = luxVacio(); luxRecordar(); 1");
   }
 );
 

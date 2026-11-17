@@ -2197,6 +2197,30 @@ input.del-plano,
   -moz-appearance: textfield;
   appearance: textfield;
 }
+/* Ventana «Ambientes e iluminación»: dos pestañas (Ambientes del diseño y Niveles de iluminación) */
+.am-tabs {
+  padding-top: 6px;
+}
+.am-tabs b {
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--dl-grid, #e1e4e8);
+  color: var(--dl-ink2, #5f6b77);
+  font: 600 10px var(--f-mono);
+}
+.am-tabs b:empty {
+  display: none;
+}
+.am-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.am-pane[hidden] {
+  display: none;
+}
 /* Ambientes: una fila por ambiente con su tipo, iluminancia (EM.010) y reglas del CNE */
 .am-lista {
   overflow-x: hidden;

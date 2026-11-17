@@ -730,27 +730,75 @@ const AM_TP = {
   aulas: "Aulas o alta int.",
   no: "No se cuenta"
 };
+/* Ventana «Ambientes e iluminación»: una sola ventana con dos pestañas, «Ambientes del diseño» (aquí) y «Niveles de
+   iluminación» (js/iluminacion-ventana.js), que también elige el tipo de un ambiente */
 const AM_VW = ventanaMovil(document.querySelector("#ambDlg .vw"), "jmg-electric-ambientes", {
-  w: 1040,
-  h: 560,
-  minW: 620,
-  minH: 300
+  w: 1100,
+  h: 620,
+  minW: 680,
+  minH: 320
 });
 let AM_PL = -1,
-  AM_RES = null;
-function ambAbrir() {
-  if (!EPL || !PL_MOD) return toast("Primero abra el plano de arquitectura en DXF");
-  dsAsegurar();
+  AM_RES = null,
+  // Pestaña a la vista: «amb» (ambientes del diseño) o «lux» (niveles de iluminación)
+  AM_TAB = "amb";
+const AM_PIE = {
+  amb: "El tipo se reconoce por el nombre escrito en el plano (criterio): confírmelo o cámbielo con su botón. Iluminancia: Norma EM.010, Anexo, o la del proyecto. Reglas: CNE-Utilización, Reglas 150-700 a 150-708 y Sección 170.",
+  lux: "Iluminancia mantenida mínima Em de la Norma EM.010 (2019), Anexo (la Sección 4, Industria, aún no está). Distinta de la norma: criterio del proyectista; menor que el mínimo: se avisa en la revisión."
+};
+const amHayPlano = () => !!(EPL && PL_MOD);
+// Abre la ventana en una pestaña
+function amVentana(tab) {
+  if (tab === "amb" && amHayPlano()) dsAsegurar();
+  AM_TAB = tab;
+  const abierta = !$("ambDlg").hidden;
   $("ambDlg").hidden = false;
-  vwFondo();
-  AM_VW.abrir();
-  ambRender();
+  if (!abierta) {
+    vwFondo();
+    AM_VW.abrir();
+  }
+  amTabs();
+}
+// Muestra la pestaña elegida, con su título y su nota al pie
+function amTabs() {
+  $("amPaneAmb").hidden = AM_TAB !== "amb";
+  $("amPaneLux").hidden = AM_TAB !== "lux";
+  document.querySelectorAll("#ambDlg [data-am-tab]").forEach(b => {
+    b.classList.toggle("on", b.dataset.amTab === AM_TAB);
+    b.setAttribute("aria-selected", b.dataset.amTab === AM_TAB);
+  });
+  $("amT").textContent =
+    AM_TAB === "lux" && typeof LX_PICK !== "undefined" && LX_PICK
+      ? `Tipo de ambiente · ${LX_PICK.n}`
+      : "Ambientes e iluminación";
+  $("amPie").textContent = AM_PIE[AM_TAB];
+  $("amPie").title = AM_PIE[AM_TAB];
+  if (AM_TAB === "amb") ambRender();
+  else luxRender();
+}
+function ambAbrir() {
+  if (!amHayPlano()) return toast("Primero abra el plano de arquitectura en DXF");
+  amVentana("amb");
 }
 function ambCerrar() {
+  if (typeof LX_PICK !== "undefined" && LX_PICK) LX_G = LX_PICK.g0;
+  if (typeof LX_PICK !== "undefined") LX_PICK = null;
   $("ambDlg").hidden = true;
   vwFondo();
 }
 function ambRender() {
+  if ($("ambDlg").hidden || AM_TAB !== "amb") return;
+  // Sin plano (ventana abierta desde Parámetros): los ambientes se marcan en el editor
+  if (!amHayPlano()) {
+    $("amLista").innerHTML =
+      '<p class="rev-ok">Los ambientes se marcan sobre el plano de arquitectura: abra el editor de diseño con su plano DXF y use «Detectar ambientes» o «Área de ambiente». Los niveles de iluminación se pueden revisar en la otra pestaña.</p>';
+    $("amCuenta").textContent = "";
+    $("amPlanta").hidden = true;
+    document.querySelector('#ambDlg [data-am="detectar"]').disabled = true;
+    $("amTabN").textContent = "";
+    return;
+  }
+  document.querySelector('#ambDlg [data-am="detectar"]').disabled = AM_OCUP;
   const D = dsD(),
     pl = EPL.plantas,
     L = D.els.filter(
@@ -815,6 +863,7 @@ function ambRender() {
   $("amCuenta").textContent =
     (pl.length ? "" : "Sin plantas encuadradas: se detecta lo visible en pantalla · ") +
     (L.length ? `${L.length} ambiente${L.length === 1 ? "" : "s"}${sinTipo ? ` · ${sinTipo} sin tipo` : ""}` : "");
+  $("amTabN").textContent = L.length ? String(L.length) : "";
 }
 let AM_OCUP = false;
 async function ambDetectar() {
@@ -846,7 +895,16 @@ $("ambDlg").addEventListener("click", e => {
   if (b && b.dataset.am === "cerrar") return ambCerrar();
   if (b && b.dataset.am === "max") return AM_VW.maximizar();
   if (b && b.dataset.am === "detectar") return ambDetectar();
-  if (b && b.dataset.am === "lux") return luxAbrir();
+  const tb = e.target.closest("[data-am-tab]");
+  if (tb) {
+    // Otra pestaña: se deja de elegir el tipo
+    if (LX_PICK) {
+      LX_G = LX_PICK.g0;
+      LX_PICK = null;
+    }
+    AM_TAB = tb.dataset.amTab;
+    return amTabs();
+  }
   const v = e.target.closest("[data-am-ver]");
   if (v) return dsVerIds([v.dataset.amVer]);
   const tp = e.target.closest("[data-am-tipo]");

@@ -1,16 +1,10 @@
-/* VENTANA «NIVELES DE ILUMINACIÓN»
+/* PESTAÑA «NIVELES DE ILUMINACIÓN» (ventana «Ambientes e iluminación», js/diseno-avanzado.js)
    Todos los tipos de ambiente del Anexo de la EM.010 (js/iluminacion.js) con su iluminancia de la norma y la del
    proyecto, que el proyectista puede cambiar: un valor distinto queda como criterio y uno menor que el mínimo, «bajo
    norma» (con aviso en la revisión del diseño). También los ambientes propios, para lo que el Anexo no tiene (pista
-   de baile, cabina de DJ…). Se abre desde Parámetros, desde la cinta del editor y desde la ventana Ambientes.
-   Modo «elegir» (luxElegir): la misma ventana elige el tipo de ambiente de las áreas (propiedades del área o ventana
-   Ambientes), con el uso del proyecto a la vista y un botón «Elegir» en cada fila. */
-const LX_VW = ventanaMovil(document.querySelector("#luxDlg .vw"), "jmg-electric-iluminacion", {
-  w: 980,
-  h: 600,
-  minW: 640,
-  minH: 320
-});
+   de baile, cabina de DJ…). Se abre desde Parámetros y desde la cinta del editor.
+   Modo «elegir» (luxElegir): la misma pestaña elige el tipo de ambiente de las áreas (propiedades del área o pestaña
+   Ambientes del diseño), con el uso del proyecto a la vista y un botón «Elegir» en cada fila. */
 let LX_G = "",
   LX_T = null,
   // Áreas a las que se elige el tipo de ambiente (modo elegir), o null
@@ -30,11 +24,7 @@ function luxGrupoProyecto() {
   return MODE === "multi" || u === "viv" ? "viv" : LX_USO[u] || "com";
 }
 function luxAbrir() {
-  if (!LX_PICK) $("lxT").textContent = "Niveles de iluminación";
-  $("luxDlg").hidden = false;
-  vwFondo();
-  LX_VW.abrir();
-  luxRender();
+  amVentana("lux");
 }
 // Elegir el tipo de ambiente de unas áreas del diseño
 function luxElegir(ids) {
@@ -47,13 +37,14 @@ function luxElegir(ids) {
     ids: els.map(e => e.id),
     n: els.length === 1 ? els[0].ar.n || "Área" : `${els.length} áreas`,
     k,
-    // Filtro de la ventana normal, que vuelve al cerrar
-    g0: LX_G
+    // Filtro de la pestaña normal, que vuelve al terminar
+    g0: LX_G,
+    // Elegido desde la pestaña Ambientes del diseño: al terminar vuelve a ella
+    volver: !$("ambDlg").hidden && AM_TAB === "amb"
   };
   LX_G = t && t.g !== "prop" ? t.g : t ? "prop" : luxGrupoProyecto();
   $("lxBusca").value = "";
-  $("lxT").textContent = `Tipo de ambiente · ${LX_PICK.n}`;
-  luxAbrir();
+  amVentana("lux");
   $("lxBusca").focus();
 }
 function luxAsignar(k) {
@@ -65,19 +56,18 @@ function luxAsignar(k) {
     if (k) el.ar.amb = k;
     else delete el.ar.amb;
   });
-  luxCerrar();
+  LX_G = P.g0;
+  LX_PICK = null;
+  if (P.volver) {
+    AM_TAB = "amb";
+    amTabs();
+  } else ambCerrar();
   edCambio();
   plSobreDibujar();
   edProps();
   if (typeof elRender === "function") elRender();
-  if (!$("ambDlg").hidden) ambRender();
+  ambRender();
   toast(k ? `Tipo de ambiente: ${ambTipo(k).n}` : "Sin tipo de ambiente");
-}
-function luxCerrar() {
-  if (LX_PICK) LX_G = LX_PICK.g0;
-  LX_PICK = null;
-  $("luxDlg").hidden = true;
-  vwFondo();
 }
 // Tipos de ambiente usados en las áreas del diseño
 function luxUsados() {
@@ -85,7 +75,7 @@ function luxUsados() {
   return new Set(((D && D.els) || []).filter(e => e.ar && e.ar.amb).map(e => e.ar.amb));
 }
 function luxRender() {
-  if ($("luxDlg").hidden) return;
+  if ($("ambDlg").hidden || AM_TAB !== "lux") return;
   const q = $("lxBusca").value.trim().toLowerCase(),
     solo = $("lxCamb").checked,
     usados = luxUsados(),
@@ -140,7 +130,7 @@ function luxRender() {
     if (L.length) h += `<h4>${esc(tit)}</h4>` + L.map(([k, t]) => fila(k, t)).join("");
   });
   const elige = LX_PICK
-    ? `<div class="lx-elige">Elija el tipo de ambiente de <b>${esc(LX_PICK.n)}</b> con «Elegir» o doble clic en la fila${LX_PICK.k ? ` · actual: <b>${esc((ambTipo(LX_PICK.k) || { n: "—" }).n)}</b>` : ""}. Si no está en la norma, «+ Ambiente propio». <button type="button" class="vw-btn" data-lx-pick="">Sin tipo</button></div>`
+    ? `<div class="lx-elige">Elija el tipo de ambiente de <b>${esc(LX_PICK.n)}</b> con «Elegir» o doble clic en la fila${LX_PICK.k ? ` · actual: <b>${esc((ambTipo(LX_PICK.k) || { n: "—" }).n)}</b>` : ""}. Si no está en la norma, «+ Ambiente propio». <button type="button" class="vw-btn" data-lx-pick="">Sin tipo</button>${LX_PICK.volver ? '<button type="button" class="vw-btn" data-lxb="volver">← Volver a los ambientes</button>' : ""}</div>`
     : "";
   $("lxLista").innerHTML =
     elige +
@@ -150,6 +140,7 @@ function luxRender() {
   const todos = [...Object.keys(PL_AMB), ...LUX.prop.map(p => p.k)].map(ambTipo),
     nc = todos.filter(t => t.est === "criterio" && !t.propio).length,
     nb = todos.filter(t => t.est === "bajo").length;
+  $("lxTabN").textContent = nc + nb + LUX.prop.length ? String(nc + nb + LUX.prop.length) : "";
   $("lxCuenta").innerHTML =
     `${nc ? `${nc} criterio` : "Todo según la norma"}${nb ? ` · <b class="lux-bajo">${nb} bajo norma</b>` : ""}${LUX.prop.length ? ` · ${LUX.prop.length} propio${LUX.prop.length === 1 ? "" : "s"}` : ""}`;
 }
@@ -161,20 +152,23 @@ function luxCambio(redibujar = true) {
     saveDraft();
     if (typeof histPush === "function") histPush();
   }, 400);
-  if (!$("ambDlg").hidden) ambRender();
+  ambRender();
   if (ED && ED.abierto) {
     edProps();
     if (typeof elRender === "function") elRender();
   }
   if (redibujar) luxRender();
 }
-$("luxDlg").addEventListener("click", e => {
-  if (e.target.id === "luxDlg") return luxCerrar();
+$("amPaneLux").addEventListener("click", e => {
   const b = e.target.closest("[data-lxb]");
   if (b) {
     const a = b.dataset.lxb;
-    if (a === "cerrar") return luxCerrar();
-    if (a === "max") return LX_VW.maximizar();
+    if (a === "volver") {
+      LX_G = LX_PICK ? LX_PICK.g0 : LX_G;
+      LX_PICK = null;
+      AM_TAB = "amb";
+      return amTabs();
+    }
     if (a === "nuevo") {
       let i = 1;
       while (LUX.prop.some(p => p.k === "u" + i)) i++;
@@ -231,11 +225,11 @@ $("luxDlg").addEventListener("click", e => {
     );
   }
 });
-$("luxDlg").addEventListener("dblclick", e => {
+$("amPaneLux").addEventListener("dblclick", e => {
   const f = e.target.closest("[data-lx-dbl]");
   if (f && !e.target.closest("input, button")) luxAsignar(f.dataset.lxDbl);
 });
-$("luxDlg").addEventListener("input", e => {
+$("amPaneLux").addEventListener("input", e => {
   const t = e.target;
   if (t.id === "lxBusca") return luxRender();
   if (t.dataset.lxN !== undefined) {
@@ -261,7 +255,7 @@ $("luxDlg").addEventListener("input", e => {
   }
   luxCambio(false);
 });
-$("luxDlg").addEventListener("change", e => {
+$("amPaneLux").addEventListener("change", e => {
   if (e.target.id === "lxGrupo") {
     LX_G = e.target.value;
     return luxRender();
@@ -269,11 +263,4 @@ $("luxDlg").addEventListener("change", e => {
   if (e.target.id === "lxCamb") return luxRender();
   // Al terminar de escribir, la cuenta y el orden al día
   if (e.target.dataset.lx !== undefined || e.target.dataset.lxN !== undefined) luxRender();
-});
-$("luxDlg").addEventListener("keydown", e => {
-  if (e.key === "Escape") {
-    e.preventDefault();
-    luxCerrar();
-  }
-  e.stopPropagation();
 });
