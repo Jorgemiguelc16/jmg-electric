@@ -187,7 +187,8 @@ function planoOmitidos(D) {
     if (PD.ali) S.add("Lgen");
     if (PD.rutas.BM) S.add("Lbm");
     if (PD.rutas.TSG) S.add("Lms");
-    PD.deps.forEach(i => ["nAl", "nTo", "Lc"].forEach(k => S.add(`tipos_${k}_${i}`)));
+    // El número de unidades del tipo, si no se escribe, es el de sus tableros dibujados
+    PD.deps.forEach(i => ["cant", "nAl", "nTo", "Lc"].forEach(k => S.add(`tipos_${k}_${i}`)));
     PD.depsLd.forEach(i => S.add(`tipos_Ld_${i}`));
     PD.depsArea.forEach(i => S.add(`tipos_area_${i}`));
     return S;
@@ -272,7 +273,9 @@ function validar() {
     chk("Lgen", v("Lgen") > 0, "Ingrese la longitud del alimentador general.");
     if (PROY.bmJunto === "0") chk("Lbm", v("Lbm") > 0, "Ingrese la longitud del TG al banco de medidores.");
     if (serv.length) chk("Lms", v("Lms") > 0, "Ingrese la longitud al tablero de servicios generales.");
-    if (!tipos.some(t => t.cant > 0)) E.push("Agregue al menos un tipo de departamento con una o más unidades.");
+    // Unidades del tipo: las escritas o, con el diseño, las de sus tableros en el plano
+    const conUnid = (t, i) => t.cant > 0 || (!(t.cant > 0) && OM.has(`tipos_cant_${i}`));
+    if (!tipos.some(conUnid)) E.push("Agregue al menos un tipo de departamento con una o más unidades.");
     tipos.forEach((t, i) => {
       const n = t.nombre || `Tipo ${i + 1}`;
       chk(
@@ -280,8 +283,8 @@ function validar() {
         t.cant >= 0 && Number.isInteger(t.cant),
         `${n}: el número de unidades debe ser un entero.`
       );
-      if (t.cant > 0) {
-        chk(`tipos_area_${i}`, t.area > 0, `${n}: ingrese el área de vivienda.`);
+      if (conUnid(t, i)) {
+        chk(`tipos_area_${i}`, t.area > 0, `${n}: ingrese el área${t.uso && t.uso !== "viv" ? "" : " de vivienda"}.`);
         chk(`tipos_Ld_${i}`, t.Ld > 0, `${n}: ingrese la longitud del alimentador.`);
         chk(`tipos_Lc_${i}`, t.Lc > 0, `${n}: ingrese la longitud de los circuitos.`);
       }
