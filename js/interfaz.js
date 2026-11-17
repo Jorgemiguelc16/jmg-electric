@@ -301,7 +301,8 @@ function planoDatos(D) {
     areas: new Set(),
     deps: new Set(),
     depsLd: new Set(),
-    depsArea: new Set()
+    depsArea: new Set(),
+    libres: []
   };
   if (D.calPlano !== "1" || !D.PLANO || !D.PLANO.dis) return vacio;
   const n = k => parseFloat(D[k]) || 0,
@@ -337,9 +338,22 @@ function planoDatos(D) {
     fuera = noms
       ? R.tabs
           .filter(t => t.circs.length && !noms.has(t.nom))
-          .map(t => ({ nom: t.nom, n: t.circs.reduce((s, q) => s + q.n, 0) }))
-      : [];
-  return { tabs, rutas: R.rutas, ali: !!R.rutas.TG, areas, deps, depsLd, depsArea, fuera, noms: noms ? [...noms] : [] };
+          .map(t => ({ id: t.id, nom: t.nom, n: t.circs.reduce((s, q) => s + q.n, 0) }))
+      : [],
+    // Nombres del cálculo que ningún tablero del plano usa (para renombrar uno con un clic)
+    libres = noms ? [...noms].filter(n => !R.tabs.some(t => t.nom === n)) : [];
+  return {
+    tabs,
+    rutas: R.rutas,
+    ali: !!R.rutas.TG,
+    areas,
+    deps,
+    depsLd,
+    depsArea,
+    fuera,
+    libres,
+    noms: noms ? [...noms] : []
+  };
 }
 // Resumen del diseño en Salidas (Diseño en el plano) y avisos en los datos que salen del plano
 function planoResumen(r) {
@@ -435,7 +449,8 @@ function faltantes(p = null) {
     const PD = planoDatos(D),
       tabDe = n => (!pisos.length || (n === 1 && val("esqPisos") === "tg") ? "TG" : tabPiso(n)),
       delPlano = n => PD.tabs.has(tabDe(n));
-    if (!PD.areas.has(1)) req("area", "Área techada de la vivienda");
+    if (!PD.areas.has(1))
+      req("area", D.uso && D.uso !== "viv" ? "Área de la edificación (Regla 050-210)" : "Área techada de la vivienda");
     if (!PD.ali) req("Lalim", "Longitud del alimentador");
     [
       ["al", "alumbrado"],
@@ -575,11 +590,33 @@ function planoFueraAviso() {
       ? `<p class="falta-plano"><b>Este proyecto se calcula con el diseño del plano.</b> Las salidas, las longitudes y las áreas salen del dibujo: coloque los tableros con sus circuitos, las salidas y las tuberías; lo que el plano aún no tiene se pide abajo. ${ir}</p>`
       : "";
   const s = PD.fuera.map(t => `<b>${esc(t.nom)}</b> (${t.n} salida${t.n === 1 ? "" : "s"})`).join(", ");
-  return `<p class="falta-plano"><b>El plano tiene ${PD.fuera.length === 1 ? "el tablero" : "los tableros"} ${s}, pero el cálculo solo tiene ${esc(PD.noms.join(", "))}.</b> Sus salidas no se cuentan y por eso se piden escritas. En el Editor de diseño, cámbiele el nombre (doble clic en el tablero o «Renombrar» en Revisar diseño), o agregue su piso en Vivienda › Pisos y tableros. ${ir}</p>`;
+  // Un tablero fuera y un nombre libre del cálculo: se renombra con un clic
+  const ren =
+    PD.fuera.length === 1 && PD.libres.length
+      ? `<button type="button" class="btn sm" data-renplano="${esc(String(PD.fuera[0].id))}" data-nom="${esc(PD.libres[0])}">Llamarlo ${esc(PD.libres[0])}</button> `
+      : "";
+  return `<p class="falta-plano"><b>El plano tiene ${PD.fuera.length === 1 ? "el tablero" : "los tableros"} ${s}, pero el cálculo solo tiene ${esc(PD.noms.join(", "))}.</b> Sus salidas no se cuentan y por eso se piden escritas. ${ren ? `Si es el tablero general, llámelo ${esc(PD.libres[0])}: ` : ""}${ren}También puede cambiarle el nombre en el Editor de diseño (doble clic en el tablero o «Renombrar» en Revisar diseño), o agregar su piso en Vivienda › Pisos y tableros. ${ir}</p>`;
 }
 document.addEventListener("click", e => {
   if (e.target.closest("[data-abred]")) edAbrir(!PLANO);
+  const rn = e.target.closest("[data-renplano]");
+  if (rn) planoRenombrar(rn.dataset.renplano, rn.dataset.nom);
 });
+// Cambia el nombre de un tablero del plano (en el editor, si está abierto; si no, en el diseño guardado del proyecto)
+function planoRenombrar(id, nom) {
+  const D = ED.abierto && typeof dsD === "function" ? dsD() : PLANO && PLANO.dis,
+    el = D && D.els.find(x => String(x.id) === String(id));
+  if (!el) return;
+  const ant = el.nom || "TG";
+  el.nom = nom;
+  if (ED.abierto) edCambio();
+  else {
+    saveDraft();
+    histPush();
+  }
+  calcularAhora();
+  toast(`El tablero ${ant} ahora se llama ${nom}: sus salidas entran al cálculo`);
+}
 /* Cálculo preliminar: con datos pendientes, el proyecto que se calcula con el diseño se calcula igual con lo que ya
    tiene (el plano y lo escrito), para ver cómo va mientras se dibuja. Lo que falta cuenta como 0 (salidas, potencias, áreas), 1 m (longitudes) o 1
    unidad (departamentos de un tipo). El resultado lleva la marca «preliminar» y la lista de pendientes; el Excel,
