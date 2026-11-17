@@ -177,8 +177,9 @@ function tableros(r, op = {}) {
       x0 = px + pw + 24;
     // Encabezado del tablero
     T(20, yb + 14, `TABLERO ${tb.tab}`, { s: 11, b: 1, f: NAVY });
+    // La línea de datos, a continuación del nombre: con un nombre largo, más a la derecha (≈ 7 px por letra en 11 negrita)
     T(
-      150,
+      Math.max(150, 20 + `TABLERO ${tb.tab}`.length * 7 + 12),
       yb + 14,
       `${tb.desc} · ${a.s.txt} · PdC ${tb.pdc} kA · capacidad mínima ${pt.m} polos · alimentado con ITM ${pa}×${a.itm} A${a.cant > 1 ? ` · ${a.cant} tableros iguales` : ""}`,
       { s: 8, f: GR }

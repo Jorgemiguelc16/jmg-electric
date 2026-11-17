@@ -320,9 +320,18 @@ function calcMulti(c) {
       pdc: pdcPara(icc, c.pdcMin)
     });
   }
+  /* Nombre del tablero de cada tipo: el del plano si el tipo tiene un solo tablero dibujado (por ejemplo, TD-01);
+     si no, TD- y el nombre del tipo. Dos tipos nunca comparten nombre ni toman el de TG o TSG. */
+  const nomTipo = t => "TD-" + t.nombre.replace(/^Tipo\s*/i, "");
+  T.forEach(t => {
+    const pn = t.plano && t.plano.n === 1 ? String(t.plano.tb.nom || "").trim() : "";
+    t.tab = pn && !["TG", "TSG"].includes(pn.toUpperCase()) ? pn : nomTipo(t);
+  });
+  T.forEach(t => {
+    if (T.filter(x => x.tab === t.tab).length > 1) t.tab = nomTipo(t);
+  });
   T.forEach((t, ti) => {
-    const tab = "TD-" + t.nombre.replace(/^Tipo\s*/i, "");
-    t.tab = tab;
+    const tab = t.tab;
     const f = alimentador(
       `Alimentador medidor → ${tab} (${t.nombre})`,
       t.md.MD,
@@ -519,7 +528,9 @@ function calcMulti(c) {
       ? {
           plano: {
             tabs: [...new Set(PLD.tabs.filter(t => Number.isInteger(t.dep) && t.circs.length).map(t => t.dep))].map(
-              i => "TD-" + ((P.tipos[i] || {}).nombre || "").replace(/^Tipo\s*/i, "")
+              i =>
+                (T.find(t => t._i === i) || {}).tab ||
+                "TD-" + ((P.tipos[i] || {}).nombre || "").replace(/^Tipo\s*/i, "")
             ),
             ali: !!rG,
             avisos: PLD.avisos,

@@ -154,7 +154,13 @@ function exTree() {
   } else {
     add(
       1,
-      `Departamentos · ${tipos.reduce((s, t) => s + (t.cant > 0 ? Math.round(t.cant) : 0), 0)} departamentos`,
+      // Unidades: las del cálculo (con el diseño, las de los tableros dibujados) o, sin cálculo, las escritas
+      (() => {
+        const T = LAST && LAST.mode === "multi" ? LAST.T : tipos,
+          n = T.reduce((s, t) => s + (t.cant > 0 ? Math.round(t.cant) : 0), 0),
+          loc = T.some(t => t.uso && t.uso !== "viv");
+        return `Departamentos · ${n} ${loc ? (n === 1 ? "unidad" : "unidades") : "departamentos"}`;
+      })(),
       "vivienda",
       pst("vivienda"),
       pc("vivienda")

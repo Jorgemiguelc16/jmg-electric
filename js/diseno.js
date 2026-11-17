@@ -2301,10 +2301,12 @@ const dsBancoManual = (el, auto) => MODE !== "multi" || !!(el && el.mman) || !au
 function dsMedidoresAuto() {
   if (MODE !== "multi") return [];
   const out = [];
-  tipos.forEach(t => {
-    const l = (t.nombre || "").replace(/^Tipo\s*/i, ""),
-      n = Math.max(0, Math.round(+t.cant || 0));
-    for (let k = 1; k <= n; k++) out.push({ dep: `${l}-${k}`, tri: t.fases === "3", tab: "TD-" + l });
+  tipos.forEach((t, i) => {
+    // Unidades y tablero: los del cálculo (con el diseño, el nombre del tablero del plano) o los escritos
+    const tc = LAST && LAST.mode === "multi" ? LAST.T.find(x => x._i === i) : null,
+      l = (t.nombre || "").replace(/^Tipo\s*/i, ""),
+      n = Math.max(0, Math.round(+(tc ? tc.cant : t.cant) || 0));
+    for (let k = 1; k <= n; k++) out.push({ dep: `${l}-${k}`, tri: t.fases === "3", tab: (tc && tc.tab) || "TD-" + l });
   });
   const D = dsD();
   if (PROY.tsgDe !== "tg" && (serv.some(x => x.p > 0) || (D && D.els.some(e => e.k === "tab" && e.nom === "TSG"))))

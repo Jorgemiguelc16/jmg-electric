@@ -243,8 +243,8 @@ module.exports = function probarPlano(ctx) {
   ver("edificio: circuito más largo del tipo A (1.1 + 6)", rm.T[0].Lc, 7.1);
   ver("edificio sin el modo: datos escritos", calc(M).T[0].Ld, 30);
   ver(
-    "edificio: circuitos del departamento A, los del plano",
-    rm.circ.filter(q => q.tab === "TD-A").map(q => [q.id, q.n, !!q.plano]),
+    "edificio: circuitos del departamento A, los del plano (su tablero con el nombre del plano)",
+    rm.circ.filter(q => q.tab === "TD-A1").map(q => [q.id, q.n, !!q.plano]),
     [
       ["C-1", 2, true],
       ["C-2", 1, true]
