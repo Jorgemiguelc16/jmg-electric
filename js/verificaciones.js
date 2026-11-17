@@ -4,14 +4,40 @@
    cálculo; no lo cambian. */
 function alertas(r) {
   const A = [],
-    maxDV = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
-  A.push([
-    r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
-    "050-102 · 050-104",
-    r.alims.every(a => a.ok) && r.circ.every(q => q.ok)
-      ? `Alimentadores y circuitos conformes. Caída de tensión máxima total ${fmt(maxDV, 2)} %.`
-      : "Existen alimentadores o circuitos que no cumplen ampacidad o caída de tensión: revise longitudes o secciones."
-  ]);
+    PD = r.pend;
+  /* Resultado preliminar (faltan datos; js/interfaz.js): se verifica lo ya calculado y se dice cuánto falta; el
+     balance de fases, con cargas pendientes, no se verifica aún */
+  if (PD) {
+    const al = r.alims.filter((a, i) => !PD.al.has(i)),
+      cs = r.circ.filter(q => !PD.circ.has(q.key)),
+      dvs = [
+        ...r.alims.filter((a, i) => !PD.al.has(i) && !PD.dv.has(i)).map(a => a.dvAc),
+        ...cs.filter(q => !PD.cdv.has(q.key)).map(q => q.dVt)
+      ],
+      ok = al.every(a => a.ok) && cs.every(q => q.ok),
+      np = r.alims.length - al.length + r.circ.length - cs.length;
+    A.push([
+      "warn",
+      "Preliminar",
+      `Faltan ${r.prelim.length} dato${r.prelim.length === 1 ? "" : "s"} del proyecto: ${np ? `${np} alimentador${np === 1 ? "" : "es"} o circuito${np === 1 ? "" : "s"} y ` : ""}lo que depende de ellos queda pendiente.`
+    ]);
+    A.push([
+      ok,
+      "050-102 · 050-104",
+      ok
+        ? `De lo ya calculado, alimentadores y circuitos conformes${dvs.length ? `; caída de tensión máxima total ${fmt(Math.max(...dvs), 2)} %` : "; la caída de tensión total queda pendiente"}.`
+        : "De lo ya calculado, hay alimentadores o circuitos que no cumplen ampacidad o caída de tensión: revise longitudes o secciones."
+    ]);
+  }
+  const maxDV = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
+  if (!PD)
+    A.push([
+      r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
+      "050-102 · 050-104",
+      r.alims.every(a => a.ok) && r.circ.every(q => q.ok)
+        ? `Alimentadores y circuitos conformes. Caída de tensión máxima total ${fmt(maxDV, 2)} %.`
+        : "Existen alimentadores o circuitos que no cumplen ampacidad o caída de tensión: revise longitudes o secciones."
+    ]);
   A.push([
     r.pat.ok,
     "060-712",
@@ -25,7 +51,7 @@ function alertas(r) {
       "060-702",
       `La varilla debe tener al menos 2 m de longitud y 13 mm de diámetro (cobre) o 16 mm (acero-cobre).`
     ]);
-  if (r.bal) {
+  if (r.bal && !(PD && (PD.md || PD.circ.size))) {
     const b = r.bal;
     A.push([
       b.desb <= 10 ? true : "warn",

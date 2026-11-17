@@ -284,7 +284,10 @@ function wsRefresh(F) {
   $("wsStatus").innerHTML =
     `<div>Modo edición</div><div>${AUTO ? `<span class="g">●</span> Cálculo automático` : `<span class="w">●</span> Cálculo manual · F9`}</div>` +
     (r
-      ? `<div>MD ${fmt((r.mode === "multi" ? r.MD : r.md.MD) / 1000, 2)} kW</div><div>Alimentador ${r.alims[0].s.n}-1×${r.alims[0].S} mm² · ITM ${r.alims[0].s.tri ? 3 : 2}×${r.alims[0].itm} A</div><div>ΔV máx ${fmt(Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt)), 2)} %</div><div class="${ok ? "g" : "b"}">${ok ? "CONFORME" : "REVISAR"}</div>`
+      ? (({ md, a0, dv }) =>
+          `<div>MD ${md === null ? "pendiente" : `${fmt(md / 1000, 2)} kW`}</div><div>Alimentador ${a0 ? `${a0.s.n}-1×${a0.S} mm² · ITM ${a0.s.tri ? 3 : 2}×${a0.itm} A` : "pendiente"}</div><div>ΔV máx ${dv === null ? "pendiente" : `${fmt(dv, 2)} %`}</div>${r.prelim ? `<div class="w">PRELIMINAR · ${r.prelim.length} pendiente${r.prelim.length === 1 ? "" : "s"}</div>` : `<div class="${ok ? "g" : "b"}">${ok ? "CONFORME" : "REVISAR"}</div>`}`)(
+          vivoDatos(r)
+        )
       : `<div class="w">${WSF.length} dato${WSF.length === 1 ? "" : "s"} pendiente${WSF.length === 1 ? "" : "s"}</div>`) +
     `<div class="r">${n && !/^EJEMPLO\b/.test(n) ? `Guardado ${hh}` : /^EJEMPLO\b/.test(n) ? "Ejemplo · no se guarda" : "Sin nombre · no se guarda"}${typeof nubeTxt === "function" ? " · " + nubeTxt() : ""} · ${VERSION}</div>`;
   if (!$("ws").hidden) exTree();

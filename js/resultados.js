@@ -62,9 +62,11 @@ const VLBL = {
 const cerca = (v, lim) =>
   v >= DV_MARGEN * lim ? ` class="cerca" title="Al ${fmt((v / lim) * 100, 0)} % de su límite"` : "";
 function tablaAlims(r, nro) {
+  // Resultado preliminar: lo que depende de un dato que falta, «pendiente» (prelimPartes, js/interfaz.js)
+  const PD = r.pend;
   return `<section class="card"><h2><span><span class="num">${nro}</span>Alimentadores</span><span class="ref">050-102 · 050-104 · Tabla 2</span></h2>
   <div class="tbl-wrap"><table><thead><tr><th class="t">Alimentador</th>${r.mode === "multi" ? "<th>Cant.</th>" : ""}<th>P (kW)</th><th>Sistema</th><th>I (A)</th><th>Id (A)</th><th>ITM</th><th>PdC</th><th>Conductor Cu</th><th>Iz corr. (A)</th><th>L (m)</th><th>ΔV %</th><th>ΔV acum. %</th><th>Tierra</th><th>Tubo</th><th class="t">Estado</th></tr></thead><tbody>
-  ${r.alims.map((a, i) => `<tr${(t => (t ? ` data-fichatab="${t.tab}" title="Doble clic: ficha del tablero ${t.tab}"` : ""))(r.tabs.find(t => t.feeder === i))}><td class="t">${a.desc}</td>${r.mode === "multi" ? `<td>${a.cant ?? 1}</td>` : ""}<td>${fmt(a.P / 1000, 2)}</td><td>${a.s.txt}</td><td>${fmt(a.I, 2)}</td><td>${fmt(a.Id, 2)}${a.Imin && a.Id === a.Imin ? "*" : ""}</td><td>${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</td><td>${a.pdc ?? "—"} kA</td><td>${condTxt(a.s.n, a.S, r.c)}</td><td>${fmt(a.Izc, 1)}</td><td>${fmt(a.L, 1)}</td><td>${fmt(a.dVp, 2)}</td><td${cerca(a.dvAc, DV_ALIM)}>${fmt(a.dvAc, 2)}</td><td>${a.St} mm²</td><td>${a.tubo.mm ? a.tubo.mm + " mm" : a.tubo.pul}</td><td class="t">${pill(a.ok, "Cumple", "Revisar")}</td></tr>`).join("")}
+  ${r.alims.map((a, i) => `<tr${(t => (t ? ` data-fichatab="${t.tab}" title="Doble clic: ficha del tablero ${t.tab}"` : ""))(r.tabs.find(t => t.feeder === i))}${PD && PD.al.has(i) ? ' class="pend"' : ""}><td class="t">${a.desc}</td>${r.mode === "multi" ? `<td>${a.cant ?? 1}</td>` : ""}${PD && PD.al.has(i) ? `<td colspan="14" class="t">${pendTxt(PD, "a" + i, "Pendiente: se calcula al completar los datos (pase el mouse para ver cuáles)")}</td></tr>` : `<td>${fmt(a.P / 1000, 2)}</td><td>${a.s.txt}</td><td>${fmt(a.I, 2)}</td><td>${fmt(a.Id, 2)}${a.Imin && a.Id === a.Imin ? "*" : ""}</td><td>${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</td><td>${a.pdc ?? "—"} kA</td><td>${condTxt(a.s.n, a.S, r.c)}</td><td>${fmt(a.Izc, 1)}</td><td>${fmt(a.L, 1)}</td><td>${fmt(a.dVp, 2)}</td><td${PD && PD.dv.has(i) ? "" : cerca(a.dvAc, DV_ALIM)}>${PD && PD.dv.has(i) ? pendTxt(PD, "v" + i) : fmt(a.dvAc, 2)}</td><td>${a.St} mm²</td><td>${a.tubo.mm ? a.tubo.mm + " mm" : a.tubo.pul}</td><td class="t">${PD && PD.dv.has(i) ? "—" : pill(a.ok, "Cumple", "Revisar")}</td></tr>`}`).join("")}
   </tbody></table></div><div class="body"><p class="hint">* Corriente mínima del código: ${r.mode === "uni" ? "40 A (050-200(1)(b))" : "25 A por departamento (050-202(1)(b))"}. PdC: poder de corte mínimo del interruptor. En ámbar: valores al 90 % o más de su límite. Doble clic en una fila: ficha del tablero.</p>${tgbmTxt(r) ? `<p class="hint"><b>Del TG al banco de medidores:</b> ${tgbmTxt(r)}.</p>` : ""}</div></section>`;
 }
 /* Tuberías entre el TG y el banco de medidores (banco junto al TG): sus conductores y cuántas tuberías llevan
@@ -88,19 +90,22 @@ function tgbmTxt(r) {
 }
 function tablaCircuitos(r, nro) {
   let rows = "";
-  const tri = !!r.bal && r.mode === "uni";
+  const tri = !!r.bal && r.mode === "uni",
+    PD = r.pend;
   r.tabs.forEach(tb => {
     const f = r.alims[tb.feeder],
       cs = r.circ.filter(c => c.tab === tb.tab);
-    rows += `<tr class="grp" data-fichatab="${tb.tab}" title="Doble clic: ficha del tablero ${tb.tab}"><td colspan="${tri ? 17 : 16}">Tablero ${tb.tab} — ${tb.desc} · ΔV aguas arriba ${fmt(f.dvAc, 2)} % · Icc ${fmt(tb.icc, 2)} kA · PdC mínimo ${tb.pdc} kA</td></tr>`;
+    rows += `<tr class="grp" data-fichatab="${tb.tab}" title="Doble clic: ficha del tablero ${tb.tab}"><td colspan="${tri ? 17 : 16}">Tablero ${tb.tab} — ${tb.desc} · ΔV aguas arriba ${PD && PD.dv.has(tb.feeder) ? "pendiente" : `${fmt(f.dvAc, 2)} %`} · Icc ${fmt(tb.icc, 2)} kA · PdC mínimo ${tb.pdc} kA</td></tr>`;
     cs.forEach(c => {
-      rows += `<tr data-ficha="${esc(c.key)}" title="Doble clic: ficha del circuito"><td class="t"><strong>${c.id}</strong></td><td class="t">${esc(c.desc)}</td><td>${c.n}</td><td>${fmt(c.P, 0)}</td><td>${c.f3 ? "3φ" : "1φ"}</td>${tri ? `<td>${c.fase}</td>` : ""}<td>${fmt(c.I, 2)}</td><td>${fmt(c.Id, 2)}</td><td>${c.f3 ? 3 : 2}×${c.itm ?? "—"} A · ${c.curva}</td><td>${condTxt(c.f3 ? 3 : 2, c.S, r.c)}</td><td${cerca(c.I, c.Izc)}>${fmt(c.Izc, 1)}</td><td>${fmt(c.L, 0)}</td><td${cerca(c.dVp, DV_DER)}>${fmt(c.dVp, 2)}</td><td${cerca(c.dVt, DV_TOT)}>${fmt(c.dVt, 2)}</td><td>${c.St} mm²</td><td class="t">${c.idName} · ${c.f3 ? 4 : 2}×${c.idRat} A · 30 mA · ${c.idTipo || "A"}</td><td class="t">${pill(c.ok, "OK", "Revisar")}</td></tr>`;
+      const pc = PD && PD.circ.has(c.key),
+        pv = PD && PD.cdv.has(c.key);
+      rows += `<tr data-ficha="${esc(c.key)}" title="Doble clic: ficha del circuito"${pc ? ' class="pend"' : ""}><td class="t"><strong>${c.id}</strong></td><td class="t">${esc(c.desc)}</td>${pc ? `<td colspan="${tri ? 15 : 14}" class="t">${pendTxt(PD, "c" + c.key, "Pendiente: faltan datos del circuito (pase el mouse para ver cuáles)")}</td></tr>` : `<td>${c.n}</td><td>${fmt(c.P, 0)}</td><td>${c.f3 ? "3φ" : "1φ"}</td>${tri ? `<td>${c.fase}</td>` : ""}<td>${fmt(c.I, 2)}</td><td>${fmt(c.Id, 2)}</td><td>${c.f3 ? 3 : 2}×${c.itm ?? "—"} A · ${c.curva}</td><td>${condTxt(c.f3 ? 3 : 2, c.S, r.c)}</td><td${cerca(c.I, c.Izc)}>${fmt(c.Izc, 1)}</td><td>${fmt(c.L, 0)}</td><td${cerca(c.dVp, DV_DER)}>${fmt(c.dVp, 2)}</td><td${pv ? "" : cerca(c.dVt, DV_TOT)}>${pv ? pendTxt(PD, "w" + c.key) : fmt(c.dVt, 2)}</td><td>${c.St} mm²</td><td class="t">${c.idName} · ${c.f3 ? 4 : 2}×${c.idRat} A · 30 mA · ${c.idTipo || "A"}</td><td class="t">${pv ? "—" : pill(c.ok, "OK", "Revisar")}</td></tr>`}`;
     });
     const pre = tb.tab === "TSG" ? "S-" : "C-";
     for (let i = 1; i <= r.c.reserva; i++)
       rows += `<tr class="res"><td class="t">${pre}${cs.length + i}</td><td class="t">Reserva</td><td colspan="${tri ? 15 : 14}"></td></tr>`;
   });
-  const allOk = r.circ.every(c => c.ok);
+  const allOk = r.circ.every(c => c.ok || (PD && (PD.circ.has(c.key) || PD.cdv.has(c.key))));
   return `<section class="card"><h2><span><span class="num">${nro}</span>Cuadro de cargas — circuitos derivados</span><span class="ref">${allOk ? pill(true, "Todos cumplen") : pill(false, "", "Revisar observaciones")}</span></h2>
   <div class="tbl-wrap"><table><thead><tr><th class="t">Circ.</th><th class="t">Descripción</th><th>Salidas</th><th>P (W)</th><th>Fases</th>${tri ? "<th>Fase</th>" : ""}<th>I (A)</th><th>Id (A)</th><th>ITM</th><th>Conductor Cu</th><th>Iz corr. (A)</th><th>L (m)</th><th>ΔV %</th><th>ΔV total %</th><th>Tierra</th><th class="t">Diferencial</th><th class="t">Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
   <div class="body"><p class="hint">Conductores según Tabla 2, método ${r.c.met}; corrección ${fmt(r.c.ft, 2)} (temperatura) × ${fmt(r.c.fa, 2)} (agrupamiento) = ${fmt(r.c.fc, 2)}. Diferenciales: ${r.c.idMode === "grupo" ? "uno por cada grupo de tres circuitos (150-400(8))" : "uno por circuito (150-400(9))"}. En ámbar: valores al 90 % o más de su límite (ΔV del circuito 2.5 %, ΔV total 4 %, o corriente frente a Iz corregida). Doble clic en un circuito o en la franja de un tablero: su ficha. ITM curva C en circuitos generales${r.circ.some(q => q.motor) ? "; curva D en circuitos de motores, con conductor al 125 % de la corriente a plena carga (Reglas 160-106 y 160-200)" : ""}.</p></div></section>`;
@@ -159,11 +164,15 @@ function cardBalance(r, nro) {
 }
 function cardSuministro(r, nro) {
   const a0 = r.alims[0],
-    md = r.mode === "uni" ? r.md.MD : r.MD;
+    md = r.mode === "uni" ? r.md.MD : r.MD,
+    // Resultado preliminar: lo que depende de un dato que falta, «pendiente»
+    PD = r.pend,
+    pm = PD && PD.md ? pendTxt(PD, "md") : null,
+    pa = PD && PD.al.has(0) ? pendTxt(PD, "a0") : null;
   return `<section class="card"><h2><span><span class="num">${nro}</span>Suministro y conexión</span><span class="ref">EM.010 · Norma DGE</span></h2><div class="body"><dl class="spec">
-    <dt>Potencia instalada</dt><dd>${fmt(r.CI / 1000, 2)} kW</dd><dt>Máxima demanda</dt><dd>${fmt(md / 1000, 2)} kW</dd><dt>Factor de demanda</dt><dd>${fmt(md / (r.CI || 1), 2)}</dd>
-    <dt>Potencia a contratar sugerida</dt><dd>${fmt(r.contratada, 1)} kW</dd><dt>Sistema de suministro</dt><dd>${a0.s.nom}</dd><dt>Tipo de conexión</dt><dd style="white-space:normal">${r.conexion}</dd>
-    <dt>Interruptor general</dt><dd>${a0.s.tri ? 3 : 2}×${a0.itm} A · ${a0.pdc} kA</dd><dt>Icc punto de entrega / TG</dt><dd>${fmt(r.c.iccE, 1)} / ${fmt(r.iccTG, 2)} kA</dd></dl></div></section>`;
+    <dt>Potencia instalada</dt><dd>${pm || `${fmt(r.CI / 1000, 2)} kW`}</dd><dt>Máxima demanda</dt><dd>${pm || `${fmt(md / 1000, 2)} kW`}</dd><dt>Factor de demanda</dt><dd>${pm || fmt(md / (r.CI || 1), 2)}</dd>
+    <dt>Potencia a contratar sugerida</dt><dd>${pm || `${fmt(r.contratada, 1)} kW`}</dd><dt>Sistema de suministro</dt><dd>${a0.s.nom}</dd><dt>Tipo de conexión</dt><dd style="white-space:normal">${r.conexion}</dd>
+    <dt>Interruptor general</dt><dd>${pa || `${a0.s.tri ? 3 : 2}×${a0.itm} A · ${a0.pdc} kA`}</dd><dt>Icc punto de entrega / TG</dt><dd>${fmt(r.c.iccE, 1)} / ${fmt(r.iccTG, 2)} kA</dd></dl></div></section>`;
 }
 function cardPozo(r, nro) {
   const p = r.pat;

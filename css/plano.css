@@ -2602,6 +2602,7 @@ input.del-plano,
 }
 /* Cálculo preliminar (faltan datos) */
 #edVivoE .w,
+.ed-vivo .w,
 .rev-dato .w {
   color: #a86b12;
 }

@@ -3230,9 +3230,8 @@ function edRevCinta(E) {
     calc = `<div class="col rev-calc"><span class="rev-dato pend">Faltan datos para calcular</span><button type="button" class="rs" data-vivo="datos">Escribir los datos que faltan</button></div>`;
   else {
     const ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
-      md = r.mode === "multi" ? r.MD : r.md.MD,
-      dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
-    calc = `<div class="col rev-calc"><span class="rev-dato">Máxima demanda <b>${fmt(md / 1000, 2)} kW</b></span><span class="rev-dato">ΔV máxima <b${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</b></span><span class="rev-dato">Estado ${r.prelim ? `<b class="w" title="Calculado con lo que el diseño tiene; faltan ${r.prelim.length} datos">Preliminar</b>` : `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`}</span></div>`;
+      { md, dv } = vivoDatos(r);
+    calc = `<div class="col rev-calc"><span class="rev-dato">Máxima demanda ${md === null ? '<b class="w">pendiente</b>' : `<b>${fmt(md / 1000, 2)} kW</b>`}</span><span class="rev-dato">ΔV máxima ${dv === null ? '<b class="w">pendiente</b>' : `<b${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</b>`}</span><span class="rev-dato">Estado ${r.prelim ? `<b class="w" title="Calculado con lo que el diseño tiene; faltan ${r.prelim.length} datos">Preliminar</b>` : `<b class="${ok ? "ok" : "bad"}">${ok ? "Conforme" : "Revisar"}</b>`}</span></div>`;
   }
   $("edRevRib").innerHTML =
     `<div class="rgrp"><div class="gi">${pasos}</div><div class="gl">Avance del diseño · ${hechos} de ${ED_PASOS.length}</div></div>` +
@@ -3277,9 +3276,12 @@ function edVivo() {
     return;
   }
   const ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
-    a0 = r.alims[0],
-    md = r.mode === "multi" ? r.MD : r.md.MD,
-    dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(q => q.dVt));
+    { md, a0, dv } = vivoDatos(r),
+    PD = r.pend,
+    pend = '<span class="w">pendiente</span>',
+    // Circuitos: los ya calculados y, de ellos, los que no cumplen
+    cs = r.circ.filter(q => !(PD && PD.circ.has(q.key))),
+    malos = cs.filter(q => !q.ok && !(PD && PD.cdv.has(q.key))).length;
   // Preliminar: calculado con lo que hay; debajo, lo que falta
   const F = r.prelim || [];
   $("edVivoE").innerHTML = F.length
@@ -3294,10 +3296,10 @@ function edVivo() {
           .map(edPistaLi)
           .join("")}${F.length > 4 ? `<li>y ${F.length - 4} más</li>` : ""}</ul>`
       : "") +
-    `<dl><dt>Máxima demanda</dt><dd>${fmt(md / 1000, 2)} kW</dd>` +
-    `<dt>Alimentador</dt><dd>${a0.s.n}-1×${a0.S} mm² · ${a0.s.tri ? 3 : 2}×${a0.itm} A</dd>` +
-    `<dt>ΔV máxima</dt><dd${dv > DV_TOT ? ' class="bad"' : ""}>${fmt(dv, 2)} %</dd>` +
-    `<dt>Circuitos</dt><dd>${r.circ.length}${r.circ.some(q => !q.ok) ? ` · ${r.circ.filter(q => !q.ok).length} por revisar` : ""}</dd></dl>` +
+    `<dl><dt>Máxima demanda</dt><dd>${md === null ? pend : `${fmt(md / 1000, 2)} kW`}</dd>` +
+    `<dt>Alimentador</dt><dd>${a0 ? `${a0.s.n}-1×${a0.S} mm² · ${a0.s.tri ? 3 : 2}×${a0.itm} A` : pend}</dd>` +
+    `<dt>ΔV máxima</dt><dd${dv > DV_TOT ? ' class="bad"' : ""}>${dv === null ? pend : `${fmt(dv, 2)} %`}</dd>` +
+    `<dt>Circuitos</dt><dd>${cs.length}${cs.length < r.circ.length ? ` de ${r.circ.length}` : ""}${malos ? ` · ${malos} por revisar` : ""}</dd></dl>` +
     `<button type="button" class="vw-btn" data-vivo="res">Ver resultados completos</button>` +
     (F.length ? `<button type="button" class="vw-btn" data-vivo="datos">Escribir los datos que faltan</button>` : "");
 }

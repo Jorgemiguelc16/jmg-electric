@@ -4,8 +4,10 @@
    y textos que cambian según el uso de la edificación. */
 let PRINT = null;
 function render(r) {
-  const k = [];
-  const maxDV = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt)),
+  const k = [],
+    PD = r.pend;
+  // ΔV máxima: en un resultado preliminar, solo la de lo que ya es definitivo
+  const maxDV = vivoDatos(r).dv,
     a0 = r.alims[0];
   if (r.mode === "uni")
     k.push(
@@ -32,7 +34,14 @@ function render(r) {
     );
   k.push(
     ["Potencia a contratar", fmt(r.contratada, 1), "kW", "Sugerida"],
-    ["ΔV máx. total", fmt(maxDV, 2), "%", pill(maxDV <= DV_TOT, "Dentro del límite", "Excede 4 %")],
+    maxDV === null
+      ? ["ΔV máx. total", "—", "", "Pendiente"]
+      : [
+          "ΔV máx. total",
+          fmt(maxDV, 2),
+          "%",
+          PD ? "De lo ya calculado" : pill(maxDV <= DV_TOT, "Dentro del límite", "Excede 4 %")
+        ],
     ["Puesta a tierra", fmt(r.pat.Rt, 1), "Ω", pill(r.pat.ok, "Cumple", "Excede 25 Ω")]
   );
   if (r.bal)
@@ -44,12 +53,30 @@ function render(r) {
         ? pillS("ok", "≤ 10 %")
         : pillS("warn", r.bal.desb <= r.bal.desbMin + 0.05 ? "Mínimo posible" : "Revisar reparto")
     ]);
+  // Resultado preliminar: lo que depende de un dato que falta, «pendiente»
+  if (PD) {
+    const pend = {
+      "Potencia instalada": PD.md && "md",
+      "Máxima demanda": PD.md && "md",
+      "Potencia a contratar": PD.md && "md",
+      Alimentador: PD.al.has(0) && "a0",
+      "Alimentador general": PD.al.has(0) && "a0",
+      "ITM general": PD.al.has(0) && "a0",
+      Desbalance: (PD.md || PD.circ.size > 0) && "md"
+    };
+    k.forEach((x, i) => {
+      if (pend[x[0]]) k[i] = [x[0], pendTxt(PD, pend[x[0]] === "md" && !PD.md ? "a0" : pend[x[0]]), "", "Faltan datos"];
+    });
+  }
   let html = `<div class="kpis">${k.map(([a, b, u, n]) => `<div class="kpi"><div class="k">${a}</div><div class="v">${b}${u ? `<small>${u}</small>` : ""}</div><div class="n">${n}</div></div>`).join("")}</div>`;
   const S = {},
     A = alertas(r);
   S.resumen = () =>
     `<div class="two">${cardSuministro(r, "")}${cardPozo(r, "")}</div>${cardAlertas(r, "")}${cardRecom(r)}`;
-  S.demanda = () => cardDemanda(r);
+  S.demanda = () =>
+    (PD && PD.md
+      ? `<p class="falta-plano"><b>Máxima demanda pendiente:</b> falta ${esc([...new Set(PD.por.md)].join("; "))}. Los valores de abajo son provisionales.</p>`
+      : "") + cardDemanda(r);
   S.alims = () => tablaAlims(r, "");
   S.cuadro = () => tablaCircuitos(r, "");
   if (r.bal) S.balance = () => cardBalance(r, "");
@@ -574,10 +601,114 @@ function estadoParcial(D, F) {
   }
   return P;
 }
+/* Cálculo por partes: qué del resultado preliminar depende de un dato que falta (y se muestra «pendiente» en vez de
+   un número de relleno) y qué ya es definitivo.
+   · md: falta un dato de la carga (área, salidas, potencias, unidades): la máxima demanda y todos los alimentadores.
+   · al: alimentadores pendientes (por la máxima demanda o por su longitud); dv: alimentadores cuya ΔV acumulada
+     depende de una longitud que falta (la suya o la de uno aguas arriba).
+   · circ: circuitos con un dato propio pendiente; cdv: circuitos cuya ΔV total depende de un alimentador pendiente.
+   Cada parte guarda los datos que faltan (por: clave → textos), para el «title». */
+function prelimPartes(F, r) {
+  const P = { md: false, al: new Set(), dv: new Set(), circ: new Set(), cdv: new Set(), por: {} },
+    motivo = (k, l) => (P.por[k] = [...(P.por[k] || []), l]),
+    alim = (j, l, dv) => {
+      if (j < 0) return;
+      P.al.add(j);
+      motivo("a" + j, l);
+      if (dv) {
+        // Su ΔV acumulada y la de lo que alimenta: el general, todo
+        r.alims.forEach((a, i) => {
+          if (i !== j && j !== 0) return;
+          P.dv.add(i);
+          motivo("v" + i, l);
+        });
+        r.circ.forEach(q => {
+          if (j !== 0 && q.feeder !== j) return;
+          P.cdv.add(q.key);
+          motivo("w" + q.key, l);
+        });
+      }
+    },
+    circ = (f, l) =>
+      r.circ.forEach(q => {
+        if (q.src && f(q.src)) {
+          P.circ.add(q.key);
+          motivo("c" + q.key, l);
+        }
+      }),
+    alimDe = tab => r.alims.findIndex(a => new RegExp(`→ (tablero )?${tab}\\b`).test(a.desc));
+  F.forEach(x => {
+    const m = /^(tipos|cargasT|cargas|pisos|serv)_(.+)_(\d+)$/.exec(x.id),
+      k = m ? m[2] : x.id,
+      i = m ? +m[3] : -1,
+      L = /^L|_L$/.test(k);
+    if (!L) {
+      P.md = true;
+      motivo("md", x.l);
+    }
+    if (!m) {
+      if (k === "Lalim" || k === "Lgen") alim(0, x.l, true);
+      else if (k === "Lbm")
+        alim(
+          r.alims.findIndex(a => a.pKey === "bm"),
+          x.l,
+          true
+        );
+      else if (k === "Lms")
+        alim(
+          r.alims.findIndex(a => a.pKey === "servP"),
+          x.l,
+          true
+        );
+      else if (k === "Ltd1") alim(alimDe("TD-1"), x.l, true);
+      else {
+        // Salidas del 1er piso (o de la vivienda de un piso): sus grupos de circuitos
+        const g = k.split("_")[0];
+        if (["al", "tg", "tc"].includes(g)) circ(s => s.t === "grp" && s.k === g, x.l);
+      }
+      return;
+    }
+    const lista = m[1];
+    if (lista === "pisos") {
+      if (k === "Ld") alim(alimDe(tabPiso(i + 2)), x.l, true);
+      else if (k !== "area") circ(s => s.t === "piso" && s.i === i && s.k === k.split("_")[0], x.l);
+    } else if (lista === "tipos") {
+      if (k === "Ld")
+        alim(
+          r.alims.findIndex(a => a.pKey === "tipo" && r.T[a.ti] && r.T[a.ti]._i === i),
+          x.l,
+          true
+        );
+      else if (["nAl", "nTo", "Lc"].includes(k)) circ(s => s.t === "tipo" && s.i === i, x.l);
+    } else circ(s => s.t === lista && s.i === i, x.l);
+  });
+  // Sin la máxima demanda, ningún alimentador es definitivo
+  if (P.md) r.alims.forEach((a, j) => (P.al.add(j), motivo("a" + j, "la máxima demanda")));
+  return P;
+}
+// Celda o texto «pendiente», con los datos que faltan en el title
+const pendTxt = (P, k, t = "pendiente") => {
+  const m = [...new Set(P.por[k] || [])];
+  return `<span class="pend-v" title="${esc(m.length ? "Falta: " + m.join("; ") : "Faltan datos del proyecto")}">${t}</span>`;
+};
+/* Máxima demanda, alimentador general y ΔV máxima de un resultado (resumen y cálculo en vivo del editor); en uno
+   preliminar, null lo que está pendiente, y la ΔV solo de lo que ya es definitivo */
+function vivoDatos(r) {
+  const PD = r.pend,
+    dvs = [
+      ...r.alims.filter((a, i) => !(PD && (PD.al.has(i) || PD.dv.has(i)))).map(a => a.dvAc),
+      ...r.circ.filter(c => !(PD && (PD.circ.has(c.key) || PD.cdv.has(c.key)))).map(c => c.dVt)
+    ];
+  return {
+    md: PD && PD.md ? null : r.mode === "multi" ? r.MD : r.md.MD,
+    a0: PD && PD.al.has(0) ? null : r.alims[0],
+    dv: dvs.length ? Math.max(...dvs) : null
+  };
+}
 // Aviso del resultado preliminar, con los datos que faltan (clic: ir al dato)
 function prelimCard(F) {
   return `<section class="card falta-card prelim"><h2><span>Resultado preliminar</span><span class="ref">${F.length} dato${F.length > 1 ? "s" : ""} pendiente${F.length > 1 ? "s" : ""}</span></h2><div class="body">
-      <p class="hint">Se calculó con lo que el proyecto tiene hasta ahora, para ver cómo va el diseño. Lo que falta cuenta como 0 salidas, 0 W o 0 m², 1 m de longitud o 1 departamento: los valores cambiarán al completarlo. El Excel, el expediente y los planos se habilitan con el proyecto completo.</p>
+      <p class="hint">Se calculó por partes con lo que el proyecto tiene hasta ahora: lo que ya tiene sus datos es definitivo; lo que depende de un dato que falta dice <i>pendiente</i> (pase el mouse para ver cuál). Los diagramas, los tableros y el metrado son provisionales. El Excel, el expediente y los planos se habilitan con el proyecto completo.</p>
       ${planoFueraAviso()}
       <ul class="faltan">${F.map(x => `<li><button type="button" class="linkbtn" data-foco="${x.id}">${esc(x.l)}</button></li>`).join("")}</ul></div></section>`;
 }
@@ -617,7 +748,10 @@ function update() {
     } catch (e) {
       r = null;
     }
-    if (r) r.prelim = F;
+    if (r) {
+      r.prelim = F;
+      r.pend = prelimPartes(F, r);
+    }
   }
   if (F.length && !r) {
     LAST = null;

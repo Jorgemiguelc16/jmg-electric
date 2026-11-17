@@ -2542,6 +2542,13 @@ prueba("Flujo con el plano: asistente, editor primero, pasos del diseño y cálc
       !!(await ev("!!(LAST && LAST.prelim) && $('btnXlsx').disabled")),
     "cálculo preliminar con lo que tiene el diseño, sin Excel"
   );
+  // Por partes: el área y el alimentador general faltan, así que la máxima demanda y el alimentador dicen «pendiente»
+  ok(
+    /MD pendiente/.test(await ev("$('wsStatus').textContent")) &&
+      /PRELIMINAR/.test(await ev("$('wsStatus').textContent")) &&
+      /pendiente/.test(await ev("$('edVivo').textContent")),
+    "lo que depende de un dato que falta dice «pendiente», sin números de relleno"
+  );
   // El área y el alimentador escritos (en un proyecto real, se marcan en el plano)
   await ev("ponerDato('area', '100'); ponerDato('Lalim', '12'); calcularAhora(); edVivo(); 1");
   const pasos = await J(

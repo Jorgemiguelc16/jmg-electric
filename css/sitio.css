@@ -1719,6 +1719,15 @@ body:not(.sin-falta) select.falta {
   background: #fbf0d9;
   padding: 2px 8px;
 }
+/* Resultado preliminar: lo que depende de un dato que falta */
+.pend-v {
+  color: #8a5a00;
+  font-style: italic;
+  cursor: help;
+}
+tr.pend td {
+  background: #fffaf0;
+}
 .falta-plano {
   margin: 10px 0;
   padding: 8px 12px;

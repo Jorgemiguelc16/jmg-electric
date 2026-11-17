@@ -132,13 +132,13 @@ function ppResumen(r) {
       "Resumen",
       `<p class="pp-nota">Para calcular faltan <b>${WSF.length}</b> dato${WSF.length === 1 ? "" : "s"}: están en «Por revisar».</p>`
     );
-  const a0 = r.alims[0],
-    md = r.mode === "multi" ? r.MD : r.md.MD,
-    dv = Math.max(...r.alims.map(a => a.dvAc), ...r.circ.map(c => c.dVt)),
-    ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok);
+  // En un resultado preliminar, lo pendiente sin número (vivoDatos, js/interfaz.js)
+  const { md, a0, dv } = vivoDatos(r),
+    ok = r.alims.every(a => a.ok) && r.circ.every(q => q.ok),
+    pe = "pendiente";
   return ppSec(
     "Resumen",
-    `<div class="pp-big"><small>Máxima demanda</small><b>${fmt(md / 1000, 2)} <small>kW</small></b></div><table class="rt">${ppFila("Potencia a contratar", `${fmt(r.contratada, 1)} kW`)}${ppFila("Alimentador", `${a0.s.n}-1×${a0.S} mm²`)}${ppFila("Interruptor general", `${a0.s.tri ? 3 : 2}×${a0.itm ?? "—"} A`)}${ppFila("ΔV máxima total", `${fmt(dv, 2)} %`)}${ppFila("Puesta a tierra", `${fmt(r.pat.Rn ?? r.pat.Rt, 1)} Ω`)}</table><div class="pp-estado ${ok ? "ok" : "bad"}"><i></i>${ok ? "Conforme" : "Revisar"}</div>`
+    `<div class="pp-big"><small>Máxima demanda</small><b>${md === null ? pe : `${fmt(md / 1000, 2)} <small>kW</small>`}</b></div><table class="rt">${ppFila("Potencia a contratar", md === null ? pe : `${fmt(r.contratada, 1)} kW`)}${ppFila("Alimentador", a0 ? `${a0.s.n}-1×${a0.S} mm²` : pe)}${ppFila("Interruptor general", a0 ? `${a0.s.tri ? 3 : 2}×${a0.itm ?? "—"} A` : pe)}${ppFila("ΔV máxima total", dv === null ? pe : `${fmt(dv, 2)} %`)}${ppFila("Puesta a tierra", `${fmt(r.pat.Rn ?? r.pat.Rt, 1)} Ω`)}</table>${r.prelim ? `<div class="pp-estado"><i></i>Preliminar · ${r.prelim.length} pendiente${r.prelim.length === 1 ? "" : "s"}</div>` : `<div class="pp-estado ${ok ? "ok" : "bad"}"><i></i>${ok ? "Conforme" : "Revisar"}</div>`}`
   );
 }
 // Elemento elegido en el explorador: su resumen y el botón que abre su ventana
