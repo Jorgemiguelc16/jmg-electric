@@ -143,6 +143,10 @@ module.exports = function probarPlano(ctx) {
   ver("área techada del plano (20 + 30 m²)", r3.areaT, 50);
   ver("área libre del plano: 10 m² × 5 W/m²", r3.md.libre, 50);
   ver("máxima demanda con las áreas del plano (2500 + 1500 + 50)", r3.md.MD, 4050);
+  // Un área con tipo de departamento (de cuando el proyecto era edificio) en vivienda u otros usos: es del piso
+  const d3b = JSON.parse(JSON.stringify(d3));
+  d3b.PLANO.dis.els.forEach(e => e.ar && (e.ar.dep = 0));
+  ver("área con tipo de departamento fuera de un edificio: cuenta en el piso", calc({ ...d3b, calPlano: "1" }).areaT, 50);
   ver("C-1 agrupado con el C-2 en una tubería: Tabla 5C, 2 circuitos", q3("C-1").grp, { n: 2, fa: 0.8 });
   ver("C-2 también agrupado", q3("C-2").grp.fa, 0.8);
   ver("C-3 solo en sus tuberías", q3("C-3").grp.fa, 1);

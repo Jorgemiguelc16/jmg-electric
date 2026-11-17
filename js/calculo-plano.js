@@ -749,12 +749,14 @@ function planoCalc(PL, c, v) {
       ip = plantaDe(cx / k, cy / k),
       piso = plantas.length ? (ip >= 0 ? plPisoPlanta(plantas[ip], ip) : null) : 1,
       m2 = plAreaPol(e.pts) * f * f,
-      tp = PL_TAREA[e.ar.tp] ? e.ar.tp : "tech";
-    areas.push({ id: e.id, n: e.ar.n || "", tp, piso, m2, ...(Number.isInteger(e.ar.dep) ? { dep: e.ar.dep } : {}) });
+      tp = PL_TAREA[e.ar.tp] ? e.ar.tp : "tech",
+      // El tipo de departamento del área solo cuenta en un edificio: en vivienda y otros usos el área es del piso
+      dep = v && v.nTipos > 0 && Number.isInteger(e.ar.dep) ? e.ar.dep : null;
+    areas.push({ id: e.id, n: e.ar.n || "", tp, piso, m2, ...(dep !== null ? { dep } : {}) });
     if (tp === "no") return;
     // Edificio: las áreas de un departamento (su tipo) van a ese tipo, no al piso
-    if (Number.isInteger(e.ar.dep) && (tp === "tech" || tp === "ext")) {
-      const o = (areaDep[e.ar.dep] = areaDep[e.ar.dep] || { m2: 0, plantas: new Set() });
+    if (dep !== null && (tp === "tech" || tp === "ext")) {
+      const o = (areaDep[dep] = areaDep[dep] || { m2: 0, plantas: new Set() });
       o.m2 += m2;
       o.plantas.add(ip);
       return;

@@ -628,7 +628,7 @@ function estadoParcial(D, F) {
   if (F.some(x => x.id === "add_tipos")) return null;
   const P = JSON.parse(JSON.stringify(D));
   for (const x of F) {
-    const m = /^(tipos|cargasT|cargas|pisos|serv)_(.+)_(d+)$/.exec(x.id),
+    const m = /^(tipos|cargasT|cargas|pisos|serv)_(.+)_(\d+)$/.exec(x.id),
       k = m ? m[2] : x.id,
       v = k === "cant" ? 1 : /^L|_L$/.test(k) ? 1 : 0;
     if (m) {

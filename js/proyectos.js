@@ -799,7 +799,7 @@ function disValido(v) {
                   tp: ["tech", "ext", "sot", "libre", "aulas", "no"].includes(e.ar.tp) ? e.ar.tp : "tech",
                   n: txt(e.ar.n, 60),
                   // Tipo de ambiente (PL_AMB, js/calculo-plano.js)
-                  ...(typeof e.ar.amb === "string" && (Object.hasOwn(PL_AMB, e.ar.amb) || /^ud{1,3}$/.test(e.ar.amb))
+                  ...(typeof e.ar.amb === "string" && (Object.hasOwn(PL_AMB, e.ar.amb) || /^u\d{1,3}$/.test(e.ar.amb))
                     ? { amb: e.ar.amb }
                     : {}),
                   ...(Array.isArray(e.ar.p) && e.ar.p.length === 2 && e.ar.p.every(n) ? { p: e.ar.p.slice() } : {}),
