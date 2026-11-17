@@ -8,6 +8,10 @@
 /* Diámetro máximo de cada tubería entre el TG y el banco de medidores: criterio del proyectista (dato tgbmMax), por
    defecto 2" (50 mm) */
 const TGBM_MAX = 50;
+/* Uso de un tipo de unidad del edificio: vivienda (Regla 050-202) o un local de otro uso de la Tabla 14 (Regla
+   050-210), por ejemplo un local comercial o una discoteca con su propio medidor en el banco. Devuelve la clave del
+   uso de la Tabla 14 o null (vivienda). Escuelas, hospitales y hoteles (Reglas 050-204 a 050-208) no son unidades. */
+const usoTipo = t => (t && t.uso && USOS[t.uso] && !USOS[t.uso].regla ? t.uso : null);
 /* Conductores del TG al banco de medidores (banco junto al TG): por cada suministro, sus fases y su neutro con la
    sección de su alimentador, sin tierra (el medidor no la lleva). Se reparten en tuberías de hasta TGBM_MAX mm con el
    40 % de ocupación, los más grandes primero; cada tubería toma el menor diámetro que le alcanza. */
@@ -114,8 +118,10 @@ function calcMulti(c) {
       const dp = dPlano(t._i),
         // Con el tablero del tipo en el plano, sus cargas especiales son las dibujadas
         ce = dp ? dp.ce : espT(t._i),
-        // Áreas marcadas de un departamento de este tipo (Regla 050-110: dimensiones interiores)
+        // Áreas marcadas de un departamento de este tipo (Regla 050-110: dimensiones interiores; en un local de
+        // otro uso, el contorno exterior, Regla 050-210)
         aD = PLD && PLD.areaDep[t._i],
+        uso = usoTipo(t),
         u = {
           ...t,
           ...(dp ? { nAl: dp.nAl, nTo: dp.nTo, Lc: dp.Lc, ...(dp.Ld ? { Ld: dp.Ld } : {}), plano: dp } : {}),
@@ -124,9 +130,14 @@ function calcMulti(c) {
           Pesp: ce.reduce((s, x) => s + x.p, 0),
           nEsp: ce.length
         };
-      return { ...u, cant: Math.round(t.cant), md: mdVivienda(u, true) };
+      /* Local de otro uso: su máxima demanda por la Regla 050-210 y la Tabla 14 (carga por área con sus factores y
+         las cargas especiales a su potencia nominal) */
+      return uso
+        ? { ...u, uso, com: true, cant: Math.round(t.cant), md: mdUso(uso, u.area || 0, ce) }
+        : (({ uso: _, ...v }) => ({ ...v, cant: Math.round(t.cant), md: mdVivienda(u, true) }))(u);
     })
-    .sort((a, b) => b.md.sinAire - a.md.sinAire);
+    // Las viviendas primero, de mayor a menor carga (orden de los factores de la Regla 050-202(3)(a)); luego los locales
+    .sort((a, b) => !!a.com - !!b.com || b.md.sinAire - a.md.sinAire);
   // Luminarias de otra potencia de cada tipo de departamento
   const exT = t =>
       lumsExtra(
@@ -156,23 +167,32 @@ function calcMulti(c) {
         nombre: t.nombre,
         md: t.md.sinAire,
         P: t.md.MD,
+        ...(t.com ? { com: true } : {}),
         // Departamento con medidor trifásico: su carga se reparte en las tres fases
         f3: t.fases === "3" && SIST[sk].tri,
         ref: `${t.nombre} · Nº ${k + 1}`
       });
   });
   const fac = i => (i < 1 ? 1 : i < 3 ? 0.65 : i < 5 ? 0.4 : i < 20 ? 0.3 : 0.25);
+  // Factores de la Regla 050-202(3)(a): solo para las unidades de vivienda; los locales van aparte
+  const viv = units.filter(u => !u.com);
   units.forEach((u, i) => {
     u.ord = i + 1;
-    u.f = fac(i);
+    if (u.com) {
+      u.f = null;
+      u.dem = 0;
+      return;
+    }
+    u.f = fac(viv.indexOf(u));
     u.dem = u.md * u.f;
   });
   let pos = 1;
   T.forEach((t, ti) => {
+    t.dem = units.filter(u => u.ti === ti).reduce((s, u) => s + u.dem, 0);
+    if (t.com) return;
     t.desde = pos;
     t.hasta = pos + t.cant - 1;
     pos += t.cant;
-    t.dem = units.filter(u => u.ti === ti).reduce((s, u) => s + u.dem, 0);
   });
   const tramosDef = [
     ["Unidad de mayor carga", 1, 1],
@@ -184,7 +204,7 @@ function calcMulti(c) {
   const tramos = [];
   let i0 = 0;
   for (const [lab, n, f] of tramosDef) {
-    const sl = units.slice(i0, i0 + n);
+    const sl = viv.slice(i0, i0 + n);
     if (!sl.length) break;
     tramos.push({
       lab,
@@ -196,7 +216,12 @@ function calcMulti(c) {
     i0 += sl.length;
   }
   const mdDeptos = units.reduce((s, u) => s + u.dem, 0),
-    aireTot = T.reduce((s, t) => s + t.aire * t.cant, 0);
+    aireTot = T.reduce((s, t) => s + (t.com ? 0 : t.aire * t.cant), 0),
+    /* Locales de otro uso (cargas que no están en las unidades de vivienda): su máxima demanda por la Regla 050-210,
+       al 75 % en el alimentador general (Regla 050-202(3)(d), criterio confirmado por el proyectista) */
+    TC = T.filter(t => t.com),
+    Pcom = TC.reduce((s, t) => s + t.md.MD * t.cant, 0),
+    mdCom = 0.75 * Pcom;
   if (PLD)
     Object.entries(PLD.areaDep).forEach(([i, o]) => {
       if (o.plantas.size > 1)
@@ -227,7 +252,7 @@ function calcMulti(c) {
   const Pserv = SV.reduce((s, x) => s + x.p, 0),
     maxMot = Math.max(0, ...SV.filter(x => x.tipo === "motor").map(x => x.p)),
     mdServ = 0.75 * Pserv;
-  const MD = mdDeptos + aireTot + mdServ;
+  const MD = mdDeptos + aireTot + mdServ + mdCom;
   const gen = alimentador("Alimentador general: acometida → tablero general TG", MD, sk, Lgen, 0, c.dvGen, c, {
     pKey: "MD",
     fd: c.fdA,
@@ -249,7 +274,7 @@ function calcMulti(c) {
   if (bmLejos) {
     bm = alimentador(
       "Alimentador TG → banco de medidores",
-      mdDeptos + aireTot + (tsgTG ? 0 : mdServ),
+      mdDeptos + aireTot + mdCom + (tsgTG ? 0 : mdServ),
       sk,
       Lbm,
       gen.dVp,
@@ -305,7 +330,11 @@ function calcMulti(c) {
       dvBM,
       DV_ALIM - dvBM,
       c,
-      { pKey: "tipo", ti, cant: t.cant, Imin: IMIN_DPTO, fd: c.fdA, viv: true }
+      /* Local de otro uso: sin la corriente mínima de 25 A (propia de las viviendas) y con su carga continua
+         (Regla 050-104(3)), como en la Regla 050-210 */
+      t.com
+        ? { pKey: "tipo", ti, cant: t.cant, fd: FD, viv: false }
+        : { pKey: "tipo", ti, cant: t.cant, Imin: IMIN_DPTO, fd: c.fdA, viv: true }
     );
     f.iccO = iccBM;
     f.pdc = pdcPara(iccBM, c.pdcMin);
@@ -314,7 +343,9 @@ function calcMulti(c) {
     const icc = iccAbajo(iccBM, f.s, f.L, f.S);
     tabs.push({
       tab,
-      desc: `Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,
+      desc: t.com
+        ? `Tablero de ${t.nombre} (${USOS[t.uso].n}) · ${t.cant} unidad(es)`
+        : `Tablero de departamento ${t.nombre} · ${t.cant} unidad(es)`,
       feeder: alims.length - 1,
       icc,
       pdc: pdcPara(icc, c.pdcMin)
@@ -469,6 +500,8 @@ function calcMulti(c) {
     SV,
     Pserv,
     mdServ,
+    // Locales de otro uso (solo si los hay)
+    ...(TC.length ? { TC, Pcom, mdCom } : {}),
     maxMot,
     MD,
     CI,

@@ -46,8 +46,11 @@ function excelResumen(X) {
   const C2 = `'Cálculos'!`;
   if (multi)
     rs(
-      "Número de departamentos",
-      F(`SUM(B${tipoRow[r.T[0].nombre]}:B${tipoRow[r.T[r.T.length - 1].nombre]})`, r.units.length),
+      r.TC ? "Número de unidades (departamentos y locales)" : "Número de departamentos",
+      // Con locales de otro uso, sus filas están en otra tabla: se suma cada tipo
+      r.TC
+        ? F(r.T.map(t => `B${tipoRow[t.nombre]}`).join("+"), r.units.length)
+        : F(`SUM(B${tipoRow[r.T[0].nombre]}:B${tipoRow[r.T[r.T.length - 1].nombre]})`, r.units.length),
       "unid.",
       "0"
     );

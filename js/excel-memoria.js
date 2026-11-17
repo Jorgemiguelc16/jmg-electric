@@ -405,8 +405,9 @@ function excelMemoria(X) {
       [9, 9, "MD sin aire (W)"],
       [10, 10, "MD unidad (W)"]
     ]);
-    const u0 = m;
-    r.T.forEach(t => {
+    const u0 = m,
+      TV = r.T.filter(t => !t.com);
+    TV.forEach(t => {
       tipoRow[t.nombre] = m;
       cell(wsM, m, 1, t.nombre, { box: 1, bold: 1, h: "center" });
       cell(wsM, m, 2, t.cant, { ...inp, fmt: "0" });
@@ -431,7 +432,8 @@ function excelMemoria(X) {
     });
     const u1 = m - 1;
     span(wsM, m, 1, 1, "TOTAL", { box: 1, h: "center" });
-    cell(wsM, m, 2, F(`SUM(B${u0}:B${u1})`, r.units.length), { ...val, fmt: "0" });
+    const nViv = r.units.filter(u => !u.com).length;
+    cell(wsM, m, 2, TV.length ? F(`SUM(B${u0}:B${u1})`, nViv) : 0, { ...val, fmt: "0" });
     for (let k = 3; k <= 10; k++) cell(wsM, m, k, "", { box: 1 });
     tot(wsM, m, 1, 10);
     m++;
@@ -442,6 +444,56 @@ function excelMemoria(X) {
         LM,
         "Carga básica: 1 500 W por los primeros 45 m², 1 000 W por los segundos 45 m² y 1 000 W por cada 90 m² o fracción adicional. Cocina: 6 000 W más 40 % del exceso sobre 12 kW. Otras cargas mayores de 1 500 W: 25 % si existe cocina; si no, 100 % hasta 6 kW más 25 % del exceso. Corriente mínima del alimentador de cada departamento: 25 A."
       ) + 1;
+    // Locales de otro uso con su medidor en el banco: Regla 050-210 y Tabla 14 (la MD de la unidad en la columna J)
+    let c0 = 0,
+      c1 = -1;
+    if (r.TC) {
+      m = sub(wsM, m, LM, "2.1b  Carga por local de otro uso · Regla 050-210 · Tabla 14");
+      m = thead(wsM, m, [
+        [1, 1, "Tipo"],
+        [2, 2, "Unidades"],
+        [3, 3, "Área (m²)"],
+        [4, 4, "W/m² (Tabla 14)"],
+        [5, 5, "Carga por área (W)"],
+        [6, 6, "Factor (%)"],
+        [7, 7, "Demanda por área (W)"],
+        [8, 8, "Cargas especiales (W)"],
+        [9, 9, "Uso"],
+        [10, 10, "MD unidad (W)"]
+      ]);
+      c0 = m;
+      r.TC.forEach(t => {
+        const md = t.md,
+          uno = md.tramos.length === 1;
+        tipoRow[t.nombre] = m;
+        cell(wsM, m, 1, t.nombre, { box: 1, bold: 1, h: "center" });
+        cell(wsM, m, 2, t.cant, { ...inp, fmt: "0" });
+        cell(wsM, m, 3, md.area, { ...inp, fmt: "0.0" });
+        cell(wsM, m, 4, md.U.w, { ...val, fmt: "0" });
+        cell(wsM, m, 5, F(`C${m}*D${m}`, md.carga), { ...val, fmt: "0" });
+        // Con un solo tramo de la Tabla 14, la demanda es la carga por el factor; con varios, el valor calculado
+        cell(
+          wsM,
+          m,
+          6,
+          uno ? md.tramos[0].fal : md.tramos.map(x => x.fal).join(" / "),
+          uno ? { ...inp, fmt: "0" } : val
+        );
+        cell(wsM, m, 7, uno ? F(`E${m}*F${m}/100`, md.dem) : md.dem, { ...val, fmt: "0" });
+        cell(wsM, m, 8, md.esp, { ...inp, fmt: "0" });
+        cell(wsM, m, 9, md.U.n, { box: 1, h: "center" });
+        cell(wsM, m, 10, F(`G${m}+H${m}`, md.MD), { ...val, fmt: "0", bold: 1 });
+        m++;
+      });
+      c1 = m - 1;
+      m =
+        nota(
+          wsM,
+          m,
+          LM,
+          "Carga por área según la Tabla 14 (área por las dimensiones exteriores, Regla 050-210), con el factor de demanda de alimentadores; las cargas especiales se suman a su potencia nominal. El alimentador de cada local no lleva la corriente mínima de 25 A de los departamentos y su carga se considera continua (Regla 050-104(3))."
+        ) + 1;
+    }
     m = sub(
       wsM,
       m,
@@ -459,7 +511,7 @@ function excelMemoria(X) {
       [9, 10, "Demanda (W)"]
     ]);
     const e0 = m;
-    r.T.forEach((t, i) => {
+    TV.forEach((t, i) => {
       const tr = tipoRow[t.nombre];
       span(wsM, m, 1, 2, t.nombre, { box: 1, bold: 1, h: "center" });
       cell(wsM, m, 3, F(`B${tr}`, t.cant), { ...val, fmt: "0" });
@@ -493,13 +545,19 @@ function excelMemoria(X) {
       if (bold) tot(wsM, m, 1, 10);
       return m++;
     };
-    er("Demanda de departamentos · 050-202(3)(a)", `SUM(I${e0}:I${e1})`, r.mdDeptos);
+    er("Demanda de departamentos · 050-202(3)(a)", TV.length ? `SUM(I${e0}:I${e1})` : "0", r.mdDeptos);
     er(
       "Aire acondicionado de departamentos (100 %) · 050-202(3)(c)",
-      `SUMPRODUCT(B${u0}:B${u1},G${u0}:G${u1})`,
+      TV.length ? `SUMPRODUCT(B${u0}:B${u1},G${u0}:G${u1})` : "0",
       r.aireTot
     );
     const rS = er("Cargas comunes fuera de las unidades (75 %) · 050-202(3)(d)", "0", r.mdServ);
+    if (r.TC)
+      er(
+        "Locales de otro uso, fuera de las unidades de vivienda (75 %) · 050-202(3)(d)",
+        `0.75*SUMPRODUCT(B${c0}:B${c1},J${c0}:J${c1})`,
+        r.mdCom
+      );
     const rMD = er("MÁXIMA DEMANDA DEL EDIFICIO (W)", `SUM(I${e1 + 1}:I${m - 1})`, r.MD, true);
     MDREF = `'Memoria'!$I$${rMD}`;
     m =

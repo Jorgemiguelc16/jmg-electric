@@ -10,6 +10,12 @@ let DPD = null,
   DPD_SEL = 0;
 const DPD_L = ["tipos", "lumsT", "tomsT", "cargasT"];
 const dpdCopia = () => Object.fromEntries(DPD_L.map(k => [k, LISTS[k].arr.map(x => ({ ...x }))]));
+// Cantidad de un tipo en la lista: departamentos o, si es un local de otro uso, locales
+const dpdUnid = x => {
+  const n = Math.round(x.cant),
+    loc = x.uso && x.uso !== "viv";
+  return `${n} ${loc ? (n > 1 ? "locales" : "local") : n > 1 ? "dptos" : "dpto"}`;
+};
 function depAbrir() {
   DPD = dpdCopia();
   DPD_SEL = Math.min(DPD_SEL, Math.max(0, DPD.tipos.length - 1));
@@ -54,7 +60,7 @@ function depHTML() {
     t = T[j];
   const lista = T.map(
     (x, i) =>
-      `<button type="button" class="tc-it${i === j ? " sel" : ""}" data-ddsel="${i}"><b>${i + 1}</b><span>${esc(x.nombre || `Tipo ${i + 1}`)}</span><em>${x.cant > 0 ? `${Math.round(x.cant)} dpto${Math.round(x.cant) > 1 ? "s" : ""}` : ""}</em><i></i></button>`
+      `<button type="button" class="tc-it${i === j ? " sel" : ""}" data-ddsel="${i}"><b>${i + 1}</b><span>${esc(x.nombre || `Tipo ${i + 1}`)}</span><em>${x.cant > 0 ? dpdUnid(x) : ""}</em><i></i></button>`
   ).join("");
   let der = `<p class="fc-nota">Agregue el primer tipo de departamento con +.</p>`;
   if (t) {
@@ -98,7 +104,7 @@ function depHTML() {
       )
       .join("");
     der =
-      `<fieldset class="fc-g"><legend>Departamento ${j + 1}</legend><div class="dp-grid">${campo("nombre", "Denominación", "", " ancho")}${campo("cant", "Nº de dptos.")}${campo("area", "Área", "m²")}${campo("Ld", "Long. alimentador", "m")}${campo("Lc", "Long. de circuitos", "m")}<label class="dp-c fc-e" title="Medidor del departamento en el banco de medidores: trifásico, por ejemplo, para un local comercial"><span>Medidor</span><select data-dd="tipos|${j}|fases" aria-label="Medidor">${FASES_MED.map(([v, l]) => `<option value="${v}"${String(t.fases || "1") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div></fieldset>` +
+      `<fieldset class="fc-g"><legend>${t.uso && t.uso !== "viv" ? "Local de otro uso" : "Departamento"} ${j + 1}</legend><div class="dp-grid">${campo("nombre", "Denominación", "", " ancho")}${campo("cant", t.uso && t.uso !== "viv" ? "Nº de locales" : "Nº de dptos.")}${campo("area", "Área", "m²")}${campo("Ld", "Long. alimentador", "m")}${campo("Lc", "Long. de circuitos", "m")}<label class="dp-c fc-e" title="Vivienda: máxima demanda por la Regla 050-202. Un local de otro uso (comercio, discoteca, oficina…) con su medidor en el banco: Regla 050-210 y Tabla 14, por el área exterior; entra al alimentador general al 75 % (Regla 050-202(3)(d))"><span>Uso</span><select data-dd="tipos|${j}|uso" aria-label="Uso">${USOS_TIPO.map(([v, l]) => `<option value="${v}"${String(t.uso || "viv") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label><label class="dp-c fc-e" title="Medidor del departamento en el banco de medidores: trifásico, por ejemplo, para un local comercial"><span>Medidor</span><select data-dd="tipos|${j}|fases" aria-label="Medidor">${FASES_MED.map(([v, l]) => `<option value="${v}"${String(t.fases || "1") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div></fieldset>` +
       `<fieldset class="fc-g"><legend>Salidas</legend><div class="dp-grid">${campo("nAl", "Salidas de alumbrado")}${campo("nTo", "Tomacorrientes")}</div>` +
       `<div class="dd-sub"><span>Salidas de otra potencia</span><button type="button" class="vw-btn" data-ddadd="lumsT">+ Luminarias</button><button type="button" class="vw-btn" data-ddadd="tomsT">+ Tomacorrientes</button></div>${tOtras}</fieldset>` +
       `<fieldset class="fc-g"><legend>Cargas especiales</legend>${tCargas}<div class="tc-rap"><span>Agregar</span>${rap}</div></fieldset>`;
@@ -122,7 +128,7 @@ function depRes() {
     cs = r.circ.filter(q => q.tab === t.tab),
     ok = cs.every(q => q.ok) && (!a || a.ok);
   el.className = "tc-res" + (hay ? " previa" : "");
-  el.innerHTML = `<i class="cd-est ${ok ? "ok" : "bad"}"></i><b>MD ${fmt(t.md.MD / 1000, 2)} kW por dpto.</b>${a ? `<span>Alimentador ${a.s.n}-1×${a.S} mm² · ITM ${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</span><span>ΔV ${fmt(a.dvAc, 2)} %</span>` : ""}<span>${cs.length} circuitos</span><span class="tc-ok">${ok ? "Conforme" : "Revisar"}</span>${hay ? `<em>Vista previa: así quedaría al aplicar</em>` : ""}`;
+  el.innerHTML = `<i class="cd-est ${ok ? "ok" : "bad"}"></i><b>MD ${fmt(t.md.MD / 1000, 2)} kW por ${t.com ? "unidad · 050-210" : "dpto."}</b>${a ? `<span>Alimentador ${a.s.n}-1×${a.S} mm² · ITM ${a.s.tri ? 3 : 2}×${a.itm ?? "—"} A</span><span>ΔV ${fmt(a.dvAc, 2)} %</span>` : ""}<span>${cs.length} circuitos</span><span class="tc-ok">${ok ? "Conforme" : "Revisar"}</span>${hay ? `<em>Vista previa: así quedaría al aplicar</em>` : ""}`;
 }
 // Redibuja el contenido conservando el foco en el mismo dato
 function depRedibujar() {
@@ -145,12 +151,11 @@ $("dpDlg").addEventListener("input", e => {
   const cel = el.closest(".dp-c,td");
   if (cel && el.type === "number") cel.classList.toggle("tc-falta", !(parseFloat(el.value) > 0));
   // El nombre y la cantidad se ven en la lista de la izquierda
-  if (nm === "tipos" && (k === "nombre" || k === "cant")) {
+  if (nm === "tipos" && (k === "nombre" || k === "cant" || k === "uso")) {
     const it = $("dpBody").querySelector(`[data-ddsel="${i}"]`);
     if (it) {
       it.querySelector("span").textContent = x.nombre || `Tipo ${+i + 1}`;
-      it.querySelector("em").textContent =
-        x.cant > 0 ? `${Math.round(x.cant)} dpto${Math.round(x.cant) > 1 ? "s" : ""}` : "";
+      it.querySelector("em").textContent = x.cant > 0 ? dpdUnid(x) : "";
     }
   }
   dpPie();
@@ -159,6 +164,8 @@ $("dpDlg").addEventListener("input", e => {
 });
 $("dpDlg").addEventListener("change", e => {
   if (e.target.matches("select[data-dd]")) e.target.dispatchEvent(new Event("input", { bubbles: true }));
+  // Al cambiar el uso, los textos del tipo (departamento o local) cambian
+  if (e.target.matches('[data-dd$="|uso"]')) depRedibujar();
 });
 $("dpDlg").addEventListener("click", e => {
   if (!DPD) return;

@@ -146,7 +146,11 @@ module.exports = function probarPlano(ctx) {
   // Un área con tipo de departamento (de cuando el proyecto era edificio) en vivienda u otros usos: es del piso
   const d3b = JSON.parse(JSON.stringify(d3));
   d3b.PLANO.dis.els.forEach(e => e.ar && (e.ar.dep = 0));
-  ver("área con tipo de departamento fuera de un edificio: cuenta en el piso", calc({ ...d3b, calPlano: "1" }).areaT, 50);
+  ver(
+    "área con tipo de departamento fuera de un edificio: cuenta en el piso",
+    calc({ ...d3b, calPlano: "1" }).areaT,
+    50
+  );
   ver("C-1 agrupado con el C-2 en una tubería: Tabla 5C, 2 circuitos", q3("C-1").grp, { n: 2, fa: 0.8 });
   ver("C-2 también agrupado", q3("C-2").grp.fa, 0.8);
   ver("C-3 solo en sus tuberías", q3("C-3").grp.fa, 1);

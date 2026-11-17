@@ -185,4 +185,54 @@ mal += require("./pruebas-calc-plano.js")(ctx);
       `✔ Edificio: banco junto al TG sin cambios; banco lejos (+${b1.dVp.toFixed(2)} % de caída), TSG desde el TG y medidor trifásico`
     );
 }
+/* Edificio con locales de otro uso (por ejemplo, dos discotecas y dos departamentos, cada uno con su medidor en el
+   banco): cada local por la Regla 050-210 y la Tabla 14; los factores de la Regla 050-202(3)(a) solo para las
+   viviendas; los locales, al 75 % en el alimentador general (Regla 050-202(3)(d)); el alimentador de cada local sin
+   la corriente mínima de 25 A y con su carga continua (1.25). */
+{
+  const fallas = [],
+    calc = p => vm.runInContext("calcular", ctx)(vm.runInContext("proyectoDe", ctx)(JSON.parse(JSON.stringify(p)))),
+    cerca = (a, b) => Math.abs(a - b) < 1e-6 * Math.max(1, Math.abs(a)),
+    base = casos.find(c => c.id === "C7").p,
+    p = JSON.parse(JSON.stringify(base));
+  p.tipos = [
+    { nombre: "Discoteca", uso: "teatros", cant: 2, area: 264.5, Ld: 12, fases: "3", nAl: 20, nTo: 10, Lc: 25 },
+    { nombre: "Dpto", uso: "viv", cant: 2, area: 90, Ld: 20, fases: "1", nAl: 10, nTo: 12, Lc: 15 }
+  ];
+  p.cargasT = [];
+  p.lumsT = [];
+  p.tomsT = [];
+  const r = calc(p),
+    d = r.T.find(t => t.nombre === "Discoteca"),
+    v = r.T.find(t => t.nombre === "Dpto"),
+    // Teatros: 30 W/m², 95 % en alimentadores (Tabla 14)
+    mdD = 264.5 * 30 * 0.95,
+    aD = r.alims.find(a => a.pKey === "tipo" && r.T[a.ti] === d),
+    aV = r.alims.find(a => a.pKey === "tipo" && r.T[a.ti] === v);
+  if (!d || !d.com || !cerca(d.md.MD, mdD)) fallas.push(`MD de la discoteca: ${d && d.md.MD} (esperada ${mdD})`);
+  if (!v || v.com || r.T[0] !== v) fallas.push("la vivienda debe ir primero y sin marca de local");
+  if (!cerca(r.mdCom, 0.75 * 2 * mdD)) fallas.push(`locales al 75 %: ${r.mdCom}`);
+  const vu = r.units.filter(u => !u.com);
+  if (vu.length !== 2 || vu[0].f !== 1 || vu[1].f !== 0.65) fallas.push("factores 050-202(3)(a) solo en las viviendas");
+  if (r.units.filter(u => u.com).some(u => u.dem !== 0)) fallas.push("los locales no van en los tramos de la 050-202");
+  if (!cerca(r.MD, r.mdDeptos + r.aireTot + r.mdServ + r.mdCom)) fallas.push("MD del edificio");
+  if (!aD || aD.viv || aD.Imin || aD.fd !== 1.25 || !aD.s.tri)
+    fallas.push("alimentador del local: sin 25 A, 1.25 y trifásico");
+  if (!aV || aV.Imin !== 25) fallas.push("alimentador del departamento: 25 A mínimo");
+  if (r.tramos.reduce((s, t) => s + t.n, 0) !== 2) fallas.push("tramos de la 050-202 con unidades de más");
+  const rb = calc({ ...p, bmJunto: "0", Lbm: "25" }),
+    bb = rb.alims.find(a => a.pKey === "bm");
+  if (!bb || !cerca(bb.P, rb.mdDeptos + rb.aireTot + rb.mdServ + rb.mdCom)) fallas.push("TG → banco sin los locales");
+  // Un uso que no es de la Tabla 14 (o vacío) es vivienda
+  const pv = JSON.parse(JSON.stringify(p));
+  pv.tipos[0].uso = "hospital";
+  if (calc(pv).TC) fallas.push("un uso de las Reglas 050-204 a 050-208 no es un local");
+  if (fallas.length) {
+    mal++;
+    console.log("✘ Edificio con locales de otro uso" + fallas.map(x => "\n    " + x).join(""));
+  } else
+    console.log(
+      `✔ Edificio con locales: discoteca ${(mdD / 1000).toFixed(2)} kW por la 050-210, locales al 75 % en el general (${(r.mdCom / 1000).toFixed(2)} kW)`
+    );
+}
 process.exit(mal ? 1 : 0);

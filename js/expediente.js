@@ -104,7 +104,9 @@ function expediente(r, estilo = "formal") {
   B += cap("Memoria descriptiva");
   B += sub("Generalidades");
   const objeto = multi
-    ? `un edificio multifamiliar de ${r.units.length} departamentos (${r.T.length} tipo${r.T.length > 1 ? "s" : ""})${r.SV.length ? " con servicios generales" : ""}`
+    ? r.TC
+      ? `un edificio de ${r.units.length} unidades con su medidor en el banco: ${r.units.length - r.units.filter(u => u.com).length} departamentos y ${r.units.filter(u => u.com).length} local${r.units.filter(u => u.com).length > 1 ? "es" : ""} de otro uso (${[...new Set(r.TC.map(t => t.md.U.n.toLowerCase()))].join(", ")})${r.SV.length ? ", con servicios generales" : ""}`
+      : `un edificio multifamiliar de ${r.units.length} departamentos (${r.T.length} tipo${r.T.length > 1 ? "s" : ""})${r.SV.length ? " con servicios generales" : ""}`
     : `una vivienda unifamiliar${r.varios ? ` de ${r.PS.length} pisos` : ""}`;
   B += `<p>La presente memoria corresponde al proyecto de instalaciones eléctricas interiores de ${objeto}, denominado <b>«${esc(nom)}»</b>${P.ubic ? `, ubicado en ${esc(P.ubic)}` : ""}${P.prop ? `, de propiedad de ${esc(P.prop)}` : ""}.</p>
     <p>El proyecto comprende el diseño de las instalaciones desde el punto de entrega de la empresa concesionaria hasta los puntos de utilización: alimentadores, tableros, circuitos derivados, sistemas de protección y sistema de puesta a tierra, conforme al Código Nacional de Electricidad – Utilización, al Reglamento Nacional de Edificaciones (Norma EM.010) y a la Norma DGE de conexiones en baja tensión.</p>`;
@@ -154,6 +156,7 @@ function expediente(r, estilo = "formal") {
     B += tbl(
       [
         "Tipo",
+        "Uso",
         "Unidades",
         "Área (m²)",
         "Alumbrado",
@@ -165,6 +168,7 @@ function expediente(r, estilo = "formal") {
       ],
       r.T.map(t => [
         esc(t.nombre),
+        t.com ? esc(t.md.U.n) : "Vivienda",
         t.cant,
         fmt(t.area, 1),
         t.nAl,
@@ -175,7 +179,7 @@ function expediente(r, estilo = "formal") {
         fmt(t.otras, 0)
       ]),
       "",
-      "Departamentos del edificio",
+      r.TC ? "Unidades del edificio" : "Departamentos del edificio",
       "Fuente: datos del proyecto."
     );
     if (r.SV.length)

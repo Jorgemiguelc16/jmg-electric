@@ -276,15 +276,28 @@ function cardDemanda(r) {
       ${PT.map(p => `<tr><td class="t"><strong>${ORD(p.n)} piso</strong></td><td class="t">${p.tab}</td><td>${fmt(p.areaC, 1)}</td><td>${fmt(p.md.basica, 0)}</td><td>${fmt(p.md.mdCoc, 0)}</td><td>${fmt(p.md.cal, 0)}</td><td>${fmt(p.md.aire, 0)}</td><td>${fmt(p.md.mdOtras, 0)}</td><td><strong>${fmt(p.md.MD, 0)}</strong></td><td>${fmt(r.alims[p.feeder].I, 2)}</td></tr>`).join("")}
       </tbody></table></div><div class="body"><p class="hint">Cada alimentador TG → TD se dimensiona con la Regla 050-200 aplicada al área del piso y a las cargas especiales conectadas a su tablero${r.sot > 0 && r.esq === "td" ? "; el sótano, al 75 %, se asigna al 1er piso" : ""}. El alimentador general mantiene la máxima demanda de toda la vivienda.${r.esq === "tg" ? " Los circuitos del 1er piso salen directamente del tablero general TG." : ""}</p></div></section>`;
   } else {
-    html += `<section class="card"><h2><span><span class="num"></span>Carga por unidad de vivienda</span><span class="ref">050-202(1)</span></h2><div class="tbl-wrap"><table>
+    if (r.T.some(t => !t.com))
+      html += `<section class="card"><h2><span><span class="num"></span>Carga por unidad de vivienda</span><span class="ref">050-202(1)</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Tipo</th><th>Unid.</th><th>Área (m²)</th><th>Carga básica</th><th>Cocina</th><th>Calentador</th><th>Aire acond.</th><th>Otras &gt;1,5 kW</th><th>MD unidad (W)</th><th>I (A)</th></tr></thead><tbody>
-      ${r.T.map(t => `<tr><td class="t"><strong>${esc(t.nombre)}</strong></td><td>${t.cant}</td><td>${fmt(t.area, 0)}</td><td>${fmt(t.md.basica, 0)}</td><td>${fmt(t.md.mdCoc, 0)}</td><td>${fmt(t.md.cal, 0)}</td><td>${fmt(t.md.aire, 0)}</td><td>${fmt(t.md.mdOtras, 0)}</td><td><strong>${fmt(t.md.MD, 0)}</strong></td><td>${fmt(t.md.MD / (220 * r.c.fp), 2)}</td></tr>`).join("")}
+      ${r.T.filter(t => !t.com)
+        .map(
+          t =>
+            `<tr><td class="t"><strong>${esc(t.nombre)}</strong></td><td>${t.cant}</td><td>${fmt(t.area, 0)}</td><td>${fmt(t.md.basica, 0)}</td><td>${fmt(t.md.mdCoc, 0)}</td><td>${fmt(t.md.cal, 0)}</td><td>${fmt(t.md.aire, 0)}</td><td>${fmt(t.md.mdOtras, 0)}</td><td><strong>${fmt(t.md.MD, 0)}</strong></td><td>${fmt(t.md.MD / (220 * r.c.fp), 2)}</td></tr>`
+        )
+        .join("")}
       </tbody></table></div></section>`;
+    // Locales de otro uso con su medidor en el banco: Regla 050-210 y Tabla 14
+    if (r.TC)
+      html += `<section class="card"><h2><span><span class="num"></span>Carga por local de otro uso</span><span class="ref">050-210 · Tabla 14</span></h2><div class="tbl-wrap"><table>
+      <thead><tr><th class="t">Tipo</th><th class="t">Uso</th><th>Unid.</th><th>Área (m²)</th><th>W/m²</th><th>Carga por área (W)</th><th>Factor</th><th>Demanda por área (W)</th><th>Cargas especiales (W)</th><th>MD unidad (W)</th></tr></thead><tbody>
+      ${r.TC.map(t => `<tr><td class="t"><strong>${esc(t.nombre)}</strong></td><td class="t">${esc(t.md.U.n)}</td><td>${t.cant}</td><td>${fmt(t.md.area, 1)}</td><td>${t.md.U.w}</td><td>${fmt(t.md.carga, 0)}</td><td>${t.md.tramos.map(x => x.fal + " %").join(" · ") || "—"}</td><td>${fmt(t.md.dem, 0)}</td><td>${fmt(t.md.esp, 0)}</td><td><strong>${fmt(t.md.MD, 0)}</strong></td></tr>`).join("")}
+      </tbody></table></div><div class="body"><p class="hint">Cada local se calcula como en la Regla 050-210: carga por área (Tabla 14, por las dimensiones exteriores) con los factores de demanda de alimentadores, más las cargas especiales a su potencia nominal. Su alimentador desde el medidor no lleva la corriente mínima de 25 A de los departamentos y su carga se considera continua (Regla 050-104(3)): corriente de diseño 1.25 × I. En el alimentador general entra al 75 % como carga que no está en las unidades de vivienda (Regla 050-202(3)(d)).</p></div></section>`;
     html += `<div class="two"><section class="card"><h2><span><span class="num"></span>Máxima demanda del edificio</span><span class="ref">050-202(3)</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Tramo</th><th>Unid.</th><th>Carga (W)</th><th>Factor</th><th>Demanda (W)</th></tr></thead><tbody>
       ${r.tramos.map(t => `<tr><td class="t">${t.lab}</td><td>${t.n}</td><td>${fmt(t.sum, 0)}</td><td>${fmt(t.f * 100, 0)} %</td><td>${fmt(t.dem, 0)}</td></tr>`).join("")}
       <tr><td class="t">Aire acondicionado</td><td></td><td>${fmt(r.aireTot, 0)}</td><td>100 %</td><td>${fmt(r.aireTot, 0)}</td></tr>
       <tr><td class="t">Cargas comunes (servicios generales)</td><td></td><td>${fmt(r.Pserv, 0)}</td><td>75 %</td><td>${fmt(r.mdServ, 0)}</td></tr>
+      ${r.TC ? `<tr><td class="t">Locales de otro uso · 050-202(3)(d)</td><td>${r.units.filter(u => u.com).length}</td><td>${fmt(r.Pcom, 0)}</td><td>75 %</td><td>${fmt(r.mdCom, 0)}</td></tr>` : ""}
       <tr class="total"><td class="t" colspan="4">Máxima demanda del edificio</td><td>${fmt(r.MD, 0)}</td></tr></tbody></table></div></section>
       <section class="card"><h2><span><span class="num"></span>Servicios generales</span><span class="ref">Tablero TSG</span></h2><div class="tbl-wrap"><table>
       <thead><tr><th class="t">Carga común</th><th>Fases</th><th>P (W)</th></tr></thead><tbody>

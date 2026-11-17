@@ -27,8 +27,15 @@ function render(r) {
     );
   else
     k.push(
-      ["Departamentos", r.units.length, "", `${r.T.length} tipo(s)`],
-      ["Máxima demanda", fmt(r.MD / 1000, 2), "kW", "Edificio · Regla 050-202"],
+      r.TC
+        ? ["Unidades", r.units.length, "", `${r.units.filter(u => u.com).length} local(es) de otro uso`]
+        : ["Departamentos", r.units.length, "", `${r.T.length} tipo(s)`],
+      [
+        "Máxima demanda",
+        fmt(r.MD / 1000, 2),
+        "kW",
+        r.TC ? "Edificio · Reglas 050-202 y 050-210" : "Edificio · Regla 050-202"
+      ],
       ["Alimentador general", a0.S, "mm²", `${fmt(a0.I, 1)} A · ${a0.s.txt}`],
       ["ITM general", a0.itm ?? "—", "A", `${a0.s.tri ? 3 : 2} polos · ${a0.pdc} kA`]
     );
@@ -498,7 +505,7 @@ function faltantes(p = null) {
       const n = t.nombre || `Tipo ${i + 1}`;
       [
         ["cant", "número de unidades"],
-        ["area", "área de vivienda"],
+        ["area", USOS[t.uso] ? "área de la edificación (Regla 050-210)" : "área de vivienda"],
         ["Ld", "longitud del alimentador"],
         ["nAl", "salidas de alumbrado"],
         ["nTo", "tomacorrientes"],

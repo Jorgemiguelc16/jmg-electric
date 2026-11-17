@@ -50,6 +50,14 @@ const FASES_MED = [
   ["1", "Monofásico"],
   ["3", "Trifásico"]
 ];
+/* Uso de cada tipo de unidad del edificio: vivienda (Regla 050-202) o un local de otro uso de la Tabla 14 (Regla
+   050-210), con su medidor en el banco */
+const USOS_TIPO = [
+  ["viv", "Vivienda · 050-202"],
+  ...Object.entries(USOS)
+    .filter(([, u]) => !u.regla)
+    .map(([k, u]) => [k, `${u.n} · 050-210`])
+];
 // Pisos de la vivienda unifamiliar: el 1er piso usa los datos de Vivienda y Salidas; la lista «pisos» guarda del 2do piso en adelante
 const ORD = n => ["", "1er", "2do", "3er", "4to", "5to", "6to", "7mo", "8vo", "9no", "10mo"][n] || n + "°";
 const tabPiso = n => "TD-" + n;
@@ -116,8 +124,9 @@ const LISTS = {
     lab: "Departamento",
     f: [
       { k: "nombre", l: "Denominación", t: "text" },
-      { k: "cant", l: "Nº de dptos. de este tipo", t: "number" },
-      { k: "area", l: "Área de vivienda (m²)", t: "number" },
+      { k: "uso", l: "Uso", t: "select", o: USOS_TIPO },
+      { k: "cant", l: "Nº de unidades de este tipo", t: "number" },
+      { k: "area", l: "Área (m²)", t: "number" },
       { k: "Ld", l: "Long. alimentador (m)", t: "number" },
       { k: "fases", l: "Medidor", t: "select", o: FASES_MED },
       { k: "nAl", l: "Salidas de alumbrado", t: "number" },
@@ -133,7 +142,9 @@ const LISTS = {
       Ld: null,
       Lc: null,
       // Medidor del departamento en el banco: monofásico (1) o trifásico (3)
-      fases: "1"
+      fases: "1",
+      // Vivienda o un local de otro uso de la Tabla 14 (USOS_TIPO)
+      uso: "viv"
     }),
     // al quitar un tipo, se quitan sus luminarias y cargas especiales, y las de los tipos siguientes bajan un número
     quitar: i => {
