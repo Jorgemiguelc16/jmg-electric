@@ -360,6 +360,8 @@ function estado() {
     PLANO,
     // Precios unitarios del presupuesto (js/presupuesto.js)
     PRESU,
+    // Niveles de iluminación del proyecto (js/iluminacion.js)
+    LUX,
     res: RESUMEN,
     sist: PROY.sist || radio("sist"),
     sistG: PROY.sistG || radio("sistG")
@@ -574,6 +576,7 @@ function normalizar(o) {
   return {
     PLANO: planoValido(o.PLANO),
     PRESU: presuValido(o.PRESU),
+    LUX: luxValido(o.LUX),
     id: typeof o.id === "string" && /^[\w-]{1,40}$/.test(o.id) ? o.id : null,
     campos,
     listas,
@@ -796,7 +799,9 @@ function disValido(v) {
                   tp: ["tech", "ext", "sot", "libre", "aulas", "no"].includes(e.ar.tp) ? e.ar.tp : "tech",
                   n: txt(e.ar.n, 60),
                   // Tipo de ambiente (PL_AMB, js/calculo-plano.js)
-                  ...(typeof e.ar.amb === "string" && Object.hasOwn(PL_AMB, e.ar.amb) ? { amb: e.ar.amb } : {}),
+                  ...(typeof e.ar.amb === "string" && (Object.hasOwn(PL_AMB, e.ar.amb) || /^ud{1,3}$/.test(e.ar.amb))
+                    ? { amb: e.ar.amb }
+                    : {}),
                   ...(Array.isArray(e.ar.p) && e.ar.p.length === 2 && e.ar.p.every(n) ? { p: e.ar.p.slice() } : {}),
                   // Edificio: tipo de departamento del área
                   ...(Number.isInteger(e.ar.dep) && e.ar.dep >= 0 && e.ar.dep < 100 ? { dep: e.ar.dep } : {})
@@ -991,6 +996,7 @@ function aplicar(o) {
   SECF = n.SECF;
   PLANO = n.PLANO;
   PRESU = n.PRESU;
+  LUX = n.LUX;
   renderSys("sys_uni", "sist", n.sist);
   renderSys("sys_multi", "sistG", n.sistG);
   PROY.sist = n.sist;

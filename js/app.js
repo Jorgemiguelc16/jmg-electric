@@ -324,6 +324,7 @@ $("ws").addEventListener("click", e => {
   if (!ac) return;
   const a = ac.dataset.act;
   if (a === "nuevo") asistente(true, MODE);
+  else if (a === "lux") luxAbrir();
   else if (a === "json") $("btnSave").click();
   else if (a === "guardar") {
     saveDraft();
@@ -464,6 +465,8 @@ $("wizard").addEventListener("click", e => {
     m = com ? "uni" : md0,
     o = proyectoVacio(m),
     sist = $("wz_sist").value;
+  // Niveles de iluminación: los últimos que usó el proyectista (criterio) o los de la norma
+  o.LUX = luxRecordado();
   if (com) {
     o.uso = $("wz_uso").value;
     o.tg_p = o.tc_p = String(VA_TOMA_COM);

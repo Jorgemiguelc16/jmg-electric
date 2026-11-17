@@ -760,11 +760,7 @@ function ambRender() {
     `<option value="-1">${pl.length ? "Todas las plantas" : "Lo visible en pantalla"}</option>` +
     pl.map((p, i) => `<option value="${i}"${i === AM_PL ? " selected" : ""}>${esc(p.n)}</option>`).join("");
   $("amPlanta").hidden = !pl.length;
-  const op = v =>
-    `<option value=""${v ? "" : " selected"}>— Sin tipo —</option>` +
-    Object.entries(PL_AMB)
-      .map(([k, t]) => `<option value="${k}"${k === v ? " selected" : ""}>${esc(t.n)}</option>`)
-      .join("");
+  const op = v => ambOpciones(v);
   L.sort(
     (a, b) =>
       dpPlantaEl(a) - dpPlantaEl(b) ||
@@ -804,7 +800,7 @@ function ambRender() {
   h += L.length
     ? `<div class="am-fila am-cab"><span>Ambiente</span><span>Tipo de ambiente</span><span>Piso</span><span>Área</span><span>Para el cálculo</span><span title="Iluminancia mantenida mínima, Norma EM.010, Anexo">Iluminancia mín.</span><span>Qué exige el CNE-Utilización</span><span></span></div>` +
       L.map(e => {
-        const t = PL_AMB[e.ar.amb],
+        const t = ambTipo(e.ar.amb),
           jp = dpPlantaEl(e),
           piso = pl.length ? (jp >= 0 ? dpNomPiso(plPisoPlanta(pl[jp], jp)) : "fuera") : "1er piso";
         return `<div class="am-fila${e.ar.amb ? "" : " am-sin"}"><input type="text" data-am-k="n" data-id="${e.id}" value="${esc(e.ar.n || "")}" maxlength="60" placeholder="Nombre del ambiente" aria-label="Nombre del ambiente"><select data-am-k="amb" data-id="${e.id}" aria-label="Tipo de ambiente">${op(e.ar.amb)}</select><span>${esc(piso)}</span><span class="am-n">${fmt(dsM2(e), 2)} m²</span><select data-am-k="tp" data-id="${e.id}" aria-label="Tipo de área para el cálculo">${Object.entries(
@@ -813,7 +809,7 @@ function ambRender() {
           .map(([k, n]) => `<option value="${k}"${k === e.ar.tp ? " selected" : ""}>${esc(n)}</option>`)
           .join(
             ""
-          )}</select><span class="am-n">${t && t.lux ? `${t.lux} lx <em>EM.010 ${t.em}</em>` : "—"}</span><span class="am-cne" title="${t && t.cne ? esc(t.cne) : ""}">${t ? (t.cne ? dpRefs(t.cne) : "—") : "<em>Elija el tipo</em>"}</span><button type="button" class="vw-btn" data-am-ver="${e.id}" title="Ver en el plano">Ver</button></div>`;
+          )}</select><span class="am-n">${luxCelda(t)}</span><span class="am-cne" title="${t && t.cne ? esc(t.cne) : ""}">${t ? (t.cne ? dpRefs(t.cne) : "—") : "<em>Elija el tipo</em>"}</span><button type="button" class="vw-btn" data-am-ver="${e.id}" title="Ver en el plano">Ver</button></div>`;
       }).join("")
     : `<p class="rev-ok">Aún no hay ambientes${AM_PL >= 0 ? " en esta planta" : ""}. «Detectar ambientes» busca los nombres escritos en el plano (SALA, DORMITORIO, COCINA, SS.HH.…) y marca el contorno de cada uno; también puede marcarlos uno por uno con «Área de ambiente».</p>`;
   $("amLista").innerHTML = h;
@@ -851,6 +847,7 @@ $("ambDlg").addEventListener("click", e => {
   if (b && b.dataset.am === "cerrar") return ambCerrar();
   if (b && b.dataset.am === "max") return AM_VW.maximizar();
   if (b && b.dataset.am === "detectar") return ambDetectar();
+  if (b && b.dataset.am === "lux") return luxAbrir();
   const v = e.target.closest("[data-am-ver]");
   if (v) return dsVerIds([v.dataset.amVer]);
   const pt = e.target.closest("[data-am-pt]");
@@ -875,7 +872,7 @@ $("ambDlg").addEventListener("change", e => {
     v = c.value;
   if (k === "n") el.ar.n = v.replace(/[<>]/g, "").trim().slice(0, 60);
   else if (k === "amb") {
-    if (Object.hasOwn(PL_AMB, v)) el.ar.amb = v;
+    if (ambValido(v)) el.ar.amb = v;
     else delete el.ar.amb;
   } else if (k === "tp") el.ar.tp = PL_TAREA[v] ? v : "tech";
   edCambio();
@@ -942,7 +939,7 @@ function dpVerifNorma(add) {
     // Ambiente de un punto: el más pequeño que lo contiene
     ambDe = (x, y) =>
       amb.filter(a => plDentro(x, y, a.pts)).sort((a, b) => plAreaPol(a.pts) - plAreaPol(b.pts))[0] || null,
-    nom = a => a.ar.n || PL_AMB[a.ar.amb].n,
+    nom = a => a.ar.n || (ambTipo(a.ar.amb) || { n: "Ambiente" }).n,
     m = v => fmt(v, 2),
     clase = e => dsClase(e),
     esToma = e => clase(e) === "to",
@@ -957,6 +954,21 @@ function dpVerifNorma(add) {
       );
     return;
   }
+  // Iluminancia del proyecto por debajo del mínimo de la EM.010 (ventana «Niveles de iluminación»)
+  const bajos = amb.filter(a => (ambTipo(a.ar.amb) || {}).est === "bajo");
+  if (bajos.length)
+    add(
+      "aviso",
+      `${bajos.length} ambiente${bajos.length > 1 ? "s" : ""} con iluminancia por debajo del mínimo de la EM.010`,
+      bajos.map(a => a.id),
+      bajos
+        .slice(0, 6)
+        .map(a => {
+          const t = ambTipo(a.ar.amb);
+          return `${nom(a)}: ${t.lux} lx, mínimo ${t.luxN} lx (EM.010, Anexo ${t.em})`;
+        })
+        .join("; ") + ". Cámbielo en «Niveles de iluminación» o justifíquelo en la memoria."
+    );
   const lugar = new Map(sims.map(e => [e.id, ambDe(e.x, e.y)])),
     duchas = dpDuchas(),
     // Duchas o tinas de un ambiente: las que tienen su centro adentro

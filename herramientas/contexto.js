@@ -24,6 +24,7 @@ const MOTOR = [
   "js/calculo-demanda.js",
   "js/calculo-tierra-fases.js",
   "js/calculo-plano.js",
+  "js/iluminacion.js",
   "js/calculo-vivienda.js",
   "js/calculo-edificio.js",
   "js/verificaciones.js",

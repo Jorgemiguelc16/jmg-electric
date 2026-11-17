@@ -1882,7 +1882,7 @@ function dsDibArea(g, el, col, s) {
   const b = dsBBox(el),
     [X, Y] = plAPant((b[0] + b[2]) / 2, (b[1] + b[3]) / 2),
     L = [
-      el.ar.n || (el.ar.amb ? PL_AMB[el.ar.amb].n : ""),
+      el.ar.n || ((el.ar.amb && ambTipo(el.ar.amb)) || { n: "" }).n,
       `${fmt(dsM2(el), 2)} m²`,
       el.ar.tp !== "tech" ? PL_TAREA[el.ar.tp].toLowerCase() : ""
     ].filter(Boolean);
@@ -4140,15 +4140,8 @@ function dsProps(c) {
         `<input type="text" data-dsp="arn" value="${esc(el.ar.n || "")}" maxlength="60" placeholder="Sala, cocina, pasillo…">`
       ) +
       (el.ar.tp !== "ext"
-        ? campo(
-            "Tipo de ambiente",
-            `<select data-dsp="aramb"><option value="">— Sin tipo —</option>${Object.entries(PL_AMB)
-              .map(([k, t]) => `<option value="${k}"${k === el.ar.amb ? " selected" : ""}>${esc(t.n)}</option>`)
-              .join("")}</select>`
-          ) +
-          (el.ar.amb && PL_AMB[el.ar.amb].lux
-            ? fila("Iluminancia mín.", `${PL_AMB[el.ar.amb].lux} lx · EM.010 ${PL_AMB[el.ar.amb].em}`)
-            : "")
+        ? campo("Tipo de ambiente", `<select data-dsp="aramb">${ambOpciones(el.ar.amb)}</select>`) +
+          (el.ar.amb && ambTipo(el.ar.amb) ? fila("Iluminancia", luxCelda(ambTipo(el.ar.amb))) : "")
         : "") +
       campo(
         "Tipo",
@@ -4355,7 +4348,7 @@ function dsPropCambio(e) {
       // Sin tipo de ambiente: se toma del nombre
       if (!el.ar.amb && el.ar.tp !== "ext" && plAmbDe(el.ar.n)) el.ar.amb = plAmbDe(el.ar.n);
     } else if (k === "aramb" && el.ar) {
-      if (Object.hasOwn(PL_AMB, v)) el.ar.amb = v;
+      if (ambValido(v)) el.ar.amb = v;
       else delete el.ar.amb;
     } else if (k === "artp" && el.ar) el.ar.tp = PL_TAREA[v] ? v : "tech";
     else if (k === "ardep" && el.ar) {

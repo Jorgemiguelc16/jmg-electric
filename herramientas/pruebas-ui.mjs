@@ -3270,6 +3270,52 @@ prueba("Presupuesto: precios unitarios, desperdicio, porcentajes, precios record
   );
 });
 
+prueba(
+  "Niveles de iluminación: EM.010 por defecto, criterio del proyectista, bajo norma y ambientes propios",
+  async ok => {
+    await ev(
+      `(() => { document.querySelectorAll(".welcome").forEach(x => (x.hidden = true)); cargarEjemplo("com"); document.body.classList.remove("sin-acceso", "wl-open"); document.querySelectorAll(".welcome, #acceso").forEach(x => (x.hidden = true)); return 1; })()`
+    );
+    await esperar(300);
+    ok(
+      await ev("ambTipo('com15').lux === 200 && ambTipo('com15').em === '5.3' && ambTipo('com10').lux === null"),
+      "catálogo del Anexo: «Cantinas, tabernas» 200 lx (5.3) y el salón multiuso sin valor"
+    );
+    await ev("document.querySelector('[data-act=\"lux\"]').click(); 1");
+    await esperar(200);
+    ok(
+      await ev("!$('luxDlg').hidden && document.querySelectorAll('#lxLista .lx-fila').length > 150"),
+      "ventana con todos los ambientes"
+    );
+    const poner = async (k, v) =>
+      ev(
+        `(() => { const el = document.querySelector('[data-lx="${k}"]'); el.value = "${v}"; el.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`
+      );
+    await poner("com15", 300);
+    await poner("com14", 80);
+    await poner("com9", 500);
+    ok(
+      (await ev("ambTipo('com15').est + ',' + ambTipo('com14').est + ',' + Object.hasOwn(LUX.v, 'com9')")) ===
+        "criterio,bajo,false",
+      "mayor: criterio; menor: bajo norma; igual a la norma: no se guarda"
+    );
+    await ev("document.querySelector('[data-lxb=\"nuevo\"]').click(); 1");
+    await ev(
+      `(() => { const n = document.querySelector('[data-lx-n="u1"]'); n.value = "Pista de baile"; n.dispatchEvent(new Event("input", { bubbles: true })); return 1; })()`
+    );
+    await poner("u1", 150);
+    ok(
+      await ev(
+        "(() => { const o = estado(); LUX = luxVacio(); aplicar(o); return LUX.v.com15 === 300 && LUX.prop[0].n === 'Pista de baile' && LUX.prop[0].lux === 150; })()"
+      ),
+      "los niveles y el ambiente propio se guardan con el proyecto"
+    );
+    ok(await ev("luxRecordado().prop.length === 1"), "y se recuerdan para los proyectos nuevos");
+    ok(/Propios del proyecto/.test(await ev("ambOpciones('u1')")), "el ambiente propio aparece en la lista de tipos");
+    await ev("luxCerrar(); LUX = luxVacio(); luxRecordar(); 1");
+  }
+);
+
 prueba("Respaldo: descargar todos los proyectos con sus planos y restaurarlos", async ok => {
   await ejemplo("uni");
   await ev(

@@ -3347,6 +3347,7 @@ $("editor").addEventListener("click", e => {
   if (a === "lums") return lumAbrir();
   if (a === "muros") return murAbrir();
   if (a === "amb") return ambAbrir();
+  if (a === "lux") return luxAbrir();
   if (a === "buscar") return buAbrir();
   if (a === "presentar") return edPresentar(true);
   if (a === "atajos") return atjAbrir();
