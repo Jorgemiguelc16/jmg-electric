@@ -781,6 +781,8 @@ function update() {
   if ($("LbmBox")) $("LbmBox").hidden = PROY.bmJunto !== "0";
   // y el diámetro máximo de la tubería TG → banco, solo si el banco está junto al TG
   if ($("tgbmBox")) $("tgbmBox").hidden = PROY.bmJunto === "0";
+  // y el porcentaje de los locales de otro uso en el alimentador general, solo si hay locales
+  if ($("fLocBox")) $("fLocBox").hidden = !LISTS.tipos.arr.some(t => t.uso && t.uso !== "viv");
   const F = faltantes();
   // Con datos pendientes: cálculo preliminar con lo que el proyecto tiene (si se puede); si no, la lista de lo que falta
   let r = null;

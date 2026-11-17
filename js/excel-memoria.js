@@ -554,8 +554,10 @@ function excelMemoria(X) {
     const rS = er("Cargas comunes fuera de las unidades (75 %) · 050-202(3)(d)", "0", r.mdServ);
     if (r.TC)
       er(
-        "Locales de otro uso, fuera de las unidades de vivienda (75 %) · 050-202(3)(d)",
-        `0.75*SUMPRODUCT(B${c0}:B${c1},J${c0}:J${c1})`,
+        r.fLoc === 1
+          ? "Locales de otro uso, fuera de las unidades de vivienda (100 %, criterio del proyectista)"
+          : "Locales de otro uso, fuera de las unidades de vivienda (75 %) · 050-202(3)(d)",
+        `${r.fLoc}*SUMPRODUCT(B${c0}:B${c1},J${c0}:J${c1})`,
         r.mdCom
       );
     const rMD = er("MÁXIMA DEMANDA DEL EDIFICIO (W)", `SUM(I${e1 + 1}:I${m - 1})`, r.MD, true);

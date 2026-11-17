@@ -911,7 +911,7 @@ function dsFilasLey0() {
     tubs = { techo: false, piso: false },
     cond = { f: false, n: false, t: false };
   D.els.forEach(el => {
-    if (el.t === "sim" && DS_CAT[el.k]) usados.add(el.k);
+    if (el.t === "sim" && DS_CAT[el.k]) usados.add(dsKVis(el));
     if (el.t === "tub") {
       tubs[el.modo === "piso" ? "piso" : "techo"] = true;
       if (el.cond) {
@@ -930,6 +930,8 @@ function dsFilasLey0() {
   if (cond.n) out.push({ cond: { n: true }, n: "Conductor neutro", c: "09-93-01" });
   if (cond.t) out.push({ cond: { t: true }, n: "Conductor de protección (tierra)", c: "09-93-02" });
   if (out.some(f => f.k && dsSimb(f.k))) out.push({ nota: true, n: "(*) Símbolo con criterio del proyectista", c: "" });
+  if (D.els.some(e => dsVis(e) && dsTabTri(e)))
+    out.push({ nota: true, n: "3φ junto a un tablero: tablero trifásico", c: "" });
   // Tipos de luminaria usados en el plano
   const lt = new Set(D.els.filter(e => e.lt).map(e => e.lt));
   (D.lums || []).filter(t => lt.has(t.id)).forEach(t => out.push({ nota: true, n: "Luminaria " + dsLumTxt(t), c: "" }));
@@ -1824,7 +1826,8 @@ function dsPintar(g) {
         g.fillRect(X - 1, Y - 1, 2, 2);
         continue;
       }
-      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
+      dsDibSim(g, dsKVis(el), X, Y, ((el.r || 0) * Math.PI) / 180, uk, col, PL_FONDO, dsGrosor(cap), el.dt);
+      if (el.k === "tab" && dsTabTri(el)) dsDib3f(g, el, col, s);
       if (el.enc) dsDibEnc(g, el, col, s);
       if (dsNsalDe(el) && el.cir && el.k !== "tab") dsDibNum(g, el, col, s);
       if (el.k === "tab") dsDibSalidas(g, el, col, uk, dsGrosor(cap));
@@ -2202,6 +2205,39 @@ function dsDibEnc(g, el, col, s) {
   g.restore();
 }
 // Circuito del artefacto (C-1, C-2…) abajo a la derecha, pequeño y derecho (Dibujo › Circuito en las salidas)
+/* Tablero general del edificio: se dibuja con el símbolo DGE 09-91-16 (panel de distribución, rectángulo rayado),
+   porque solo distribuye a los suministros; los demás tableros, con el 09-91-17. Mismo tamaño: las salidas, las
+   conexiones y la selección no cambian (elección del proyectista, 2026-11-17). */
+const dsKVis = el =>
+  el.k === "tab" && MODE === "multi" && (el.nom || "TG").trim().toUpperCase() === "TG" ? "tabD" : el.k;
+// ¿Tablero trifásico? El sistema elegido en su ventana o, si no, el del proyecto (el de su medidor si es de un tipo)
+function dsTabTri(el) {
+  if (el.k !== "tab") return false;
+  const multi = MODE === "multi",
+    skP = (multi ? PROY.sistG : PROY.sist) || (multi ? "tri380" : "mono220"),
+    triP = !!(SIST[skP] || {}).tri;
+  if (String(el.fs) === "3") return true;
+  if (String(el.fs) === "1") return false;
+  if (multi && Number.isInteger(el.dep)) {
+    const t = tipos[el.dep];
+    return !!(t && t.fases === "3" && triP);
+  }
+  return triP;
+}
+// «3φ» junto al tablero trifásico, arriba a la derecha del símbolo (anotación de criterio, no parte del símbolo DGE)
+function dsDib3f(g, el, col, s) {
+  const hp = dsMm(1.8) * s;
+  if (hp < 4) return;
+  const b = dsBBox(el),
+    [X, Y] = plAPant(b[2], b[1]);
+  g.save();
+  g.font = `700 ${hp / 0.72}px Arial, sans-serif`;
+  g.textAlign = "left";
+  g.textBaseline = "top";
+  g.fillStyle = col;
+  g.fillText("3φ", X + hp * 0.2, Y + hp * 0.1);
+  g.restore();
+}
 function dsDibNum(g, el, col, s) {
   const hp = dsMm(1.8) * s;
   if (hp < 4) return;
@@ -2558,7 +2594,7 @@ function dsSobre(g) {
     g.globalAlpha = sel ? 0.32 : 0.18;
     if (el.t === "sim") {
       const [X, Y] = plAPant(el.x, el.y);
-      dsDibSim(g, el.k, X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
+      dsDibSim(g, dsKVis(el), X, Y, ((el.r || 0) * Math.PI) / 180, dsUk(el.k) * PLV.s, selc, null, 5 * d, el.dt);
     } else if (el.t === "txt") {
       const b = dsBBox(el),
         [a, c] = plAPant(b[0], b[3]),

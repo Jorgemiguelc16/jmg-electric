@@ -84,6 +84,7 @@ const KEYS = [
   "Lbm",
   "tgbmMax",
   "tsgDe",
+  "fLoc",
   "rho_s",
   "fr",
   "Lv",

@@ -223,6 +223,10 @@ mal += require("./pruebas-calc-plano.js")(ctx);
   const rb = calc({ ...p, bmJunto: "0", Lbm: "25" }),
     bb = rb.alims.find(a => a.pKey === "bm");
   if (!bb || !cerca(bb.P, rb.mdDeptos + rb.aireTot + rb.mdServ + rb.mdCom)) fallas.push("TG → banco sin los locales");
+  // Criterio del proyectista: los locales al 100 % en el alimentador general
+  const r100 = calc({ ...p, fLoc: "100" });
+  if (!cerca(r100.mdCom, 2 * mdD) || !cerca(r100.MD - r.MD, 0.25 * 2 * mdD) || r100.fLoc !== 1)
+    fallas.push("locales al 100 % (criterio)");
   // Un uso que no es de la Tabla 14 (o vacío) es vivienda
   const pv = JSON.parse(JSON.stringify(p));
   pv.tipos[0].uso = "hospital";

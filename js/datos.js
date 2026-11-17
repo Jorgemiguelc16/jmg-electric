@@ -296,6 +296,7 @@ const HLP = {
     'Con el banco junto al TG, las fases y neutros de cada suministro pasan del TG al banco por tubería, al 40 % de ocupación. Si no entran en una tubería de este diámetro, se reparten en varias. Por defecto 50 mm (2"). Criterio del proyectista.',
   bmJunto:
     "Junto al TG, el banco es la barra del TG y no hay tramo entre ellos. En otro lugar, se calcula el alimentador TG → banco (conductor, interruptor y caída de tensión), que los departamentos acumulan. Criterio del proyectista.",
+  fLoc: "Con qué porcentaje entra al alimentador general la máxima demanda de los locales de otro uso (calculada por la Regla 050-210). 75 %: la Regla 050-202(3)(d) para las cargas que no están en las unidades de vivienda. 100 %: sin reducción, del lado seguro cuando el local funciona a la misma hora que las viviendas (por ejemplo, una discoteca de noche) o porque su máxima demanda ya lleva el factor de la Tabla 14. Criterio del proyectista.",
   tsgDe:
     "Con su propio medidor en el banco (lo usual) o directo desde el TG, sin pasar por el banco. Cambia desde dónde se mide su alimentador y su caída de tensión. Criterio del proyectista.",
   Lms: "Desde el tablero general TG hasta el tablero de servicios generales TSG.",

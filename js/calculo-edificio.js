@@ -218,10 +218,12 @@ function calcMulti(c) {
   const mdDeptos = units.reduce((s, u) => s + u.dem, 0),
     aireTot = T.reduce((s, t) => s + (t.com ? 0 : t.aire * t.cant), 0),
     /* Locales de otro uso (cargas que no están en las unidades de vivienda): su máxima demanda por la Regla 050-210,
-       al 75 % en el alimentador general (Regla 050-202(3)(d), criterio confirmado por el proyectista) */
+       en el alimentador general al 75 % (Regla 050-202(3)(d), por defecto) o al 100 % (dato fLoc, criterio del
+       proyectista) */
     TC = T.filter(t => t.com),
+    fLoc = pv("fLoc") === "100" ? 1 : 0.75,
     Pcom = TC.reduce((s, t) => s + t.md.MD * t.cant, 0),
-    mdCom = 0.75 * Pcom;
+    mdCom = fLoc * Pcom;
   if (PLD)
     Object.entries(PLD.areaDep).forEach(([i, o]) => {
       if (o.plantas.size > 1)
@@ -501,7 +503,7 @@ function calcMulti(c) {
     Pserv,
     mdServ,
     // Locales de otro uso (solo si los hay)
-    ...(TC.length ? { TC, Pcom, mdCom } : {}),
+    ...(TC.length ? { TC, Pcom, mdCom, fLoc } : {}),
     maxMot,
     MD,
     CI,
