@@ -4140,8 +4140,10 @@ function dsProps(c) {
         `<input type="text" data-dsp="arn" value="${esc(el.ar.n || "")}" maxlength="60" placeholder="Sala, cocina, pasillo…">`
       ) +
       (el.ar.tp !== "ext"
-        ? campo("Tipo de ambiente", `<select data-dsp="aramb">${ambOpciones(el.ar.amb)}</select>`) +
-          (el.ar.amb && ambTipo(el.ar.amb) ? fila("Iluminancia", luxCelda(ambTipo(el.ar.amb))) : "")
+        ? campo(
+            "Tipo de ambiente",
+            `<button type="button" class="ds-amb" data-dsa="ambtipo" title="Elegir el tipo de ambiente (Norma EM.010 o propio)">${esc(el.ar.amb && ambTipo(el.ar.amb) ? ambTipo(el.ar.amb).n : "Elegir el tipo…")}<span class="ds-amb-f">▸</span></button>`
+          ) + (el.ar.amb && ambTipo(el.ar.amb) ? fila("Iluminancia", luxCelda(ambTipo(el.ar.amb))) : "")
         : "") +
       campo(
         "Tipo",
@@ -4430,6 +4432,12 @@ function dsPropClic(e) {
   if (!b) return;
   const a = b.dataset.dsa;
   if (a === "girar") dsGirar();
+  else if (a === "ambtipo")
+    luxElegir(
+      dsSel()
+        .filter(o => o.ar)
+        .map(o => o.id)
+    );
   else if (a === "simbolo") siAbrir(dsSel()[0].k);
   else if (a === "condcir") {
     const t = dsSel()[0];

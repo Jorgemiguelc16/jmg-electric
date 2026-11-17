@@ -583,24 +583,7 @@ function luxRecordar() {
   } catch (e) {}
 }
 
-/* ---------- Listas y celdas (ventana Ambientes y propiedades del área) ---------- */
-// Opciones del tipo de ambiente, agrupadas por uso del Anexo, con los propios del proyecto al final
-function ambOpciones(v) {
-  const op = (k, n) => `<option value="${k}"${k === v ? " selected" : ""}>${esc(n)}</option>`;
-  return (
-    `<option value=""${v ? "" : " selected"}>— Sin tipo —</option>` +
-    AMB_GRUPOS.map(
-      ([g, n]) =>
-        `<optgroup label="${esc(n)}">${Object.entries(PL_AMB)
-          .filter(([, t]) => t.g === g)
-          .map(([k, t]) => op(k, t.em && g !== "viv" ? `${t.n} (${t.em})` : t.n))
-          .join("")}</optgroup>`
-    ).join("") +
-    (LUX.prop.length
-      ? `<optgroup label="Propios del proyecto (criterio)">${LUX.prop.map(p => op(p.k, p.n)).join("")}</optgroup>`
-      : "")
-  );
-}
+/* ---------- Celda del nivel (ventana Ambientes y propiedades del área) ---------- */
 // Nivel de un tipo de ambiente para mostrar: lux y si es de la norma, criterio o bajo norma
 function luxCelda(t) {
   if (!t) return "—";

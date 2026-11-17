@@ -2137,9 +2137,14 @@ prueba("Ambientes: nombres del plano, tipo de ambiente, detección y ventana", a
       /150-702\(3\)/.test(await ev("$('amLista').textContent")),
     "muestra la iluminancia de la EM.010 y la regla del CNE"
   );
-  // Cambiar el tipo en la ventana
-  await ev(`(() => { const s = [...$('amLista').querySelectorAll('select[data-am-k="amb"]')].find(x => x.value === "bano");
-    s.value = "dorm"; s.dispatchEvent(new Event("change", { bubbles: true })); return 1; })()`);
+  // Cambiar el tipo en la ventana: el botón del tipo abre la ventana para elegirlo
+  await ev(`(() => { const id = dsD().els.find(e => e.ar && e.ar.amb === "bano").id;
+    $('amLista').querySelector('[data-am-tipo="' + id + '"]').click(); return 1; })()`);
+  ok(
+    await ev("!$('luxDlg').hidden && !!LX_PICK && LX_G === 'viv'"),
+    "el botón del tipo abre la ventana para elegirlo, en los de vivienda"
+  );
+  await ev(`document.querySelector('#lxLista [data-lx-pick="dorm"]').click(); 1`);
   ok(
     (await J("dsD().els.filter(e => e.ar && e.ar.amb === 'dorm').length")) === 1,
     "el tipo cambiado en la ventana queda en el ambiente"
@@ -2152,7 +2157,7 @@ prueba("Ambientes: nombres del plano, tipo de ambiente, detección y ventana", a
   // Propiedades del área y validación al guardar
   await ev("dsVerIds([dsD().els.find(e => e.ar && e.ar.amb === 'sala').id]); 1");
   ok(
-    await ev("!!document.querySelector('[data-dsp=\"aramb\"]')"),
+    await ev("!!document.querySelector('[data-dsa=\"ambtipo\"]')"),
     "las propiedades del área tienen el tipo de ambiente"
   );
   ok(
@@ -3311,7 +3316,11 @@ prueba(
       "los niveles y el ambiente propio se guardan con el proyecto"
     );
     ok(await ev("luxRecordado().prop.length === 1"), "y se recuerdan para los proyectos nuevos");
-    ok(/Propios del proyecto/.test(await ev("ambOpciones('u1')")), "el ambiente propio aparece en la lista de tipos");
+    ok(
+      (await ev("(luxRender(), document.querySelector('[data-lx-n=\"u1\"]').value)")) === "Pista de baile" &&
+        /Propios del proyecto/.test(await ev("$('lxLista').textContent")),
+      "el ambiente propio aparece en la ventana"
+    );
     await ev("luxCerrar(); LUX = luxVacio(); luxRecordar(); 1");
   }
 );

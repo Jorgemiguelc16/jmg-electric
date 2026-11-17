@@ -760,7 +760,6 @@ function ambRender() {
     `<option value="-1">${pl.length ? "Todas las plantas" : "Lo visible en pantalla"}</option>` +
     pl.map((p, i) => `<option value="${i}"${i === AM_PL ? " selected" : ""}>${esc(p.n)}</option>`).join("");
   $("amPlanta").hidden = !pl.length;
-  const op = v => ambOpciones(v);
   L.sort(
     (a, b) =>
       dpPlantaEl(a) - dpPlantaEl(b) ||
@@ -803,7 +802,7 @@ function ambRender() {
         const t = ambTipo(e.ar.amb),
           jp = dpPlantaEl(e),
           piso = pl.length ? (jp >= 0 ? dpNomPiso(plPisoPlanta(pl[jp], jp)) : "fuera") : "1er piso";
-        return `<div class="am-fila${e.ar.amb ? "" : " am-sin"}"><input type="text" data-am-k="n" data-id="${e.id}" value="${esc(e.ar.n || "")}" maxlength="60" placeholder="Nombre del ambiente" aria-label="Nombre del ambiente"><select data-am-k="amb" data-id="${e.id}" aria-label="Tipo de ambiente">${op(e.ar.amb)}</select><span>${esc(piso)}</span><span class="am-n">${fmt(dsM2(e), 2)} m²</span><select data-am-k="tp" data-id="${e.id}" aria-label="Tipo de área para el cálculo">${Object.entries(
+        return `<div class="am-fila${e.ar.amb ? "" : " am-sin"}"><input type="text" data-am-k="n" data-id="${e.id}" value="${esc(e.ar.n || "")}" maxlength="60" placeholder="Nombre del ambiente" aria-label="Nombre del ambiente"><button type="button" class="ds-amb" data-am-tipo="${e.id}" title="Elegir el tipo de ambiente (Norma EM.010 o propio)">${esc(t ? t.n : "Elegir el tipo…")}<span class="ds-amb-f">▸</span></button><span>${esc(piso)}</span><span class="am-n">${fmt(dsM2(e), 2)} m²</span><select data-am-k="tp" data-id="${e.id}" aria-label="Tipo de área para el cálculo">${Object.entries(
           AM_TP
         )
           .map(([k, n]) => `<option value="${k}"${k === e.ar.tp ? " selected" : ""}>${esc(n)}</option>`)
@@ -850,6 +849,8 @@ $("ambDlg").addEventListener("click", e => {
   if (b && b.dataset.am === "lux") return luxAbrir();
   const v = e.target.closest("[data-am-ver]");
   if (v) return dsVerIds([v.dataset.amVer]);
+  const tp = e.target.closest("[data-am-tipo]");
+  if (tp) return luxElegir([tp.dataset.amTipo]);
   const pt = e.target.closest("[data-am-pt]");
   if (pt) {
     const [x, y] = pt.dataset.amPt.split(",").map(Number),

@@ -2241,7 +2241,7 @@ input.del-plano,
   font-size: 11px;
   line-height: 1.35;
 }
-.am-sin select[data-am-k="amb"] {
+.am-sin .ds-amb {
   border-color: #d49a2a;
   background: color-mix(in srgb, #d49a2a 10%, #fff);
 }
@@ -2261,7 +2261,7 @@ input.del-plano,
 }
 .lx-fila {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 46px 78px 92px 84px 150px 34px;
+  grid-template-columns: minmax(200px, 1fr) 46px 78px 92px 84px 150px 62px;
   align-items: center;
   gap: 8px;
   padding: 3px 0;
@@ -2332,6 +2332,50 @@ input.del-plano,
   color: #2e7d32;
   font-size: 10px;
   font-style: normal;
+}
+/* Tipo de ambiente: botón que abre la ventana para elegirlo (propiedades del área y ventana Ambientes) */
+.ds-amb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--dl-grid2, #c9cfd6);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--dl-ink, #1b1b1b);
+  font: 12px var(--f-body);
+  text-align: left;
+  cursor: pointer;
+}
+.ds-amb:hover {
+  border-color: #14304f;
+}
+.ds-amb-f {
+  flex: none;
+  color: var(--dl-mute, #5b6470);
+  font-style: normal;
+}
+/* Modo elegir de la ventana de iluminación */
+.lx-elige {
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border-left: 3px solid #14304f;
+  background: color-mix(in srgb, #14304f 6%, transparent);
+  font: 12px var(--f-body);
+}
+.lx-elige .vw-btn {
+  margin-left: 6px;
+}
+.lx-fila[data-lx-dbl]:hover {
+  background: var(--dl-hover, #e5f1fb);
+  cursor: pointer;
+}
+.lx-act {
+  background: color-mix(in srgb, #14304f 8%, transparent);
+  box-shadow: inset 3px 0 0 #14304f;
 }
 .ca-barra .lx-chk {
   display: inline-flex;
