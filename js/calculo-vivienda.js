@@ -309,65 +309,69 @@ function calcUni(c) {
       c
     )
   );
-  return {
-    mode: "uni",
-    uso: viv ? "viv" : c.uso,
-    viv,
-    iccTG,
-    c,
-    sk,
-    area,
-    areaT,
-    sot,
-    cs,
-    md,
-    CI,
-    alims,
-    circ,
-    tabs,
-    bal,
-    pat: pozo(c.pat),
-    PS,
-    varios,
-    esq,
-    contratada: Math.ceil(md.MD / 500) / 2,
-    conexion: "Conexión simple (Norma DGE, 301.A)",
-    // Con el diseño: los tableros que salen del plano, los alimentadores medidos en él y los avisos
-    ...(PLD
-      ? {
-          plano: {
-            tabs: [...PT_.keys()],
-            ali: !!rTG,
-            Ld: PS.filter(p => p.LdPlano).map(p => tabDe(p.n)),
-            areas: PS.filter(p => p.areaPlano).map(p => p.n),
-            campos: Object.fromEntries(
-              [
-                rTG ? ["Lalim", Lalim] : null,
-                rP ? ["pzCond", c.pozo.cond] : null,
-                rP ? ["pzPvc", c.pozo.pvc] : null,
-                AP && sumaA("sot") > 0 ? ["sot", sot] : null,
-                AP && sumaA("libre") > 0 ? ["aLib", sumaA("libre")] : null,
-                ...PS.flatMap(p => {
-                  const k = (c0, c1) => (p.n === 1 ? c0 : `pisos_${c1}_${p.i}`);
-                  return [
-                    p.areaPlano ? [k("area", "area"), p.area] : null,
-                    p.LdPlano ? [p.n === 1 ? "Ltd1" : `pisos_Ld_${p.i}`, p.Ld] : null,
-                    ...(p.plano
-                      ? ["al", "tg", "tc"].flatMap(t => [
-                          [k(t + "_n", t + "_n"), p[t].n],
-                          [k(t + "_L", t + "_L"), p[t].L]
-                        ])
-                      : [])
-                  ];
-                })
-              ].filter(Boolean)
-            ),
-            sot: !!(AP && sumaA("sot") > 0),
-            libre: !!(AP && sumaA("libre") > 0),
-            avisos: PLD.avisos
+  return plConDiseno(
+    {
+      mode: "uni",
+      uso: viv ? "viv" : c.uso,
+      viv,
+      iccTG,
+      c,
+      sk,
+      area,
+      areaT,
+      sot,
+      cs,
+      md,
+      CI,
+      alims,
+      circ,
+      tabs,
+      bal,
+      pat: pozo(c.pat),
+      PS,
+      varios,
+      esq,
+      contratada: Math.ceil(md.MD / 500) / 2,
+      conexion: "Conexión simple (Norma DGE, 301.A)",
+      // Con el diseño: los tableros que salen del plano, los alimentadores medidos en él y los avisos
+      ...(PLD
+        ? {
+            plano: {
+              tabs: [...PT_.keys()],
+              ali: !!rTG,
+              Ld: PS.filter(p => p.LdPlano).map(p => tabDe(p.n)),
+              areas: PS.filter(p => p.areaPlano).map(p => p.n),
+              campos: Object.fromEntries(
+                [
+                  rTG ? ["Lalim", Lalim] : null,
+                  rP ? ["pzCond", c.pozo.cond] : null,
+                  rP ? ["pzPvc", c.pozo.pvc] : null,
+                  AP && sumaA("sot") > 0 ? ["sot", sot] : null,
+                  AP && sumaA("libre") > 0 ? ["aLib", sumaA("libre")] : null,
+                  ...PS.flatMap(p => {
+                    const k = (c0, c1) => (p.n === 1 ? c0 : `pisos_${c1}_${p.i}`);
+                    return [
+                      p.areaPlano ? [k("area", "area"), p.area] : null,
+                      p.LdPlano ? [p.n === 1 ? "Ltd1" : `pisos_Ld_${p.i}`, p.Ld] : null,
+                      ...(p.plano
+                        ? ["al", "tg", "tc"].flatMap(t => [
+                            [k(t + "_n", t + "_n"), p[t].n],
+                            [k(t + "_L", t + "_L"), p[t].L]
+                          ])
+                        : [])
+                    ];
+                  })
+                ].filter(Boolean)
+              ),
+              sot: !!(AP && sumaA("sot") > 0),
+              libre: !!(AP && sumaA("libre") > 0),
+              avisos: PLD.avisos
+            }
           }
-        }
-      : {}),
-    Selec: tierraElectrodo(al.Izc)
-  };
+        : {}),
+      Selec: tierraElectrodo(al.Izc)
+    },
+    PLD,
+    P.PLANO
+  );
 }

@@ -1041,3 +1041,97 @@
     display: none;
   }
 }
+/* Circuito elegido con un clic (para «Verificar longitudes») */
+.cd-tabla tbody tr.cd-sel td {
+  box-shadow:
+    inset 0 1px 0 var(--dl-acc),
+    inset 0 -1px 0 var(--dl-acc);
+}
+/* Verificar longitudes (js/longitudes.js): la misma rejilla del cuadro, con la letra de la plataforma */
+.lg-res {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 12px var(--f-body);
+  color: var(--dl-ink2);
+}
+.lg-res b {
+  color: var(--dl-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.lg-tabs {
+  margin-top: 6px;
+}
+.lg-tabs[hidden] {
+  display: none;
+}
+.lg-tabla {
+  margin-top: 0;
+}
+.lg-tabla th,
+.lg-tabla td {
+  font-family: var(--f-body);
+}
+.lg-tabla .c {
+  text-align: center;
+}
+.lg-tabla .bad {
+  color: #b3261e;
+}
+.lg-tabla th.lg-c-n {
+  width: 40px;
+  text-align: center;
+}
+.lg-tabla th.lg-c-p {
+  width: 180px;
+}
+.lg-tabla th.lg-c-l {
+  width: 84px;
+}
+.lg-tabla th.lg-c-a {
+  width: 100px;
+}
+.lg-tabla th.lg-c-v {
+  width: 40px;
+}
+.lg-sub {
+  color: var(--dl-ink2);
+  font-size: 11px;
+}
+.lg-tabla tr.lg-tot td {
+  height: 26px;
+  border-top: 2px solid var(--dl-grid2);
+  background: var(--dl-th) !important;
+  font-weight: 600;
+}
+.lg-tabla tr.lg-lej td {
+  font-weight: 600;
+}
+.lg-ver {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--dl-btn-b);
+  border-radius: 2px;
+  background: var(--dl-btn);
+  color: var(--dl-ink);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.lg-ver:hover {
+  border-color: var(--dl-acc);
+  color: var(--dl-acc);
+}
+.lg-ver svg {
+  width: 12px;
+  height: 12px;
+}
+.lg-msg {
+  margin: 0;
+  padding: 12px;
+  font: 12px/1.5 var(--f-body);
+  color: var(--dl-ink);
+}

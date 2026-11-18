@@ -1208,6 +1208,40 @@ prueba(
     );
     await poner('#edPropC [data-dsp="enc"]', "B");
     ok((await ev("dsSel()[0].enc")) === "b", "letra de encendido «b»");
+    // Interruptor doble: una letra por tecla; la revisión cuenta cada una y su tubería lleva la fase y dos retornos
+    const dob = await J(
+      `(() => { const I = { t: 'sim', k: 'int' }, L = { t: 'sim', k: 'luz' };
+      const r = { ab: dsEncLimpio('AB', I), sep: dsEncLimpio('a1, b', I), luz: dsEncLimpio('ab', L), txt: dsEncTxt({ enc: 'a,b' }) };
+      const n0 = dsD().els.length, tb = dsD().els.find(e => e.k === 'tab');
+      const la = dsAgregar({ t: 'sim', k: 'luz', x: ${OX} + 8, y: ${OY} + 2, r: 0, capa: 'E-ALUMBRADO', enc: 'x' });
+      const sw = dsAgregar({ t: 'sim', k: 'int', x: ${OX} + 8, y: ${OY} + 3, r: 0, capa: 'E-ALUMBRADO', enc: 'x,y' });
+      const lb = dsAgregar({ t: 'sim', k: 'luz', x: ${OX} + 9, y: ${OY} + 2, r: 0, capa: 'E-ALUMBRADO', enc: 'y' });
+      // Recorrido: tablero → luminaria «x» → luminaria «y», y de la «x» al interruptor «x,y»
+      const o = dsSalidasTab(tb)[0], d = { cir: o.n, tab: tb.id };
+      [la, sw, lb].forEach(e => Object.assign(e, d));
+      const tub = (p, c0, c1) => dsAgregar({ t: 'tub', pts: p, modo: 'techo', capa: 'E-TUBERIAS-TECHO', c0, c1, ...d });
+      const t0 = tub([...o.p, ${OX} + 8, ${OY} + 2], tb.id, la.id),
+        tu = tub([${OX} + 8, ${OY} + 2, ${OX} + 8, ${OY} + 3], la.id, sw.id),
+        t2 = tub([${OX} + 8, ${OY} + 2, ${OX} + 9, ${OY} + 2], la.id, lb.id);
+      dsIdxSucio(); dsCondAuto();
+      const k = c => (c.f || 0) + dsNeutros(c);
+      r.v = dsVerificar().map(o => o.t).filter(t => /«[xy]»/.test(t));
+      r.int = dpCond(tu.cond); r.col = [dsTubInt(tu), dsTubInt(t0)].join();
+      r.t0 = !t0.cond.r && k(t0.cond) === 2 && t0.cond.t; r.t2 = t2.cond.r === 1 && k(t2.cond) === 1 && t2.cond.t;
+      dsD().els.splice(n0); dsIdxSucio(); return r; })()`
+    );
+    ok(
+      dob.ab === "a,b" &&
+        dob.sep === "a1,b" &&
+        dob.luz === "ab" &&
+        dob.txt === "ab" &&
+        dob.int === "1F+2R" &&
+        dob.t0 &&
+        dob.t2 &&
+        dob.col === "true,false" &&
+        !dob.v.length,
+      `interruptor doble «a,b»: fase al interruptor y un retorno por tecla hasta sus luminarias; su tubería en color (${JSON.stringify(dob)})`
+    );
     // Copiar en fila: 3 copias a 1.5 m
     await clic('#editor [data-pl="fila"]');
     await poner("#plCmdV", "3");
@@ -1692,6 +1726,29 @@ prueba(
       "caja puesta: la tubería quedó en dos, conectadas a la caja"
     );
     await clic('[data-rev="cerrar"]');
+    // Dos tuberías entre los mismos puntos (C-1 y C-2 del tablero a la misma luminaria): la revisión las junta
+    await ev(
+      `(() => { const t = dsD().els.find(e => e.t === 'tub' && e.c0 === dsD().els.find(x => x.k === 'tab').id); dsAgregar({ ...JSON.parse(JSON.stringify(t)), id: undefined, cir: 'C-2', cond: undefined }); t.cx = ['C-1']; edCambio(); return 1; })()`
+    );
+    await clic('#editor [data-pl="revisar"]');
+    ok(
+      /C-1 y C-2 de TG: 2 tuberías entre los mismos puntos/.test(await ev("$('revLista').textContent")) &&
+        (await ev("!!$('revLista').querySelector('[data-revj]')")),
+      "la revisión avisa de dos tuberías entre los mismos puntos y ofrece juntarlas"
+    );
+    await clic("#revLista [data-revj]");
+    const jt = await J(
+      "(() => { const tb = dsD().els.find(x => x.k === 'tab'), l = dsD().els.filter(e => e.t === 'tub' && e.c0 === tb.id); return { n: l.length, cir: l[0].cir, cx: l[0].cx, cond: l[0].cond, auto: !!l[0].condA }; })()"
+    );
+    ok(
+      jt.n === 1 && jt.cir === "C-1" && JSON.stringify(jt.cx) === '["C-2"]' && jt.cond.f === 4 && jt.auto,
+      `juntadas: una tubería con C-1 y C-2 y sus conductores automáticos (${JSON.stringify(jt)})`
+    );
+    await clic('[data-rev="cerrar"]');
+    // Vuelve a la tubería de antes (solo C-1, 1F+1N+T) para lo que sigue
+    await ev(
+      "(() => { const t = dsD().els.find(e => e.t === 'tub' && e.cx); delete t.cx; delete t.condA; t.cond = { f: 1, n: 1, t: true }; edCambio(); return 1; })()"
+    );
     // Buscar
     await teclaE("f", "KeyF", 70, 2);
     ok(await ev("!$('edBuscar').hidden"), "Ctrl+F abre el buscador");
@@ -2007,6 +2064,33 @@ prueba("Calcular con el diseño: tipo de circuito, luminarias, carga especial, a
     "ficha del circuito: datos del plano"
   );
   await ev("cerrarFicha(); 1");
+  // Verificar longitudes (cuadro de conductores): los tramos del recorrido suman la longitud del cuadro
+  await ev("cuadroCond(true); 1");
+  await clic(`#cdBody tr[data-circ="${key}"]`);
+  await clic('#condDlg [data-cd="lg"]');
+  const lg = await J(
+    `(() => { const q = LAST.circ.find(x => x.key === LG_KEY), f = [...$('lgC').querySelectorAll('tbody tr:not(.lg-tot):not(.grp)')];
+      const s = f.reduce((a, tr) => a + (+tr.cells[4].textContent || 0) + (+tr.cells[5].textContent || 0), 0), tot = $('lgC').querySelector('.lg-tot').cells[4].textContent;
+      document.querySelector('#lgTabs [data-lgt="sal"]').click();
+      const sal = $('lgC').querySelectorAll('tbody tr:not(.grp)').length;
+      document.querySelector('#lgTabs [data-lgt="rec"]').click();
+      return { k: LG_KEY, n: f.length, s, L: q.L, tot, sal }; })()`
+  );
+  ok(
+    lg.k === key &&
+      lg.n >= 3 &&
+      Math.abs(lg.s - lg.L) < 0.02 &&
+      +lg.tot === Math.round(lg.L * 100) / 100 &&
+      lg.sal === 2,
+    `verificar longitudes: los tramos del C-1 suman su longitud del cuadro (${JSON.stringify(lg)})`
+  );
+  await clic('#lgDlg [data-lg="plano"]');
+  for (let i = 0; i < 40 && !(await ev("!!PL_MOD && !!dsD() && DS_SEL.size > 0")); i++) await esperar(100);
+  ok(
+    await ev("$('lgDlg').hidden && $('condDlg').hidden && DS_SEL.size >= 3"),
+    "«Ver el recorrido en el plano»: cierra las ventanas y elige el recorrido en el editor"
+  );
+  await clic('[data-ed="aceptar"]');
   // Áreas: clic dentro de un ambiente del plano de prueba (cocina y dormitorio, de 4 × 8 m entre muros de una línea)
   await ev("edAbrir(); 1");
   for (let i = 0; i < 40 && !(await ev("!!PL_MOD && !!dsD()")); i++) await esperar(100);

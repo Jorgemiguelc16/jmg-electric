@@ -495,68 +495,72 @@ function calcMulti(c) {
             : t.nAl * c.pAl + (exT(t)?.P || 0) + t.nTo * c.pTo + (exTt(t)?.P || 0) + t.Pesp),
       0
     ) + Pserv;
-  return {
-    mode: "multi",
-    iccTG,
-    // Esquema elegido, solo si no es el de por defecto (banco junto al TG y TSG con medidor en el banco)
-    ...(bmLejos || tsgTG ? { topo: { bm: bmLejos, tsgTG, iccBM } } : {}),
-    ...(tgbm ? { tgbm } : {}),
-    c,
-    sk,
-    T,
-    units,
-    tramos,
-    mdDeptos,
-    aireTot,
-    SV,
-    Pserv,
-    mdServ,
-    // Locales de otro uso (solo si los hay)
-    ...(TC.length ? { TC, Pcom, mdCom, fLoc } : {}),
-    maxMot,
-    MD,
-    CI,
-    alims,
-    circ,
-    tabs,
-    bal,
-    emerg,
-    pat: pozo(c.pat),
-    contratada: Math.ceil(MD / 500) / 2,
-    conexion: "Conexión en derivación con banco de medidores (Norma DGE, 301.C)",
-    ...(PLD
-      ? {
-          plano: {
-            tabs: [...new Set(PLD.tabs.filter(t => Number.isInteger(t.dep) && t.circs.length).map(t => t.dep))].map(
-              i =>
-                (T.find(t => t._i === i) || {}).tab ||
-                "TD-" + ((P.tipos[i] || {}).nombre || "").replace(/^Tipo\s*/i, "")
-            ),
-            ali: !!rG,
-            avisos: PLD.avisos,
-            campos: Object.fromEntries(
-              [
-                rG ? ["Lgen", Lgen] : null,
-                bmLejos && rB ? ["Lbm", Lbm] : null,
-                rS ? ["Lms", Lms] : null,
-                rP ? ["pzCond", c.pozo.cond] : null,
-                rP ? ["pzPvc", c.pozo.pvc] : null,
-                ...T.filter(t => t.areaPlano).map(t => [`tipos_area_${t._i}`, t.area]),
-                ...T.flatMap(t =>
-                  t.plano
-                    ? [
-                        [`tipos_nAl_${t._i}`, t.nAl],
-                        [`tipos_nTo_${t._i}`, t.nTo],
-                        [`tipos_Lc_${t._i}`, t.Lc],
-                        t.plano.Ld ? [`tipos_Ld_${t._i}`, t.Ld] : null
-                      ]
-                    : []
-                )
-              ].filter(Boolean)
-            )
+  return plConDiseno(
+    {
+      mode: "multi",
+      iccTG,
+      // Esquema elegido, solo si no es el de por defecto (banco junto al TG y TSG con medidor en el banco)
+      ...(bmLejos || tsgTG ? { topo: { bm: bmLejos, tsgTG, iccBM } } : {}),
+      ...(tgbm ? { tgbm } : {}),
+      c,
+      sk,
+      T,
+      units,
+      tramos,
+      mdDeptos,
+      aireTot,
+      SV,
+      Pserv,
+      mdServ,
+      // Locales de otro uso (solo si los hay)
+      ...(TC.length ? { TC, Pcom, mdCom, fLoc } : {}),
+      maxMot,
+      MD,
+      CI,
+      alims,
+      circ,
+      tabs,
+      bal,
+      emerg,
+      pat: pozo(c.pat),
+      contratada: Math.ceil(MD / 500) / 2,
+      conexion: "Conexión en derivación con banco de medidores (Norma DGE, 301.C)",
+      ...(PLD
+        ? {
+            plano: {
+              tabs: [...new Set(PLD.tabs.filter(t => Number.isInteger(t.dep) && t.circs.length).map(t => t.dep))].map(
+                i =>
+                  (T.find(t => t._i === i) || {}).tab ||
+                  "TD-" + ((P.tipos[i] || {}).nombre || "").replace(/^Tipo\s*/i, "")
+              ),
+              ali: !!rG,
+              avisos: PLD.avisos,
+              campos: Object.fromEntries(
+                [
+                  rG ? ["Lgen", Lgen] : null,
+                  bmLejos && rB ? ["Lbm", Lbm] : null,
+                  rS ? ["Lms", Lms] : null,
+                  rP ? ["pzCond", c.pozo.cond] : null,
+                  rP ? ["pzPvc", c.pozo.pvc] : null,
+                  ...T.filter(t => t.areaPlano).map(t => [`tipos_area_${t._i}`, t.area]),
+                  ...T.flatMap(t =>
+                    t.plano
+                      ? [
+                          [`tipos_nAl_${t._i}`, t.nAl],
+                          [`tipos_nTo_${t._i}`, t.nTo],
+                          [`tipos_Lc_${t._i}`, t.Lc],
+                          t.plano.Ld ? [`tipos_Ld_${t._i}`, t.Ld] : null
+                        ]
+                      : []
+                  )
+                ].filter(Boolean)
+              )
+            }
           }
-        }
-      : {}),
-    Selec: tierraElectrodo(gen.Izc)
-  };
+        : {}),
+      Selec: tierraElectrodo(gen.Izc)
+    },
+    PLD,
+    P.PLANO
+  );
 }

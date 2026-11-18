@@ -1146,7 +1146,7 @@ function dpVerifNorma(add) {
           "CNE-U 170-328(1): todas las escaleras de una unidad de vivienda deben ser iluminadas."
         );
       const letras = new Set(luces.map(e => e.enc).filter(Boolean)),
-        tres = sims.filter(e => DP_3V.has(e.k) && e.enc && letras.has(e.enc));
+        tres = sims.filter(e => DP_3V.has(e.k) && dsLetras(e).some(l => letras.has(l)));
       if (tres.length < 2)
         add(
           "seg",
@@ -2026,7 +2026,9 @@ function dcEscribir() {
   const D = dsD(),
     por = new Map(D.els.map(e => [e.id, e])),
     Q = new Map(LAST.circ.filter(q => q.src && q.src.t === "plano").map(q => [q.src.tab + "|" + q.id, q])),
-    n380 = LAST.sk === "tri380";
+    n380 = LAST.sk === "tri380",
+    tri = dsCirTri(D),
+    red = dsRedCond(D, tri);
   let n = 0,
     ret = 0;
   D.els.forEach(t => {
@@ -2085,43 +2087,32 @@ function dcEscribir() {
       return;
     }
     if (t.t !== "tub" || t.ali || !t.cir || !t.tab) return;
-    const qs = [t.cir, ...(t.cx || [])].map(c => Q.get(t.tab + "|" + c)).filter(Boolean);
-    const sw = [t.c0, t.c1].map(id => por.get(id)).filter(s => s && DS_CAT[s.k] && DS_CAT[s.k].g === "Interruptores");
-    if (sw.length) {
-      if (!qs.length) return;
-      const k = Math.max(...sw.map(s => DC_RET[s.k] || 2)),
-        a = (k * OD[qs[0].S] ** 2 * Math.PI) / 4,
-        tb = TUBOS.find(([, , di]) => a <= (0.4 * Math.PI * di * di) / 4);
-      t.cond = { f: k, n: 0, t: false };
-      delete t.condA;
-      if (tb && DS_DIAS.includes(tb[0])) t.dia = tb[0];
-      t.sec = `${k}-1×${qs[0].S} mm² (retornos)`;
-      ret++;
-      return;
-    }
-    if (!qs.length) return;
-    let fa = 0,
-      ne = 0,
-      St = 0,
+    if (![t.cir, ...(t.cx || [])].some(c => Q.has(t.tab + "|" + c))) return;
+    // Conductores por el recorrido del circuito (fase, retornos, neutro y tierra), cada uno con la sección de su circuito
+    const { c, act } = dsCondTub(t, red, tri, n380, por);
+    let St = 0,
       a = 0;
     const sec = new Map();
-    qs.forEach(q => {
-      const f = q.f3 ? 3 : n380 ? 1 : 2,
-        nn = n380 ? 1 : 0;
-      fa += f;
-      ne += nn;
-      St = Math.max(St, q.St);
-      a += (f + nn) * OD[q.S] ** 2;
+    act.forEach(({ cir, k }) => {
+      const q = Q.get(t.tab + "|" + cir);
+      if (!q || !k) return;
+      if (c.t) St = Math.max(St, q.St);
+      a += k * OD[q.S] ** 2;
       // Conductores de la misma sección, juntos: «4-1×2.5»
-      sec.set(q.S, (sec.get(q.S) || 0) + f + nn);
+      sec.set(q.S, (sec.get(q.S) || 0) + k);
     });
-    a = ((a + OD[St] ** 2) * Math.PI) / 4;
+    if (!sec.size) return;
+    a = ((a + (St ? OD[St] ** 2 : 0)) * Math.PI) / 4;
     const tb = TUBOS.find(([, , di]) => a <= (0.4 * Math.PI * di * di) / 4);
-    t.cond = { f: Math.min(12, fa), n: Math.min(6, ne), t: true };
+    if (!c.r) delete c.r;
+    t.cond = c;
     delete t.condA;
     if (tb && DS_DIAS.includes(tb[0])) t.dia = tb[0];
-    t.sec = `${[...sec].map(([S, k]) => `${k}-1×${S}`).join(" + ")} + 1×${St} T mm²`;
-    n++;
+    t.sec =
+      `${[...sec].map(([S, k]) => `${k}-1×${S}`).join(" + ")}${St ? ` + 1×${St} T` : ""} mm²` +
+      (c.r ? ` (${c.f + dsNeutros(c)} + ${c.r} retorno${c.r > 1 ? "s" : ""})` : "");
+    if (c.r) ret++;
+    else n++;
   });
   D.cirt = true;
   edCambio();
@@ -2618,7 +2609,8 @@ $("verDlg").addEventListener("keydown", e => {
    tomacorrientes y otras), los metros de tubería en techo y en piso, los conductores marcados y el diámetro (los
    más frecuentes en el circuito) y una fila de totales. Medidas en el papel (mm), como la leyenda. */
 const DS_CUA = { w: [14, 44, 30, 28, 24, 12], tit: 7, cab: 5, fila: 5.5, txt: 2 };
-const dpCond = c => (c ? `${c.f || 0}F${dsNeutros(c) ? "+" + dsNeutros(c) + "N" : ""}${c.t ? "+T" : ""}` : "");
+const dpCond = c =>
+  c ? `${c.f || 0}F${c.r ? "+" + c.r + "R" : ""}${dsNeutros(c) ? "+" + dsNeutros(c) + "N" : ""}${c.t ? "+T" : ""}` : "";
 const dpModa = a => {
   const m = new Map();
   a.filter(Boolean).forEach(v => m.set(v, (m.get(v) || 0) + 1));
@@ -2862,7 +2854,7 @@ function metDatos() {
   tubs.forEach(t => {
     const L = dsLargo(t) * f;
     if (!t.cond) return (sinC += L);
-    act += L * ((t.cond.f || 0) + dsNeutros(t.cond));
+    act += L * ((t.cond.f || 0) + (t.cond.r || 0) + dsNeutros(t.cond));
     if (t.cond.t) pro += L;
   });
   sec.push([

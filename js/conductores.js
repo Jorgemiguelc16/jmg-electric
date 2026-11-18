@@ -3,7 +3,7 @@
    Cada tramo usa por defecto la sección automática: la menor que cumple la capacidad de corriente (Tabla 2 con
    5A y 5C) y la caída de tensión (Regla 050-102). La lista ofrece esa sección y las tres siguientes, que también
    cumplen. Las elecciones quedan pendientes (CD_PEND) hasta «Aplicar» o «Aceptar»: entonces pasan a SECF y
-   dimensionar() las aplica (js/calculo-conductores.js). La ventana se mueve y redimensiona como las demás ventanas de
+   dimensionar() las aplica (js/calculo-conductores.js). Un clic elige un circuito para «Verificar longitudes» (js/longitudes.js). La ventana se mueve y redimensiona como las demás ventanas de
    escritorio (js/ventana.js). Si se angosta, la tabla oculta primero las columnas secundarias (container
    queries en css/ventanas.css) en lugar de desplazarse hacia el costado. Doble clic en un circuito abre su ficha. */
 let CD_PEND = null;
@@ -78,7 +78,7 @@ function renderCond() {
         : pocoMargen(y)
           ? ["warn", "Poco margen"]
           : ["ok", "Cumple"];
-    return `<tr${mod ? ' class="cd-mod"' : x.Sauto ? ' class="cd-elegida"' : ""}${alim ? "" : ` data-circ="${esc(key)}"`}><td class="t" title="${esc(nombre)}">${esc(nombre)}</td><td class="c-l">${fmt(x.L, 1)}</td><td>${fmt(x.I, 1)}</td><td class="c-itm">${x.itm ?? "—"}</td><td class="c-min" title="${porDV ? `Definida por la caída de tensión; por corriente bastaría ${SECC[kc]} mm²` : "Definida por la capacidad de corriente"}">${Sa}${porDV ? "<sup>ΔV</sup>" : ""}</td><td class="t c-sec">${sel}</td><td>${fmt(alim ? x.dvAc : x.dVt, 2)}</td><td class="c-uso"><span class="cd-uso"><i style="width:${Math.min(100, uso * 100).toFixed(0)}%"${uso >= DV_MARGEN ? ' class="w"' : ""}></i></span>${fmt(uso * 100, 0)}</td><td class="t"><span class="cd-est ${ec}" title="${et}">${et}</span></td></tr>`;
+    return `<tr${mod ? ' class="cd-mod"' : x.Sauto ? ' class="cd-elegida"' : !alim && x.key === CD_SELK ? ' class="cd-sel"' : ""}${alim ? "" : ` data-circ="${esc(key)}"`}><td class="t" title="${esc(nombre)}">${esc(nombre)}</td><td class="c-l">${fmt(x.L, 1)}</td><td>${fmt(x.I, 1)}</td><td class="c-itm">${x.itm ?? "—"}</td><td class="c-min" title="${porDV ? `Definida por la caída de tensión; por corriente bastaría ${SECC[kc]} mm²` : "Definida por la capacidad de corriente"}">${Sa}${porDV ? "<sup>ΔV</sup>" : ""}</td><td class="t c-sec">${sel}</td><td>${fmt(alim ? x.dvAc : x.dVt, 2)}</td><td class="c-uso"><span class="cd-uso"><i style="width:${Math.min(100, uso * 100).toFixed(0)}%"${uso >= DV_MARGEN ? ' class="w"' : ""}></i></span>${fmt(uso * 100, 0)}</td><td class="t"><span class="cd-est ${ec}" title="${et}">${et}</span></td></tr>`;
   };
   // Fila de grupo con una celda por columna (no colspan) para que las columnas ocultas no dejen espacio vacío
   const sub = t =>
@@ -105,7 +105,18 @@ function aplicarCond() {
   toast("Secciones aplicadas");
   renderCond();
 }
-// Doble clic en un circuito derivado: abre su ficha (js/ficha.js) sobre el cuadro
+/* Clic en un circuito derivado: queda elegido para «Verificar longitudes» (js/longitudes.js); doble clic: abre su
+   ficha (js/ficha.js) sobre el cuadro */
+let CD_SELK = null;
+$("cdBody").addEventListener("click", e => {
+  const tr = e.target.closest("tr[data-circ]");
+  if (!tr || e.target.closest("select")) return;
+  CD_SELK = tr.dataset.circ;
+  $("cdBody")
+    .querySelectorAll("tr.cd-sel")
+    .forEach(x => x.classList.remove("cd-sel"));
+  tr.classList.add("cd-sel");
+});
 $("cdBody").addEventListener("dblclick", e => {
   const tr = e.target.closest("tr[data-circ]");
   if (tr && !e.target.closest("select")) fichaCirc(tr.dataset.circ);
@@ -126,6 +137,7 @@ $("condDlg").addEventListener("click", e => {
     aplicarCond();
     cuadroCond(false);
   } else if (a === "apply") aplicarCond();
+  else if (a === "lg") verificarLongitudes(true, CD_SELK);
   else if (a === "auto") {
     CD_PEND = {};
     renderCond();
@@ -137,5 +149,5 @@ $("condDlg").addEventListener("click", e => {
   }
 });
 addEventListener("keydown", e => {
-  if (e.key === "Escape" && !$("condDlg").hidden && $("fichaDlg").hidden) cuadroCond(false);
+  if (e.key === "Escape" && !$("condDlg").hidden && $("fichaDlg").hidden && $("lgDlg").hidden) cuadroCond(false);
 });

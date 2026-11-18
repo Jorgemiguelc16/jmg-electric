@@ -3065,11 +3065,11 @@ function edMenuAccion(a) {
   if (a === "enc")
     return plPedir("Letra de encendido (vacío: quitar)", sel.find(dsConEnc).enc || "a", v => {
       plPedir(null);
-      const l = String(v)
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "")
-        .slice(0, 3);
-      sel.filter(dsConEnc).forEach(el => (l ? (el.enc = l) : delete el.enc));
+      sel.filter(dsConEnc).forEach(el => {
+        const l = dsEncLimpio(v, el);
+        if (l) el.enc = l;
+        else delete el.enc;
+      });
       edCambio();
     });
   if (a === "acapa") {

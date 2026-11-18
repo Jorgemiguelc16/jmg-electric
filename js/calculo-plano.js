@@ -297,10 +297,11 @@ function plTramosL(t) {
   }
   return out;
 }
-// Camino más corto desde un nodo: distancias totales y su parte horizontal, y el nodo anterior
+// Camino más corto desde un nodo: distancias totales y su parte horizontal, y el nodo anterior con su arista
 function plDijkstra(G, ini) {
   const D = new Map([[ini, 0]]),
     H = new Map([[ini, 0]]),
+    A = new Map(),
     hecho = new Set();
   // Montículo binario simple de [distancia, nodo]
   const M = [[0, ini]],
@@ -333,17 +334,67 @@ function plDijkstra(G, ini) {
     }
     if (hecho.has(u)) continue;
     hecho.add(u);
-    (G.get(u) || []).forEach(([v, w, h]) => {
+    (G.get(u) || []).forEach(([v, w, h, m]) => {
       const nd = d + w;
       if (nd < (D.has(v) ? D.get(v) : Infinity) - 1e-12) {
         D.set(v, nd);
         H.set(v, H.get(u) + h);
+        A.set(v, [u, w, h, m]);
         M.push([nd, v]);
         sube(M.length - 1);
       }
     });
   }
-  return { D, H };
+  return { D, H, A };
+}
+
+/* Recorrido desde el origen de un plDijkstra hasta un nodo, para la ventana Verificar longitudes
+   (js/longitudes.js). Los tramos seguidos de una misma tubería van juntos. Cada paso:
+   { k: "h", t, L }            tubería t (horizontal en el plano)
+   { k: "v", id, t, de, a, L, sale } vertical en el artefacto id, de la altura de/a la otra (m desde el NPT), entre él
+                               y la tubería t (sale: del artefacto a la tubería); de o a null: el artefacto sigue a la
+                               tubería (sin vertical)
+   { k: "d", t, o, de, a, L }  derivación de la tubería t a la o (de/a: sus niveles)
+   { k: "m", id, o, L, pisos } montante del artefacto id al o, en la otra planta */
+function plCamino(dj, fin) {
+  const pasos = [],
+    tub = n => n.split(":")[1];
+  for (let v = fin, i = 0; dj.A.has(v) && i < 1e5; i++) {
+    const [u, w, , m] = dj.A.get(v);
+    pasos.push([u, v, w, m || {}]);
+    v = u;
+  }
+  const out = [];
+  pasos.reverse().forEach(([u, v, w, m]) => {
+    const U = u[0],
+      V = v[0];
+    if (U === "V" && V === "V" && tub(u) === tub(v)) {
+      const ult = out[out.length - 1];
+      if (ult && ult.k === "h" && ult.t === tub(u)) ult.L += w;
+      else out.push({ k: "h", t: tub(u), L: w });
+    } else if (U === "V" && V === "V")
+      out.push({ k: "d", t: tub(u), o: tub(v), de: m.n[tub(u)], a: m.n[tub(v)], L: w });
+    else if (U === "D" && V === "D") out.push({ k: "m", id: u.slice(2), o: v.slice(2), L: w, pisos: m.pisos });
+    else if (U === "D" || V === "D") {
+      const d = U === "D";
+      out.push({
+        k: "v",
+        id: (d ? u : v).slice(2),
+        t: tub(d ? v : u),
+        de: d ? m.h : m.lv,
+        a: d ? m.lv : m.h,
+        L: w,
+        sale: d
+      });
+    }
+  });
+  return out;
+}
+/* Resultado del cálculo con el diseño que usó y los elementos de su plano (sin enumerar: no cambia el resultado, su
+   JSON ni sus copias). Lo lee la ventana Verificar longitudes. */
+function plConDiseno(r, PLD, PL) {
+  if (PLD) Object.defineProperty(r, "pld", { value: { ...PLD, els: (PL && PL.dis && PL.dis.els) || [] } });
+  return r;
 }
 
 /* Datos del diseño para el cálculo. PL: el plano del proyecto ({ f, plantas, dis }); c: ctx() del proyecto;
@@ -390,14 +441,16 @@ function planoCalc(PL, c, v) {
     return A[a] ?? 0;
   };
   /* Grafo de un grupo de tuberías: nodos «D:id» (artefactos y tableros) y «V:tubería:i» (vértices). Cada arista
-     lleva [nodo, longitud total, parte horizontal] en metros. tc: el circuito es de cocina (altura de tomas). */
+     lleva [nodo, longitud total, parte horizontal, datos del paso] en metros; los datos (alturas de una vertical,
+     niveles de una derivación, pisos de un montante) son para mostrar el recorrido (plCamino). tc: el circuito es de
+     cocina (altura de tomas). */
   function grafo(lista, tc) {
     const G = new Map(),
-      arista = (a, b, w, h) => {
+      arista = (a, b, w, h, m) => {
         if (!G.has(a)) G.set(a, []);
         if (!G.has(b)) G.set(b, []);
-        G.get(a).push([b, w, h]);
-        G.get(b).push([a, w, h]);
+        G.get(a).push([b, w, h, m]);
+        G.get(b).push([a, w, h, m]);
       },
       nivel = new Map(),
       puntas = [];
@@ -415,7 +468,7 @@ function planoCalc(PL, c, v) {
         [s0, h0, 0],
         [s1, h1, n - 1]
       ].forEach(([s, h, i]) => {
-        if (s) arista(`D:${s.id}`, `V:${t.id}:${i}`, h === null ? 0 : Math.abs(lv - h), 0);
+        if (s) arista(`D:${s.id}`, `V:${t.id}:${i}`, h === null ? 0 : Math.abs(lv - h), 0, { lv, h });
         else puntas.push({ t, i, x: t.pts[2 * i], y: t.pts[2 * i + 1] });
       });
     });
@@ -425,7 +478,9 @@ function planoCalc(PL, c, v) {
         if (o === q.t) return;
         for (let j = 0; j < o.pts.length; j += 2)
           if (Math.abs(o.pts[j] - q.x) < tol && Math.abs(o.pts[j + 1] - q.y) < tol)
-            arista(`V:${q.t.id}:${q.i}`, `V:${o.id}:${j / 2}`, Math.abs(nivel.get(q.t.id) - nivel.get(o.id)), 0);
+            arista(`V:${q.t.id}:${q.i}`, `V:${o.id}:${j / 2}`, Math.abs(nivel.get(q.t.id) - nivel.get(o.id)), 0, {
+              n: { [q.t.id]: nivel.get(q.t.id), [o.id]: nivel.get(o.id) }
+            });
       })
     );
     // Montantes: la subida de un piso y la bajada del otro, unidas por la altura de entrepiso
@@ -438,7 +493,7 @@ function planoCalc(PL, c, v) {
           1,
           pi >= 0 && pj >= 0 ? Math.abs(plPisoPlanta(plantas[pi], pi) - plPisoPlanta(plantas[pj], pj)) : 1
         );
-      arista(`D:${s.id}`, `D:${o.id}`, k * v.hEnt, 0);
+      arista(`D:${s.id}`, `D:${o.id}`, k * v.hEnt, 0, { pisos: k });
     });
     return G;
   }
@@ -515,7 +570,8 @@ function planoCalc(PL, c, v) {
         );
       // Recorridos desde el tablero
       const G = grafo(tt, tipo === "tc"),
-        { D, H } = plDijkstra(G, `D:${tb.id}`),
+        dj = plDijkstra(G, `D:${tb.id}`),
+        { D, H } = dj,
         sal = [];
       let P = 0,
         tri = false,
@@ -622,6 +678,8 @@ function planoCalc(PL, c, v) {
         Lv: L - Lh,
         est,
         lej: lej ? lej.id : null,
+        // Pasos del recorrido hasta la salida más alejada (ventana Verificar longitudes)
+        ruta: lej && !est ? plCamino(dj, `D:${lej.id}`) : null,
         f3: tri,
         elec,
         ng,

@@ -715,7 +715,7 @@ function disValido(v) {
             : {}),
           ...cir,
           // Letra de encendido (qué interruptor enciende qué luminaria: a, b, c…)
-          ...(typeof e.enc === "string" && /^[a-z0-9]{1,3}$/.test(e.enc) ? { enc: e.enc } : {}),
+          ...(typeof e.enc === "string" && /^[a-z0-9]{1,3}(,[a-z0-9]{1,3}){0,3}$/.test(e.enc) ? { enc: e.enc } : {}),
           // Montante: la canalización vertical par en otra planta
           ...(typeof e.mon === "string" && /^d[0-9]{1,7}$/.test(e.mon) ? { mon: e.mon } : {}),
           // Tablero del circuito del artefacto (lo hereda de la tubería que llega a él)
@@ -845,7 +845,9 @@ function disValido(v) {
                         f: Number.isInteger(e.cond.f) ? Math.max(0, Math.min(12, e.cond.f)) : 0,
                         // Neutros (antes era sí o no)
                         n: Number.isInteger(e.cond.n) ? Math.max(0, Math.min(6, e.cond.n)) : e.cond.n === true ? 1 : 0,
-                        t: e.cond.t === true
+                        t: e.cond.t === true,
+                        // Retornos de los interruptores (y viajeros de los de tres vías)
+                        ...(Number.isInteger(e.cond.r) && e.cond.r > 0 ? { r: Math.min(12, e.cond.r) } : {})
                       },
                       // Marcados solos según el sistema (se actualizan); sin esta marca, los eligió el proyectista
                       ...(e.condA === true ? { condA: true } : {})
@@ -876,6 +878,8 @@ function disValido(v) {
     ...(v.cirt === true ? { cirt: true } : {}),
     // Circuito escrito junto a cada salida
     ...(v.nsal === true ? { nsal: true } : {}),
+    // Tuberías a interruptor con el color de siempre (por defecto, con su color propio)
+    ...(v.intCol === false ? { intCol: false } : {}),
     // Catálogo de luminarias del proyecto: tipo (L1, L2…), descripción, potencia, control y si es de emergencia
     ...(Array.isArray(v.lums) && v.lums.length
       ? {

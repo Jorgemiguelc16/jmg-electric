@@ -280,8 +280,27 @@ function dsColCir(cir, tab) {
     v = (Math.floor(Math.max(0, i) / DS_PALC.length) + it) % DS_TONOS.length;
   return dsTono(DS_PALC[((i % DS_PALC.length) + DS_PALC.length) % DS_PALC.length], DS_TONOS[v]);
 }
+/* Tubería a interruptor (uno de sus extremos es un interruptor): con su color propio, para distinguirla (criterio del
+   proyectista, se quita en Vista; se guarda en el diseño: D.intCol === false la deja con el color de siempre) */
+const DS_COL_INT = "#e8730c";
+let DS_TINT = null;
+function dsTubInt(el) {
+  const D = dsD();
+  if (!D || el.t !== "tub" || D.intCol === false || (!el.c0 && !el.c1)) return false;
+  if (!DS_TINT || DS_TINT.D !== D || DS_TINT.v !== DS_IDXV || DS_TINT.n !== D.els.length) {
+    const ints = new Set(D.els.filter(dsEsInt).map(s => s.id));
+    DS_TINT = {
+      D,
+      v: DS_IDXV,
+      n: D.els.length,
+      s: new Set(D.els.filter(t => t.t === "tub" && (ints.has(t.c0) || ints.has(t.c1))).map(t => t.id))
+    };
+  }
+  return DS_TINT.s.has(el.id);
+}
 const dsColorEl = (el, cap) =>
   el.col ||
+  (el.t === "tub" && dsTubInt(el) && DS_COL_INT) ||
   (DSU.color === "tipo" && el.t === "sim" && DS_COLT[el.k]) ||
   (DSU.color === "cir" && el.cir && (el.t === "sim" || el.t === "tub") && dsColCir(el.cir, el.tab)) ||
   cap.col;
@@ -909,14 +928,16 @@ function dsFilasLey0() {
   const D = dsD(),
     usados = new Set(),
     tubs = { techo: false, piso: false },
-    cond = { f: false, n: false, t: false };
+    cond = { f: false, n: false, r: false, t: false };
   D.els.forEach(el => {
     if (el.t === "sim" && DS_CAT[el.k]) usados.add(dsKVis(el));
     if (el.t === "tub") {
       tubs[el.modo === "piso" ? "piso" : "techo"] = true;
+      if (dsTubInt(el)) tubs.int = true;
       if (el.cond) {
         if (el.cond.f) cond.f = true;
         if (el.cond.n) cond.n = true;
+        if (el.cond.r) cond.r = true;
         if (el.cond.t) cond.t = true;
       }
     }
@@ -926,10 +947,18 @@ function dsFilasLey0() {
     .map(k => ({ k, n: DS_CAT[k].n, c: DS_CAT[k].c + (dsSimb(k) ? " *" : "") }));
   if (tubs.techo) out.push({ tub: "techo", n: "Tubería empotrada en techo o pared", c: "" });
   if (tubs.piso) out.push({ tub: "piso", n: "Tubería empotrada en piso", c: "" });
+  if (tubs.int) out.push({ tub: "int", n: "Tubería a interruptor (fase y retornos) *", c: "" });
   if (cond.f) out.push({ cond: { f: 1 }, n: "Conductor de fase", c: "" });
+  if (cond.r) out.push({ cond: { r: 1 }, n: "Conductor de retorno (r) *", c: "" });
   if (cond.n) out.push({ cond: { n: true }, n: "Conductor neutro", c: "09-93-01" });
   if (cond.t) out.push({ cond: { t: true }, n: "Conductor de protección (tierra)", c: "09-93-02" });
-  if (out.some(f => f.k && dsSimb(f.k))) out.push({ nota: true, n: "(*) Símbolo con criterio del proyectista", c: "" });
+  const critTub = tubs.int || cond.r;
+  if (critTub || out.some(f => f.k && dsSimb(f.k)))
+    out.push({
+      nota: true,
+      n: critTub ? "(*) Criterio del proyectista" : "(*) Símbolo con criterio del proyectista",
+      c: ""
+    });
   if (D.els.some(e => dsVis(e) && dsTabTri(e)))
     out.push({ nota: true, n: "3φ junto a un tablero: tablero trifásico", c: "" });
   // Tipos de luminaria usados en el plano
@@ -1008,7 +1037,7 @@ function dsDibLeyenda(g, el, col, s, lw) {
         yy = el.y - yc * m,
         mt = { pts: [a, yy, b, yy], cond: f.cond };
       g.save();
-      g.strokeStyle = col;
+      g.strokeStyle = f.tub === "int" ? plColorDis(DS_COL_INT) : col;
       if (f.tub === "piso") g.setLineDash([dsMm(3) * s, dsMm(1.5) * s]);
       g.beginPath();
       plRuta(g, mt.pts, false);
@@ -1537,6 +1566,13 @@ function dsPropagarCircuitos() {
   if (!D) return;
   const por = new Map(D.els.map(e => [e.id, e])),
     tubs = D.els.filter(e => e.t === "tub" && !e.ali && (e.c0 || e.c1));
+  // «Lleva también» no repite el circuito propio (queda así si se cambia el circuito de la tubería)
+  tubs.forEach(t => {
+    if (t.cx && t.cx.includes(t.cir)) {
+      t.cx = t.cx.filter(c => c !== t.cir);
+      if (!t.cx.length) delete t.cx;
+    }
+  });
   for (let vuelta = 0, cambio = true; cambio && vuelta < 50; vuelta++) {
     cambio = false;
     tubs.forEach(t => {
@@ -1585,41 +1621,226 @@ function dsPropagarCircuitos() {
     });
   }
 }
-/* Conductores por defecto de cada tubería de circuito (marcas de la norma), según el sistema del proyecto: en
-   monofásico 220 V los dos conductores son fases (sin neutro); con 380/220 V, fase y neutro; un circuito trifásico,
-   tres fases (sin neutro). Más la tierra (T). La tubería de un interruptor lleva la fase y sus retornos, sin tierra (DC_RET,
-   criterio). Solo en las tuberías sin conductores o con los automáticos (condA): si el proyectista los cambia, se
-   respetan. Las secciones y el diámetro los escribe el cálculo («Datos para el cálculo»). */
-function dsCondAuto() {
-  const D = dsD();
-  if (!D) return;
-  const sk = (typeof MODE !== "undefined" && MODE === "multi" ? PROY.sistG : PROY.sist) || "mono220",
-    n380 = sk === "tri380",
-    por = new Map(D.els.map(e => [e.id, e])),
-    // Circuitos trifásicos: los que tienen alguna salida trifásica (como en el cálculo)
-    tri = new Set();
+/* Conductores de cada tubería por el recorrido de su circuito (criterio de la plataforma): desde el tablero, la fase
+   llega a cada interruptor y a las salidas que no se encienden con uno; cada tecla (letra) devuelve un retorno por el
+   camino de las tuberías hasta sus luminarias; entre dos interruptores de tres vías van los dos viajeros; el neutro (o
+   la segunda fase en 220 V) y la tierra llegan a cada salida con carga. Devuelve, por tubería, los de cada circuito:
+   { f: fase, v: neutro o segunda fase, r: retornos y viajeros, t: tierra }. Los circuitos trifásicos, los que no salen
+   de su tablero y las tuberías junto a un interruptor sin letra se quedan con el conteo simple (dsCondTub). */
+function dsRedCond(D, tri) {
+  const por = new Map(D.els.map(e => [e.id, e])),
+    tol = 0.01 / (EPL && EPL.f > 0 ? EPL.f : 1),
+    tres = typeof DP_3V !== "undefined" ? DP_3V : new Set(),
+    grupos = new Map(),
+    out = new Map();
+  D.els.forEach(t => {
+    if (t.t !== "tub" || t.ali || !t.cir || !t.tab || !Array.isArray(t.pts) || t.pts.length < 4) return;
+    new Set([t.cir, ...(t.cx || [])]).forEach(c => {
+      const k = t.tab + "|" + c;
+      (grupos.get(k) || grupos.set(k, []).get(k)).push(t);
+    });
+  });
+  grupos.forEach((lista, k) => {
+    const i0 = k.indexOf("|"),
+      tab = k.slice(0, i0),
+      cir = k.slice(i0 + 1),
+      tb = por.get(tab);
+    if (!tb || tb.k !== "tab" || tri.has(k)) return;
+    // Nodos: los artefactos («D:id») y los vértices de las tuberías; la punta suelta sobre otra tubería, unida a ella
+    const alias = new Map(),
+      nodo = (t, i) => {
+        const n = t.pts.length / 2;
+        let id =
+          i === 0 && t.c0 && por.get(t.c0)
+            ? "D:" + t.c0
+            : i === n - 1 && t.c1 && por.get(t.c1)
+              ? "D:" + t.c1
+              : `V:${t.id}:${i}`;
+        for (let g = 0; alias.has(id) && g < 50; g++) id = alias.get(id);
+        return id;
+      };
+    lista.forEach(t => {
+      const n = t.pts.length / 2;
+      [
+        [0, t.c0],
+        [n - 1, t.c1]
+      ].forEach(([i, c]) => {
+        if (c && por.get(c)) return;
+        const x = t.pts[2 * i],
+          y = t.pts[2 * i + 1],
+          yo = `V:${t.id}:${i}`;
+        for (const o of lista) {
+          if (o === t) continue;
+          for (let j = 0; j < o.pts.length; j += 2)
+            if (Math.abs(o.pts[j] - x) < tol && Math.abs(o.pts[j + 1] - y) < tol) {
+              const a = nodo(o, j / 2);
+              if (a !== yo) alias.set(yo, a);
+              return;
+            }
+        }
+      });
+    });
+    const ady = new Map(),
+      une = (a, b, t) => {
+        if (a === b) return;
+        (ady.get(a) || ady.set(a, []).get(a)).push([b, t]);
+        (ady.get(b) || ady.set(b, []).get(b)).push([a, t]);
+      };
+    lista.forEach(t => {
+      for (let i = 0; i + 1 < t.pts.length / 2; i++) une(nodo(t, i), nodo(t, i + 1), t);
+    });
+    // Árbol desde el tablero (por número de tramos)
+    const raiz = "D:" + tab;
+    if (!ady.has(raiz)) return;
+    const par = new Map([[raiz, null]]),
+      prof = new Map([[raiz, 0]]),
+      cola = [raiz];
+    for (let q = 0; q < cola.length; q++) {
+      const u = cola[q];
+      ady.get(u).forEach(([w, t]) => {
+        if (par.has(w)) return;
+        par.set(w, { p: u, t });
+        prof.set(w, prof.get(u) + 1);
+        cola.push(w);
+      });
+    }
+    // Artefactos del circuito unidos al tablero: interruptores por letra, luminarias encendidas por ellos y cargas
+    const N = s => "D:" + s.id,
+      sims = D.els.filter(s => s.t === "sim" && s.tab === tab && s.cir === cir && par.has(N(s))),
+      ints = sims.filter(dsEsInt),
+      sinLetra = ints.filter(s => !s.enc),
+      porL = new Map(),
+      lumL = new Map(),
+      fase = new Set(),
+      carga = [],
+      steiner = [];
+    ints.forEach(s => dsLetras(s).forEach(l => (porL.get(l) || porL.set(l, []).get(l)).push(s)));
+    sims.forEach(s => {
+      const cl = plArt(s.k)[0];
+      if (!cl || dsEsInt(s)) return;
+      carga.push(N(s));
+      const l = cl === "al" && s.enc;
+      if (l && porL.has(l)) (lumL.get(l) || lumL.set(l, []).get(l)).push(N(s));
+      else fase.add(N(s));
+    });
+    sinLetra.forEach(s => fase.add(N(s)));
+    porL.forEach((sw, l) => {
+      const lu = lumL.get(l) || [];
+      if (sw.length >= 2 && sw.every(s => tres.has(s.k))) {
+        // Tres vías: la fase al más cercano al tablero, los viajeros entre ellos y el retorno desde el último
+        const o = [...sw].sort((a, b) => prof.get(N(a)) - prof.get(N(b)));
+        fase.add(N(o[0]));
+        steiner.push([o.map(N), 2]);
+        steiner.push([[N(o[o.length - 1]), ...lu], 1]);
+      } else
+        sw.forEach(s => {
+          fase.add(N(s));
+          steiner.push([[N(s), ...lu], 1]);
+        });
+    });
+    // Cuántos de un conjunto quedan aguas abajo de cada tramo (el tramo se nombra por su nodo hijo)
+    const contar = L => {
+      const c = new Map();
+      new Set(L).forEach(x => {
+        for (let y = x, g = 0; y !== raiz && par.get(y) && g < 1e5; y = par.get(y).p, g++)
+          c.set(y, (c.get(y) || 0) + 1);
+      });
+      return c;
+    };
+    const cF = contar(fase),
+      cV = contar(carga),
+      R = new Map();
+    // Un tramo une a un grupo (interruptor y sus luminarias) si deja a unos de un lado y a otros del otro
+    steiner.forEach(([L, m]) => {
+      const S = new Set(L);
+      if (S.size < 2) return;
+      contar(S).forEach((n, y) => n < S.size && R.set(y, (R.get(y) || 0) + m));
+    });
+    const res = new Map();
+    par.forEach((e, y) => {
+      if (!e) return;
+      const o = res.get(e.t) || res.set(e.t, { f: 0, v: 0, r: 0, t: 0 }).get(e.t);
+      if (cF.get(y)) o.f = 1;
+      if (cV.get(y)) o.v = o.t = 1;
+      o.r = Math.max(o.r, R.get(y) || 0);
+    });
+    const junto = new Set(sinLetra.map(s => s.id));
+    res.forEach((o, t) => {
+      if (junto.has(t.c0) || junto.has(t.c1) || !(o.f + o.v + o.r)) return;
+      (out.get(t.id) || out.set(t.id, new Map()).get(t.id)).set(cir, o);
+    });
+  });
+  return out;
+}
+/* Conductores de una tubería: los del recorrido de cada circuito (dsRedCond) o, si no se pudo seguir, el conteo
+   simple (fase y neutro o dos fases, tres fases en un trifásico; la del interruptor, la fase y un retorno por tecla o
+   los de su tipo, sin tierra: DC_RET, criterio). Devuelve el total { f, n, r, t } y los conductores activos de cada
+   circuito (act: [{ cir, k }], para la sección). */
+function dsCondTub(t, red, tri, n380, por) {
+  const cirs = [...new Set([t.cir, ...(t.cx || [])])],
+    rc = red.get(t.id),
+    sw = [t.c0, t.c1].map(id => por.get(id)).filter(s => s && dsEsInt(s)),
+    c = { f: 0, n: 0, r: 0, t: false },
+    act = [];
+  if (sw.length && !(rc && cirs.some(x => rc.has(x)))) {
+    const k = Math.max(
+      ...sw.map(s => Math.max((typeof DC_RET !== "undefined" && DC_RET[s.k]) || 2, 1 + dsLetras(s).length))
+    );
+    c.f = 1;
+    c.r = Math.min(12, k - 1);
+    act.push({ cir: t.cir, k });
+    return { c, act };
+  }
+  cirs.forEach(cir => {
+    const o = rc && rc.get(cir);
+    if (o) {
+      c.f += o.f + (n380 ? 0 : o.v);
+      c.n += n380 ? o.v : 0;
+      c.r += o.r;
+      if (o.t) c.t = true;
+      act.push({ cir, k: o.f + o.v + o.r });
+      return;
+    }
+    const f3 = tri.has((t.tab || "") + "|" + cir),
+      f = f3 ? 3 : n380 ? 1 : 2,
+      n = !f3 && n380 ? 1 : 0;
+    c.f += f;
+    c.n += n;
+    c.t = true;
+    act.push({ cir, k: f + n });
+  });
+  c.f = Math.min(12, c.f);
+  c.n = Math.min(6, c.n);
+  c.r = Math.min(12, c.r);
+  return { c, act };
+}
+// Circuitos trifásicos del diseño («tablero|circuito»): los que tienen alguna salida trifásica (como en el cálculo)
+function dsCirTri(D) {
+  const tri = new Set();
   D.els.forEach(s => {
     if (s.t !== "sim" || !s.cir) return;
     const cl = plArt(s.k)[0],
       f3 = cl === "esp" ? (s.fs || (PL_ESP[s.k] || [])[1]) === 3 : PL_TRI.has(s.k) || s.fs === 3;
     if (f3) tri.add((s.tab || "") + "|" + s.cir);
   });
+  return tri;
+}
+/* Conductores por defecto de cada tubería de circuito (marcas de la norma), según el sistema del proyecto y el
+   recorrido del circuito (dsRedCond): la fase, el neutro (con 380/220 V; en monofásico 220 V los dos conductores son
+   fases), los retornos (R) de los interruptores y la tierra (T). Solo en las tuberías sin conductores o con los
+   automáticos (condA): si el proyectista los cambia, se respetan. Las secciones y el diámetro los escribe el cálculo
+   («Datos para el cálculo»). */
+function dsCondAuto() {
+  const D = dsD();
+  if (!D) return;
+  const sk = (typeof MODE !== "undefined" && MODE === "multi" ? PROY.sistG : PROY.sist) || "mono220",
+    por = new Map(D.els.map(e => [e.id, e])),
+    tri = dsCirTri(D),
+    red = dsRedCond(D, tri);
   D.els.forEach(t => {
     if (t.t !== "tub" || t.ali || !t.cir || (t.cond && !t.condA)) return;
-    const sw = [t.c0, t.c1].map(id => por.get(id)).filter(s => s && DS_CAT[s.k] && DS_CAT[s.k].g === "Interruptores");
-    let c;
-    if (sw.length)
-      c = { f: Math.max(...sw.map(s => (typeof DC_RET !== "undefined" && DC_RET[s.k]) || 2)), n: 0, t: false };
-    else {
-      let f = 0,
-        n = 0;
-      [t.cir, ...(t.cx || [])].forEach(cir => {
-        const f3 = tri.has((t.tab || "") + "|" + cir);
-        f += f3 ? 3 : n380 ? 1 : 2;
-        n += !f3 && n380 ? 1 : 0;
-      });
-      c = { f: Math.min(12, f), n: Math.min(6, n), t: true };
-    }
+    const { c } = dsCondTub(t, red, tri, sk === "tri380", por);
+    if (!c.r) delete c.r;
     t.cond = c;
     t.condA = true;
   });
@@ -2026,7 +2247,13 @@ function dsPuntoA(el, frac) {
 const dsNeutros = c => (c.n === true ? 1 : c.n || 0);
 function dsMarcas(g, el, col, s, lw, frac = 0.5) {
   const c = el.cond,
-    tipos = [...Array(c.f || 0).fill("f"), ...Array(dsNeutros(c)).fill("n"), ...(c.t ? ["t"] : [])];
+    // Fases, retornos (raya con una «r» encima, criterio), neutros y tierra
+    tipos = [
+      ...Array(c.f || 0).fill("f"),
+      ...Array(c.r || 0).fill("r"),
+      ...Array(dsNeutros(c)).fill("n"),
+      ...(c.t ? ["t"] : [])
+    ];
   if (!tipos.length || dsMm(1) * s < 1.2) return;
   const { pt, ang } = dsPuntoA(el, frac),
     recta = DSU.marcaEst === "recta",
@@ -2060,6 +2287,17 @@ function dsMarcas(g, el, col, s, lw, frac = 0.5) {
       g.fill();
     }
   });
+  // «r» junto a las rayas de los retornos, del lado opuesto a la longitud escrita, siempre derecha
+  const ir = tipos.map((t, k) => (t === "r" ? k : -1)).filter(k => k >= 0);
+  if (ir.length) {
+    const a = ((ir[0] + ir[ir.length - 1]) / 2 - (tipos.length - 1) / 2) * sep,
+      [X, Y] = aP(a, -2.9),
+      hp = 1.6 * m * s;
+    g.font = `italic 600 ${hp}px Arial, sans-serif`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText("r", X, Y);
+  }
   g.restore();
 }
 // Tubería cuyas marcas (o el medio de su recorrido, si aún no tiene) están bajo el punto
@@ -2082,7 +2320,7 @@ function dsVentanaCond(el) {
   edMenuLista(
     pt,
     `<div class="ed-mt">Conductores de la tubería${el.cir ? " · " + esc(el.cir) : ""}</div>` +
-      `<div class="ed-mc">${op("f", 6, c.f || 0, "F")}${op("n", 2, dsNeutros(c), "N")}<label><input type="checkbox" data-edc="t"${c.t ? " checked" : ""}>T</label></div>` +
+      `<div class="ed-mc">${op("f", 6, c.f || 0, "F")}${op("r", 6, c.r || 0, "R")}${op("n", 2, dsNeutros(c), "N")}<label><input type="checkbox" data-edc="t"${c.t ? " checked" : ""}>T</label></div>` +
       `<div class="ed-mc"><select data-edc="dia"><option value="">Diámetro —</option>${DS_DIAS.map(d => `<option value="${d}"${d === el.dia ? " selected" : ""}>Ø ${d} mm</option>`).join("")}</select></div>` +
       (el.cir
         ? `<hr><button type="button" data-edm="sal:1" role="menuitem"><span>Igual en todo el circuito ${esc(el.cir)}</span></button>`
@@ -2102,6 +2340,7 @@ function dsVentanaCond(el) {
         n.n = dsNeutros(n);
         if (k === "t") n.t = !!v;
         else n[k] = parseInt(v, 10) || 0;
+        if (!n.r) delete n.r;
         // Elegidos por el proyectista (aunque sean cero): ya no se cambian solos
         delete el.condA;
         el.cond = n;
@@ -2165,7 +2404,7 @@ function dsInfoEl(el) {
       c.u && pot != null ? `${pot} ${c.u}` : "",
       el.lt ? `tipo ${el.lt}` : "",
       el.cn || "",
-      el.enc ? `encendido «${el.enc}»` : ""
+      el.enc ? `encendido «${dsEncTxt(el)}»` : ""
     ]
       .filter(Boolean)
       .join(" · ");
@@ -2199,9 +2438,9 @@ function dsDibEnc(g, el, col, s) {
   g.lineJoin = "round";
   g.lineWidth = 3 * plDpr();
   g.strokeStyle = PL_FONDO;
-  g.strokeText(el.enc, X, Y + hp * 0.2);
+  g.strokeText(dsEncTxt(el), X, Y + hp * 0.2);
   g.fillStyle = col;
-  g.fillText(el.enc, X, Y + hp * 0.2);
+  g.fillText(dsEncTxt(el), X, Y + hp * 0.2);
   g.restore();
 }
 // Circuito del artefacto (C-1, C-2…) abajo a la derecha, pequeño y derecho (Dibujo › Circuito en las salidas)
@@ -2253,6 +2492,25 @@ function dsDibNum(g, el, col, s) {
 }
 // Grupos con letra de encendido
 const dsConEnc = el => el.t === "sim" && DS_CAT[el.k] && ["Iluminación", "Interruptores"].includes(DS_CAT[el.k].g);
+const dsEsInt = el => el.t === "sim" && DS_CAT[el.k] && DS_CAT[el.k].g === "Interruptores";
+/* Letras de encendido de un elemento: la luminaria tiene una; el interruptor, una por tecla (doble «a,b», triple
+   «a,b,c»), guardadas con coma */
+const dsLetras = el => (el.enc ? String(el.enc).split(",") : []);
+// Lo escrito en Encendido, limpio: en un interruptor, «ab», «a,b» o «a b» son dos teclas (hasta 4); «a1» es una
+function dsEncLimpio(v, el) {
+  const s = String(v || "").toLowerCase();
+  if (!dsEsInt(el)) return s.replace(/[^a-z0-9]/g, "").slice(0, 3) || undefined;
+  const L = s
+    .split(/[^a-z0-9]+/)
+    .flatMap(x => (/^[a-z]+$/.test(x) ? x.split("") : [x.slice(0, 3)]))
+    .filter(Boolean);
+  return [...new Set(L)].slice(0, 4).join(",") || undefined;
+}
+// Texto de la letra en el plano: las teclas de una letra, juntas («ab»); si alguna es más larga, con coma
+const dsEncTxt = el => {
+  const L = dsLetras(el);
+  return L.every(x => x.length === 1) ? L.join("") : L.join(",");
+};
 /* Salidas de circuito del tablero (ventana Tablero, doble clic): un trazo corto desde el frente del tablero (el lado
    opuesto al muro) hasta el punto de conexión, con su nombre (C-1, C-2…). Hasta 10 por fila; desde la 11, otra fila
    más adelante y corrida medio paso, para que los trazos no se crucen. En unidades del símbolo y en el dibujo. */
@@ -4033,7 +4291,7 @@ function dsProps(c) {
       (sel.every(dsConEnc)
         ? campo(
             "Encendido",
-            `<input type="text" data-dsp="enc" value="${sel.every(e => (e.enc || "") === (sel[0].enc || "")) ? esc(sel[0].enc || "") : ""}" placeholder="a, b…" maxlength="3">`
+            `<input type="text" data-dsp="enc" value="${sel.every(e => (e.enc || "") === (sel[0].enc || "")) ? esc(sel[0].enc || "") : ""}" placeholder="a, b…" maxlength="${sel.every(dsEsInt) ? 15 : 3}">`
           )
         : "") +
       (sel.some(el => el.t === "lin" || el.t === "tub") ? curvas : "") +
@@ -4119,8 +4377,11 @@ function dsProps(c) {
       (dsConEnc(el)
         ? campo(
             "Encendido",
-            `<input type="text" data-dsp="enc" value="${esc(el.enc || "")}" placeholder="a, b…" maxlength="3" title="Letra que une el interruptor con las luminarias que enciende">`
-          )
+            `<input type="text" data-dsp="enc" value="${esc(el.enc || "")}" placeholder="${dsEsInt(el) ? "a  ·  doble: a,b" : "a, b…"}" maxlength="${dsEsInt(el) ? 15 : 3}" title="Letra que une el interruptor con las luminarias que enciende">`
+          ) +
+          (dsEsInt(el)
+            ? `<p class="ds-crit">Una letra por tecla: interruptor doble «a,b» (o «ab»), triple «a,b,c». Cada letra enciende las luminarias que la tienen; la tubería lleva la fase y un retorno por tecla.</p>`
+            : "")
         : "") +
       fila("Posición X", `${plFm(el.x)} m`) +
       fila("Posición Y", `${plFm(el.y)} m`);
@@ -4291,8 +4552,51 @@ function dsCampoCx(campo, el) {
       "Lleva también",
       `<span class="ds-cx">${S.map(o => `<label title="${esc(o.d || "")}"><input type="checkbox" data-dsp="cx" value="${o.n}"${(el.cx || []).includes(o.n) ? " checked" : ""}>${o.n}</label>`).join("")}</span>`
     ) +
-    `<p class="ds-crit">Circuitos de ${esc(tb.nom || "este tablero")} que van juntos en esta tubería: el cálculo aplica la Tabla 5C con ellos.</p>`
+    `<p class="ds-crit">Circuitos de ${esc(tb.nom || "este tablero")} que van juntos en esta tubería: el cálculo aplica la Tabla 5C con ellos.</p>` +
+    (dsTubRepetidas(el).length
+      ? `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="juntar" title="Deja una sola tubería entre estos dos puntos, con todos los circuitos y sus conductores">Juntar con ${esc(
+          dsTubRepetidas(el)[0]
+            .filter(o => o !== el)
+            .map(o => o.cir)
+            .join(", ")
+        )} (mismos extremos)</button></div>`
+      : "")
   );
+}
+/* Tuberías repetidas: dos o más tuberías de circuito del mismo tablero entre los mismos dos artefactos (por ejemplo, una
+   por circuito desde el tablero hasta la misma salida). Devuelve los grupos (cada uno, sus tuberías). */
+function dsTubRepetidas(t) {
+  const D = dsD();
+  if (!D) return [];
+  const G = new Map();
+  D.els.forEach(o => {
+    if (o.t !== "tub" || o.ali || !o.cir || !o.c0 || !o.c1 || o.c0 === o.c1 || !dsVis(o)) return;
+    const k = [o.tab || "", ...[o.c0, o.c1].sort()].join("|");
+    (G.get(k) || G.set(k, []).get(k)).push(o);
+  });
+  const L = [...G.values()].filter(g => g.length > 1);
+  return t ? L.filter(g => g.includes(t)) : L;
+}
+/* Junta las tuberías repetidas en una: queda la que lleva más circuitos, con todos los circuitos en «Lleva también»
+   (Tabla 5C) y los conductores automáticos de todos ellos. */
+function dsJuntarTubs(ids) {
+  const D = dsD(),
+    g = ids.map(id => D.els.find(e => e.id === id)).filter(e => e && e.t === "tub");
+  if (g.length < 2) return;
+  const cirs = t => [t.cir, ...(t.cx || [])].filter(Boolean),
+    q = g.reduce((a, b) => (cirs(b).length > cirs(a).length ? b : a)),
+    todos = new Set(g.flatMap(cirs));
+  todos.delete(q.cir);
+  if (todos.size) q.cx = [...todos].sort((a, b) => parseInt(a.slice(2), 10) - parseInt(b.slice(2), 10));
+  else delete q.cx;
+  delete q.cond;
+  delete q.condA;
+  const fuera = new Set(g.filter(t => t !== q).map(t => t.id));
+  D.els = D.els.filter(e => !fuera.has(e.id));
+  DS_SEL.clear();
+  DS_SEL.add(q.id);
+  edCambio();
+  toast(`Tuberías juntadas: una sola lleva ${[q.cir, ...(q.cx || [])].join(", ")} con sus conductores`);
 }
 // Diámetros nominales de las tuberías (mm)
 const DS_DIAS = [15, 20, 25, 35, 40, 50, 65, 80];
@@ -4314,15 +4618,21 @@ function dsCampoCond1(campo, ts) {
   return (
     campo(
       "Conductores",
-      `<span class="ds-cond"><select data-dsp="condF" title="Fases o conductores activos (también los retornos)">${[
+      `<span class="ds-cond"><select data-dsp="condF" title="Fases (en 220 V monofásico, los dos conductores del circuito)">${[
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
       ]
         .map(n => `<option value="${n}"${igual && (c.f || 0) === n ? " selected" : ""}>${n} F</option>`)
+        .join(
+          ""
+        )}</select><select data-dsp="condR" title="Retornos: la fase que vuelve del interruptor a sus luminarias (y los viajeros de los de tres vías)">${[
+        0, 1, 2, 3, 4, 5, 6
+      ]
+        .map(n => `<option value="${n}"${igual && (c.r || 0) === n ? " selected" : ""}>${n} R</option>`)
         .join("")}</select><select data-dsp="condN" title="Neutros">${[0, 1, 2, 3, 4, 5, 6]
         .map(n => `<option value="${n}"${igual && dsNeutros(c) === n ? " selected" : ""}>${n} N</option>`)
         .join("")}</select><label><input type="checkbox" data-dsp="condT"${c.t ? " checked" : ""}>T</label></span>`
     ) +
-    `<p class="ds-crit">Marcas de la norma sobre la tubería: una raya por fase, el neutro (N) con punto y la tierra (T) con tope. ${ts.every(t => t.condA) ? "Automáticos según el sistema del proyecto (cambian solos si cambia el circuito)." : ts.some(t => t.cir && !t.ali) ? "Elegidos a mano." : ""}</p>` +
+    `<p class="ds-crit">Marcas de la norma sobre la tubería: una raya por fase, el neutro (N) con punto y la tierra (T) con tope; los retornos (R), una raya con una «r» encima (criterio). ${ts.every(t => t.condA) ? "Automáticos según el sistema del proyecto y el recorrido del circuito: la fase llega a cada interruptor y cada tecla devuelve un retorno a sus luminarias (cambian solos si cambia el circuito)." : ts.some(t => t.cir && !t.ali) ? "Elegidos a mano." : ""}</p>` +
     (ts.some(t => t.cir && !t.ali && !t.condA)
       ? `<div class="ed-pb"><button type="button" class="btn sec sm" data-dsa="condauto" title="Vuelve a marcar los conductores según el sistema y el circuito">Conductores automáticos</button></div>`
       : "") +
@@ -4352,13 +4662,15 @@ function dsPropCambio(e) {
   const k = f.dataset.dsp,
     v = f.type === "checkbox" ? (f.checked ? "1" : "") : f.value.trim();
   dsSel().forEach(el => {
-    if (k === "condF" || k === "condN" || k === "condT") {
+    if (k === "condF" || k === "condN" || k === "condT" || k === "condR") {
       if (el.t !== "tub") return;
       const c = { f: 0, n: false, t: false, ...(el.cond || {}) };
       if (k === "condF") c.f = Math.max(0, Math.min(12, parseInt(v, 10) || 0));
       else if (k === "condN") c.n = Math.max(0, Math.min(6, parseInt(v, 10) || 0));
+      else if (k === "condR") c.r = Math.max(0, Math.min(12, parseInt(v, 10) || 0));
       else c.t = !!v;
       c.n = dsNeutros(c);
+      if (!c.r) delete c.r;
       // Elegidos por el proyectista: ya no se cambian solos
       delete el.condA;
       el.cond = c;
@@ -4369,12 +4681,7 @@ function dsPropCambio(e) {
       return;
     }
     if (k === "enc") {
-      if (dsConEnc(el))
-        el.enc =
-          v
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "")
-            .slice(0, 3) || undefined;
+      if (dsConEnc(el)) el.enc = dsEncLimpio(v, el);
       return;
     }
     if (k === "capa") {
@@ -4492,6 +4799,10 @@ function dsPropClic(e) {
     });
     edCambio();
     toast(`Conductores iguales en ${n + 1} tubería${n ? "s" : ""} del circuito ${t.cir}`);
+  } else if (a === "juntar") {
+    const g = dsTubRepetidas(dsSel()[0])[0];
+    if (g) dsJuntarTubs(g.map(o => o.id));
+    edProps();
   } else if (a === "condauto") {
     dsSel().forEach(t => {
       if (t.t === "tub" && t.cir && !t.ali) {
@@ -4651,6 +4962,8 @@ function dsCinta() {
   $("dsCirT").checked = !!(D && D.cirt);
   $("dsNSal").checked = !!(D && D.nsal);
   $("dsNSal").disabled = sin;
+  $("dsIntCol").checked = !!D && D.intCol !== false;
+  $("dsIntCol").disabled = sin;
   $("dsCirT").disabled = sin;
   $("edPolar").value = String(DSU.polarInc);
   $("dsSueltos").checked = DSU.sueltos;
@@ -4741,6 +5054,12 @@ $("dsMarcaEst").addEventListener("change", e => {
   e.target.blur();
   dsGuardarPref();
   plDibujar();
+});
+$("dsIntCol").addEventListener("change", e => {
+  if (!dsD()) return;
+  if (e.target.checked) delete dsD().intCol;
+  else dsD().intCol = false;
+  edCambio();
 });
 $("dsNSal").addEventListener("change", e => {
   if (!dsD()) return;
@@ -5078,6 +5397,16 @@ function dsVerificar() {
         `Más de ${C.cur}° entre dos cajas o artefactos (criterio; verifique la regla del CNE): ponga una caja de paso.`
       ) && (out[out.length - 1].caja = t.id);
   });
+  // Tuberías repetidas entre los mismos dos puntos: se juntan en una que lleva todos los circuitos
+  dsTubRepetidas().forEach(g => {
+    const tb = por.get(g[0].tab);
+    add(
+      "aviso",
+      `${[...new Set(g.flatMap(t => [t.cir, ...(t.cx || [])]))].join(" y ")}${tb && tb.nom ? " de " + tb.nom : ""}: ${g.length} tuberías entre los mismos puntos`,
+      g.map(t => t.id),
+      "Júntelas en una sola tubería que lleve todos los circuitos (Lleva también): el cálculo aplica la Tabla 5C."
+    ) && (out[out.length - 1].juntar = g.map(t => t.id).join(","));
+  });
   // Tomacorrientes sin conductor de protección marcado
   const sinT = tubs.filter(
     t =>
@@ -5100,8 +5429,9 @@ function dsVerificar() {
     intr = new Map();
   D.els.forEach(e => {
     if (!e.enc || !dsConEnc(e)) return;
-    const m = DS_CAT[e.k].g === "Interruptores" ? intr : luz;
-    (m.get(e.enc) || m.set(e.enc, []).get(e.enc)).push(e);
+    const m = dsEsInt(e) ? intr : luz;
+    // Un interruptor doble o triple enciende cada letra de sus teclas
+    dsLetras(e).forEach(l => (m.get(l) || m.set(l, []).get(l)).push(e));
   });
   luz.forEach((l, k) => {
     if (!intr.has(k))
@@ -5196,7 +5526,7 @@ function revRender() {
   $("revLista").innerHTML = REV_L.length
     ? REV_L.map(
         (o, i) =>
-          `<div class="rev-it ${o.nivel}"><i>${o.nivel === "seg" ? "⛔" : o.nivel === "aviso" ? "⚠" : "ℹ"}</i><span>${o.nivel === "seg" ? '<em class="rev-seg">Seguridad</em>' : ""}${esc(o.t)}<small>${esc(o.d)}</small></span><span class="pla-b">${o.ren ? `<button type="button" class="vw-btn" data-revr="${i}" title="Le pone al tablero el nombre que tiene en el cálculo">Renombrar a ${esc(o.ren.nom)}</button>` : ""}${o.caja ? `<button type="button" class="vw-btn" data-revc="${o.caja}" title="Parte la tubería en el medio de su recorrido con una caja de paso">Poner caja</button>` : ""}<button type="button" class="vw-btn" data-revi="${i}" title="Elige y muestra estos elementos">Ver</button></span></div>`
+          `<div class="rev-it ${o.nivel}"><i>${o.nivel === "seg" ? "⛔" : o.nivel === "aviso" ? "⚠" : "ℹ"}</i><span>${o.nivel === "seg" ? '<em class="rev-seg">Seguridad</em>' : ""}${esc(o.t)}<small>${esc(o.d)}</small></span><span class="pla-b">${o.ren ? `<button type="button" class="vw-btn" data-revr="${i}" title="Le pone al tablero el nombre que tiene en el cálculo">Renombrar a ${esc(o.ren.nom)}</button>` : ""}${o.caja ? `<button type="button" class="vw-btn" data-revc="${o.caja}" title="Parte la tubería en el medio de su recorrido con una caja de paso">Poner caja</button>` : ""}${o.juntar ? `<button type="button" class="vw-btn" data-revj="${o.juntar}" title="Deja una sola tubería con todos los circuitos y sus conductores">Juntar</button>` : ""}<button type="button" class="vw-btn" data-revi="${i}" title="Elige y muestra estos elementos">Ver</button></span></div>`
       ).join("")
     : '<p class="rev-ok">✓ Sin observaciones: el diseño está conectado y completo.</p>';
   $("revNota").textContent = REV_L.length
@@ -5217,6 +5547,11 @@ $("revDlg").addEventListener("click", e => {
       edCambio();
       toast(`Tablero renombrado a ${o.ren.nom}: sus circuitos entran al cálculo`);
     }
+    return revRender();
+  }
+  const pj = e.target.closest("[data-revj]");
+  if (pj) {
+    dsJuntarTubs(pj.dataset.revj.split(","));
     return revRender();
   }
   const pc = e.target.closest("[data-revc]");
